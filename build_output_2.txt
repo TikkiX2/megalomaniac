@@ -1,0 +1,57 @@
+
+> build
+> vite build
+
+vite v7.3.1 building client environment for production...
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+✓ 33 modules transformed.
+✗ Build failed in 3.90s
+error during build:
+[vite:react-babel] /mnt/Delta/wamp64/www/megalomaniac/resources/js/routes/profile/index.ts: Identifier 'queryParams' has already been declared. (2:9)
+
+  1 | import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+> 2 | import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../wayfinder'
+    |          ^
+  3 |
+file: /mnt/Delta/wamp64/www/megalomaniac/resources/js/routes/profile/index.ts:2:9
+    at constructor (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.declareName (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:4866:21)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.finishImportSpecifier (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14266:10)
+    at TypeScriptParserMixin.parseImportSpecifier (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14419:17)
+    at TypeScriptParserMixin.parseImportSpecifier (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:10148:18)
+    at TypeScriptParserMixin.parseNamedImportSpecifiers (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14398:36)
+    at TypeScriptParserMixin.parseImportSpecifiersAndAfter (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14242:37)
+    at TypeScriptParserMixin.parseImport (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14235:17)
+    at TypeScriptParserMixin.parseImport (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:9353:26)
+    at TypeScriptParserMixin.parseStatementContent (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12876:27)
+    at TypeScriptParserMixin.parseStatementContent (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14522:38)
+    at parser (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at step (/mnt/Delta/wamp64/www/megalomaniac/node_modules/gensync/index.js:261:32)
+    at evaluateAsync (/mnt/Delta/wamp64/www/megalomaniac/node_modules/gensync/index.js:291:5)
+    at /mnt/Delta/wamp64/www/megalomaniac/node_modules/gensync/index.js:93:9
+    at new Promise (<anonymous>)
+    at async (/mnt/Delta/wamp64/www/megalomaniac/node_modules/gensync/index.js:92:14)
+    at stopHiding - secret - don't use this - v1 (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Module.transformAsync (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/transform.js:43:77)
+    at Object.handler (file:///mnt/Delta/wamp64/www/megalomaniac/node_modules/@vitejs/plugin-react/dist/index.js:206:46)

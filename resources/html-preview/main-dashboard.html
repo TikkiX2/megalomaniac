@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FitTrack Pro Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "card-dark": "#1a2e22",
+                        "card-dark-lighter": "#23482f",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "sans": ["Lexend", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #102216;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #23482f;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #13ec5b;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased selection:bg-primary selection:text-background-dark">
+    <div class="flex h-screen w-full overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="hidden w-64 flex-col border-r border-gray-800 bg-[#112217] lg:flex">
+            <div class="flex h-full flex-col justify-between p-4">
+                <div class="flex flex-col gap-6">
+                    <!-- Brand -->
+                    <div class="flex items-center gap-3 px-2">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary">
+                            <span class="material-symbols-outlined">fitness_center</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="text-lg font-bold text-white leading-tight">FitTrack Pro</h1>
+                            <p class="text-xs text-[#92c9a4]">v2.4.0</p>
+                        </div>
+                    </div>
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 rounded-lg bg-[#23482f] px-3 py-2.5 text-primary transition-colors hover:bg-[#23482f]"
+                            href="#">
+                            <span class="material-symbols-outlined"
+                                style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                            <span class="text-sm font-medium">Dashboard</span>
+                        </a>
+                        <a class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-400 transition-colors hover:bg-[#23482f] hover:text-white"
+                            href="#">
+                            <span class="material-symbols-outlined">exercise</span>
+                            <span class="text-sm font-medium">Workout Log</span>
+                        </a>
+                        <a class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-400 transition-colors hover:bg-[#23482f] hover:text-white"
+                            href="#">
+                            <span class="material-symbols-outlined">restaurant</span>
+                            <span class="text-sm font-medium">Nutrition</span>
+                        </a>
+                        <a class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-400 transition-colors hover:bg-[#23482f] hover:text-white"
+                            href="#">
+                            <span class="material-symbols-outlined">medication</span>
+                            <span class="text-sm font-medium">Supplements</span>
+                        </a>
+                        <a class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-400 transition-colors hover:bg-[#23482f] hover:text-white"
+                            href="#">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            <span class="text-sm font-medium">Grocery Budget</span>
+                        </a>
+                    </nav>
+                </div>
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-2">
+                    <a class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-gray-400 transition-colors hover:bg-[#23482f] hover:text-white"
+                        href="#">
+                        <span class="material-symbols-outlined">settings</span>
+                        <span class="text-sm font-medium">Settings</span>
+                    </a>
+                    <div class="mt-4 flex items-center gap-3 rounded-xl bg-[#1a2e22] p-3">
+                        <div class="h-10 w-10 overflow-hidden rounded-full border-2 border-[#1a2e22]"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAf7Wx_XG39U7q_DACBOsZMtuSIcG7R4byAkKUgAr_j_Gsj0fGBJMf5Hr2mKqNgKoABRK0pRJVryZN5lyyMbPlkJArmrhQQ7BK1Fjs3tbq5lh3HVyBPQ9OV4POEY41DbotrVqRzgPgS3fo8bu3DDT0kOZOEPERkU55emk2PpTLOmLXrjjjxnGK5kT0nil1TrsM72nGXL85z-cM7bVV5qNP_wx-txwXY6NHuOO9rQlh6jOLzwHArd_ocVlmYGWxJEiNPeZZ6Rm3xTQ'); background-size: cover; background-position: center;">
+                        </div>
+                        <div class="flex flex-col">
+                            <p class="text-sm font-semibold text-white">Alex Morgan</p>
+                            <p class="text-xs text-gray-400">Pro Member</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <main class="flex h-full flex-1 flex-col overflow-y-auto bg-background-light dark:bg-background-dark">
+            <!-- Mobile Header -->
+            <header class="flex items-center justify-between border-b border-gray-800 bg-[#112217] p-4 lg:hidden">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">fitness_center</span>
+                    <h1 class="font-bold text-white">FitTrack Pro</h1>
+                </div>
+                <button class="text-gray-400 hover:text-white">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </header>
+            <div class="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6 lg:p-8">
+                <!-- Welcome Section -->
+                <div class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+                    <div>
+                        <h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white lg:text-4xl">
+                            Welcome back, Alex!</h2>
+                        <p class="mt-1 text-base text-gray-500 dark:text-[#92c9a4]">Today is Wednesday, Oct 25th</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button
+                            class="flex items-center gap-2 rounded-lg bg-[#23482f] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#2c583a]">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                            Log Meal
+                        </button>
+                        <button
+                            class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-background-dark shadow-[0_0_15px_rgba(19,236,91,0.3)] transition hover:bg-[#0fb847]">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">bolt</span>
+                            Quick Start
+                        </button>
+                    </div>
+                </div>
+                <!-- Bento Grid Layout -->
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
+                    <!-- 1. Calories Card (Wide) -->
+                    <div
+                        class="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm dark:bg-[#1a2e22] md:col-span-2">
+                        <div class="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl"></div>
+                        <div class="flex items-start justify-between">
+                            <div class="flex flex-col gap-1">
+                                <span
+                                    class="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    <span class="material-symbols-outlined text-primary"
+                                        style="font-size: 18px;">local_fire_department</span>
+                                    Calories Remaining
+                                </span>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-4xl font-bold text-slate-900 dark:text-white">850</span>
+                                    <span class="text-sm font-medium text-gray-400">kcal</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Goal:
+                                    2,800</span>
+                                <span class="block text-xs font-medium text-primary">Consumed: 1,950</span>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex flex-col gap-2">
+                            <div class="flex justify-between text-xs font-medium text-gray-400">
+                                <span>Progress</span>
+                                <span>70%</span>
+                            </div>
+                            <div class="h-3 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-[#23482f]">
+                                <div class="h-full rounded-full bg-gradient-to-r from-primary to-[#0fb847]"
+                                    style="width: 70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 2. Macros (Stacked) -->
+                    <div class="flex flex-col gap-4 md:col-span-2 md:flex-row lg:col-span-2">
+                        <!-- Protein -->
+                        <div
+                            class="flex flex-1 flex-col justify-between rounded-2xl bg-white p-5 shadow-sm dark:bg-[#1a2e22]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Protein</span>
+                                <span class="text-xs font-bold text-indigo-400">145g / 180g</span>
+                            </div>
+                            <div class="mt-3 flex items-end gap-2">
+                                <div class="text-2xl font-bold text-slate-900 dark:text-white">80%</div>
+                                <span class="mb-1 text-xs text-green-400">On Track</span>
+                            </div>
+                            <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-[#23482f]">
+                                <div class="h-full rounded-full bg-indigo-500" style="width: 80%"></div>
+                            </div>
+                        </div>
+                        <!-- Carbs -->
+                        <div
+                            class="flex flex-1 flex-col justify-between rounded-2xl bg-white p-5 shadow-sm dark:bg-[#1a2e22]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Carbs</span>
+                                <span class="text-xs font-bold text-sky-400">210g / 250g</span>
+                            </div>
+                            <div class="mt-3 flex items-end gap-2">
+                                <div class="text-2xl font-bold text-slate-900 dark:text-white">84%</div>
+                                <span class="mb-1 text-xs text-yellow-400">High</span>
+                            </div>
+                            <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-[#23482f]">
+                                <div class="h-full rounded-full bg-sky-500" style="width: 84%"></div>
+                            </div>
+                        </div>
+                        <!-- Fats -->
+                        <div
+                            class="flex flex-1 flex-col justify-between rounded-2xl bg-white p-5 shadow-sm dark:bg-[#1a2e22]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Fats</span>
+                                <span class="text-xs font-bold text-rose-400">55g / 70g</span>
+                            </div>
+                            <div class="mt-3 flex items-end gap-2">
+                                <div class="text-2xl font-bold text-slate-900 dark:text-white">78%</div>
+                                <span class="mb-1 text-xs text-green-400">Good</span>
+                            </div>
+                            <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-[#23482f]">
+                                <div class="h-full rounded-full bg-rose-500" style="width: 78%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 3. Today's Workout (Big Card) -->
+                    <div
+                        class="relative overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-[#1a2e22] lg:col-span-2 lg:row-span-2">
+                        <div class="absolute inset-0 z-0 bg-cover bg-center opacity-40 dark:opacity-20"
+                            data-alt="Dark gym interior with weights"
+                            style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCO20LI1B4P7ccL-qbli7RL74AV13BnEJYVNuU3tRZg_2SCh-WueK1d9ecQKdV6dwehSO8Uk9Ll1e_FvFjAx7WkRCumf7lnTD6em7YR_P1V7ur--DfRBPhYrKeIK-SDH5GS9yi0-QlqQHnjY_yDSJibJVCVrcOa-rPRmX32krRZkymw0bQKRHDQqUQzVQ33yj91fe7MkxQ4tgbeDw_OoMv4gyt2uqhtCDL3oDpeyVpK3s-jaNNsCFgTbCwTc9Fqaa-sGUkk_-f4GQ');">
+                        </div>
+                        <div
+                            class="absolute inset-0 z-10 bg-gradient-to-t from-background-light via-background-light/80 to-transparent dark:from-[#1a2e22] dark:via-[#1a2e22]/90">
+                        </div>
+                        <div class="relative z-20 flex h-full flex-col p-6">
+                            <div class="mb-4 flex items-center justify-between">
+                                <span
+                                    class="flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                                    Scheduled
+                                </span>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">5:30 PM</span>
+                            </div>
+                            <h3 class="mb-2 text-2xl font-bold text-slate-900 dark:text-white">Upper Body Power</h3>
+                            <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">Focus on compound movements for
+                                chest and back hypertrophy.</p>
+                            <div class="mb-6 flex flex-col gap-3">
+                                <div
+                                    class="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-[#112217]/50">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="flex h-8 w-8 items-center justify-center rounded bg-gray-200 text-gray-600 dark:bg-[#23482f] dark:text-gray-300">
+                                            1</div>
+                                        <span class="font-medium text-slate-900 dark:text-white">Bench Press</span>
+                                    </div>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">4 x 8</span>
+                                </div>
+                                <div
+                                    class="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-[#112217]/50">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="flex h-8 w-8 items-center justify-center rounded bg-gray-200 text-gray-600 dark:bg-[#23482f] dark:text-gray-300">
+                                            2</div>
+                                        <span class="font-medium text-slate-900 dark:text-white">Bent Over Rows</span>
+                                    </div>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">4 x 10</span>
+                                </div>
+                                <div
+                                    class="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-[#112217]/50">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="flex h-8 w-8 items-center justify-center rounded bg-gray-200 text-gray-600 dark:bg-[#23482f] dark:text-gray-300">
+                                            3</div>
+                                        <span class="font-medium text-slate-900 dark:text-white">Overhead Press</span>
+                                    </div>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">3 x 12</span>
+                                </div>
+                            </div>
+                            <div class="mt-auto flex items-center gap-4">
+                                <button
+                                    class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-center font-bold text-background-dark shadow-[0_4px_20px_rgba(19,236,91,0.2)] transition hover:bg-[#0fb847] hover:shadow-[0_4px_25px_rgba(19,236,91,0.4)]">
+                                    Start Workout
+                                </button>
+                                <button
+                                    class="flex h-[52px] w-[52px] items-center justify-center rounded-xl border border-gray-200 text-gray-500 transition hover:bg-gray-50 dark:border-[#23482f] dark:text-gray-400 dark:hover:bg-[#23482f]">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 4. Supplement Checklist -->
+                    <div class="flex flex-col rounded-2xl bg-white p-6 shadow-sm dark:bg-[#1a2e22] lg:col-span-1">
+                        <div class="mb-4 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 dark:text-white">Supplements</h3>
+                            <div class="text-xs font-medium text-primary">3/5 Done</div>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <label class="group flex cursor-pointer items-center gap-3">
+                                <input checked=""
+                                    class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-[#23482f] dark:bg-[#112217] dark:checked:bg-primary"
+                                    type="checkbox" />
+                                <span
+                                    class="text-sm font-medium text-gray-400 line-through transition group-hover:text-primary">Whey
+                                    Protein</span>
+                            </label>
+                            <label class="group flex cursor-pointer items-center gap-3">
+                                <input checked=""
+                                    class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-[#23482f] dark:bg-[#112217] dark:checked:bg-primary"
+                                    type="checkbox" />
+                                <span
+                                    class="text-sm font-medium text-gray-400 line-through transition group-hover:text-primary">Creatine
+                                    (5g)</span>
+                            </label>
+                            <label class="group flex cursor-pointer items-center gap-3">
+                                <input checked=""
+                                    class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-[#23482f] dark:bg-[#112217] dark:checked:bg-primary"
+                                    type="checkbox" />
+                                <span
+                                    class="text-sm font-medium text-gray-400 line-through transition group-hover:text-primary">Multivitamin</span>
+                            </label>
+                            <label class="group flex cursor-pointer items-center gap-3">
+                                <input
+                                    class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-[#23482f] dark:bg-[#112217] dark:checked:bg-primary"
+                                    type="checkbox" />
+                                <span
+                                    class="text-sm font-medium text-slate-700 dark:text-gray-300 transition group-hover:text-primary">Omega-3</span>
+                            </label>
+                            <label class="group flex cursor-pointer items-center gap-3">
+                                <input
+                                    class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:border-[#23482f] dark:bg-[#112217] dark:checked:bg-primary"
+                                    type="checkbox" />
+                                <span
+                                    class="text-sm font-medium text-slate-700 dark:text-gray-300 transition group-hover:text-primary">Magnesium</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- 5. Grocery Budget -->
+                    <div class="flex flex-col rounded-2xl bg-white p-6 shadow-sm dark:bg-[#1a2e22] lg:col-span-1">
+                        <div class="mb-4 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 dark:text-white">Grocery Budget</h3>
+                            <span class="material-symbols-outlined text-gray-400"
+                                style="font-size: 20px;">more_horiz</span>
+                        </div>
+                        <div class="mb-4 flex items-end gap-2">
+                            <span class="text-3xl font-bold text-slate-900 dark:text-white">$350</span>
+                            <span class="mb-1 text-sm text-gray-500 dark:text-gray-400">/ $500</span>
+                        </div>
+                        <!-- Mini Chart Representation -->
+                        <div class="relative mb-2 h-16 w-full">
+                            <div class="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-1">
+                                <div class="w-full rounded-t bg-primary/20" style="height: 30%"></div>
+                                <div class="w-full rounded-t bg-primary/20" style="height: 45%"></div>
+                                <div class="w-full rounded-t bg-primary/40" style="height: 25%"></div>
+                                <div class="w-full rounded-t bg-primary/30" style="height: 60%"></div>
+                                <div class="w-full rounded-t bg-primary" style="height: 75%"></div>
+                                <!-- Current week -->
+                                <div class="w-full rounded-t bg-gray-700/20 dark:bg-gray-700/50" style="height: 10%">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-auto flex items-center justify-between">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Oct 1 - Oct 25</span>
+                            <div class="flex items-center gap-1 text-xs font-medium text-primary">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">trending_up</span>
+                                <span>+15%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 6. Weekly Activity Graph (Optional filler for full grid look) -->
+                    <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-[#1a2e22] lg:col-span-2">
+                        <div class="mb-6 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 dark:text-white">Activity Overview</h3>
+                            <select
+                                class="rounded-lg border-none bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 focus:ring-0 dark:bg-[#23482f] dark:text-white">
+                                <option>This Week</option>
+                                <option>Last Week</option>
+                            </select>
+                        </div>
+                        <div class="flex h-32 items-end justify-between gap-4">
+                            <!-- Mon -->
+                            <div class="flex w-full flex-col items-center gap-2">
+                                <div class="w-full max-w-[40px] rounded-t-lg bg-gray-200 dark:bg-[#23482f]"
+                                    style="height: 40%"></div>
+                                <span class="text-xs text-gray-400">M</span>
+                            </div>
+                            <!-- Tue -->
+                            <div class="flex w-full flex-col items-center gap-2">
+                                <div class="w-full max-w-[40px] rounded-t-lg bg-gray-200 dark:bg-[#23482f]"
+                                    style="height: 60%"></div>
+                                <span class="text-xs text-gray-400">T</span>
+                            </div>
+                            <!-- Wed -->
+                            <div class="flex w-full flex-col items-center gap-2">
+                                <div class="w-full max-w-[40px] rounded-t-lg bg-primary shadow-[0_0_15px_rgba(19,236,91,0.3)]"
+                                    style="height: 85%"></div>
+                                <span class="text-xs font-bold text-white">W</span>
+                            </div>
+                            <!-- Thu -->
+                            <div class="flex w-full flex-col items-center gap-2">
+                                <div class="w-full max-w-[40px] rounded-t-lg bg-gray-200 dark:bg-[#23482f]"
+                                    style="height: 30%"></div>
+                                <span class="text-xs text-gray-400">T</span>
+                            </div>
+                            <!-- Fri -->
+                            <div class="flex w-full flex-col items-center gap-2">
+                                <div class="w-full max-w-[40px] rounded-t-lg bg-gray-200 dark:bg-[#23482f]"
+                                    style="height: 50%"></div>
+                                <span class="text-xs text-gray-400">F</span>
+                            </div>
+                            <!-- Sat -->
+                            <div class="flex w-full flex-col items-center gap-2">
+                                <div class="w-full max-w-[40px] rounded-t-lg bg-gray-200 dark:bg-[#23482f]"
+                                    style="height: 70%"></div>
+                                <span class="text-xs text-gray-400">S</span>
+                            </div>
+                            <!-- Sun -->
+                            <div class="flex w-full flex-col items-center gap-2">
+                                <div class="w-full max-w-[40px] rounded-t-lg bg-gray-200 dark:bg-[#23482f]"
+                                    style="height: 20%"></div>
+                                <span class="text-xs text-gray-400">S</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 7. Sleep/Recovery (Small Filler) -->
+                    <div
+                        class="flex flex-col justify-between rounded-2xl bg-[#13ec5b] p-6 shadow-sm dark:bg-[#13ec5b] lg:col-span-1">
+                        <div class="flex items-center justify-between text-[#102216]">
+                            <h3 class="font-bold">Sleep Score</h3>
+                            <span class="material-symbols-outlined">bedtime</span>
+                        </div>
+                        <div>
+                            <span class="text-4xl font-black text-[#102216]">85</span>
+                            <span class="text-sm font-semibold text-[#102216]/80">/ 100</span>
+                        </div>
+                        <div class="text-xs font-medium text-[#102216]/80">
+                            +2pts vs 30 day avg
+                        </div>
+                    </div>
+                    <!-- 8. Water Intake (Small Filler) -->
+                    <div
+                        class="flex flex-col justify-between rounded-2xl bg-white p-6 shadow-sm dark:bg-[#1a2e22] lg:col-span-1">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 dark:text-white">Water</h3>
+                            <span class="material-symbols-outlined text-blue-400">water_drop</span>
+                        </div>
+                        <div class="flex items-end gap-1">
+                            <span class="text-3xl font-bold text-slate-900 dark:text-white">2.5</span>
+                            <span class="mb-1 text-sm font-medium text-gray-500 dark:text-gray-400">Liters</span>
+                        </div>
+                        <div class="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-[#23482f]">
+                            <div class="h-full rounded-full bg-blue-400" style="width: 65%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

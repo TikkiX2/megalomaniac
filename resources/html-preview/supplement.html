@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Supplement Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "primary-dark": "#0ea341",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "card-dark": "#1A2E22",
+                        "card-border": "#23482f",
+                        "text-secondary": "#92c9a4"
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "body": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #102216;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #23482f;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #13ec5b;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white overflow-hidden">
+    <div class="flex h-screen w-full overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="hidden lg:flex flex-col w-72 h-full border-r border-card-border bg-background-dark flex-shrink-0">
+            <div class="p-6 flex flex-col h-full justify-between">
+                <div class="flex flex-col gap-8">
+                    <!-- Brand -->
+                    <div class="flex gap-3 items-center">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-full size-10"
+                            data-alt="Abstract green fitness logo"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC3vw40L2ny88Zz6pSgzLrc1S4Y0ZgLifpLDXKDjwBiPHZeRd_5PfRP8O95ZVNuOWsy5txmJNsJuQfRspZ5p233iNfz8NLMyaF_0yPz76x9YuZyjGUOKUoSDANdqWeP5f8o9G2eRyiihxJEZJUeQZzRlu8KMevUba4U7fhBzkb5JBozlE19GZkIZWSuJjTQzD3JwO7m6_k13fZceVzXmni6zlZo99WwlEjpmAjn3ZsxIhzmvqWp1tqK-_zaGsOhkPP0kmDSjpNV2g");'>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="text-white text-lg font-bold leading-tight">FitLife Pro</h1>
+                            <p class="text-text-secondary text-xs font-normal">Manage your lifestyle</p>
+                        </div>
+                    </div>
+                    <!-- Navigation -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:text-white hover:bg-card-border transition-colors group"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-2xl group-hover:text-primary transition-colors">dashboard</span>
+                            <span class="text-sm font-medium">Dashboard</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:text-white hover:bg-card-border transition-colors group"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-2xl group-hover:text-primary transition-colors">fitness_center</span>
+                            <span class="text-sm font-medium">Workouts</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:text-white hover:bg-card-border transition-colors group"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-2xl group-hover:text-primary transition-colors">restaurant</span>
+                            <span class="text-sm font-medium">Nutrition</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-card-border text-white shadow-lg shadow-primary/10"
+                            href="#">
+                            <span class="material-symbols-outlined text-2xl text-primary">medication</span>
+                            <span class="text-sm font-medium">Supplements</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:text-white hover:bg-card-border transition-colors group"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-2xl group-hover:text-primary transition-colors">shopping_cart</span>
+                            <span class="text-sm font-medium">Groceries</span>
+                        </a>
+                    </nav>
+                </div>
+                <!-- Bottom User Profile -->
+                <div class="flex items-center gap-3 pt-6 border-t border-card-border">
+                    <div class="bg-center bg-no-repeat bg-cover rounded-full size-10 ring-2 ring-card-border"
+                        data-alt="User profile photo"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBP7IFhvCyBKlaUqTsFjGBMIiFtjM35lCgBMu-X3VNtNayTbY_GaHlb96iEArXq9Z1teLh3rnQLH1fv-j4BcHzvqDxiU12cV4QfBft9xyXk66UsGZjGYX_ErhrP_kTA9dlGm_fs6wyXVY_ypgQxCNzvKGTGnh2Mmy-tXuMwxmNMcxGcdZqEphqEs5O0g6kC34_rVukKULsuKx_HoyHxEMr9zBRjiom4aWYNM591Z5W6NfD1t-x2Qo9gbFwDKEsUHx_R-MI1AzJcqg");'>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-white">Alex Morgan</span>
+                        <span class="text-xs text-text-secondary">Pro Plan</span>
+                    </div>
+                    <button class="ml-auto text-text-secondary hover:text-white">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-background-light dark:bg-background-dark relative">
+            <!-- Top Header -->
+            <header
+                class="h-16 flex items-center justify-between px-6 lg:px-8 border-b border-card-border bg-background-dark/50 backdrop-blur-sm z-10 shrink-0">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-white">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-white tracking-tight">Supplement Stack</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div
+                        class="hidden md:flex items-center bg-card-dark rounded-full px-4 py-1.5 border border-card-border focus-within:border-primary/50 transition-colors">
+                        <span class="material-symbols-outlined text-text-secondary text-xl">search</span>
+                        <input
+                            class="bg-transparent border-none text-sm text-white placeholder-text-secondary focus:ring-0 w-48"
+                            placeholder="Search stack..." type="text" />
+                    </div>
+                    <button
+                        class="relative p-2 text-text-secondary hover:text-white transition-colors rounded-full hover:bg-card-border">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span
+                            class="absolute top-1.5 right-1.5 size-2 bg-primary rounded-full border border-background-dark"></span>
+                    </button>
+                </div>
+            </header>
+            <!-- Scrollable Content Area -->
+            <div class="flex-1 overflow-y-auto overflow-x-hidden">
+                <div class="max-w-[1600px] mx-auto p-6 lg:p-8 h-full flex flex-col">
+                    <!-- Stats Row -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <div
+                            class="bg-card-dark border border-card-border rounded-xl p-5 flex flex-col gap-1 hover:border-primary/30 transition-colors">
+                            <span class="text-text-secondary text-sm font-medium">Daily Goal</span>
+                            <div class="flex items-end gap-2">
+                                <span class="text-2xl font-bold text-white">85%</span>
+                                <span class="text-primary text-xs mb-1 font-medium">↑ 12%</span>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-card-dark border border-card-border rounded-xl p-5 flex flex-col gap-1 hover:border-primary/30 transition-colors">
+                            <span class="text-text-secondary text-sm font-medium">Current Streak</span>
+                            <div class="flex items-end gap-2">
+                                <span class="text-2xl font-bold text-white">12 Days</span>
+                                <span class="text-xs text-text-secondary mb-1">Keep it up!</span>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-card-dark border border-card-border rounded-xl p-5 flex flex-col gap-1 hover:border-primary/30 transition-colors">
+                            <span class="text-text-secondary text-sm font-medium">Active Items</span>
+                            <div class="flex items-end gap-2">
+                                <span class="text-2xl font-bold text-white">8</span>
+                                <span class="text-xs text-text-secondary mb-1">Supplements</span>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-card-dark border border-card-border rounded-xl p-5 flex flex-col gap-1 hover:border-primary/30 transition-colors relative overflow-hidden">
+                            <span class="text-text-secondary text-sm font-medium">Needs Restock</span>
+                            <div class="flex items-end gap-2 relative z-10">
+                                <span class="text-2xl font-bold text-red-400">1 Item</span>
+                                <span class="text-xs text-text-secondary mb-1">Low Inventory</span>
+                            </div>
+                            <div class="absolute -right-4 -bottom-4 text-red-500/10 rotate-12">
+                                <span class="material-symbols-outlined text-[80px]">warning</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Split Layout -->
+                    <div class="flex flex-col xl:flex-row gap-8 h-full">
+                        <!-- Left Column: Inventory Management (60%) -->
+                        <div class="flex-1 flex flex-col gap-6 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-bold text-white">My Inventory</h3>
+                                <button
+                                    class="flex items-center gap-2 bg-primary hover:bg-primary-dark text-background-dark px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-primary/20">
+                                    <span class="material-symbols-outlined text-xl">add</span>
+                                    <span>Add Supplement</span>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+                                <!-- Card 1: Whey Protein -->
+                                <div
+                                    class="bg-card-dark border border-card-border rounded-xl p-5 hover:border-primary/50 transition-all group relative">
+                                    <div
+                                        class="absolute top-4 right-4 text-text-secondary hover:text-white cursor-pointer">
+                                        <span class="material-symbols-outlined text-xl">more_vert</span>
+                                    </div>
+                                    <div class="flex items-start gap-4 mb-4">
+                                        <div
+                                            class="size-12 rounded-lg bg-[#2a4435] flex items-center justify-center text-primary shrink-0">
+                                            <span class="material-symbols-outlined">fitness_center</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-white font-bold leading-tight">Whey Isolate</h4>
+                                            <p class="text-text-secondary text-xs mt-1">Optimum Nutrition</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-y-3 gap-x-2 text-sm mb-4">
+                                        <div>
+                                            <p class="text-text-secondary text-xs">Dosage</p>
+                                            <p class="text-white font-medium">1 Scoop (30g)</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-text-secondary text-xs">Frequency</p>
+                                            <p class="text-white font-medium">Post-Workout</p>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <div class="flex justify-between items-end mb-1">
+                                                <p class="text-text-secondary text-xs">Stock Level</p>
+                                                <p class="text-white text-xs font-medium">15 Servings left</p>
+                                            </div>
+                                            <div class="w-full bg-background-dark rounded-full h-1.5">
+                                                <div class="bg-primary h-1.5 rounded-full" style="width: 45%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 2: Creatine -->
+                                <div
+                                    class="bg-card-dark border border-card-border rounded-xl p-5 hover:border-primary/50 transition-all group relative">
+                                    <div
+                                        class="absolute top-4 right-4 text-text-secondary hover:text-white cursor-pointer">
+                                        <span class="material-symbols-outlined text-xl">more_vert</span>
+                                    </div>
+                                    <div class="flex items-start gap-4 mb-4">
+                                        <div
+                                            class="size-12 rounded-lg bg-[#2a4435] flex items-center justify-center text-primary shrink-0">
+                                            <span class="material-symbols-outlined">bolt</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-white font-bold leading-tight">Creatine Monohydrate</h4>
+                                            <p class="text-text-secondary text-xs mt-1">Bulk Supplements</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-y-3 gap-x-2 text-sm mb-4">
+                                        <div>
+                                            <p class="text-text-secondary text-xs">Dosage</p>
+                                            <p class="text-white font-medium">5g</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-text-secondary text-xs">Frequency</p>
+                                            <p class="text-white font-medium">Daily</p>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <div class="flex justify-between items-end mb-1">
+                                                <p class="text-text-secondary text-xs">Stock Level</p>
+                                                <p class="text-white text-xs font-medium">80 Servings left</p>
+                                            </div>
+                                            <div class="w-full bg-background-dark rounded-full h-1.5">
+                                                <div class="bg-primary h-1.5 rounded-full" style="width: 80%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 3: Multivitamin (Low Stock) -->
+                                <div
+                                    class="bg-card-dark border border-red-900/50 rounded-xl p-5 hover:border-red-500/50 transition-all group relative">
+                                    <div class="absolute top-0 right-0 p-1">
+                                        <span class="flex size-3 relative">
+                                            <span
+                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full size-3 bg-red-500"></span>
+                                        </span>
+                                    </div>
+                                    <div class="flex items-start gap-4 mb-4">
+                                        <div
+                                            class="size-12 rounded-lg bg-red-900/20 flex items-center justify-center text-red-400 shrink-0">
+                                            <span class="material-symbols-outlined">pill</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-white font-bold leading-tight">Multivitamin</h4>
+                                            <p class="text-text-secondary text-xs mt-1">Garden of Life</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-y-3 gap-x-2 text-sm mb-4">
+                                        <div>
+                                            <p class="text-text-secondary text-xs">Dosage</p>
+                                            <p class="text-white font-medium">2 Capsules</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-text-secondary text-xs">Frequency</p>
+                                            <p class="text-white font-medium">Morning</p>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <div class="flex justify-between items-end mb-1">
+                                                <p class="text-red-300 text-xs font-bold">Low Stock Alert</p>
+                                                <p class="text-red-300 text-xs font-medium">3 Days left</p>
+                                            </div>
+                                            <div class="w-full bg-background-dark rounded-full h-1.5">
+                                                <div class="bg-red-500 h-1.5 rounded-full" style="width: 10%"></div>
+                                            </div>
+                                            <button
+                                                class="w-full mt-3 text-xs bg-red-900/30 text-red-400 hover:bg-red-900/50 py-1.5 rounded border border-red-900 transition-colors">
+                                                Order Refill
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card 4: Fish Oil -->
+                                <div
+                                    class="bg-card-dark border border-card-border rounded-xl p-5 hover:border-primary/50 transition-all group relative">
+                                    <div
+                                        class="absolute top-4 right-4 text-text-secondary hover:text-white cursor-pointer">
+                                        <span class="material-symbols-outlined text-xl">more_vert</span>
+                                    </div>
+                                    <div class="flex items-start gap-4 mb-4">
+                                        <div
+                                            class="size-12 rounded-lg bg-[#2a4435] flex items-center justify-center text-primary shrink-0">
+                                            <span class="material-symbols-outlined">water_drop</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-white font-bold leading-tight">Omega-3 Fish Oil</h4>
+                                            <p class="text-text-secondary text-xs mt-1">Nordic Naturals</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-y-3 gap-x-2 text-sm mb-4">
+                                        <div>
+                                            <p class="text-text-secondary text-xs">Dosage</p>
+                                            <p class="text-white font-medium">1000mg</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-text-secondary text-xs">Frequency</p>
+                                            <p class="text-white font-medium">Daily (Lunch)</p>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <div class="flex justify-between items-end mb-1">
+                                                <p class="text-text-secondary text-xs">Stock Level</p>
+                                                <p class="text-white text-xs font-medium">45 Servings left</p>
+                                            </div>
+                                            <div class="w-full bg-background-dark rounded-full h-1.5">
+                                                <div class="bg-primary h-1.5 rounded-full" style="width: 60%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Column: Checklist & Actions (40%) -->
+                        <div class="xl:w-[420px] shrink-0 flex flex-col gap-6">
+                            <!-- Daily Checklist Panel -->
+                            <div class="bg-card-dark border border-card-border rounded-xl p-6 flex flex-col h-full">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-white">Today's Intake</h3>
+                                        <p class="text-text-secondary text-xs">October 24, 2023</p>
+                                    </div>
+                                    <div class="size-12 relative flex items-center justify-center">
+                                        <svg class="size-full -rotate-90" viewbox="0 0 36 36">
+                                            <path class="text-background-dark"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                fill="none" stroke="currentColor" stroke-width="3"></path>
+                                            <path class="text-primary drop-shadow-[0_0_4px_rgba(19,236,91,0.5)]"
+                                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                                fill="none" stroke="currentColor" stroke-dasharray="85, 100"
+                                                stroke-linecap="round" stroke-width="3"></path>
+                                        </svg>
+                                        <span class="absolute text-xs font-bold text-white">85%</span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-3 flex-1">
+                                    <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">
+                                        Morning</p>
+                                    <!-- Checked Item -->
+                                    <label
+                                        class="flex items-center gap-4 p-3 rounded-lg bg-primary/10 border border-primary/30 cursor-pointer transition-colors">
+                                        <div class="relative flex items-center">
+                                            <input checked=""
+                                                class="peer size-5 cursor-pointer appearance-none rounded border border-primary bg-card-dark checked:bg-primary checked:border-primary transition-all"
+                                                type="checkbox" />
+                                            <span
+                                                class="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-background-dark pointer-events-none opacity-0 peer-checked:opacity-100">check</span>
+                                        </div>
+                                        <div class="flex flex-col flex-1 opacity-50">
+                                            <span
+                                                class="text-sm font-medium text-white line-through decoration-primary">Multivitamin</span>
+                                            <span class="text-xs text-text-secondary">2 Capsules • Taken at 8:00
+                                                AM</span>
+                                        </div>
+                                    </label>
+                                    <!-- Checked Item -->
+                                    <label
+                                        class="flex items-center gap-4 p-3 rounded-lg bg-primary/10 border border-primary/30 cursor-pointer transition-colors">
+                                        <div class="relative flex items-center">
+                                            <input checked=""
+                                                class="peer size-5 cursor-pointer appearance-none rounded border border-primary bg-card-dark checked:bg-primary checked:border-primary transition-all"
+                                                type="checkbox" />
+                                            <span
+                                                class="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-background-dark pointer-events-none opacity-0 peer-checked:opacity-100">check</span>
+                                        </div>
+                                        <div class="flex flex-col flex-1 opacity-50">
+                                            <span
+                                                class="text-sm font-medium text-white line-through decoration-primary">Vitamin
+                                                D3</span>
+                                            <span class="text-xs text-text-secondary">5000 IU • Taken at 8:00 AM</span>
+                                        </div>
+                                    </label>
+                                    <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1 mt-4">
+                                        Afternoon / Post-Workout</p>
+                                    <!-- Unchecked Item -->
+                                    <label
+                                        class="group flex items-center gap-4 p-3 rounded-lg bg-background-dark border border-card-border hover:border-primary/50 cursor-pointer transition-colors">
+                                        <div class="relative flex items-center">
+                                            <input
+                                                class="peer size-5 cursor-pointer appearance-none rounded border border-text-secondary bg-transparent checked:bg-primary checked:border-primary transition-all group-hover:border-primary"
+                                                type="checkbox" />
+                                            <span
+                                                class="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-background-dark pointer-events-none opacity-0 peer-checked:opacity-100">check</span>
+                                        </div>
+                                        <div class="flex flex-col flex-1">
+                                            <span
+                                                class="text-sm font-medium text-white group-hover:text-primary transition-colors">Whey
+                                                Isolate</span>
+                                            <span class="text-xs text-text-secondary">1 Scoop (30g)</span>
+                                        </div>
+                                        <span
+                                            class="text-xs font-bold bg-[#2a4435] text-primary px-2 py-1 rounded">Soon</span>
+                                    </label>
+                                    <!-- Unchecked Item -->
+                                    <label
+                                        class="group flex items-center gap-4 p-3 rounded-lg bg-background-dark border border-card-border hover:border-primary/50 cursor-pointer transition-colors">
+                                        <div class="relative flex items-center">
+                                            <input
+                                                class="peer size-5 cursor-pointer appearance-none rounded border border-text-secondary bg-transparent checked:bg-primary checked:border-primary transition-all group-hover:border-primary"
+                                                type="checkbox" />
+                                            <span
+                                                class="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-background-dark pointer-events-none opacity-0 peer-checked:opacity-100">check</span>
+                                        </div>
+                                        <div class="flex flex-col flex-1">
+                                            <span
+                                                class="text-sm font-medium text-white group-hover:text-primary transition-colors">Creatine</span>
+                                            <span class="text-xs text-text-secondary">5g</span>
+                                        </div>
+                                    </label>
+                                    <p class="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1 mt-4">
+                                        Evening</p>
+                                    <!-- Unchecked Item -->
+                                    <label
+                                        class="group flex items-center gap-4 p-3 rounded-lg bg-background-dark border border-card-border hover:border-primary/50 cursor-pointer transition-colors">
+                                        <div class="relative flex items-center">
+                                            <input
+                                                class="peer size-5 cursor-pointer appearance-none rounded border border-text-secondary bg-transparent checked:bg-primary checked:border-primary transition-all group-hover:border-primary"
+                                                type="checkbox" />
+                                            <span
+                                                class="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm text-background-dark pointer-events-none opacity-0 peer-checked:opacity-100">check</span>
+                                        </div>
+                                        <div class="flex flex-col flex-1">
+                                            <span
+                                                class="text-sm font-medium text-white group-hover:text-primary transition-colors">Magnesium</span>
+                                            <span class="text-xs text-text-secondary">400mg</span>
+                                        </div>
+                                        <span
+                                            class="material-symbols-outlined text-text-secondary text-sm">bedtime</span>
+                                    </label>
+                                </div>
+                                <button
+                                    class="mt-6 w-full py-3 rounded-lg border border-dashed border-card-border text-text-secondary hover:text-white hover:border-primary hover:bg-primary/5 transition-all text-sm font-medium flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">edit_note</span>
+                                    Manage Schedule
+                                </button>
+                            </div>
+                            <!-- Quick Insight Card -->
+                            <div
+                                class="bg-gradient-to-br from-[#2a4435] to-card-dark border border-primary/20 rounded-xl p-5 relative overflow-hidden">
+                                <div class="absolute -right-6 -bottom-6 opacity-10">
+                                    <span class="material-symbols-outlined text-9xl text-white">insights</span>
+                                </div>
+                                <h4 class="text-white font-bold mb-2 relative z-10">Weekly Insight</h4>
+                                <p class="text-text-secondary text-sm relative z-10 leading-relaxed">
+                                    You've been consistent with your <span class="text-primary">Creatine</span> intake
+                                    for 12 days straight. This consistency maximizes saturation levels!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

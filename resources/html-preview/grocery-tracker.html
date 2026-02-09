@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FitLife Pro - Grocery Tracker</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#112217",
+                        "surface-dark": "#193322",
+                        "border-dark": "#326744",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "body": ["Lexend", "sans-serif"],
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-x-hidden antialiased">
+    <div class="relative flex h-screen w-full flex-row overflow-hidden">
+        <!-- Sidebar -->
+        <aside
+            class="flex h-full w-64 flex-col justify-between border-r border-border-dark bg-background-dark p-4 shrink-0 hidden md:flex">
+            <div class="flex flex-col gap-4">
+                <div class="flex gap-3 items-center mb-6">
+                    <div class="bg-center bg-no-repeat bg-cover rounded-full size-10"
+                        data-alt="Abstract green pattern logo"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAeJWGgNIYy93pitFst9n69HZTsPg8qB0ae5UxKX5HL_xLZVh7m5Gk3jRBMHaTxclHBDlxSa2JfdrFx-kHDPKdRLCT7-SRtG-0yOUVjne2Im41jbyvR902XXgLfYbJCHZ0RLwgTNMWRG8jnBstJKdIumeiFc4QBn_V1lxBBVR8xDEjtf9GWsZuKgHQlRzi_JqAY7j_8qA2YLmPwHxBpoLRC7xAKep1g8Uff7PmR-VnVp5XQiZqRVZVM4gY_Tr29gtZt42ML3aFECw");'>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-white text-base font-bold leading-normal">FitLife Pro</h1>
+                        <p class="text-[#92c9a4] text-xs font-normal leading-normal">Manage your lifestyle</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group"
+                        href="#">
+                        <span class="material-symbols-outlined text-[#92c9a4] group-hover:text-white">dashboard</span>
+                        <p class="text-[#92c9a4] group-hover:text-white text-sm font-medium leading-normal">Dashboard
+                        </p>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group"
+                        href="#">
+                        <span
+                            class="material-symbols-outlined text-[#92c9a4] group-hover:text-white">fitness_center</span>
+                        <p class="text-[#92c9a4] group-hover:text-white text-sm font-medium leading-normal">Workouts</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group"
+                        href="#">
+                        <span class="material-symbols-outlined text-[#92c9a4] group-hover:text-white">restaurant</span>
+                        <p class="text-[#92c9a4] group-hover:text-white text-sm font-medium leading-normal">Nutrition
+                        </p>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-dark text-white shadow-sm border border-border-dark/50"
+                        href="#">
+                        <span class="material-symbols-outlined text-primary fill-1">shopping_cart</span>
+                        <p class="text-white text-sm font-bold leading-normal">Groceries</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group"
+                        href="#">
+                        <span class="material-symbols-outlined text-[#92c9a4] group-hover:text-white">settings</span>
+                        <p class="text-[#92c9a4] group-hover:text-white text-sm font-medium leading-normal">Settings</p>
+                    </a>
+                </nav>
+            </div>
+            <div class="flex flex-col gap-4">
+                <div
+                    class="p-4 rounded-xl bg-gradient-to-br from-surface-dark to-background-dark border border-border-dark">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-primary text-sm">bolt</span>
+                        <span class="text-xs font-bold text-primary uppercase tracking-wider">Pro Tip</span>
+                    </div>
+                    <p class="text-xs text-[#92c9a4] leading-relaxed">
+                        Scanning receipts automatically categorizes your items for better tracking.
+                    </p>
+                </div>
+                <button
+                    class="flex w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark hover:bg-[#0fd650] transition-colors text-sm font-bold leading-normal tracking-[0.015em]">
+                    <span class="material-symbols-outlined text-lg">add</span>
+                    <span class="truncate">Log Workout</span>
+                </button>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-y-auto bg-background-dark">
+            <!-- Mobile Header -->
+            <div
+                class="md:hidden flex items-center justify-between p-4 border-b border-border-dark bg-background-dark sticky top-0 z-20">
+                <div class="flex items-center gap-3">
+                    <div class="bg-center bg-no-repeat bg-cover rounded-full size-8"
+                        data-alt="Abstract green pattern logo"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAEt2hnKVs53L3nnDMyUBI301eF09waJP0S1DkeGUuX1dB-GXrkwsGB7fKgL_boH-tGftBiGjATveFLphhNbBA7v5Ve1cENBxKY24QSCc00id4jBkseqACRT1kDU-x2vC8jC0w2DfGpLaazY2DzfA-yGp3D0AIJfntLNX4rY-9xXrfdD3iiZsWQz4VpnvUzcF0ycezxwZKfHxqMmYGjjHVpl9MJvdbQ3pPnqUpfkl-IJ413-pfu6su9mpb-GbwVtBxC2zOpQfvQzg");'>
+                    </div>
+                    <span class="text-white font-bold">FitLife Pro</span>
+                </div>
+                <button class="text-white p-2">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
+            <div class="flex-1 w-full max-w-[1200px] mx-auto p-4 md:p-8 flex flex-col gap-6">
+                <!-- Page Header -->
+                <header class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex flex-col gap-1">
+                        <h1 class="text-white text-3xl md:text-4xl font-black tracking-tight">Grocery Tracker</h1>
+                        <div class="flex items-center gap-2 text-[#92c9a4]">
+                            <button class="hover:text-white transition-colors"><span
+                                    class="material-symbols-outlined text-sm">arrow_back_ios</span></button>
+                            <span class="text-base font-medium">October 2023</span>
+                            <button class="hover:text-white transition-colors"><span
+                                    class="material-symbols-outlined text-sm">arrow_forward_ios</span></button>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <button
+                            class="flex items-center gap-2 px-4 h-10 rounded-lg border border-border-dark bg-surface-dark hover:bg-[#2a4d35] text-white text-sm font-bold transition-colors">
+                            <span class="material-symbols-outlined text-lg">download</span>
+                            Export Report
+                        </button>
+                        <button
+                            class="flex items-center gap-2 px-4 h-10 rounded-lg bg-primary hover:bg-[#0fd650] text-background-dark text-sm font-bold transition-colors shadow-[0_0_15px_rgba(19,236,91,0.3)]">
+                            <span class="material-symbols-outlined text-lg">add</span>
+                            Add Item
+                        </button>
+                    </div>
+                </header>
+                <!-- Stats Cards -->
+                <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div
+                        class="rounded-xl border border-border-dark bg-surface-dark p-6 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-6xl text-primary">payments</span>
+                        </div>
+                        <div class="flex flex-col gap-2 relative z-10">
+                            <p class="text-[#92c9a4] text-sm font-medium uppercase tracking-wider">Total Expenditure</p>
+                            <div class="flex items-end gap-3">
+                                <p class="text-white text-3xl font-bold leading-none">$450.20</p>
+                                <span
+                                    class="flex items-center text-primary text-xs font-bold bg-primary/10 px-2 py-1 rounded-full border border-primary/20">
+                                    <span class="material-symbols-outlined text-sm mr-0.5">trending_up</span>
+                                    +12%
+                                </span>
+                            </div>
+                            <p class="text-[#92c9a4]/60 text-xs mt-1">vs. last month ($401.50)</p>
+                        </div>
+                    </div>
+                    <div
+                        class="rounded-xl border border-border-dark bg-surface-dark p-6 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-6xl text-white">shopping_basket</span>
+                        </div>
+                        <div class="flex flex-col gap-2 relative z-10">
+                            <p class="text-[#92c9a4] text-sm font-medium uppercase tracking-wider">Total Items</p>
+                            <p class="text-white text-3xl font-bold leading-none">128</p>
+                            <p class="text-[#92c9a4]/60 text-xs mt-1">Most bought: Produce</p>
+                        </div>
+                    </div>
+                    <div
+                        class="rounded-xl border border-border-dark bg-surface-dark p-6 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <span class="material-symbols-outlined text-6xl text-white">analytics</span>
+                        </div>
+                        <div class="flex flex-col gap-2 relative z-10">
+                            <p class="text-[#92c9a4] text-sm font-medium uppercase tracking-wider">Avg Price / Item</p>
+                            <p class="text-white text-3xl font-bold leading-none">$3.52</p>
+                            <p class="text-[#92c9a4]/60 text-xs mt-1">Steady trend</p>
+                        </div>
+                    </div>
+                </section>
+                <!-- Receipt Upload Zone -->
+                <section
+                    class="rounded-xl border-2 border-dashed border-border-dark hover:border-primary/50 bg-surface-dark/30 transition-all cursor-pointer group">
+                    <div class="flex flex-col items-center justify-center py-10 px-4 text-center gap-4">
+                        <div
+                            class="size-16 rounded-full bg-surface-dark border border-border-dark flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span
+                                class="material-symbols-outlined text-3xl text-[#92c9a4] group-hover:text-primary transition-colors">receipt_long</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <h3 class="text-white text-lg font-bold">Upload Receipt</h3>
+                            <p class="text-[#92c9a4] text-sm">Drag &amp; drop or click to scan (AI Processing)</p>
+                        </div>
+                        <button
+                            class="text-xs font-bold text-primary hover:text-white uppercase tracking-wider mt-2">Browse
+                            Files</button>
+                    </div>
+                </section>
+                <!-- Data Table -->
+                <section class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-white text-xl font-bold">Purchased Items</h2>
+                        <div class="flex gap-2">
+                            <div class="relative">
+                                <span
+                                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#92c9a4] text-lg">search</span>
+                                <input
+                                    class="bg-surface-dark border border-border-dark text-white text-sm rounded-lg pl-10 pr-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary outline-none placeholder-[#92c9a4]/50 w-48 md:w-64"
+                                    placeholder="Search items..." type="text" />
+                            </div>
+                            <button
+                                class="p-2 rounded-lg border border-border-dark bg-surface-dark text-[#92c9a4] hover:text-white hover:bg-[#2a4d35]">
+                                <span class="material-symbols-outlined">filter_list</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-border-dark bg-surface-dark overflow-hidden shadow-xl">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-background-dark/50 border-b border-border-dark">
+                                        <th
+                                            class="p-4 text-xs font-bold text-[#92c9a4] uppercase tracking-wider w-[30%]">
+                                            Item Name</th>
+                                        <th
+                                            class="p-4 text-xs font-bold text-[#92c9a4] uppercase tracking-wider w-[15%]">
+                                            Category</th>
+                                        <th
+                                            class="p-4 text-xs font-bold text-[#92c9a4] uppercase tracking-wider w-[10%]">
+                                            Qty</th>
+                                        <th
+                                            class="p-4 text-xs font-bold text-[#92c9a4] uppercase tracking-wider w-[10%]">
+                                            Unit</th>
+                                        <th
+                                            class="p-4 text-xs font-bold text-[#92c9a4] uppercase tracking-wider w-[15%]">
+                                            Price</th>
+                                        <th
+                                            class="p-4 text-xs font-bold text-[#92c9a4] uppercase tracking-wider w-[10%]">
+                                            Date</th>
+                                        <th
+                                            class="p-4 text-xs font-bold text-[#92c9a4] uppercase tracking-wider w-[10%] text-right">
+                                            Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-border-dark">
+                                    <tr class="group hover:bg-white/[0.02] transition-colors">
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="size-8 rounded bg-[#23482f] flex items-center justify-center shrink-0">
+                                                    <span
+                                                        class="material-symbols-outlined text-white text-sm">eco</span>
+                                                </div>
+                                                <span class="text-white font-medium">Organic Spinach</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span
+                                                class="inline-flex items-center rounded-md bg-[#23482f] px-2 py-1 text-xs font-medium text-[#92c9a4] ring-1 ring-inset ring-[#326744]">Produce</span>
+                                        </td>
+                                        <td class="p-4 text-white">2</td>
+                                        <td class="p-4 text-[#92c9a4]">bunch</td>
+                                        <td class="p-4 text-white font-medium">$5.98</td>
+                                        <td class="p-4 text-[#92c9a4] text-sm">Oct 24</td>
+                                        <td class="p-4 text-right">
+                                            <button
+                                                class="text-[#92c9a4] hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
+                                                <span class="material-symbols-outlined text-lg">more_vert</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="group hover:bg-white/[0.02] transition-colors">
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="size-8 rounded bg-[#23482f] flex items-center justify-center shrink-0">
+                                                    <span
+                                                        class="material-symbols-outlined text-white text-sm">egg_alt</span>
+                                                </div>
+                                                <span class="text-white font-medium">Chicken Breast</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span
+                                                class="inline-flex items-center rounded-md bg-[#23482f] px-2 py-1 text-xs font-medium text-[#92c9a4] ring-1 ring-inset ring-[#326744]">Protein</span>
+                                        </td>
+                                        <td class="p-4 text-white">2.5</td>
+                                        <td class="p-4 text-[#92c9a4]">lbs</td>
+                                        <td class="p-4 text-white font-medium">$14.50</td>
+                                        <td class="p-4 text-[#92c9a4] text-sm">Oct 24</td>
+                                        <td class="p-4 text-right">
+                                            <button
+                                                class="text-[#92c9a4] hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
+                                                <span class="material-symbols-outlined text-lg">more_vert</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="group hover:bg-white/[0.02] transition-colors">
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="size-8 rounded bg-[#23482f] flex items-center justify-center shrink-0">
+                                                    <span
+                                                        class="material-symbols-outlined text-white text-sm">water_drop</span>
+                                                </div>
+                                                <span class="text-white font-medium">Greek Yogurt</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span
+                                                class="inline-flex items-center rounded-md bg-[#23482f] px-2 py-1 text-xs font-medium text-[#92c9a4] ring-1 ring-inset ring-[#326744]">Dairy</span>
+                                        </td>
+                                        <td class="p-4 text-white">3</td>
+                                        <td class="p-4 text-[#92c9a4]">cups</td>
+                                        <td class="p-4 text-white font-medium">$4.50</td>
+                                        <td class="p-4 text-[#92c9a4] text-sm">Oct 23</td>
+                                        <td class="p-4 text-right">
+                                            <button
+                                                class="text-[#92c9a4] hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
+                                                <span class="material-symbols-outlined text-lg">more_vert</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="group hover:bg-white/[0.02] transition-colors">
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="size-8 rounded bg-[#23482f] flex items-center justify-center shrink-0">
+                                                    <span
+                                                        class="material-symbols-outlined text-white text-sm">grain</span>
+                                                </div>
+                                                <span class="text-white font-medium">Brown Rice</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span
+                                                class="inline-flex items-center rounded-md bg-[#23482f] px-2 py-1 text-xs font-medium text-[#92c9a4] ring-1 ring-inset ring-[#326744]">Grains</span>
+                                        </td>
+                                        <td class="p-4 text-white">1</td>
+                                        <td class="p-4 text-[#92c9a4]">bag</td>
+                                        <td class="p-4 text-white font-medium">$3.20</td>
+                                        <td class="p-4 text-[#92c9a4] text-sm">Oct 22</td>
+                                        <td class="p-4 text-right">
+                                            <button
+                                                class="text-[#92c9a4] hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
+                                                <span class="material-symbols-outlined text-lg">more_vert</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="group hover:bg-white/[0.02] transition-colors">
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="size-8 rounded bg-[#23482f] flex items-center justify-center shrink-0">
+                                                    <span
+                                                        class="material-symbols-outlined text-white text-sm">eco</span>
+                                                </div>
+                                                <span class="text-white font-medium">Avocados</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span
+                                                class="inline-flex items-center rounded-md bg-[#23482f] px-2 py-1 text-xs font-medium text-[#92c9a4] ring-1 ring-inset ring-[#326744]">Produce</span>
+                                        </td>
+                                        <td class="p-4 text-white">4</td>
+                                        <td class="p-4 text-[#92c9a4]">count</td>
+                                        <td class="p-4 text-white font-medium">$6.00</td>
+                                        <td class="p-4 text-[#92c9a4] text-sm">Oct 21</td>
+                                        <td class="p-4 text-right">
+                                            <button
+                                                class="text-[#92c9a4] hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
+                                                <span class="material-symbols-outlined text-lg">more_vert</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="group hover:bg-white/[0.02] transition-colors">
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="size-8 rounded bg-[#23482f] flex items-center justify-center shrink-0">
+                                                    <span
+                                                        class="material-symbols-outlined text-white text-sm">water_drop</span>
+                                                </div>
+                                                <span class="text-white font-medium">Almond Milk</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span
+                                                class="inline-flex items-center rounded-md bg-[#23482f] px-2 py-1 text-xs font-medium text-[#92c9a4] ring-1 ring-inset ring-[#326744]">Dairy</span>
+                                        </td>
+                                        <td class="p-4 text-white">1</td>
+                                        <td class="p-4 text-[#92c9a4]">carton</td>
+                                        <td class="p-4 text-white font-medium">$3.99</td>
+                                        <td class="p-4 text-[#92c9a4] text-sm">Oct 20</td>
+                                        <td class="p-4 text-right">
+                                            <button
+                                                class="text-[#92c9a4] hover:text-white p-1 rounded hover:bg-white/10 transition-colors">
+                                                <span class="material-symbols-outlined text-lg">more_vert</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div
+                            class="bg-background-dark/30 p-4 flex items-center justify-between border-t border-border-dark">
+                            <span class="text-xs text-[#92c9a4]">Showing 1-6 of 24 items</span>
+                            <div class="flex gap-2">
+                                <button
+                                    class="px-3 py-1 text-xs font-medium text-[#92c9a4] rounded hover:bg-white/5 disabled:opacity-50">Previous</button>
+                                <button
+                                    class="px-3 py-1 text-xs font-medium text-white bg-surface-dark rounded border border-border-dark">1</button>
+                                <button
+                                    class="px-3 py-1 text-xs font-medium text-[#92c9a4] rounded hover:bg-white/5">2</button>
+                                <button
+                                    class="px-3 py-1 text-xs font-medium text-[#92c9a4] rounded hover:bg-white/5">3</button>
+                                <button
+                                    class="px-3 py-1 text-xs font-medium text-[#92c9a4] rounded hover:bg-white/5">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,69 @@
+
+> build
+> vite build
+
+vite v7.3.1 building client environment for production...
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+✓ 29 modules transformed.
+✗ Build failed in 3.02s
+error during build:
+[vite:react-babel] /mnt/Delta/wamp64/www/megalomaniac/resources/js/routes/index.ts: Identifier 'index' has already been declared. (454:13)
+
+  452 | * @route '/grocery'
+  453 | */
+> 454 | export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+      |              ^
+  455 |     url: index.url(options),
+  456 |     method: 'get',
+  457 | })
+file: /mnt/Delta/wamp64/www/megalomaniac/resources/js/routes/index.ts:454:13
+    at constructor (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:6599:19)
+    at TypeScriptScopeHandler.checkRedeclarationInScope (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:1619:19)
+    at TypeScriptScopeHandler.declareName (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:1585:12)
+    at TypeScriptScopeHandler.declareName (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:4880:11)
+    at TypeScriptParserMixin.declareNameFromIdentifier (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:7567:16)
+    at TypeScriptParserMixin.checkIdentifier (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:7563:12)
+    at TypeScriptParserMixin.checkLVal (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:7500:12)
+    at TypeScriptParserMixin.parseVarId (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13412:10)
+    at TypeScriptParserMixin.parseVarId (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:9752:11)
+    at TypeScriptParserMixin.parseVar (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13383:12)
+    at TypeScriptParserMixin.parseVarStatement (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseExportDeclaration (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13934:17)
+    at TypeScriptParserMixin.parseExportDeclaration (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:9629:85)
+    at TypeScriptParserMixin.maybeParseExportDeclaration (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13893:31)
+    at TypeScriptParserMixin.parseExport (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13812:29)
+    at TypeScriptParserMixin.parseExport (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:10126:18)
+    at parse (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/parser/lib/index.js:14522:38)
+    at parser (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at step (/mnt/Delta/wamp64/www/megalomaniac/node_modules/gensync/index.js:261:32)
+    at evaluateAsync (/mnt/Delta/wamp64/www/megalomaniac/node_modules/gensync/index.js:291:5)
+    at /mnt/Delta/wamp64/www/megalomaniac/node_modules/gensync/index.js:93:9
+    at new Promise (<anonymous>)
+    at async (/mnt/Delta/wamp64/www/megalomaniac/node_modules/gensync/index.js:92:14)
+    at stopHiding - secret - don't use this - v1 (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Module.transformAsync (/mnt/Delta/wamp64/www/megalomaniac/node_modules/@babel/core/lib/transform.js:43:77)
+    at Object.handler (file:///mnt/Delta/wamp64/www/megalomaniac/node_modules/@vitejs/plugin-react/dist/index.js:206:46)

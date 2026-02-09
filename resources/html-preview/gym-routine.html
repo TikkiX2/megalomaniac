@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Gym Routine &amp; Progression Tracker</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "primary-hover": "#0fb847",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-dark": "#112217",
+                        "surface-card": "#1a3324",
+                        "surface-input": "#23482f",
+                        "text-muted": "#92c9a4",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-white overflow-x-hidden antialiased">
+    <div class="flex h-screen w-full flex-col lg:flex-row overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="hidden lg:flex flex-col w-64 bg-surface-dark border-r border-surface-input h-full">
+            <div class="p-6 flex items-center gap-3">
+                <div class="size-8 text-primary">
+                    <span class="material-symbols-outlined text-4xl">fitness_center</span>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">Gym Tracker</h1>
+            </div>
+            <nav class="flex-1 px-4 py-4 space-y-2">
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-text-muted hover:text-white hover:bg-surface-input transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary/10 text-primary border border-primary/20"
+                    href="#">
+                    <span class="material-symbols-outlined fill-1">edit_calendar</span>
+                    <span class="font-medium">Log Workout</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-text-muted hover:text-white hover:bg-surface-input transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">restaurant</span>
+                    <span class="font-medium">Nutrition</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-text-muted hover:text-white hover:bg-surface-input transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">library_books</span>
+                    <span class="font-medium">Exercises</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-text-muted hover:text-white hover:bg-surface-input transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">monitoring</span>
+                    <span class="font-medium">Progress</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-surface-input">
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-text-muted hover:text-white hover:bg-surface-input transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="font-medium">Settings</span>
+                </a>
+                <div class="flex items-center gap-3 mt-4 px-3">
+                    <div class="size-10 rounded-full bg-cover bg-center border-2 border-primary"
+                        data-alt="User profile picture of a fitness enthusiast"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDl-XbN5X06aDcOUbhpkGwkJ7AxW5kqhLPQg3o2rqF95SJ_PlOQa8ZMGNogyUQd1WpqnrEFdVljfSFu4uk43TLBVqyYWXv9gEiNyPSUwWfX1Q_a9wvblFPJkawcmf-KOGizegUi-d23oyqXhx_n_jUYoQ9x9HhJoQlqKaAc7tAU5pIa8xQKhmmdMfoPksMrqFMG5aqfEOpHeo9LvQ8EqXzfVvmigpjdQ5SGpG8OrSzTuco3JSWGKiUnl3mQ1-6jtSpfdABK_bUE1g');">
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-white">Sarah Connor</span>
+                        <span class="text-xs text-text-muted">Pro Member</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            <!-- Mobile Header -->
+            <header
+                class="lg:hidden flex items-center justify-between p-4 bg-surface-dark border-b border-surface-input">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-3xl">fitness_center</span>
+                    <span class="font-bold text-lg">Gym Tracker</span>
+                </div>
+                <button class="text-white p-2">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </header>
+            <!-- Top Action Bar -->
+            <header
+                class="hidden lg:flex items-center justify-between px-8 py-5 border-b border-surface-input bg-background-dark sticky top-0 z-20">
+                <div class="flex flex-col">
+                    <h2 class="text-2xl font-bold">Today's Session</h2>
+                    <p class="text-text-muted text-sm">Keep pushing, you're doing great.</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div
+                        class="flex items-center gap-2 text-text-muted bg-surface-input/50 px-3 py-1.5 rounded-lg border border-surface-input">
+                        <span class="material-symbols-outlined text-lg">timer</span>
+                        <span class="text-sm font-mono font-medium">00:42:15</span>
+                    </div>
+                    <button
+                        class="bg-primary hover:bg-primary-hover text-background-dark px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(19,236,91,0.3)]">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Finish Workout
+                    </button>
+                </div>
+            </header>
+            <!-- Scrollable Workout Area -->
+            <div class="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
+                <!-- Routine Info -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <h1 class="text-3xl lg:text-4xl font-black text-white tracking-tight">Monday, Oct 24 <span
+                                    class="text-primary">•</span> Push Day</h1>
+                            <button class="text-text-muted hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                        </div>
+                        <p class="text-text-muted text-lg">Focus: Chest, Shoulders, Triceps</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="relative group w-full md:w-96">
+                            <div
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-text-muted">
+                                <span class="material-symbols-outlined">search</span>
+                            </div>
+                            <input
+                                class="block w-full p-3 pl-10 text-sm bg-surface-input border border-transparent rounded-lg placeholder-text-muted text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                                placeholder="Search exercises to add..." type="text" />
+                            <div
+                                class="absolute right-2 top-2 hidden group-focus-within:block bg-surface-dark border border-surface-input rounded px-2 py-1 text-xs text-text-muted">
+                                ⌘K
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Exercise List -->
+                <div class="space-y-6 max-w-5xl mx-auto lg:mx-0">
+                    <!-- Exercise Card 1: Bench Press -->
+                    <div class="bg-surface-card rounded-xl overflow-hidden border border-surface-input shadow-lg group">
+                        <!-- Card Header -->
+                        <div
+                            class="p-4 border-b border-surface-input flex flex-col sm:flex-row sm:items-center justify-between bg-surface-input/30 gap-4">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="size-12 rounded-lg bg-surface-input flex items-center justify-center text-primary border border-surface-input">
+                                    <span class="material-symbols-outlined">fitness_center</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                        Barbell Bench Press
+                                        <span class="material-symbols-outlined text-text-muted text-sm cursor-help"
+                                            title="View History">history</span>
+                                    </h3>
+                                    <div class="flex items-center gap-3 text-sm">
+                                        <span class="text-text-muted">Chest • Compound</span>
+                                        <span
+                                            class="text-primary font-medium bg-primary/10 px-2 py-0.5 rounded text-xs flex items-center gap-1 border border-primary/20">
+                                            <span class="material-symbols-outlined text-[14px]">trending_up</span>
+                                            +2.5kg vs last week
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    class="p-2 text-text-muted hover:text-white hover:bg-surface-input rounded-lg transition-colors"
+                                    title="Video Guide">
+                                    <span class="material-symbols-outlined">videocam</span>
+                                </button>
+                                <button
+                                    class="p-2 text-text-muted hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                    title="Remove Exercise">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Card Body (Sets) -->
+                        <div class="p-4">
+                            <div
+                                class="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 mb-2 text-xs uppercase tracking-wider font-semibold text-text-muted px-2">
+                                <div class="text-center">Set</div>
+                                <div>Previous</div>
+                                <div>kg</div>
+                                <div>Reps</div>
+                                <div>RPE</div>
+                                <div class="text-center"><span class="material-symbols-outlined text-sm">check</span>
+                                </div>
+                            </div>
+                            <!-- Set Rows -->
+                            <div class="space-y-2">
+                                <!-- Set 1 (Completed) -->
+                                <div
+                                    class="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 items-center bg-primary/5 rounded-lg p-2 border border-primary/20">
+                                    <div class="text-center font-bold text-primary">1</div>
+                                    <div class="text-text-muted text-sm">60kg x 10</div>
+                                    <input
+                                        class="bg-surface-input border-none rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" value="62.5" />
+                                    <input
+                                        class="bg-surface-input border-none rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" value="10" />
+                                    <input
+                                        class="bg-surface-input border-none rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" value="8" />
+                                    <button
+                                        class="flex items-center justify-center h-9 w-full bg-primary text-background-dark rounded hover:bg-primary-hover transition-colors">
+                                        <span class="material-symbols-outlined text-lg">check</span>
+                                    </button>
+                                </div>
+                                <!-- Set 2 (Active) -->
+                                <div class="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 items-center p-2">
+                                    <div class="text-center font-bold text-white">2</div>
+                                    <div class="text-text-muted text-sm">60kg x 10</div>
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" value="62.5" />
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="10" type="number" />
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" />
+                                    <button
+                                        class="flex items-center justify-center h-9 w-full bg-surface-input text-text-muted rounded hover:bg-primary hover:text-background-dark transition-colors border border-transparent hover:border-primary">
+                                        <span class="material-symbols-outlined text-lg">check</span>
+                                    </button>
+                                </div>
+                                <!-- Set 3 -->
+                                <div
+                                    class="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 items-center p-2 opacity-50 hover:opacity-100 transition-opacity">
+                                    <div class="text-center font-bold text-white">3</div>
+                                    <div class="text-text-muted text-sm">60kg x 10</div>
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="62.5" type="number" />
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" />
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" />
+                                    <button
+                                        class="flex items-center justify-center h-9 w-full bg-surface-input text-text-muted rounded hover:bg-primary hover:text-background-dark transition-colors border border-transparent hover:border-primary">
+                                        <span class="material-symbols-outlined text-lg">check</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <button
+                                class="w-full mt-4 py-2 border border-dashed border-text-muted/30 rounded-lg text-text-muted hover:text-white hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-sm font-medium">
+                                <span class="material-symbols-outlined text-lg">add</span> Add Set
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Exercise Card 2: Incline Dumbbell Press -->
+                    <div class="bg-surface-card rounded-xl overflow-hidden border border-surface-input shadow-lg group">
+                        <div
+                            class="p-4 border-b border-surface-input flex flex-col sm:flex-row sm:items-center justify-between bg-surface-input/30 gap-4">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="size-12 rounded-lg bg-surface-input flex items-center justify-center text-text-muted border border-surface-input">
+                                    <span class="material-symbols-outlined">fitness_center</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                        Incline Dumbbell Press
+                                        <span
+                                            class="material-symbols-outlined text-text-muted text-sm cursor-help">history</span>
+                                    </h3>
+                                    <div class="flex items-center gap-3 text-sm">
+                                        <span class="text-text-muted">Chest • Isolation</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    class="p-2 text-text-muted hover:text-white hover:bg-surface-input rounded-lg transition-colors">
+                                    <span class="material-symbols-outlined">videocam</span>
+                                </button>
+                                <button
+                                    class="p-2 text-text-muted hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div
+                                class="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 mb-2 text-xs uppercase tracking-wider font-semibold text-text-muted px-2">
+                                <div class="text-center">Set</div>
+                                <div>Previous</div>
+                                <div>kg</div>
+                                <div>Reps</div>
+                                <div>RPE</div>
+                                <div class="text-center"><span class="material-symbols-outlined text-sm">check</span>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 items-center p-2">
+                                    <div class="text-center font-bold text-white">1</div>
+                                    <div class="text-text-muted text-sm">24kg x 12</div>
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="24" type="number" />
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" />
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" />
+                                    <button
+                                        class="flex items-center justify-center h-9 w-full bg-surface-input text-text-muted rounded hover:bg-primary hover:text-background-dark transition-colors border border-transparent hover:border-primary">
+                                        <span class="material-symbols-outlined text-lg">check</span>
+                                    </button>
+                                </div>
+                                <div
+                                    class="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 items-center p-2 opacity-50 hover:opacity-100 transition-opacity">
+                                    <div class="text-center font-bold text-white">2</div>
+                                    <div class="text-text-muted text-sm">24kg x 10</div>
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="24" type="number" />
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" />
+                                    <input
+                                        class="bg-surface-input border-transparent border focus:border-primary rounded text-white text-center font-bold focus:ring-1 focus:ring-primary py-1.5 h-9"
+                                        placeholder="-" type="number" />
+                                    <button
+                                        class="flex items-center justify-center h-9 w-full bg-surface-input text-text-muted rounded hover:bg-primary hover:text-background-dark transition-colors border border-transparent hover:border-primary">
+                                        <span class="material-symbols-outlined text-lg">check</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <button
+                                class="w-full mt-4 py-2 border border-dashed border-text-muted/30 rounded-lg text-text-muted hover:text-white hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-sm font-medium">
+                                <span class="material-symbols-outlined text-lg">add</span> Add Set
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Exercise Card 3: Tricep Extensions (Empty State style) -->
+                    <div
+                        class="bg-surface-card/50 rounded-xl overflow-hidden border border-surface-input border-dashed p-6 flex flex-col items-center justify-center text-center gap-3 hover:bg-surface-card transition-colors cursor-pointer group">
+                        <div
+                            class="size-14 rounded-full bg-surface-input group-hover:bg-primary group-hover:text-background-dark text-text-muted flex items-center justify-center transition-colors">
+                            <span class="material-symbols-outlined text-2xl">add</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Add Exercise</h3>
+                            <p class="text-text-muted text-sm">Search or select from library</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Footer Summary Widget (Visible on mobile/tablet primarily, or bottom of desktop) -->
+                <div
+                    class="mt-8 lg:mt-12 pt-6 border-t border-surface-input text-center lg:text-left flex flex-col lg:flex-row justify-between items-center gap-4 text-text-muted text-sm pb-8">
+                    <p>© 2023 Gym Tracker Pro. All progress saved locally.</p>
+                    <div class="flex gap-6">
+                        <div class="flex flex-col items-center lg:items-end">
+                            <span class="uppercase text-xs tracking-wider font-bold text-primary">Volume</span>
+                            <span class="text-white font-mono">3,420 kg</span>
+                        </div>
+                        <div class="flex flex-col items-center lg:items-end">
+                            <span class="uppercase text-xs tracking-wider font-bold text-primary">Sets</span>
+                            <span class="text-white font-mono">14</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Floating Mobile Finish Button -->
+            <div class="lg:hidden absolute bottom-6 right-6 z-30">
+                <button
+                    class="bg-primary hover:bg-primary-hover text-background-dark size-14 rounded-full shadow-lg shadow-primary/30 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-2xl">check</span>
+                </button>
+            </div>
+        </main>
+        <!-- Right Sidebar (Quick Library) - Desktop Only -->
+        <aside class="hidden xl:flex flex-col w-80 bg-surface-dark border-l border-surface-input h-full">
+            <div class="p-5 border-b border-surface-input">
+                <h3 class="font-bold text-white mb-1">Quick Library</h3>
+                <p class="text-xs text-text-muted">Drag &amp; drop to your workout</p>
+            </div>
+            <!-- Categories -->
+            <div class="p-2 flex gap-2 overflow-x-auto border-b border-surface-input/50 pb-3 mx-3">
+                <button
+                    class="px-3 py-1.5 rounded-full bg-primary text-background-dark text-xs font-bold whitespace-nowrap">All</button>
+                <button
+                    class="px-3 py-1.5 rounded-full bg-surface-input text-text-muted hover:text-white text-xs font-bold whitespace-nowrap transition-colors">Chest</button>
+                <button
+                    class="px-3 py-1.5 rounded-full bg-surface-input text-text-muted hover:text-white text-xs font-bold whitespace-nowrap transition-colors">Back</button>
+                <button
+                    class="px-3 py-1.5 rounded-full bg-surface-input text-text-muted hover:text-white text-xs font-bold whitespace-nowrap transition-colors">Legs</button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                <!-- Library Item -->
+                <div
+                    class="flex items-center gap-3 p-3 rounded-lg bg-surface-input/30 hover:bg-surface-input cursor-grab active:cursor-grabbing border border-transparent hover:border-surface-input transition-all group">
+                    <div class="size-10 rounded bg-surface-dark flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-text-muted">fitness_center</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-sm font-bold text-white truncate">Cable Flys</h4>
+                        <p class="text-xs text-text-muted truncate">Chest • Isolation</p>
+                    </div>
+                    <button class="text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined text-xl">add_circle</span>
+                    </button>
+                </div>
+                <!-- Library Item -->
+                <div
+                    class="flex items-center gap-3 p-3 rounded-lg bg-surface-input/30 hover:bg-surface-input cursor-grab active:cursor-grabbing border border-transparent hover:border-surface-input transition-all group">
+                    <div class="size-10 rounded bg-surface-dark flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-text-muted">fitness_center</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-sm font-bold text-white truncate">Pec Deck</h4>
+                        <p class="text-xs text-text-muted truncate">Chest • Machine</p>
+                    </div>
+                    <button class="text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined text-xl">add_circle</span>
+                    </button>
+                </div>
+                <!-- Library Item -->
+                <div
+                    class="flex items-center gap-3 p-3 rounded-lg bg-surface-input/30 hover:bg-surface-input cursor-grab active:cursor-grabbing border border-transparent hover:border-surface-input transition-all group">
+                    <div class="size-10 rounded bg-surface-dark flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-text-muted">fitness_center</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-sm font-bold text-white truncate">Dips</h4>
+                        <p class="text-xs text-text-muted truncate">Triceps • Bodyweight</p>
+                    </div>
+                    <button class="text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="material-symbols-outlined text-xl">add_circle</span>
+                    </button>
+                </div>
+                <!-- Promo / Ad space (Internal) -->
+                <div
+                    class="mt-8 p-4 rounded-xl bg-gradient-to-br from-surface-input to-surface-card border border-surface-input text-center">
+                    <div
+                        class="size-12 rounded-full bg-primary/20 text-primary mx-auto flex items-center justify-center mb-2">
+                        <span class="material-symbols-outlined">bolt</span>
+                    </div>
+                    <h5 class="font-bold text-white mb-1">Go Premium</h5>
+                    <p class="text-xs text-text-muted mb-3">Unlock analytics &amp; AI coaching.</p>
+                    <button
+                        class="w-full py-1.5 rounded bg-surface-dark text-white text-xs font-bold hover:bg-black transition-colors">Upgrade
+                        Now</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+</body>
+
+</html>
