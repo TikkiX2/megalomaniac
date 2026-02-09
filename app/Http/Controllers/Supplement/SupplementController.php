@@ -35,10 +35,12 @@ class SupplementController extends Controller
             'image_url' => 'nullable|url',
         ]);
 
-        return $request->user()->supplements()->create($validated);
+        $request->user()->supplements()->create($validated);
+
+        return redirect()->back();
     }
 
-    public function update(Request $request, Supplement $supplement)
+    public function update(Request $request, Supplement $item)
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -50,14 +52,14 @@ class SupplementController extends Controller
             'image_url' => 'nullable|url',
         ]);
 
-        $supplement->update($validated);
+        $item->update($validated);
 
-        return $supplement;
+        return redirect()->back();
     }
 
-    public function destroy(Supplement $supplement)
+    public function destroy(Supplement $item)
     {
-        $supplement->delete();
+        $item->delete();
 
         return response()->noContent();
     }
@@ -70,16 +72,13 @@ class SupplementController extends Controller
         }
 
         // Create log
-        $log = SupplementLog::create([
+        SupplementLog::create([
             'user_id' => $request->user()->id,
             'supplement_id' => $supplement->id,
             'taken_at' => now(),
         ]);
 
-        return response()->json([
-            'supplement' => $supplement->fresh(),
-            'log' => $log,
-        ]);
+        return redirect()->back();
     }
 
     public function getLogs(Request $request)

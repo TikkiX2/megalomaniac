@@ -14,7 +14,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         { name: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
         { name: 'Workout Log', icon: 'exercise', href: '/fitness/gym' },
         { name: 'Nutrition', icon: 'restaurant', href: '/fitness/nutrition' },
-        { name: 'Supplements', icon: 'medication', href: '/fitness/supplement' },
+        { name: 'Supplements', icon: 'medication', href: '/fitness/supplements' },
         { name: 'Grocery List', icon: 'shopping_cart', href: '/fitness/grocery' },
     ];
 
