@@ -14,22 +14,27 @@ class GroceryItem extends Model
         'user_id',
         'name',
         'category',
-        'quantity',
+        'current_stock',
+        'target_stock',
         'unit',
         'price',
         'purchased_at',
-        'is_purchased',
     ];
 
     protected $casts = [
-        'quantity' => 'decimal:2',
+        'current_stock' => 'decimal:2',
+        'target_stock' => 'decimal:2',
         'price' => 'decimal:2',
         'purchased_at' => 'datetime',
-        'is_purchased' => 'boolean',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function priceHistory()
+    {
+        return $this->hasMany(GroceryPriceHistory::class, 'grocery_item_id', 'id');
     }
 }

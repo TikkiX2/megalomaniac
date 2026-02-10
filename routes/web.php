@@ -59,7 +59,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Grocery Routes
     Route::prefix('grocery')->group(function () {
+        Route::get('history', [\App\Http\Controllers\Grocery\GroceryController::class, 'history'])->name('grocery.history');
+        Route::post('bulk-restock', [\App\Http\Controllers\Grocery\GroceryController::class, 'bulkRestock'])->name('grocery.bulk-restock');
         Route::apiResource('items', \App\Http\Controllers\Grocery\GroceryController::class)->names('grocery.items');
-        Route::patch('{groceryItem}/toggle', [\App\Http\Controllers\Grocery\GroceryController::class, 'togglePurchased']);
+        Route::post('{item}/consume', [\App\Http\Controllers\Grocery\GroceryController::class, 'consume'])->name('grocery.consume');
     });
 });

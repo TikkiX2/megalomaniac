@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ReactNode, useState } from 'react';
+import type { ReactNode} from 'react';
+import { useState } from 'react';
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -15,7 +16,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         { name: 'Workout Log', icon: 'exercise', href: '/fitness/gym' },
         { name: 'Nutrition', icon: 'restaurant', href: '/fitness/nutrition' },
         { name: 'Supplements', icon: 'medication', href: '/fitness/supplements' },
-        { name: 'Grocery List', icon: 'shopping_cart', href: '/fitness/grocery' },
+        { name: 'Grocery List', icon: 'shopping_cart', href: '/fitness/groceries' },
     ];
 
     return (
@@ -30,8 +31,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                                 <span className="material-symbols-outlined text-[#102216] font-bold">bolt</span>
                             </div>
                             <div className="flex flex-col">
-                                <h1 className="text-base font-bold leading-tight text-white">FitTrack Pro</h1>
-                                <p className="text-xs font-medium text-[#92c9a4]">Premium Version</p>
+                                <h1 className="text-base font-bold leading-tight text-white">Megalomaniac</h1>
                             </div>
                         </div>
 
@@ -82,7 +82,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
                             </div>
                             <div className="flex flex-col overflow-hidden text-left">
                                 <p className="truncate text-sm font-bold text-white leading-tight">{auth.user.name}</p>
-                                <p className="text-[11px] font-semibold text-[#92c9a4] uppercase tracking-wider">Free Member</p>
                             </div>
                         </div>
                     </div>
@@ -105,7 +104,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                             <span className="material-symbols-outlined text-[#102216] text-[18px] font-bold">bolt</span>
                         </div>
-                        <span className="text-lg font-bold text-white">FitTrack</span>
+                        <span className="text-lg font-bold text-white">Megalomaniac</span>
                     </div>
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

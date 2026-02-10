@@ -1,5 +1,5 @@
-import NutritionLayout from '@/layouts/nutrition-layout';
 import { Head } from '@inertiajs/react';
+import NutritionLayout from '@/layouts/nutrition-layout';
 
 interface Props {
     logs: any[];
@@ -42,7 +42,7 @@ export default function Nutrition({ logs, currentDate }: Props) {
                 </header>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                    {/* Summary cards with FitTrack palette */}
+                    {/* Summary cards with Megalomaniac palette */}
                     {[
                         { label: 'Calories', val: '1,850', goal: '/ 2,400', progress: 77, color: 'bg-primary' },
                         { label: 'Protein', val: '145g', goal: '/ 180g', progress: 80, color: 'bg-blue-500' },

@@ -1,6 +1,6 @@
-import SupplementLayout from '@/layouts/supplement-layout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import SupplementLayout from '@/layouts/supplement-layout';
 
 interface Supplement {
     id: number;

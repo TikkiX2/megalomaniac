@@ -11,7 +11,7 @@ export default function Welcome({
 
     return (
         <div className="flex min-h-screen flex-col items-center bg-[#102216] text-white p-6 lg:justify-center lg:p-8 selection:bg-primary selection:text-[#102216] antialiased">
-            <Head title="Welcome to FitTrack Pro">
+            <Head title="Welcome to Megalomaniac Pro">
                 <link rel="preconnect" href="https://fonts.bunny.net" />
                 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
             </Head>
@@ -22,7 +22,7 @@ export default function Welcome({
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-[0_0_15px_rgba(19,236,91,0.3)]">
                             <span className="material-symbols-outlined text-[#102216] font-bold">bolt</span>
                         </div>
-                        <span className="text-xl font-black text-white tracking-tighter">FitTrack<span className="text-primary">Pro</span></span>
+                        <span className="text-xl font-black text-white tracking-tighter">Megalomaniac<span className="text-primary">Pro</span></span>
                     </div>
                     <div className="flex items-center gap-6">
                         {auth.user ? (
@@ -121,7 +121,7 @@ export default function Welcome({
             </main>
 
             <footer className="mt-20 w-full max-w-4xl border-t border-[#23482f] pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                <p className="text-xs font-bold text-[#92c9a4] uppercase tracking-widest">© 2026 FitTrack Pro. Peak Performance Guaranteed.</p>
+                <p className="text-xs font-bold text-[#92c9a4] uppercase tracking-widest">© 2026 Megalomaniac Pro. Peak Performance Guaranteed.</p>
                 <div className="flex gap-6 text-xs font-black uppercase tracking-widest text-[#92c9a4]">
                     <a href="#" className="hover:text-white transition-colors">Privacy</a>
                     <a href="#" className="hover:text-white transition-colors">Terms</a>

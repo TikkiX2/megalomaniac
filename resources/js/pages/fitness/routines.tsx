@@ -1,6 +1,6 @@
-import GymLayout from '@/layouts/gym-layout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import GymLayout from '@/layouts/gym-layout';
 
 interface Routine {
     id: number;

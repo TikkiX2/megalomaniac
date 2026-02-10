@@ -1,6 +1,6 @@
-import MainLayout from '@/layouts/main-layout';
 import { Head, usePage } from '@inertiajs/react';
-import { SharedData } from '@/types';
+import MainLayout from '@/layouts/main-layout';
+import type { SharedData } from '@/types';
 
 interface Props {
     workoutCount: number;

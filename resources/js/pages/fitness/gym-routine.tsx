@@ -1,6 +1,6 @@
-import GymLayout from '@/layouts/gym-layout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import GymLayout from '@/layouts/gym-layout';
 
 interface Set {
     id: number;
@@ -348,7 +348,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
 
                         {/* Footer Summary Widget */}
                         <div className="mt-12 pt-8 border-t border-[#23482f] flex flex-col lg:flex-row justify-between items-center gap-6 pb-12">
-                            <p className="text-[#92c9a4] text-xs font-bold uppercase tracking-widest">© 2026 FitTrack Pro. All progress saved to profile.</p>
+                            <p className="text-[#92c9a4] text-xs font-bold uppercase tracking-widest">© 2026 Megalomaniac Pro. All progress saved to profile.</p>
                             <div className="flex gap-10">
                                 <div className="flex flex-col items-end">
                                     <span className="uppercase text-[10px] tracking-[0.2em] font-black text-primary mb-1">Total Volume</span>
