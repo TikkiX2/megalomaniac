@@ -64,4 +64,54 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::apiResource('items', \App\Http\Controllers\Grocery\GroceryController::class)->names('grocery.items');
         Route::post('{item}/consume', [\App\Http\Controllers\Grocery\GroceryController::class, 'consume'])->name('grocery.consume');
     });
+
+    // Finance Routes
+    Route::prefix('finance')->name('finance.')->group(function () {
+        // Dashboard
+        Route::get('dashboard', [\App\Http\Controllers\Finance\DashboardController::class, 'index'])->name('dashboard');
+
+        // Purchases
+        Route::resource('purchases', \App\Http\Controllers\Finance\PurchaseController::class);
+
+        // Incomes
+        Route::resource('incomes', \App\Http\Controllers\Finance\IncomeController::class);
+
+        // Debts
+        Route::resource('debts', \App\Http\Controllers\Finance\DebtController::class);
+        Route::post('debts/{debt}/payments', [\App\Http\Controllers\Finance\DebtController::class, 'addPayment'])->name('debts.payments.store');
+
+        // Credit Cards
+        Route::resource('credit-cards', \App\Http\Controllers\Finance\CreditCardController::class);
+
+        // Currencies
+        Route::resource('currencies', \App\Http\Controllers\Finance\CurrencyController::class);
+        Route::patch('currencies/{currency}/restore', [\App\Http\Controllers\Finance\CurrencyController::class, 'restore'])->name('currencies.restore');
+
+        // Exchange Rates
+        Route::resource('exchange-rates', \App\Http\Controllers\Finance\ExchangeRateController::class);
+        Route::post('exchange-rates/convert', [\App\Http\Controllers\Finance\ExchangeRateController::class, 'convert'])->name('exchange-rates.convert');
+
+        // Income Sources
+        Route::resource('income-sources', \App\Http\Controllers\Finance\IncomeSourceController::class);
+
+        // Purchase Categories
+        Route::resource('categories', \App\Http\Controllers\Finance\PurchaseCategoryController::class);
+
+        // Statistics
+        Route::get('statistics', [\App\Http\Controllers\Finance\FinanceStatisticsController::class, 'index'])->name('statistics');
+
+        // Withdrawals
+        Route::resource('withdrawal-categories', \App\Http\Controllers\Finance\WithdrawalCategoryController::class);
+        Route::resource('withdrawals', \App\Http\Controllers\Finance\WithdrawalController::class);
+
+        // Savings Reserves
+        Route::resource('savings-reserves', \App\Http\Controllers\Finance\SavingsReserveController::class)->parameters([
+            'savings-reserves' => 'savings_reserve',
+        ]);
+        Route::post('savings-reserves/{savings_reserve}/deposit', [\App\Http\Controllers\Finance\SavingsReserveController::class, 'deposit'])->name('savings-reserves.deposit');
+        Route::post('savings-reserves/{savings_reserve}/withdraw', [\App\Http\Controllers\Finance\SavingsReserveController::class, 'withdraw'])->name('savings-reserves.withdraw');
+
+        // Currency Exchanges
+        Route::resource('currency-exchanges', \App\Http\Controllers\Finance\CurrencyExchangeController::class);
+    });
 });

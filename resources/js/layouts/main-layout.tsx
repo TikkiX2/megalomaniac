@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 
 interface MainLayoutProps {
@@ -13,6 +13,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     const navItems = [
         { name: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
+        { name: 'Finance', icon: 'payments', href: '/finance/dashboard' },
         { name: 'Workout Log', icon: 'exercise', href: '/fitness/gym' },
         { name: 'Nutrition', icon: 'restaurant', href: '/fitness/nutrition' },
         { name: 'Supplements', icon: 'medication', href: '/fitness/supplements' },

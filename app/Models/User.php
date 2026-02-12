@@ -79,4 +79,60 @@ class User extends Authenticatable
     {
         return $this->hasMany(GroceryItem::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Finance Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function incomeSources()
+    {
+        return $this->hasMany(IncomeSource::class);
+    }
+
+    public function incomes()
+    {
+        return $this->hasMany(Income::class);
+    }
+
+    public function purchaseCategories()
+    {
+        return $this->hasMany(PurchaseCategory::class);
+    }
+
+    public function purchases()
+    {
+        return $this->hasMany(Purchase::class);
+    }
+
+    public function creditCards()
+    {
+        return $this->hasMany(CreditCard::class);
+    }
+
+    public function debts()
+    {
+        return $this->hasMany(Debt::class);
+    }
+
+    public function withdrawalCategories()
+    {
+        return $this->hasMany(WithdrawalCategory::class);
+    }
+
+    public function withdrawals()
+    {
+        return $this->hasMany(Withdrawal::class);
+    }
+
+    public function savingsReserves()
+    {
+        return $this->hasMany(SavingsReserve::class);
+    }
+
+    public function currencyExchanges()
+    {
+        return $this->hasMany(CurrencyExchange::class);
+    }
 }
