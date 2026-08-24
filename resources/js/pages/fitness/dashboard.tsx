@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, Link } from '@inertiajs/react';
 import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 
@@ -43,7 +43,7 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
                 </div>
 
                 {/* Bento Grid Layout */}
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                     {/* 1. Calories Card (Wide) */}
                     <div
                         className="group relative overflow-hidden rounded-2xl bg-[#193322] p-6 shadow-xl border border-[#23482f] md:col-span-2">
@@ -189,6 +189,25 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
                             {[1, 2, 3].map(i => <div key={i} className="h-6 w-2 rounded-full bg-[#102216]"></div>)}
                         </div>
                     </div>
+
+                    {/* 6. Freelance Card */}
+                    <Link
+                        href="/freelance/dashboard"
+                        className="flex group flex-col rounded-2xl bg-[#193322] p-6 shadow-xl border border-[#23482f] lg:col-span-1 hover:border-primary/50 transition-all"
+                    >
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-sm font-black uppercase tracking-widest text-white group-hover:text-primary transition-colors">Freelance</h3>
+                            <span className="material-symbols-outlined text-primary group-hover:rotate-12 transition-transform">work</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <span className="text-2xl font-black text-white tracking-widest leading-none">BUSINESS</span>
+                            <span className="text-[10px] font-bold text-[#92c9a4] uppercase tracking-tighter italic">Manage projects & quotes</span>
+                        </div>
+                        <div className="mt-auto pt-4 flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
+                            Go to Panel
+                            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                        </div>
+                    </Link>
                 </div>
             </div>
         </MainLayout>

@@ -50,18 +50,18 @@ class WorkoutController extends Controller
 
                 // Find previous sets for this exercise
                 $previousExercise = \App\Models\WorkoutExercise::whereHas('workout', function ($query) use ($request) {
-                        $query->where('user_id', $request->user()->id)->whereNotNull('ended_at');
-                    })
+                    $query->where('user_id', $request->user()->id)->whereNotNull('ended_at');
+                })
                     ->where('exercise_id', $exercise->id)
                     ->latest()
                     ->with('sets')
                     ->first();
 
                 $targetSets = $exercise->pivot->target_sets ?? 3;
-                
+
                 for ($i = 1; $i <= $targetSets; $i++) {
                     $prevSet = $previousExercise ? $previousExercise->sets->where('set_number', $i)->first() : null;
-                    
+
                     $workoutExercise->sets()->create([
                         'set_number' => $i,
                         'weight' => $prevSet ? $prevSet->weight : ($exercise->pivot->target_weight ?? null),
@@ -85,10 +85,10 @@ class WorkoutController extends Controller
 
         foreach ($workout->exercises as $exercise) {
             $previous = \App\Models\WorkoutExercise::whereHas('workout', function ($query) use ($workout) {
-                    $query->where('user_id', $workout->user_id)
-                        ->whereNotNull('ended_at')
-                        ->where('workouts.id', '!=', $workout->id);
-                })
+                $query->where('user_id', $workout->user_id)
+                    ->whereNotNull('ended_at')
+                    ->where('workouts.id', '!=', $workout->id);
+            })
                 ->where('exercise_id', $exercise->exercise_id)
                 ->latest()
                 ->with('sets')

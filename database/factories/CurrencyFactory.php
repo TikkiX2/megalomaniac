@@ -17,7 +17,10 @@ class CurrencyFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'code' => $this->faker->unique()->currencyCode(),
+            'name' => $this->faker->currencyCode(),
+            'symbol' => $this->faker->randomElement(['$', '€', '£', '¥']),
+            'is_active' => true,
         ];
     }
 }

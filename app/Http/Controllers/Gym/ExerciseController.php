@@ -23,7 +23,7 @@ class ExerciseController extends Controller
             ->first();
 
         if ($activeWorkout) {
-            $activeWorkout = (new WorkoutController())->loadWorkoutWithHistory($activeWorkout);
+            $activeWorkout = (new WorkoutController)->loadWorkoutWithHistory($activeWorkout);
         }
 
         return Inertia::render('fitness/gym-routine', [

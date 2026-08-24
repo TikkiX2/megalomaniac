@@ -13,6 +13,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
     const navItems = [
         { name: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
+        { name: 'Freelance', icon: 'work', href: '/freelance/dashboard' },
         { name: 'Finance', icon: 'payments', href: '/finance/dashboard' },
         { name: 'Workout Log', icon: 'exercise', href: '/fitness/gym' },
         { name: 'Nutrition', icon: 'restaurant', href: '/fitness/nutrition' },

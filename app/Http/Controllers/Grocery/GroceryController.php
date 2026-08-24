@@ -13,17 +13,17 @@ class GroceryController extends Controller
     public function index(Request $request): Response
     {
         $userId = $request->user()->id;
-        
+
         $history = \App\Models\GroceryPriceHistory::whereHas('groceryItem', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })
+            $query->where('user_id', $userId);
+        })
             ->with('groceryItem')
             ->orderByDesc('purchased_at')
             ->get()
             ->groupBy(function ($item) {
                 return $item->purchased_at->format('Y-m-d H:i:s');
             });
-        
+
         return Inertia::render('fitness/grocery', [
             'items' => GroceryItem::where('user_id', $userId)
                 ->orderBy('name')
@@ -32,12 +32,12 @@ class GroceryController extends Controller
                 ->whereNotNull('category')
                 ->distinct()
                 ->pluck('category')
-                ->map(fn($category) => preg_split('/[\s,]+/', $category, -1, PREG_SPLIT_NO_EMPTY))
+                ->map(fn ($category) => preg_split('/[\s,]+/', $category, -1, PREG_SPLIT_NO_EMPTY))
                 ->flatten()
                 ->unique()
                 ->values()
                 ->toArray(),
-            'history' => $history
+            'history' => $history,
         ]);
     }
 
@@ -103,14 +103,14 @@ class GroceryController extends Controller
         \Illuminate\Support\Facades\DB::transaction(function () use ($items, $now) {
             foreach ($items as $data) {
                 $item = GroceryItem::find($data['id']);
-                
+
                 // Update item stock and price
                 $item->current_stock += $data['quantity'];
                 $item->price = $data['price'];
                 $item->purchased_at = $now;
                 $item->save();
 
-                // Rate limiting history creation to avoid spam if needed, 
+                // Rate limiting history creation to avoid spam if needed,
                 // but for bulk restock we assume valid intent.
                 $item->priceHistory()->create([
                     'price' => $data['price'],
@@ -126,10 +126,10 @@ class GroceryController extends Controller
     public function history(Request $request)
     {
         $userId = $request->user()->id;
-        
+
         $history = \App\Models\GroceryPriceHistory::whereHas('groceryItem', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })
+            $query->where('user_id', $userId);
+        })
             ->with('groceryItem')
             ->orderByDesc('purchased_at')
             ->get()
@@ -138,7 +138,7 @@ class GroceryController extends Controller
             });
 
         return Inertia::render('fitness/grocery-history', [
-            'history' => $history
+            'history' => $history,
         ]);
     }
 }

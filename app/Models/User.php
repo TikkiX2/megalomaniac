@@ -135,4 +135,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(CurrencyExchange::class);
     }
+
+    public function clients(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
 }

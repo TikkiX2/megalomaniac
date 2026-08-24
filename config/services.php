@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'notion' => [
+        'token' => env('NOTION_API_TOKEN'),
+        'database_id' => env('NOTION_DATABASE_ID'),
+    ],
+
 ];

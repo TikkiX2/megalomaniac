@@ -114,4 +114,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Currency Exchanges
         Route::resource('currency-exchanges', \App\Http\Controllers\Finance\CurrencyExchangeController::class);
     });
+
+    // Freelance Routes
+    Route::prefix('freelance')->name('freelance.')->group(function () {
+        Route::get('dashboard', [\App\Http\Controllers\Freelance\FreelanceDashboardController::class, 'index'])->name('dashboard');
+
+        Route::resource('clients', \App\Http\Controllers\Freelance\ClientController::class);
+
+        Route::resource('projects', \App\Http\Controllers\Freelance\ProjectController::class);
+        Route::post('projects/{project}/payments', [\App\Http\Controllers\Freelance\ProjectController::class, 'addPayment'])->name('projects.payments.store');
+        Route::post('projects/{project}/media', [\App\Http\Controllers\Freelance\ProjectController::class, 'uploadFile'])->name('projects.media.upload');
+        Route::get('media/{media}/download', [\App\Http\Controllers\Freelance\ProjectController::class, 'downloadFile'])->name('media.download');
+        Route::delete('media/{media}', [\App\Http\Controllers\Freelance\ProjectController::class, 'deleteFile'])->name('media.delete');
+
+        // Comments
+        Route::get('projects/{project}/comments', [\App\Http\Controllers\Freelance\ProjectCommentController::class, 'index'])->name('projects.comments.index');
+        Route::post('projects/{project}/comments', [\App\Http\Controllers\Freelance\ProjectCommentController::class, 'store'])->name('projects.comments.store');
+        Route::patch('comments/{comment}', [\App\Http\Controllers\Freelance\ProjectCommentController::class, 'update'])->name('comments.update');
+        Route::delete('comments/{comment}', [\App\Http\Controllers\Freelance\ProjectCommentController::class, 'destroy'])->name('comments.destroy');
+
+        Route::resource('quotes', \App\Http\Controllers\Freelance\QuoteController::class);
+        Route::get('quotes/{quote}/pdf', [\App\Http\Controllers\Freelance\QuoteController::class, 'generatePDF'])->name('quotes.pdf');
+        Route::post('quotes/{quote}/duplicate', [\App\Http\Controllers\Freelance\QuoteController::class, 'duplicate'])->name('quotes.duplicate');
+        Route::post('quotes/{quote}/convert', [\App\Http\Controllers\Freelance\QuoteController::class, 'convertToProject'])->name('quotes.convert');
+
+        Route::resource('projects.tasks', \App\Http\Controllers\Freelance\ProjectTaskController::class)->shallow();
+        Route::post('tasks/{task}/sync-to-notion', [\App\Http\Controllers\Freelance\ProjectTaskController::class, 'syncToNotion'])->name('tasks.sync-to-notion');
+        Route::post('tasks/{task}/sync-from-notion', [\App\Http\Controllers\Freelance\ProjectTaskController::class, 'syncFromNotion'])->name('tasks.sync-from-notion');
+
+        Route::post('notion/webhook', [\App\Http\Controllers\Freelance\ProjectTaskController::class, 'notionWebhook'])
+            ->name('notion.webhook')
+            ->withoutMiddleware(['auth', 'verified']);
+    });
 });
