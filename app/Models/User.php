@@ -22,6 +22,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'weight',
+        'height',
+        'target_weight',
     ];
 
     /**
@@ -47,6 +50,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'weight' => 'decimal:2',
+            'height' => 'decimal:2',
+            'target_weight' => 'decimal:2',
         ];
     }
 
@@ -144,5 +150,20 @@ class User extends Authenticatable
     public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function personalProjects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Project::class)->where('type', 'personal');
+    }
+
+    public function personalTasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectTask::class);
+    }
+
+    public function taskSavedViews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TaskSavedView::class);
     }
 }

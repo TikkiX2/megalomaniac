@@ -11,11 +11,124 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('dashboard', function () {
+    $userId = auth()->id();
+
+    // Weekly volume: last 7 days including today, sum(weight*reps) per day from completed or any sets
+    $start = now()->copy()->subDays(6)->startOfDay();
+    $weeklyWorkouts = \App\Models\Workout::with('exercises.sets')
+        ->where('user_id', $userId)
+        ->where('started_at', '>=', $start)
+        ->get();
+
+    // Build map date(Y-m-d) => volume
+    $volMap = [];
+    $labels = [];
+    for ($i = 0; $i < 7; $i++) {
+        $d = $start->copy()->addDays($i);
+        $key = $d->toDateString();
+        $volMap[$key] = 0;
+        $labels[$key] = $d->format('D');
+    }
+
+    $datesWithWorkout = [];
+    foreach ($weeklyWorkouts as $w) {
+        $key = $w->started_at->toDateString();
+        if (! isset($volMap[$key])) {
+            continue;
+        }
+        $vol = 0;
+        foreach ($w->exercises as $we) {
+            foreach ($we->sets as $set) {
+                $weight = is_numeric($set->weight) ? (float) $set->weight : 0;
+                $reps = is_numeric($set->reps) ? (int) $set->reps : 0;
+                if ($weight > 0 && $reps > 0) {
+                    $vol += $weight * $reps;
+                }
+            }
+        }
+        $volMap[$key] += $vol;
+        $datesWithWorkout[$key] = true;
+    }
+
+    $weeklyVolumeByDay = [];
+    $weeklyVolumes = [];
+    foreach ($volMap as $date => $vol) {
+        $weeklyVolumes[] = $vol;
+        $weeklyVolumeByDay[] = ['date' => $date, 'label' => $labels[$date], 'volume' => $vol];
+    }
+
+    // Streak: consecutive days with workout ending today backwards
+    $streakDays = [];
+    $currentStreak = 0;
+    $stillStreaking = true;
+    // Iterate from today backwards
+    for ($i = 6; $i >= 0; $i--) {
+        $d = $start->copy()->addDays($i);
+        $key = $d->toDateString();
+        $has = isset($datesWithWorkout[$key]);
+        array_unshift($streakDays, ['date' => $key, 'label' => $labels[$key], 'hasWorkout' => $has]);
+        // We'll compute currentStreak after building; simpler forward from today
+    }
+    // Compute currentStreak from today backwards
+    for ($i = 6; $i >= 0; $i--) {
+        $d = $start->copy()->addDays($i);
+        $key = $d->toDateString();
+        if (isset($datesWithWorkout[$key])) {
+            $currentStreak++;
+        } else {
+            if ($i === 6 && $currentStreak === 0) {
+                // today missing -> break, streak 0
+                break;
+            } elseif ($i !== 6) {
+                break;
+            } else {
+                break;
+            }
+        }
+        // If today missing, loop breaks immediately with 0
+        // If today present, continues
+        if ($i === 6 && ! isset($datesWithWorkout[$key])) {
+            $currentStreak = 0;
+            break;
+        }
+    }
+    // Correct if today missing, currentStreak should be 0; above handles
+    // But for incomplete above logic, re-evaluate cleanly:
+    $currentStreak = 0;
+    for ($i = 6; $i >= 0; $i--) {
+        $d = $start->copy()->addDays($i);
+        $key = $d->toDateString();
+        if (isset($datesWithWorkout[$key])) {
+            $currentStreak++;
+        } else {
+            break;
+        }
+    }
+
+    // Nutrition sync: sum across all MealLogs of today
+    $mealLogsToday = \App\Models\MealLog::with('items')->where('user_id', $userId)->where('date', now()->toDateString())->get();
+    $caloriesToday = $mealLogsToday->sum(fn ($log) => $log->total_calories ?? 0);
+    $macrosToday = ['protein' => 0, 'carbs' => 0, 'fats' => 0];
+    foreach ($mealLogsToday as $log) {
+        $macros = $log->total_macros ?? ['protein' => 0, 'carbs' => 0, 'fats' => 0];
+        $macrosToday['protein'] += (float) ($macros['protein'] ?? 0);
+        $macrosToday['carbs'] += (float) ($macros['carbs'] ?? 0);
+        $macrosToday['fats'] += (float) ($macros['fats'] ?? 0);
+    }
+    // Goals centralizados (sincronizados con nutrition)
+    $goals = ['calories' => 2400, 'protein' => 180, 'carbs' => 250, 'fats' => 70];
+
     return Inertia::render('fitness/dashboard', [
-        'workoutCount' => \App\Models\Workout::where('user_id', auth()->id())->count(),
-        'recentWorkouts' => \App\Models\Workout::with('routine')->where('user_id', auth()->id())->orderByDesc('started_at')->limit(5)->get(),
-        'caloriesToday' => \App\Models\MealLog::where('user_id', auth()->id())->where('date', now()->toDateString())->first()?->total_calories ?? 0,
-        'lowStockSupplements' => \App\Models\Supplement::where('user_id', auth()->id())->get()->filter->is_low_stock->values(),
+        'workoutCount' => \App\Models\Workout::where('user_id', $userId)->count(),
+        'recentWorkouts' => \App\Models\Workout::with('routine')->where('user_id', $userId)->orderByDesc('started_at')->limit(5)->get(),
+        'caloriesToday' => $caloriesToday,
+        'macrosToday' => $macrosToday,
+        'goals' => $goals,
+        'lowStockSupplements' => \App\Models\Supplement::where('user_id', $userId)->get()->filter->is_low_stock->values(),
+        'weeklyVolumeByDay' => $weeklyVolumeByDay,
+        'weeklyVolumes' => $weeklyVolumes,
+        'weeklyVolumeTotal' => array_sum($weeklyVolumes),
+        'streak' => ['current' => $currentStreak, 'days' => $streakDays],
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -49,6 +162,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Fitness App Managed Routes
     Route::prefix('fitness')->group(function () {
+        Route::get('history', [\App\Http\Controllers\Gym\WorkoutController::class, 'history'])->name('fitness.history');
         Route::get('gym', [\App\Http\Controllers\Gym\ExerciseController::class, 'index'])->name('fitness.gym');
         Route::get('routines', [\App\Http\Controllers\Gym\RoutineController::class, 'index'])->name('fitness.routines');
         Route::post('routines', [\App\Http\Controllers\Gym\RoutineController::class, 'store']);
@@ -145,5 +259,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('notion/webhook', [\App\Http\Controllers\Freelance\ProjectTaskController::class, 'notionWebhook'])
             ->name('notion.webhook')
             ->withoutMiddleware(['auth', 'verified']);
+    });
+
+    // Personal Tasks & Projects Routes
+    Route::prefix('personal')->name('personal.')->group(function () {
+        Route::resource('projects', \App\Http\Controllers\Personal\PersonalProjectController::class);
+        Route::post('projects/{project}/milestones', [\App\Http\Controllers\Personal\PersonalProjectController::class, 'storeMilestone'])->name('projects.milestones.store');
+        Route::resource('tasks', \App\Http\Controllers\Personal\PersonalTaskController::class)->except(['create', 'edit']);
+        Route::patch('tasks/{task}/move', [\App\Http\Controllers\Personal\PersonalTaskController::class, 'move'])->name('tasks.move');
+        Route::post('tasks/{task}/properties', [\App\Http\Controllers\Personal\TaskPropertyController::class, 'store'])->name('tasks.properties.store');
+        Route::patch('task-properties/{property}', [\App\Http\Controllers\Personal\TaskPropertyController::class, 'update'])->name('task-properties.update');
+        Route::delete('task-properties/{property}', [\App\Http\Controllers\Personal\TaskPropertyController::class, 'destroy'])->name('task-properties.destroy');
+        Route::resource('saved-views', \App\Http\Controllers\Personal\TaskSavedViewController::class)->only(['index', 'store', 'destroy']);
     });
 });

@@ -20,6 +20,7 @@ class Project extends Model implements HasMedia
         'name',
         'description',
         'status',
+        'type',
         'start_date',
         'end_date',
         'deadline',
@@ -36,6 +37,9 @@ class Project extends Model implements HasMedia
         'tags',
         'notes',
         'is_archived',
+        'color',
+        'icon',
+        'budget',
     ];
 
     protected $casts = [
@@ -48,6 +52,7 @@ class Project extends Model implements HasMedia
         'paid_amount' => 'decimal:2',
         'hourly_rate' => 'decimal:2',
         'estimated_hours' => 'decimal:2',
+        'budget' => 'decimal:2',
         'is_archived' => 'boolean',
     ];
 
@@ -59,6 +64,26 @@ class Project extends Model implements HasMedia
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
+    }
+
+    public function scopePersonal($query)
+    {
+        return $query->where('type', 'personal');
+    }
+
+    public function scopeFreelance($query)
+    {
+        return $query->where('type', 'freelance');
+    }
+
+    public function isPersonal(): bool
+    {
+        return $this->type === 'personal';
+    }
+
+    public function isFreelance(): bool
+    {
+        return $this->type === 'freelance';
     }
 
     public function user(): BelongsTo
@@ -94,6 +119,27 @@ class Project extends Model implements HasMedia
     public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class);
+    }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(TaskProjectMember::class);
+    }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(TaskMilestone::class)->orderBy('sort_order');
+    }
+
+    public function getProgressAttribute(): int
+    {
+        $total = $this->tasks()->count();
+        if ($total === 0) {
+            return 0;
+        }
+        $done = $this->tasks()->whereIn('status', ['Done', 'Completed', 'done', 'completed', 'completada', 'Completada'])->count();
+
+        return (int) round($done / $total * 100);
     }
 
     public function registerMediaCollections(): void
