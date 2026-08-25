@@ -16,6 +16,11 @@ class RoutineResource extends JsonResource
             'focus' => $this->focus,
             'scheduled_date' => $this->scheduled_date,
             'status' => $this->status,
+            'exercises' => ExerciseResource::collection(
+                $this->whenLoaded('exercises')
+            ),
+            'created_at' => $this->created_at?->toIso8601String(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
         ];
     }
 }
