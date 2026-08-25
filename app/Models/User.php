@@ -3,15 +3,18 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    /** @use HasFactory<UserFactory> */
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -142,27 +145,27 @@ class User extends Authenticatable
         return $this->hasMany(CurrencyExchange::class);
     }
 
-    public function clients(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function clients(): HasMany
     {
         return $this->hasMany(Client::class);
     }
 
-    public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function projects(): HasMany
     {
         return $this->hasMany(Project::class);
     }
 
-    public function personalProjects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function personalProjects(): HasMany
     {
         return $this->hasMany(Project::class)->where('type', 'personal');
     }
 
-    public function personalTasks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function personalTasks(): HasMany
     {
         return $this->hasMany(ProjectTask::class);
     }
 
-    public function taskSavedViews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function taskSavedViews(): HasMany
     {
         return $this->hasMany(TaskSavedView::class);
     }
