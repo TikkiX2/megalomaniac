@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\CreditCardController;
 use App\Http\Controllers\Api\V1\CurrencyController;
 use App\Http\Controllers\Api\V1\CurrencyExchangeController;
@@ -11,8 +12,14 @@ use App\Http\Controllers\Api\V1\GroceryController;
 use App\Http\Controllers\Api\V1\IncomeController;
 use App\Http\Controllers\Api\V1\IncomeSourceController;
 use App\Http\Controllers\Api\V1\NutritionController;
+use App\Http\Controllers\Api\V1\PersonalProjectController;
+use App\Http\Controllers\Api\V1\PersonalTaskController;
+use App\Http\Controllers\Api\V1\ProjectCommentController;
+use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\ProjectTaskController;
 use App\Http\Controllers\Api\V1\PurchaseCategoryController;
 use App\Http\Controllers\Api\V1\PurchaseController;
+use App\Http\Controllers\Api\V1\QuoteController;
 use App\Http\Controllers\Api\V1\RoutineController;
 use App\Http\Controllers\Api\V1\SavingsReserveController;
 use App\Http\Controllers\Api\V1\SupplementController;
@@ -144,4 +151,55 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('finance/currency-exchanges/{exchange}', [CurrencyExchangeController::class, 'show']);
     Route::patch('finance/currency-exchanges/{exchange}', [CurrencyExchangeController::class, 'update']);
     Route::delete('finance/currency-exchanges/{exchange}', [CurrencyExchangeController::class, 'destroy']);
+
+    // Freelance - Clients
+    Route::get('freelance/clients', [ClientController::class, 'index']);
+    Route::post('freelance/clients', [ClientController::class, 'store']);
+    Route::get('freelance/clients/{client}', [ClientController::class, 'show']);
+    Route::patch('freelance/clients/{client}', [ClientController::class, 'update']);
+    Route::delete('freelance/clients/{client}', [ClientController::class, 'destroy']);
+
+    // Freelance - Projects
+    Route::get('freelance/projects', [ProjectController::class, 'index']);
+    Route::post('freelance/projects', [ProjectController::class, 'store']);
+    Route::get('freelance/projects/{project}', [ProjectController::class, 'show']);
+    Route::patch('freelance/projects/{project}', [ProjectController::class, 'update']);
+    Route::delete('freelance/projects/{project}', [ProjectController::class, 'destroy']);
+    Route::post('freelance/projects/{project}/payments', [ProjectController::class, 'addPayment']);
+
+    // Freelance - Tasks
+    Route::get('freelance/tasks', [ProjectTaskController::class, 'index']);
+    Route::post('freelance/tasks', [ProjectTaskController::class, 'store']);
+    Route::get('freelance/tasks/{task}', [ProjectTaskController::class, 'show']);
+    Route::patch('freelance/tasks/{task}', [ProjectTaskController::class, 'update']);
+    Route::delete('freelance/tasks/{task}', [ProjectTaskController::class, 'destroy']);
+
+    // Freelance - Comments
+    Route::get('freelance/projects/{project}/comments', [ProjectCommentController::class, 'index']);
+    Route::post('freelance/projects/{project}/comments', [ProjectCommentController::class, 'store']);
+    Route::patch('freelance/projects/{project}/comments/{comment}', [ProjectCommentController::class, 'update']);
+    Route::delete('freelance/projects/{project}/comments/{comment}', [ProjectCommentController::class, 'destroy']);
+
+    // Freelance - Quotes
+    Route::get('freelance/quotes', [QuoteController::class, 'index']);
+    Route::post('freelance/quotes', [QuoteController::class, 'store']);
+    Route::get('freelance/quotes/{quote}', [QuoteController::class, 'show']);
+    Route::patch('freelance/quotes/{quote}', [QuoteController::class, 'update']);
+    Route::delete('freelance/quotes/{quote}', [QuoteController::class, 'destroy']);
+
+    // Personal - Projects
+    Route::get('personal/projects', [PersonalProjectController::class, 'index']);
+    Route::post('personal/projects', [PersonalProjectController::class, 'store']);
+    Route::get('personal/projects/{project}', [PersonalProjectController::class, 'show']);
+    Route::patch('personal/projects/{project}', [PersonalProjectController::class, 'update']);
+    Route::delete('personal/projects/{project}', [PersonalProjectController::class, 'destroy']);
+    Route::post('personal/projects/{project}/milestones', [PersonalProjectController::class, 'storeMilestone']);
+
+    // Personal - Tasks
+    Route::get('personal/tasks', [PersonalTaskController::class, 'index']);
+    Route::post('personal/tasks', [PersonalTaskController::class, 'store']);
+    Route::get('personal/tasks/{task}', [PersonalTaskController::class, 'show']);
+    Route::patch('personal/tasks/{task}', [PersonalTaskController::class, 'update']);
+    Route::delete('personal/tasks/{task}', [PersonalTaskController::class, 'destroy']);
+    Route::patch('personal/tasks/{task}/move', [PersonalTaskController::class, 'move']);
 });
