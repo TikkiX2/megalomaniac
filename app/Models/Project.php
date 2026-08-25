@@ -98,7 +98,7 @@ class Project extends Model implements HasMedia
 
     public function currency(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Currency::class);
+        return $this->belongsTo(Currency::class);
     }
 
     public function tasks(): HasMany

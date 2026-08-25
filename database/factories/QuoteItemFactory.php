@@ -2,10 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\Quote;
+use App\Models\QuoteItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\QuoteItem>
+ * @extends Factory<QuoteItem>
  */
 class QuoteItemFactory extends Factory
 {
@@ -20,7 +22,7 @@ class QuoteItemFactory extends Factory
         $rate = $this->faker->randomFloat(2, 30, 100);
 
         return [
-            'quote_id' => \App\Models\Quote::factory(),
+            'quote_id' => Quote::factory(),
             'description' => $this->faker->sentence(),
             'hours' => $hours,
             'hourly_rate' => $rate,

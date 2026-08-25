@@ -6,7 +6,7 @@ use App\Models\Exercise;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Exercise>
+ * @extends Factory<Exercise>
  */
 class ExerciseFactory extends Factory
 {

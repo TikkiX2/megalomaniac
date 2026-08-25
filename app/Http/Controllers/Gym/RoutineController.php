@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Gym;
 
 use App\Http\Controllers\Controller;
+use App\Models\Exercise;
 use App\Models\Routine;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class RoutineController extends Controller
 {
@@ -21,9 +23,9 @@ class RoutineController extends Controller
             return $routines;
         }
 
-        return \Inertia\Inertia::render('fitness/routines', [
+        return Inertia::render('fitness/routines', [
             'routines' => $routines,
-            'exercises' => \App\Models\Exercise::all(),
+            'exercises' => Exercise::all(),
         ]);
     }
 
@@ -57,7 +59,7 @@ class RoutineController extends Controller
 
                 // Create new exercise if ID is not provided
                 if (! $exerciseId && ! empty($exerciseData['name'])) {
-                    $exercise = \App\Models\Exercise::create([
+                    $exercise = Exercise::create([
                         'name' => $exerciseData['name'],
                         'muscle_group' => $exerciseData['muscle_group'] ?? null,
                         'type' => $exerciseData['type'] ?? null,
@@ -121,7 +123,7 @@ class RoutineController extends Controller
 
                 // Create new exercise if ID is not provided
                 if (! $exerciseId && ! empty($exerciseData['name'])) {
-                    $exercise = \App\Models\Exercise::create([
+                    $exercise = Exercise::create([
                         'name' => $exerciseData['name'],
                         'muscle_group' => $exerciseData['muscle_group'] ?? null,
                         'type' => $exerciseData['type'] ?? null,

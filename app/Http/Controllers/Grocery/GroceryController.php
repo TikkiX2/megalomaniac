@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Grocery;
 
 use App\Http\Controllers\Controller;
 use App\Models\GroceryItem;
+use App\Models\GroceryPriceHistory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,7 +16,7 @@ class GroceryController extends Controller
     {
         $userId = $request->user()->id;
 
-        $history = \App\Models\GroceryPriceHistory::whereHas('groceryItem', function ($query) use ($userId) {
+        $history = GroceryPriceHistory::whereHas('groceryItem', function ($query) use ($userId) {
             $query->where('user_id', $userId);
         })
             ->with('groceryItem')
@@ -100,7 +102,7 @@ class GroceryController extends Controller
 
         $now = now();
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($items, $now) {
+        DB::transaction(function () use ($items, $now) {
             foreach ($items as $data) {
                 $item = GroceryItem::find($data['id']);
 
@@ -127,7 +129,7 @@ class GroceryController extends Controller
     {
         $userId = $request->user()->id;
 
-        $history = \App\Models\GroceryPriceHistory::whereHas('groceryItem', function ($query) use ($userId) {
+        $history = GroceryPriceHistory::whereHas('groceryItem', function ($query) use ($userId) {
             $query->where('user_id', $userId);
         })
             ->with('groceryItem')

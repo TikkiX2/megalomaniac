@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Currency extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'code',
         'name',

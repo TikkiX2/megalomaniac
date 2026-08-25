@@ -4,16 +4,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-use App\Models\User;
 use App\Models\Client;
-use App\Models\Project;
 use App\Models\Currency;
+use App\Models\Project;
+use App\Models\User;
+
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 
 test('projects index is accessible', function () {
     $user = User::factory()->create();
-    
+
     actingAs($user)
         ->get(route('freelance.projects.index'))
         ->assertStatus(200)
@@ -26,7 +27,7 @@ test('project can be created', function () {
     $user = User::factory()->create();
     $client = Client::factory()->create(['user_id' => $user->id]);
     $currency = Currency::where('code', 'USD')->first() ?? Currency::factory()->create(['code' => 'USD']);
-    
+
     $projectData = [
         'client_id' => $client->id,
         'name' => 'Test Project',
@@ -37,11 +38,11 @@ test('project can be created', function () {
         'area' => 'Web',
         'module' => 'Core',
     ];
-    
+
     actingAs($user)
         ->post(route('freelance.projects.store'), $projectData)
         ->assertRedirect(); // Redirects to show
-        
+
     assertDatabaseHas('projects', [
         'name' => 'Test Project',
         'client_id' => $client->id,
@@ -51,7 +52,7 @@ test('project can be created', function () {
 test('project show page is accessible', function () {
     $user = User::factory()->create();
     $project = Project::factory()->create(['user_id' => $user->id]);
-    
+
     actingAs($user)
         ->get(route('freelance.projects.show', $project))
         ->assertStatus(200)

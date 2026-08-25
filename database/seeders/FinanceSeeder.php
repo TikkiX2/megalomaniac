@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Currency;
 use App\Models\ExchangeRate;
 use App\Models\PurchaseCategory;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
@@ -78,7 +79,7 @@ class FinanceSeeder extends Seeder
         ];
 
         // Get first user ID (assuming you have at least one user)
-        $userId = \App\Models\User::first()?->id ?? 1;
+        $userId = User::first()?->id ?? 1;
 
         foreach ($categories as $category) {
             PurchaseCategory::create(array_merge($category, ['user_id' => $userId]));

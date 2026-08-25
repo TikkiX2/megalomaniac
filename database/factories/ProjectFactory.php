@@ -2,10 +2,14 @@
 
 namespace Database\Factories;
 
+use App\Models\Client;
+use App\Models\Currency;
+use App\Models\Project;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Project>
+ * @extends Factory<Project>
  */
 class ProjectFactory extends Factory
 {
@@ -21,8 +25,8 @@ class ProjectFactory extends Factory
         $totalAmount = $this->faker->randomFloat(2, 500, 10000);
 
         return [
-            'user_id' => \App\Models\User::factory(),
-            'client_id' => \App\Models\Client::factory(),
+            'user_id' => User::factory(),
+            'client_id' => Client::factory(),
             'name' => $this->faker->sentence(3),
             'description' => $this->getYooptaContent($this->faker->paragraph()),
             'status' => $this->faker->randomElement(['pending', 'in_progress', 'completed', 'maintenance', 'cancelled']),
@@ -30,7 +34,7 @@ class ProjectFactory extends Factory
             'end_date' => $this->faker->optional(0.3)->dateTimeBetween($startDate, $deadline),
             'deadline' => $deadline,
             'total_amount' => $totalAmount,
-            'currency_id' => \App\Models\Currency::factory(),
+            'currency_id' => Currency::factory(),
             'paid_amount' => 0, // Should be updated via payments
             'hourly_rate' => $this->faker->randomFloat(2, 20, 150),
             'estimated_hours' => $totalAmount / 50, // rough estimate

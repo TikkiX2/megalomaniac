@@ -34,7 +34,7 @@ class ProjectPayment extends Model
 
     public function income(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Income::class);
+        return $this->belongsTo(Income::class);
     }
 
     protected static function booted()

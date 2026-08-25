@@ -2,10 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Currency;
+use App\Models\Project;
+use App\Models\ProjectPayment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ProjectPayment>
+ * @extends Factory<ProjectPayment>
  */
 class ProjectPaymentFactory extends Factory
 {
@@ -17,9 +20,9 @@ class ProjectPaymentFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => \App\Models\Project::factory(),
+            'project_id' => Project::factory(),
             'amount' => $this->faker->randomFloat(2, 100, 5000),
-            'currency_id' => \App\Models\Currency::factory(),
+            'currency_id' => Currency::factory(),
             'payment_date' => $this->faker->date(),
             'status' => $this->faker->randomElement(['pending', 'received', 'cancelled']),
             'method' => $this->faker->randomElement(['bank_transfer', 'paypal', 'stripe', 'cash']),

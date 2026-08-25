@@ -3,6 +3,8 @@
 use App\Models\Currency;
 use App\Models\Project;
 use App\Models\ProjectTask;
+use App\Models\TaskProperty;
+use App\Models\TaskSavedView;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -113,7 +115,7 @@ it('can add custom property to task', function () {
 
 it('prevents duplicate property keys per task', function () {
     $task = ProjectTask::factory()->create(['user_id' => $this->user->id]);
-    \App\Models\TaskProperty::factory()->create(['project_task_id' => $task->id, 'key' => 'Sprint']);
+    TaskProperty::factory()->create(['project_task_id' => $task->id, 'key' => 'Sprint']);
     $this->post("/personal/tasks/{$task->id}/properties", [
         'key' => 'Sprint',
         'type' => 'text',
@@ -129,7 +131,7 @@ it('can save and delete saved view', function () {
     ])->assertRedirect();
     $this->assertDatabaseHas('task_saved_views', ['name' => 'Mi Vista', 'user_id' => $this->user->id]);
 
-    $view = \App\Models\TaskSavedView::where('name', 'Mi Vista')->first();
+    $view = TaskSavedView::where('name', 'Mi Vista')->first();
     $this->delete("/personal/saved-views/{$view->id}")->assertRedirect();
     $this->assertDatabaseMissing('task_saved_views', ['id' => $view->id]);
 });

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreExchangeRateRequest;
 use App\Models\Currency;
 use App\Models\ExchangeRate;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -51,7 +52,7 @@ class ExchangeRateController extends Controller
         $from = Currency::findOrFail($request->from_currency_id);
         $to = Currency::findOrFail($request->to_currency_id);
 
-        $result = $from->convertTo($to, $request->amount, $request->date ? \Carbon\Carbon::parse($request->date) : null);
+        $result = $from->convertTo($to, $request->amount, $request->date ? Carbon::parse($request->date) : null);
 
         if ($result === null) {
             return response()->json(['error' => 'No exchange rate found'], 422);

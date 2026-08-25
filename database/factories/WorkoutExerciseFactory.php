@@ -8,7 +8,7 @@ use App\Models\WorkoutExercise;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WorkoutExercise>
+ * @extends Factory<WorkoutExercise>
  */
 class WorkoutExerciseFactory extends Factory
 {

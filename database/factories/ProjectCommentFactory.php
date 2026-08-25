@@ -2,10 +2,13 @@
 
 namespace Database\Factories;
 
+use App\Models\Project;
+use App\Models\ProjectComment;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ProjectComment>
+ * @extends Factory<ProjectComment>
  */
 class ProjectCommentFactory extends Factory
 {
@@ -17,8 +20,8 @@ class ProjectCommentFactory extends Factory
     public function definition(): array
     {
         return [
-            'project_id' => \App\Models\Project::factory(),
-            'user_id' => \App\Models\User::factory(),
+            'project_id' => Project::factory(),
+            'user_id' => User::factory(),
             'content' => json_encode(['text' => $this->faker->paragraph()]), // Simple JSON for now
             'parent_id' => null,
         ];

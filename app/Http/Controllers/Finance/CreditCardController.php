@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
 use App\Models\CreditCard;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -26,7 +27,7 @@ class CreditCardController extends Controller
     public function create()
     {
         return Inertia::render('finance/credit-cards/create', [
-            'users' => \App\Models\User::where('id', '!=', auth()->id())->get(['id', 'name']),
+            'users' => User::where('id', '!=', auth()->id())->get(['id', 'name']),
         ]);
     }
 

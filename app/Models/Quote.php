@@ -58,7 +58,7 @@ class Quote extends Model
 
     public function currency(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Currency::class);
+        return $this->belongsTo(Currency::class);
     }
 
     public function items(): HasMany

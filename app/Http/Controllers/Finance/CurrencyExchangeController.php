@@ -7,6 +7,7 @@ use App\Models\Currency;
 use App\Models\CurrencyExchange;
 use App\Models\Income;
 use App\Models\IncomeSource;
+use App\Models\SavingsReserve;
 use App\Models\Withdrawal;
 use App\Models\WithdrawalCategory;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class CurrencyExchangeController extends Controller
             'currencies' => Currency::active()->get(),
             'incomeSources' => IncomeSource::where('user_id', auth()->id())->get(),
             'withdrawalCategories' => WithdrawalCategory::where('user_id', auth()->id())->get(),
-            'savingsReserves' => \App\Models\SavingsReserve::where('user_id', auth()->id())->get(),
+            'savingsReserves' => SavingsReserve::where('user_id', auth()->id())->get(),
         ]);
     }
 
@@ -70,7 +71,7 @@ class CurrencyExchangeController extends Controller
 
             if ($validated['to_reserve_id']) {
                 // 2a. Create Reserve Transaction (instead of Income)
-                $reserve = \App\Models\SavingsReserve::findOrFail($validated['to_reserve_id']);
+                $reserve = SavingsReserve::findOrFail($validated['to_reserve_id']);
 
                 // Ensure currency matches (or use the one from reserve)
                 $reserveTransaction = $reserve->transactions()->create([
