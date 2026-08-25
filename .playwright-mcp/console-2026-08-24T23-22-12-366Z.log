@@ -1,0 +1,2 @@
+[     256ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://127.0.0.1:8010/_boost/browser-logs @ http://127.0.0.1:8010/freelance/projects/1:24
+[     706ms] [ERROR] Initial value is not valid. Should be an object with blocks. You passed: "Rediseño rojizo + QA diario" @ http://127.0.0.1:8010/freelance/projects/1:83

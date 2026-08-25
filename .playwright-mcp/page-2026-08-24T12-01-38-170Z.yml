@@ -1,0 +1,64 @@
+- generic [ref=f25e3]:
+  - complementary [ref=f25e4]:
+    - generic [ref=f25e5]:
+      - generic [ref=f25e6]:
+        - generic [ref=f25e7]:
+          - generic [ref=f25e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f25e11]
+        - navigation [ref=f25e12]:
+          - link "dashboard Dashboard" [ref=f25e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f25e14]: dashboard
+            - generic [ref=f25e15]: Dashboard
+          - link "work Freelance" [ref=f25e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f25e17]: work
+            - generic [ref=f25e18]: Freelance
+          - link "payments Finance" [ref=f25e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f25e20]: payments
+            - generic [ref=f25e21]: Finance
+          - link "exercise Workout Log" [ref=f25e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f25e23]: exercise
+            - generic [ref=f25e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f25e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f25e26]: restaurant
+            - generic [ref=f25e27]: Nutrition
+          - link "medication Supplements" [ref=f25e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f25e29]: medication
+            - generic [ref=f25e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f25e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f25e32]: shopping_cart
+            - generic [ref=f25e33]: Grocery List
+      - generic [ref=f25e34]:
+        - link "settings Settings" [ref=f25e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f25e36]: settings
+          - generic [ref=f25e37]: Settings
+        - generic [ref=f25e38]:
+          - generic [ref=f25e39]: T
+          - paragraph [ref=f25e41]: Test User
+  - main [ref=f25e42]:
+    - generic [ref=f25e44]:
+      - generic [ref=f25e45]:
+        - generic [ref=f25e46]:
+          - heading "Clientes" [level=1] [ref=f25e47]
+          - paragraph [ref=f25e48]: Gestiona tu base de clientes y sus proyectos.
+        - link "Nuevo Cliente" [ref=f25e49] [cursor=pointer]:
+          - /url: /freelance/clients/create
+      - textbox "Buscar clientes por nombre o empresa..." [ref=f25e55]
+      - table [ref=f25e58]:
+        - rowgroup [ref=f25e59]:
+          - row [ref=f25e60]:
+            - columnheader "Nombre" [ref=f25e61]
+            - columnheader "Empresa" [ref=f25e62]
+            - columnheader "Email" [ref=f25e63]
+            - columnheader "Estado" [ref=f25e64]
+            - columnheader [ref=f25e65]
+        - rowgroup [ref=f25e66]:
+          - row [ref=f25e67]:
+            - cell "No se encontraron clientes." [ref=f25e68]

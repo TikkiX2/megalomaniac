@@ -31,7 +31,7 @@ export default function DebtCreate({ creditCards, currencies }: Props) {
             <Head title="Record Debt" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex items-center gap-4">
-                    <Link href={finance.debts.index().url} className="rounded-full p-2 hover:bg-white/5 text-[#92c9a4] transition-all">
+                    <Link href={finance.debts.index().url} className="rounded-full p-2 hover:bg-white/5 text-[#e8b4b4] transition-all">
                         <span className="material-symbols-outlined">arrow_back</span>
                     </Link>
                     <div>
@@ -40,17 +40,17 @@ export default function DebtCreate({ creditCards, currencies }: Props) {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-2xl bg-[#193322] border border-[#23482f] p-8 shadow-xl">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-8 shadow-xl">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="original_amount" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Principal Amount</Label>
+                            <Label htmlFor="original_amount" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Principal Amount</Label>
                             <Input
                                 id="original_amount"
                                 type="number"
                                 step="0.01"
                                 value={data.original_amount}
                                 onChange={e => setData('original_amount', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white focus:ring-primary h-12"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary h-12"
                                 placeholder="0.00"
                                 required
                             />
@@ -58,12 +58,12 @@ export default function DebtCreate({ creditCards, currencies }: Props) {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="currency_id" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Currency</Label>
+                            <Label htmlFor="currency_id" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Currency</Label>
                             <select
                                 id="currency_id"
                                 value={data.currency_id}
                                 onChange={e => setData('currency_id', e.target.value)}
-                                className="flex h-12 w-full rounded-md border border-[#23482f] bg-[#102216] px-3 py-1 text-sm text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                className="flex h-12 w-full rounded-md border border-[#3e2121] bg-[#1c0f0f] px-3 py-1 text-sm text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                 required
                             >
                                 <option value="">Select Currency</option>
@@ -72,12 +72,12 @@ export default function DebtCreate({ creditCards, currencies }: Props) {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="credit_card_id" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Credit Card (Optional)</Label>
+                            <Label htmlFor="credit_card_id" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Credit Card (Optional)</Label>
                             <select
                                 id="credit_card_id"
                                 value={data.credit_card_id}
                                 onChange={e => setData('credit_card_id', e.target.value)}
-                                className="flex h-12 w-full rounded-md border border-[#23482f] bg-[#102216] px-3 py-1 text-sm text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                className="flex h-12 w-full rounded-md border border-[#3e2121] bg-[#1c0f0f] px-3 py-1 text-sm text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                             >
                                 <option value="">Direct Debt (No Card)</option>
                                 {creditCards.map(cc => <option key={cc.id} value={cc.id}>{cc.name} (**** {cc.last_four_digits})</option>)}
@@ -86,30 +86,30 @@ export default function DebtCreate({ creditCards, currencies }: Props) {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="due_date" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Next Due Date</Label>
+                            <Label htmlFor="due_date" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Next Due Date</Label>
                             <Input
                                 id="due_date"
                                 type="date"
                                 value={data.due_date}
                                 onChange={e => setData('due_date', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white focus:ring-primary h-12"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary h-12"
                             />
                         </div>
 
                         <div className="flex flex-col gap-2 md:col-span-2">
-                            <Label htmlFor="notes" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Notes</Label>
+                            <Label htmlFor="notes" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Notes</Label>
                             <textarea
                                 id="notes"
                                 value={data.notes || ''}
                                 onChange={e => setData('notes', e.target.value)}
-                                className="flex min-h-[100px] w-full rounded-md border border-[#23482f] bg-[#102216] px-3 py-2 text-sm text-white shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                className="flex min-h-[100px] w-full rounded-md border border-[#3e2121] bg-[#1c0f0f] px-3 py-2 text-sm text-white shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                 placeholder="Details about this debt..."
                             />
                         </div>
                     </div>
 
                     <div className="rounded-xl bg-orange-500/5 border border-orange-500/10 p-4">
-                        <p className="text-[10px] font-medium text-[#92c9a4] italic">
+                        <p className="text-[10px] font-medium text-[#e8b4b4] italic">
                             {data.credit_card_id
                                 ? "Interest and taxes will be automatically calculated based on the selected credit card's settings."
                                 : "No card selected. Interest and taxes will be set to 0."}
@@ -118,7 +118,7 @@ export default function DebtCreate({ creditCards, currencies }: Props) {
 
                     <Button
                         disabled={processing}
-                        className="mt-4 bg-primary px-8 py-6 text-base font-black text-[#102216] hover:bg-green-400 shadow-[0_4px_20_rgba(19,236,91,0.2)]"
+                        className="mt-4 bg-primary px-8 py-6 text-base font-black text-white hover:bg-primary/90 shadow-[0_4px_20_rgba(239,68,68,0.2)]"
                     >
                         {processing ? 'Processing...' : 'Save Debt'}
                     </Button>

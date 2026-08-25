@@ -1,0 +1,231 @@
+- generic [ref=f53e3]:
+  - generic [ref=f53e7]:
+    - generic [ref=f53e8]:
+      - list [ref=f53e9]:
+        - listitem [ref=f53e10]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f53e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f53e15]: Megalomaniac Pro
+            - generic [ref=f53e17]: Megalomaniac Pro
+      - generic [ref=f53e18]:
+        - generic [ref=f53e19]: Navegación
+        - button "Sidebar fijado" [ref=f53e20]
+    - generic [ref=f53e23]:
+      - generic [ref=f53e24]:
+        - generic [ref=f53e25]: Principal
+        - list [ref=f53e26]:
+          - listitem [ref=f53e27]:
+            - link "Panel" [ref=f53e28] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f53e35]:
+            - link "Entrenamiento" [ref=f53e36] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f53e44]:
+            - link "Nutrición" [ref=f53e45] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f53e50]:
+            - link "Suplementos" [ref=f53e51] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f53e56]:
+            - link "Compras" [ref=f53e57] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f53e63]:
+        - generic [ref=f53e64]: Freelance
+        - list [ref=f53e65]:
+          - listitem [ref=f53e66]:
+            - link "Panel Freelance" [ref=f53e67] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f53e72]:
+            - listitem [ref=f53e73]:
+              - link "Clientes" [ref=f53e74] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f53e81]:
+              - link "Proyectos" [ref=f53e82] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f53e87]:
+              - link "Cotizaciones" [ref=f53e88] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f53e93]:
+        - generic [ref=f53e94]: Finanzas
+        - list [ref=f53e95]:
+          - listitem [ref=f53e96]:
+            - link "Finanzas" [ref=f53e97] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f53e102]:
+            - link "Compras" [ref=f53e103] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f53e109]:
+            - link "Ingresos" [ref=f53e110] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f53e115]:
+      - listitem [ref=f53e116]:
+        - button "TU Test User" [ref=f53e117]:
+          - generic [ref=f53e118]: TU
+          - generic [ref=f53e120]: Test User
+  - main [ref=f53e125]:
+    - generic [ref=f53e126]:
+      - button "Toggle Sidebar" [ref=f53e127]
+      - generic [ref=f53e130]: Megalomaniac Pro · Panel
+    - generic [ref=f53e132]:
+      - generic [ref=f53e133]:
+        - generic [ref=f53e134]:
+          - heading "Bienvenido, Test!" [level=2] [ref=f53e135]
+          - paragraph [ref=f53e136]: Hoy es lunes, 24 ago
+        - generic [ref=f53e137]:
+          - link "add Registrar comida" [ref=f53e138] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f53e139]: add
+            - text: Registrar comida
+          - link "bolt Inicio rápido" [ref=f53e140] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f53e141]: bolt
+            - text: Inicio rápido
+      - generic [ref=f53e142]:
+        - generic [ref=f53e143]:
+          - generic [ref=f53e145]:
+            - generic [ref=f53e146]:
+              - generic [ref=f53e147]:
+                - generic [ref=f53e148]: local_fire_department
+                - text: Calorías restantes
+              - generic [ref=f53e149]:
+                - generic [ref=f53e150]: 2,400
+                - generic [ref=f53e151]: kcal
+            - generic [ref=f53e152]:
+              - generic [ref=f53e153]: Meta diaria
+              - generic [ref=f53e154]: 2,400
+          - generic [ref=f53e156]:
+            - generic [ref=f53e157]: Progreso del día
+            - generic [ref=f53e158]: 0%
+        - generic [ref=f53e160]:
+          - generic [ref=f53e161]:
+            - generic [ref=f53e163]:
+              - generic [ref=f53e164]: Proteína
+              - generic [ref=f53e165]: 0 / 180g
+            - generic [ref=f53e166]:
+              - generic [ref=f53e167]: 0%
+              - generic [ref=f53e168]: Bajo
+          - generic [ref=f53e170]:
+            - generic [ref=f53e172]:
+              - generic [ref=f53e173]: Carbohidratos
+              - generic [ref=f53e174]: 0 / 250g
+            - generic [ref=f53e175]:
+              - generic [ref=f53e176]: 0%
+              - generic [ref=f53e177]: Normal
+        - generic [ref=f53e180]:
+          - generic [ref=f53e181]:
+            - generic [ref=f53e182]: Grasas
+            - generic [ref=f53e183]: 0 / 70g
+          - generic [ref=f53e184]:
+            - generic [ref=f53e185]: 0%
+            - generic [ref=f53e186]: Normal
+        - generic [ref=f53e191]:
+          - generic [ref=f53e192]:
+            - generic [ref=f53e193]: Última sesión
+            - generic [ref=f53e195]: 24/8/2026
+          - heading "Fuerza Total" [level=3] [ref=f53e196]
+          - paragraph [ref=f53e197]: Tu última sesión fue intensa. ¡Sigue así!
+          - link "Entrenar ahora arrow_forward" [ref=f53e199] [cursor=pointer]:
+            - /url: /fitness/gym
+            - text: Entrenar ahora
+            - generic [ref=f53e200]: arrow_forward
+        - generic [ref=f53e201]:
+          - generic [ref=f53e202]:
+            - heading "Inventario" [level=3] [ref=f53e203]
+            - generic [ref=f53e204]: 0 bajo
+          - generic [ref=f53e206]:
+            - generic [ref=f53e207]: check_circle
+            - paragraph [ref=f53e208]: ¡Todo abastecido!
+        - generic [ref=f53e209]:
+          - generic [ref=f53e210]:
+            - heading "Hidratación" [level=3] [ref=f53e211]
+            - generic [ref=f53e212]: opacity
+          - generic [ref=f53e213]: 1.8 litros
+        - link "Freelance work NEGOCIO Gestiona proyectos y cotizaciones Ir al panel arrow_forward" [ref=f53e224] [cursor=pointer]:
+          - /url: /freelance/dashboard
+          - generic [ref=f53e225]:
+            - heading "Freelance" [level=3] [ref=f53e226]
+            - generic [ref=f53e227]: work
+          - generic [ref=f53e228]:
+            - generic [ref=f53e229]: NEGOCIO
+            - generic [ref=f53e230]: Gestiona proyectos y cotizaciones
+          - generic [ref=f53e231]:
+            - text: Ir al panel
+            - generic [ref=f53e232]: arrow_forward
+      - generic [ref=f53e233]:
+        - generic [ref=f53e234]:
+          - generic [ref=f53e236]:
+            - generic [ref=f53e237]:
+              - generic [ref=f53e238]: monitoring
+              - generic [ref=f53e240]:
+                - heading "Volumen semanal" [level=3] [ref=f53e241]
+                - paragraph [ref=f53e242]: kg × reps últimos 7 días
+            - generic [ref=f53e243]:
+              - generic [ref=f53e244]: 800kg
+              - generic [ref=f53e245]: 1 entrenos totales
+          - generic [ref=f53e246]:
+            - generic [ref=f53e247]:
+              - generic [ref=f53e248]:
+                - 'generic "Tue 2026-08-18: 0 kg" [ref=f53e250]'
+                - generic [ref=f53e251]: Tu
+              - generic [ref=f53e252]:
+                - 'generic "Wed 2026-08-19: 0 kg" [ref=f53e254]'
+                - generic [ref=f53e255]: We
+              - generic [ref=f53e256]:
+                - 'generic "Thu 2026-08-20: 0 kg" [ref=f53e258]'
+                - generic [ref=f53e259]: Th
+              - generic [ref=f53e260]:
+                - 'generic "Fri 2026-08-21: 0 kg" [ref=f53e262]'
+                - generic [ref=f53e263]: Fr
+              - generic [ref=f53e264]:
+                - 'generic "Sat 2026-08-22: 0 kg" [ref=f53e266]'
+                - generic [ref=f53e267]: Sa
+              - generic [ref=f53e268]:
+                - 'generic "Sun 2026-08-23: 0 kg" [ref=f53e270]'
+                - generic [ref=f53e271]: Su
+              - generic [ref=f53e272]:
+                - generic [ref=f53e273]: 1k
+                - 'generic "Mon 2026-08-24: 800 kg" [ref=f53e275]'
+                - generic [ref=f53e276]: Mo
+            - generic [ref=f53e277]:
+              - generic [ref=f53e278]: Lun — Dom · barra roja = kg totales
+              - generic [ref=f53e279]: "chart-1 #EF4444"
+        - generic [ref=f53e281]:
+          - generic [ref=f53e282]:
+            - generic [ref=f53e283]:
+              - generic [ref=f53e284]:
+                - generic [ref=f53e285]: local_fire_department
+                - generic [ref=f53e287]:
+                  - heading "Racha" [level=3] [ref=f53e288]
+                  - paragraph [ref=f53e289]: días consecutivos
+              - generic [ref=f53e290]: 1días
+            - generic [ref=f53e291]:
+              - generic [ref=f53e292]:
+                - generic "Tue 2026-08-18" [ref=f53e293]
+                - generic [ref=f53e295]: Tu
+                - generic [ref=f53e296]: 08-18
+              - generic [ref=f53e297]:
+                - generic "Wed 2026-08-19" [ref=f53e298]
+                - generic [ref=f53e300]: We
+                - generic [ref=f53e301]: 08-19
+              - generic [ref=f53e302]:
+                - generic "Thu 2026-08-20" [ref=f53e303]
+                - generic [ref=f53e305]: Th
+                - generic [ref=f53e306]: 08-20
+              - generic [ref=f53e307]:
+                - generic "Fri 2026-08-21" [ref=f53e308]
+                - generic [ref=f53e310]: Fr
+                - generic [ref=f53e311]: 08-21
+              - generic [ref=f53e312]:
+                - generic "Sat 2026-08-22" [ref=f53e313]
+                - generic [ref=f53e315]: Sa
+                - generic [ref=f53e316]: 08-22
+              - generic [ref=f53e317]:
+                - generic "Sun 2026-08-23" [ref=f53e318]
+                - generic [ref=f53e320]: Su
+                - generic [ref=f53e321]: 08-23
+              - generic [ref=f53e322]:
+                - generic "Mon 2026-08-24 · entrenado" [ref=f53e323]: check
+                - generic [ref=f53e325]: Mo
+                - generic [ref=f53e326]: 08-24
+          - generic [ref=f53e327]: Buen comienzo, no pares
+          - generic [ref=f53e330]: Últimos 7 días · punto rojo = día con entreno

@@ -1,0 +1,184 @@
+- generic [ref=f41e3]:
+  - generic [ref=f41e7]:
+    - generic [ref=f41e8]:
+      - list [ref=f41e9]:
+        - listitem [ref=f41e10]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f41e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f41e15]: Megalomaniac Pro
+            - generic [ref=f41e17]: Megalomaniac Pro
+      - generic [ref=f41e18]:
+        - generic [ref=f41e19]: Navegación
+        - button "Sidebar fijado" [ref=f41e20]:
+          - generic [ref=f41e21]: push_pin
+    - generic [ref=f41e22]:
+      - generic [ref=f41e23]:
+        - generic [ref=f41e24]: Principal
+        - list [ref=f41e25]:
+          - listitem [ref=f41e26]:
+            - link "Panel" [ref=f41e27] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f41e34]:
+            - link "Entrenamiento" [ref=f41e35] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f41e43]:
+            - link "Nutrición" [ref=f41e44] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f41e49]:
+            - link "Suplementos" [ref=f41e50] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f41e55]:
+            - link "Compras" [ref=f41e56] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f41e62]:
+        - generic [ref=f41e63]: Freelance
+        - list [ref=f41e64]:
+          - listitem [ref=f41e65]:
+            - link "Panel Freelance" [ref=f41e66] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f41e71]:
+            - listitem [ref=f41e72]:
+              - link "Clientes" [ref=f41e73] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f41e80]:
+              - link "Proyectos" [ref=f41e81] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f41e86]:
+              - link "Cotizaciones" [ref=f41e87] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f41e92]:
+        - generic [ref=f41e93]: Finanzas
+        - list [ref=f41e94]:
+          - listitem [ref=f41e95]:
+            - link "Finanzas" [ref=f41e96] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f41e101]:
+            - link "Compras" [ref=f41e102] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f41e108]:
+            - link "Ingresos" [ref=f41e109] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f41e114]:
+      - listitem [ref=f41e115]:
+        - button "TU Test User" [ref=f41e116]:
+          - generic [ref=f41e117]: TU
+          - generic [ref=f41e119]: Test User
+  - main [ref=f41e124]:
+    - generic [ref=f41e125]:
+      - button "Toggle Sidebar" [ref=f41e126]
+      - generic [ref=f41e129]: Megalomaniac Pro · Panel
+    - generic [ref=f41e131]:
+      - generic [ref=f41e132]:
+        - generic [ref=f41e133]:
+          - heading "Nutrición diaria" [level=1] [ref=f41e134]
+          - paragraph [ref=f41e135]: Registra tus macros y comidas
+        - generic [ref=f41e137]:
+          - button "Día anterior" [ref=f41e138]:
+            - generic [ref=f41e139]: chevron_left
+          - textbox [ref=f41e140] [cursor=pointer]: 2026-08-24
+          - button "Día siguiente" [ref=f41e141]:
+            - generic [ref=f41e142]: chevron_right
+          - button "Hoy" [ref=f41e143]
+      - generic [ref=f41e145]:
+        - generic [ref=f41e146]: monitor_weight
+        - generic [ref=f41e148]:
+          - paragraph [ref=f41e149]: Métricas corporales
+          - paragraph [ref=f41e150]:
+            - text: Completa peso y altura en
+            - link "Perfil" [ref=f41e151] [cursor=pointer]:
+              - /url: /settings/profile
+      - generic [ref=f41e152]:
+        - generic [ref=f41e153]:
+          - text: Calorías
+          - generic [ref=f41e154]:
+            - generic [ref=f41e155]: "0"
+            - generic [ref=f41e156]: / 2400
+        - generic [ref=f41e158]:
+          - text: Proteína
+          - generic [ref=f41e159]:
+            - generic [ref=f41e160]: 0g
+            - generic [ref=f41e161]: / 180g
+        - generic [ref=f41e163]:
+          - text: Carbohidratos
+          - generic [ref=f41e164]:
+            - generic [ref=f41e165]: 0g
+            - generic [ref=f41e166]: / 250g
+        - generic [ref=f41e168]:
+          - text: Grasas
+          - generic [ref=f41e169]:
+            - generic [ref=f41e170]: 0g
+            - generic [ref=f41e171]: / 70g
+      - generic [ref=f41e173]:
+        - generic [ref=f41e178]:
+          - generic [ref=f41e179]: "0"
+          - generic [ref=f41e180]: kcal
+        - generic [ref=f41e181]:
+          - generic [ref=f41e182]:
+            - generic [ref=f41e183]: Proteína
+            - generic [ref=f41e186]: 0%
+            - generic [ref=f41e187]: 0g
+          - generic [ref=f41e189]:
+            - generic [ref=f41e190]: Carbohidratos
+            - generic [ref=f41e193]: 0%
+            - generic [ref=f41e194]: 0g
+          - generic [ref=f41e196]:
+            - generic [ref=f41e197]: Grasas
+            - generic [ref=f41e200]: 0%
+            - generic [ref=f41e201]: 0g
+      - generic [ref=f41e203]:
+        - generic [ref=f41e204]:
+          - generic [ref=f41e205]:
+            - generic [ref=f41e206]:
+              - generic [ref=f41e207]: bakery_dining
+              - generic [ref=f41e209]:
+                - heading "Desayuno" [level=2] [ref=f41e210]
+                - paragraph [ref=f41e211]: "Recomendado: 600 - 800 kcal"
+            - button "add_circle Añadir alimento" [ref=f41e212]:
+              - generic [ref=f41e213]: add_circle
+              - text: Añadir alimento
+          - generic [ref=f41e214]:
+            - generic [ref=f41e215]: no_food
+            - paragraph [ref=f41e216]: Sin alimentos registrados
+            - button "Añadir el primero" [ref=f41e217]
+        - generic [ref=f41e218]:
+          - generic [ref=f41e219]:
+            - generic [ref=f41e220]:
+              - generic [ref=f41e221]: restaurant
+              - generic [ref=f41e223]:
+                - heading "Comida" [level=2] [ref=f41e224]
+                - paragraph [ref=f41e225]: "Recomendado: 600 - 800 kcal"
+            - button "add_circle Añadir alimento" [ref=f41e226]:
+              - generic [ref=f41e227]: add_circle
+              - text: Añadir alimento
+          - generic [ref=f41e228]:
+            - generic [ref=f41e229]: no_food
+            - paragraph [ref=f41e230]: Sin alimentos registrados
+            - button "Añadir el primero" [ref=f41e231]
+        - generic [ref=f41e232]:
+          - generic [ref=f41e233]:
+            - generic [ref=f41e234]:
+              - generic [ref=f41e235]: dinner_dining
+              - generic [ref=f41e237]:
+                - heading "Cena" [level=2] [ref=f41e238]
+                - paragraph [ref=f41e239]: "Recomendado: 600 - 800 kcal"
+            - button "add_circle Añadir alimento" [ref=f41e240]:
+              - generic [ref=f41e241]: add_circle
+              - text: Añadir alimento
+          - generic [ref=f41e242]:
+            - generic [ref=f41e243]: no_food
+            - paragraph [ref=f41e244]: Sin alimentos registrados
+            - button "Añadir el primero" [ref=f41e245]
+        - generic [ref=f41e246]:
+          - generic [ref=f41e247]:
+            - generic [ref=f41e248]:
+              - generic [ref=f41e249]: icecream
+              - generic [ref=f41e251]:
+                - heading "Snack" [level=2] [ref=f41e252]
+                - paragraph [ref=f41e253]: "Recomendado: 600 - 800 kcal"
+            - button "add_circle Añadir alimento" [ref=f41e254]:
+              - generic [ref=f41e255]: add_circle
+              - text: Añadir alimento
+          - generic [ref=f41e256]:
+            - generic [ref=f41e257]: no_food
+            - paragraph [ref=f41e258]: Sin alimentos registrados
+            - button "Añadir el primero" [ref=f41e259]

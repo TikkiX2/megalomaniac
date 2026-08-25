@@ -1,0 +1,20 @@
+FROM php:8.4-fpm
+
+RUN apt-get update && apt-get install -y \
+    git curl unzip libpq-dev libzip-dev libpng-dev libonig-dev \
+    libxml2-dev libicu-dev libsqlite3-dev libfreetype6-dev libjpeg62-turbo-dev \
+    nodejs npm \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+       pdo pdo_pgsql pdo_sqlite mbstring zip gd bcmath pcntl exif intl opcache
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+RUN echo '[global]' > /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo 'daemonize = no' >> /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo '[www]' >> /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo 'listen = 0.0.0.0:8070' >> /usr/local/etc/php-fpm.d/zz-docker.conf
+
+WORKDIR /var/www/megalomaniac
+
+CMD ["php-fpm"]

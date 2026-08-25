@@ -1,0 +1,117 @@
+- generic [ref=f43e3]:
+  - generic [ref=f43e7]:
+    - generic [ref=f43e8]:
+      - list [ref=f43e9]:
+        - listitem [ref=f43e10]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f43e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f43e15]: Megalomaniac Pro
+            - generic [ref=f43e17]: Megalomaniac Pro
+      - generic [ref=f43e18]:
+        - generic [ref=f43e19]: Navegación
+        - button "Sidebar fijado" [ref=f43e20]:
+          - generic [ref=f43e21]: push_pin
+    - generic [ref=f43e22]:
+      - generic [ref=f43e23]:
+        - generic [ref=f43e24]: Principal
+        - list [ref=f43e25]:
+          - listitem [ref=f43e26]:
+            - link "Panel" [ref=f43e27] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f43e34]:
+            - link "Entrenamiento" [ref=f43e35] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f43e43]:
+            - link "Nutrición" [ref=f43e44] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f43e49]:
+            - link "Suplementos" [ref=f43e50] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f43e55]:
+            - link "Compras" [ref=f43e56] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f43e62]:
+        - generic [ref=f43e63]: Freelance
+        - list [ref=f43e64]:
+          - listitem [ref=f43e65]:
+            - link "Panel Freelance" [ref=f43e66] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f43e71]:
+            - listitem [ref=f43e72]:
+              - link "Clientes" [ref=f43e73] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f43e80]:
+              - link "Proyectos" [ref=f43e81] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f43e86]:
+              - link "Cotizaciones" [ref=f43e87] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f43e92]:
+        - generic [ref=f43e93]: Finanzas
+        - list [ref=f43e94]:
+          - listitem [ref=f43e95]:
+            - link "Finanzas" [ref=f43e96] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f43e101]:
+            - link "Compras" [ref=f43e102] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f43e108]:
+            - link "Ingresos" [ref=f43e109] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f43e114]:
+      - listitem [ref=f43e115]:
+        - button "TU Test User" [ref=f43e116]:
+          - generic [ref=f43e117]: TU
+          - generic [ref=f43e119]: Test User
+  - main [ref=f43e124]:
+    - generic [ref=f43e125]:
+      - button "Toggle Sidebar" [ref=f43e126]
+      - generic [ref=f43e129]: Megalomaniac Pro · Panel
+    - generic [ref=f43e131]:
+      - generic [ref=f43e132]:
+        - generic [ref=f43e133]:
+          - link [ref=f43e134] [cursor=pointer]:
+            - /url: /freelance/projects
+          - generic [ref=f43e135]:
+            - generic [ref=f43e136]:
+              - heading "App Titan Redesign" [level=1] [ref=f43e137]
+              - generic [ref=f43e138]: in progress
+            - paragraph [ref=f43e139]: Gimnasio Titan
+        - link "Editar" [ref=f43e144] [cursor=pointer]:
+          - /url: /freelance/projects/1/edit
+      - generic [ref=f43e145]:
+        - generic [ref=f43e147]:
+          - tablist [ref=f43e148]:
+            - tab "Resumen" [selected] [ref=f43e149]
+            - tab "Tareas" [ref=f43e150]
+            - tab "Discusión" [ref=f43e151]
+            - tab "Archivos" [ref=f43e152]
+          - tabpanel "Resumen" [ref=f43e153]:
+            - generic [ref=f43e154]: Descripción del Proyecto
+        - generic [ref=f43e160]:
+          - generic [ref=f43e161]:
+            - generic [ref=f43e162]: Detalles del Proyecto
+            - generic [ref=f43e164]:
+              - generic [ref=f43e165]:
+                - paragraph [ref=f43e166]: Área / Módulo
+                - paragraph [ref=f43e167]: •
+              - generic [ref=f43e168]:
+                - paragraph [ref=f43e169]: Prioridad
+                - generic [ref=f43e170]: high
+              - generic [ref=f43e171]:
+                - paragraph [ref=f43e172]: Fecha Límite
+                - generic [ref=f43e173]: Sin fecha
+          - generic [ref=f43e176]:
+            - generic [ref=f43e177]: Finanzas
+            - generic [ref=f43e179]:
+              - generic [ref=f43e180]:
+                - paragraph [ref=f43e181]: Total Presupuestado
+                - paragraph [ref=f43e182]: $ 0
+              - generic [ref=f43e183]:
+                - paragraph [ref=f43e184]: Pagado hasta la fecha
+                - paragraph [ref=f43e185]: $ 0
+              - generic [ref=f43e186]:
+                - generic [ref=f43e187]:
+                  - generic [ref=f43e188]: Progreso de Pago
+                  - generic [ref=f43e189]: NaN%
+                - progressbar [ref=f43e190]

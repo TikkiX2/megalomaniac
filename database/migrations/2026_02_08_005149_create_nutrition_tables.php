@@ -36,7 +36,7 @@ return new class extends Migration
         Schema::create('meal_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('meal_log_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('food_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('food_id')->constrained('foods')->cascadeOnDelete();
             $table->decimal('quantity', 8, 2)->default(1); // Multiplier of serving size
             // Snapshots to preserve history if food changes
             $table->integer('calories_snapshot');

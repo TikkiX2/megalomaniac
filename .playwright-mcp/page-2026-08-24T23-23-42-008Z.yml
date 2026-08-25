@@ -1,0 +1,125 @@
+- generic [ref=f45e3]:
+  - generic [ref=f45e7]:
+    - generic [ref=f45e8]:
+      - list [ref=f45e9]:
+        - listitem [ref=f45e10]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f45e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f45e15]: Megalomaniac Pro
+            - generic [ref=f45e17]: Megalomaniac Pro
+      - generic [ref=f45e18]:
+        - generic [ref=f45e19]: Navegación
+        - button "Sidebar fijado" [ref=f45e20]:
+          - generic [ref=f45e21]: push_pin
+    - generic [ref=f45e22]:
+      - generic [ref=f45e23]:
+        - generic [ref=f45e24]: Principal
+        - list [ref=f45e25]:
+          - listitem [ref=f45e26]:
+            - link "Panel" [ref=f45e27] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f45e34]:
+            - link "Entrenamiento" [ref=f45e35] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f45e43]:
+            - link "Nutrición" [ref=f45e44] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f45e49]:
+            - link "Suplementos" [ref=f45e50] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f45e55]:
+            - link "Compras" [ref=f45e56] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f45e62]:
+        - generic [ref=f45e63]: Freelance
+        - list [ref=f45e64]:
+          - listitem [ref=f45e65]:
+            - link "Panel Freelance" [ref=f45e66] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f45e71]:
+            - listitem [ref=f45e72]:
+              - link "Clientes" [ref=f45e73] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f45e80]:
+              - link "Proyectos" [ref=f45e81] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f45e86]:
+              - link "Cotizaciones" [ref=f45e87] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f45e92]:
+        - generic [ref=f45e93]: Finanzas
+        - list [ref=f45e94]:
+          - listitem [ref=f45e95]:
+            - link "Finanzas" [ref=f45e96] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f45e101]:
+            - link "Compras" [ref=f45e102] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f45e108]:
+            - link "Ingresos" [ref=f45e109] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f45e114]:
+      - listitem [ref=f45e115]:
+        - button "TU Test User" [ref=f45e116]:
+          - generic [ref=f45e117]: TU
+          - generic [ref=f45e119]: Test User
+  - main [ref=f45e124]:
+    - generic [ref=f45e125]:
+      - button "Toggle Sidebar" [ref=f45e126]
+      - generic [ref=f45e129]: Megalomaniac Pro · Panel
+    - generic [ref=f45e130]:
+      - heading "Profile Settings" [level=1] [ref=f45e131]
+      - generic [ref=f45e132]:
+        - generic [ref=f45e133]:
+          - heading "Settings" [level=2] [ref=f45e134]
+          - paragraph [ref=f45e135]: Manage your profile and account settings
+        - generic [ref=f45e136]:
+          - complementary [ref=f45e137]:
+            - navigation "Settings" [ref=f45e138]:
+              - link "Profile" [ref=f45e139] [cursor=pointer]:
+                - /url: /settings/profile
+              - link "Password" [ref=f45e140] [cursor=pointer]:
+                - /url: /settings/password
+              - link "Two-Factor Auth" [ref=f45e141] [cursor=pointer]:
+                - /url: /settings/two-factor
+              - link "Appearance" [ref=f45e142] [cursor=pointer]:
+                - /url: /settings/appearance
+          - generic [ref=f45e144]:
+            - generic [ref=f45e145]:
+              - generic [ref=f45e146]:
+                - heading "Información del perfil" [level=2] [ref=f45e147]
+                - paragraph [ref=f45e148]: Actualiza tu nombre, email y métricas corporales
+              - generic [ref=f45e149]:
+                - generic [ref=f45e150]:
+                  - generic [ref=f45e151]: Name
+                  - textbox "Name" [ref=f45e152]:
+                    - /placeholder: Full name
+                    - text: Test User
+                - generic [ref=f45e153]:
+                  - generic [ref=f45e154]: Email address
+                  - textbox "Email address" [ref=f45e155]: test@example.com
+                - generic [ref=f45e156]:
+                  - heading "monitor_weight Métricas corporales" [level=3] [ref=f45e157]:
+                    - generic [ref=f45e158]: monitor_weight
+                    - text: Métricas corporales
+                  - generic [ref=f45e159]:
+                    - generic [ref=f45e160]:
+                      - generic [ref=f45e161]: Peso (kg)
+                      - spinbutton "Peso (kg)" [ref=f45e162]
+                    - generic [ref=f45e163]:
+                      - generic [ref=f45e164]: Altura (cm)
+                      - spinbutton "Altura (cm)" [ref=f45e165]
+                    - generic [ref=f45e166]:
+                      - generic [ref=f45e167]: Peso objetivo (kg)
+                      - spinbutton "Peso objetivo (kg)" [ref=f45e168]
+                  - paragraph [ref=f45e169]: Introduce peso y altura para calcular tu IMC.
+                - button "Save" [ref=f45e171]
+            - generic [ref=f45e172]:
+              - generic [ref=f45e173]:
+                - heading "Delete account" [level=2] [ref=f45e174]
+                - paragraph [ref=f45e175]: Delete your account and all of its resources
+              - generic [ref=f45e176]:
+                - generic [ref=f45e177]:
+                  - paragraph [ref=f45e178]: Warning
+                  - paragraph [ref=f45e179]: Please proceed with caution, this cannot be undone.
+                - button "Delete account" [ref=f45e180]

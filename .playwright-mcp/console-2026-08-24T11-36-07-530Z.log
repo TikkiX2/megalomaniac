@@ -1,0 +1,9 @@
+[     177ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://127.0.0.1:8010/_boost/browser-logs @ http://127.0.0.1:8010/fitness/groceries:24
+[  178240ms] Error: Page not found: ./pages/fitness/grocery-history.tsx
+    at PC (http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:82:39567)
+    at resolve (http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:90:38919)
+    at M2.v [as resolveComponent] (http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:82:23511)
+    at M2.resolve (http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:10:21652)
+    at M2.set (http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:10:19640)
+    at fS.setPage (http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:18:3021)
+    at async fS.process (http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:18:1144)

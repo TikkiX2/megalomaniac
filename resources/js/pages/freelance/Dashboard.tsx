@@ -86,7 +86,7 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-                    <Card className="col-span-4 bg-[#193322] border-[#23482f]">
+                    <Card className="col-span-4 bg-[#2b1a1a] border-[#3e2121]">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Proyectos Recientes</CardTitle>
                             <Button variant="ghost" size="sm" asChild>
@@ -99,7 +99,7 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
                                     <p className="text-sm text-muted-foreground py-4 text-center">No hay proyectos recientes.</p>
                                 ) : (
                                     recent_projects.map((project) => (
-                                        <div key={project.id} className="flex items-center justify-between p-3 rounded-lg border border-[#23482f] bg-[#102216]">
+                                        <div key={project.id} className="flex items-center justify-between p-3 rounded-lg border border-[#3e2121] bg-[#1c0f0f]">
                                             <div className="flex flex-col">
                                                 <span className="font-medium">{project.name}</span>
                                                 <span className="text-xs text-muted-foreground">{project.client?.name}</span>
@@ -121,7 +121,7 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
                         </CardContent>
                     </Card>
 
-                    <Card className="col-span-3 bg-[#193322] border-[#23482f]">
+                    <Card className="col-span-3 bg-[#2b1a1a] border-[#3e2121]">
                         <CardHeader>
                             <CardTitle>Próximas Tareas</CardTitle>
                         </CardHeader>
@@ -131,7 +131,7 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
                                     <p className="text-sm text-muted-foreground py-4 text-center">No hay tareas pendientes.</p>
                                 ) : (
                                     upcoming_tasks.map((task) => (
-                                        <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg border border-[#23482f] bg-[#102216]">
+                                        <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg border border-[#3e2121] bg-[#1c0f0f]">
                                             <Clock className="h-4 w-4 text-primary mt-0.5" />
                                             <div className="flex flex-col flex-1">
                                                 <span className="text-sm font-medium">{task.title}</span>
@@ -156,10 +156,10 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
 
 function StatCard({ title, value, icon: Icon, description }: any) {
     return (
-        <Card className="bg-[#193322] border-[#23482f]">
+        <Card className="bg-[#2b1a1a] border-[#3e2121]">
             <CardContent className="p-6">
                 <div className="flex items-center justify-between space-y-0 pb-2">
-                    <p className="text-sm font-medium text-[#92c9a4] uppercase tracking-widest">{title}</p>
+                    <p className="text-sm font-medium text-[#e8b4b4] uppercase tracking-widest">{title}</p>
                     <Icon className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex flex-col gap-1">

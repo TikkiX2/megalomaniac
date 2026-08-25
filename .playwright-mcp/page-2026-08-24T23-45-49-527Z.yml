@@ -1,0 +1,126 @@
+- generic [ref=f50e2]:
+  - generic [ref=f50e4]:
+    - generic [ref=f50e5]: Internal Server Error
+    - button "Copy as Markdown" [ref=f50e11] [cursor=pointer]
+  - generic [ref=f50e18]:
+    - generic [ref=f50e19]:
+      - heading "Illuminate\\Foundation\\ViteManifestNotFoundException" [level=1] [ref=f50e20]
+      - generic [ref=f50e21]: vendor/laravel/framework/src/Illuminate/Foundation/Vite.php:946
+      - paragraph [ref=f50e23]: "Vite manifest not found at: /var/www/megalomaniac/public/build/manifest.json"
+    - generic [ref=f50e24]:
+      - generic [ref=f50e25]:
+        - generic [ref=f50e26]:
+          - generic [ref=f50e27]: LARAVEL
+          - generic [ref=f50e28]: 12.50.0
+        - generic [ref=f50e29]:
+          - generic [ref=f50e30]: PHP
+          - generic [ref=f50e31]: 8.4.24
+      - generic [ref=f50e32]: UNHANDLED
+      - generic [ref=f50e36]: CODE 0
+    - generic [ref=f50e38]:
+      - generic [ref=f50e39]: "500"
+      - generic [ref=f50e43]: GET
+      - generic [ref=f50e47]: http://megalomaniac.dev.local/login
+      - button [ref=f50e48] [cursor=pointer]
+  - generic [ref=f50e53]:
+    - generic [ref=f50e54]:
+      - heading "Exception trace" [level=3] [ref=f50e60]
+      - generic [ref=f50e61]:
+        - generic [ref=f50e63] [cursor=pointer]:
+          - generic [ref=f50e68]: 2 vendor frames
+          - button [ref=f50e69]
+        - generic [ref=f50e74]:
+          - generic [ref=f50e75] [cursor=pointer]:
+            - generic [ref=f50e78]:
+              - code [ref=f50e82]:
+                - generic [ref=f50e83]: resources/views/app.blade.php
+              - generic [ref=f50e84]: resources/views/app.blade.php:20
+            - button [ref=f50e87]
+          - code [ref=f50e96]:
+            - generic [ref=f50e97]: "15"
+            - generic [ref=f50e98]: "16 {{-- Material Symbols --}}"
+            - generic [ref=f50e99]: 17 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+            - generic [ref=f50e100]: "18"
+            - generic [ref=f50e101]: 19 @viteReactRefresh
+            - generic [ref=f50e102]: "20 @vite(['resources/js/app.tsx', \"resources/js/pages/{$page['component']}.tsx\"])"
+            - generic [ref=f50e103]: 21 @inertiaHead
+            - generic [ref=f50e104]: 22 </head>
+            - generic [ref=f50e105]: 23 <body class="font-sans antialiased bg-background text-foreground">
+            - generic [ref=f50e106]: 24 @inertia
+            - generic [ref=f50e107]: 25 </body>
+            - generic [ref=f50e108]: 26</html>
+            - generic [ref=f50e109]: "27"
+        - generic [ref=f50e111] [cursor=pointer]:
+          - generic [ref=f50e116]: 26 vendor frames
+          - button [ref=f50e117]
+        - generic [ref=f50e123] [cursor=pointer]:
+          - generic [ref=f50e126]:
+            - code [ref=f50e130]:
+              - generic [ref=f50e131]: App\Http\Middleware\HandleAppearance->handle(object(Illuminate\Http\Request), object(Closure))
+            - generic [ref=f50e132]: app/Http/Middleware/HandleAppearance.php:21
+          - button [ref=f50e135]
+        - generic [ref=f50e141] [cursor=pointer]:
+          - generic [ref=f50e146]: 43 vendor frames
+          - button [ref=f50e147]
+        - generic [ref=f50e153] [cursor=pointer]:
+          - generic [ref=f50e156]:
+            - code [ref=f50e160]:
+              - generic [ref=f50e161]: public/index.php
+            - generic [ref=f50e162]: public/index.php:20
+          - button [ref=f50e165]
+    - generic [ref=f50e170]:
+      - generic [ref=f50e171]:
+        - heading "Queries" [level=3] [ref=f50e176]
+        - generic [ref=f50e177]: 1-1 of 1
+      - generic [ref=f50e180]:
+        - generic [ref=f50e181]:
+          - generic [ref=f50e182]: sqlite
+          - code [ref=f50e189]:
+            - generic [ref=f50e190]: select * from "sessions" where "id" = 'Ebx7PAeI8VVhR2K5bbLG91YtFl6WbeNq35nCl9dJ' limit 1
+        - generic [ref=f50e191]: 1.44ms
+  - generic [ref=f50e193]:
+    - generic [ref=f50e194]:
+      - heading "Headers" [level=2] [ref=f50e195]
+      - generic [ref=f50e196]:
+        - generic [ref=f50e197]:
+          - generic [ref=f50e198]: cookie
+          - generic [ref=f50e200]: appearance=system; XSRF-TOKEN=eyJpdiI6ImI3TlVRY0VubmNlSW9QYWdBc0hwRnc9PSIsInZhbHVlIjoiaEY0UElKK3ZCQ0k3aXhOa21veWNsdUUvV3ZjTWUzWks3OEZkZEgzTlhxVVU5Q3ZpWjBsWUU5THNSZHdlRVNxeVRNSWpoaTZoZU8yQjhSQ1hJSlNqM3I4WWhkdTZQV3N1QTljYlRmS0dySGcrT2FxcmR4VllvempZdGF6ZzlmZ2siLCJtYWMiOiIyZjY3Y2JjZDYyMDgzNmQ0MmFkMGE5MzU0MGUzNjJmOTM1MjRmM2IwMTRlN2ExNmQ4NzlhYzYyN2I3OTRmMzYxIiwidGFnIjoiIn0%3D; laravel-session=eyJpdiI6Ik1BR0hTajcrRkRxTzlnWCtEb0tTTnc9PSIsInZhbHVlIjoieHBaRDFwVWJ4M04ySXRoV2VHWEZJdElJc1dId1J1eGlLWEFWSmNTV0FuaFByemhaRkZGeVMxbFZLT1VxTXdXTVlDdU1mRkNpTDJ3VGlDcFRmb2VLeWRoK3E2UXBMelJRRkFCVk5Cd3hudmdzWExxRGdKKy9xdHBuMWdLYnhOWU8iLCJtYWMiOiIzNzJlZmJkMDkxYTc2YmNjOWZjZGJjMmM3NTQ0NzFjMzY2OGY1Y2NkOTYyOWJkYjlmYTJjM2ZkNzljMmEyNTIyIiwidGFnIjoiIn0%3D
+        - generic [ref=f50e201]:
+          - generic [ref=f50e202]: accept-language
+          - generic [ref=f50e204]: en-US,en;q=0.9
+        - generic [ref=f50e205]:
+          - generic [ref=f50e206]: accept-encoding
+          - generic [ref=f50e208]: gzip, deflate
+        - generic [ref=f50e209]:
+          - generic [ref=f50e210]: accept
+          - generic [ref=f50e212]: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+        - generic [ref=f50e213]:
+          - generic [ref=f50e214]: user-agent
+          - generic [ref=f50e216]: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36
+        - generic [ref=f50e217]:
+          - generic [ref=f50e218]: upgrade-insecure-requests
+          - generic [ref=f50e220]: "1"
+        - generic [ref=f50e221]:
+          - generic [ref=f50e222]: connection
+          - generic [ref=f50e224]: keep-alive
+        - generic [ref=f50e225]:
+          - generic [ref=f50e226]: host
+          - generic [ref=f50e228]: megalomaniac.dev.local
+    - generic [ref=f50e229]:
+      - heading "Body" [level=2] [ref=f50e230]
+      - generic [ref=f50e231]: // No request body
+    - generic [ref=f50e232]:
+      - heading "Routing" [level=2] [ref=f50e233]
+      - generic [ref=f50e234]:
+        - generic [ref=f50e235]:
+          - generic [ref=f50e236]: controller
+          - generic [ref=f50e238]: Laravel\Fortify\Http\Controllers\AuthenticatedSessionController@create
+        - generic [ref=f50e239]:
+          - generic [ref=f50e240]: route name
+          - generic [ref=f50e242]: login
+        - generic [ref=f50e243]:
+          - generic [ref=f50e244]: middleware
+          - generic [ref=f50e246]: web, guest:web
+    - generic [ref=f50e247]:
+      - heading "Routing parameters" [level=2] [ref=f50e248]
+      - generic [ref=f50e249]: // No routing parameters

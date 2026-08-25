@@ -2,10 +2,12 @@
 
 namespace Database\Factories;
 
+use App\Models\ProjectTask;
+use App\Models\TaskProperty;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TaskProperty>
+ * @extends Factory<TaskProperty>
  */
 class TaskPropertyFactory extends Factory
 {
@@ -14,7 +16,7 @@ class TaskPropertyFactory extends Factory
         $type = $this->faker->randomElement(['text', 'number', 'date', 'select', 'multi_select', 'checkbox', 'url', 'person']);
 
         $data = [
-            'project_task_id' => \App\Models\ProjectTask::factory(),
+            'project_task_id' => ProjectTask::factory(),
             'key' => $this->faker->unique()->word().'_'.$this->faker->randomNumber(3),
             'type' => $type,
             'sort_order' => $this->faker->numberBetween(0, 10),

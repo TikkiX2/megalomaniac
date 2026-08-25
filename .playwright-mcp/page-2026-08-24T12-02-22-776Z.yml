@@ -1,0 +1,128 @@
+- generic [ref=f26e3]:
+  - complementary [ref=f26e4]:
+    - generic [ref=f26e5]:
+      - generic [ref=f26e6]:
+        - generic [ref=f26e7]:
+          - generic [ref=f26e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f26e11]
+        - navigation [ref=f26e12]:
+          - link "dashboard Dashboard" [ref=f26e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f26e14]: dashboard
+            - generic [ref=f26e15]: Dashboard
+          - link "work Freelance" [ref=f26e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f26e17]: work
+            - generic [ref=f26e18]: Freelance
+          - link "payments Finance" [ref=f26e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f26e20]: payments
+            - generic [ref=f26e21]: Finance
+          - link "exercise Workout Log" [ref=f26e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f26e23]: exercise
+            - generic [ref=f26e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f26e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f26e26]: restaurant
+            - generic [ref=f26e27]: Nutrition
+          - link "medication Supplements" [ref=f26e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f26e29]: medication
+            - generic [ref=f26e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f26e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f26e32]: shopping_cart
+            - generic [ref=f26e33]: Grocery List
+      - generic [ref=f26e34]:
+        - link "settings Settings" [ref=f26e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f26e36]: settings
+          - generic [ref=f26e37]: Settings
+        - generic [ref=f26e38]:
+          - generic [ref=f26e39]: T
+          - paragraph [ref=f26e41]: Test User
+  - main [ref=f26e42]:
+    - generic [ref=f26e44]:
+      - generic [ref=f26e45]:
+        - link [ref=f26e46] [cursor=pointer]:
+          - /url: /freelance/projects
+        - heading "Crear Nuevo Proyecto" [level=1] [ref=f26e48]
+      - generic [ref=f26e49]:
+        - generic [ref=f26e50]:
+          - generic [ref=f26e51]: Información General
+          - generic [ref=f26e53]:
+            - generic [ref=f26e54]:
+              - generic [ref=f26e55]:
+                - text: Cliente *
+                - combobox [ref=f26e56]:
+                  - generic: Seleccionar cliente
+                - combobox [ref=f26e57]
+              - generic [ref=f26e58]:
+                - text: Nombre del Proyecto *
+                - textbox [ref=f26e59]
+            - generic [ref=f26e60]:
+              - text: Descripción
+              - generic [ref=f26e62]:
+                - status [ref=f26e63]
+                - generic [ref=f26e64]:
+                  - button [ref=f26e65] [cursor=pointer]
+                  - button [ref=f26e68] [cursor=pointer]
+        - generic [ref=f26e71]:
+          - generic [ref=f26e72]:
+            - generic [ref=f26e73]: Estado y Fechas
+            - generic [ref=f26e75]:
+              - generic [ref=f26e76]:
+                - text: Estado *
+                - combobox [ref=f26e77]:
+                  - generic: Pendiente
+                - combobox [ref=f26e78]
+              - generic [ref=f26e79]:
+                - generic [ref=f26e80]:
+                  - text: Fecha Inicio
+                  - textbox [ref=f26e81]
+                - generic [ref=f26e82]:
+                  - text: Deadline
+                  - textbox [ref=f26e83]
+          - generic [ref=f26e84]:
+            - generic [ref=f26e85]: Presupuesto
+            - generic [ref=f26e87]:
+              - generic [ref=f26e88]:
+                - generic [ref=f26e89]:
+                  - text: Moneda *
+                  - combobox [ref=f26e90]:
+                    - generic: USD ($)
+                  - combobox [ref=f26e91]
+                - generic [ref=f26e92]:
+                  - text: Monto Total
+                  - spinbutton [ref=f26e93]
+              - generic [ref=f26e94]:
+                - generic [ref=f26e95]:
+                  - text: Tarifa/Hora
+                  - spinbutton [ref=f26e96]
+                - generic [ref=f26e97]:
+                  - text: Horas Est.
+                  - spinbutton [ref=f26e98]
+        - generic [ref=f26e99]:
+          - generic [ref=f26e100]: Propiedades Notion
+          - generic [ref=f26e103]:
+            - generic [ref=f26e104]:
+              - text: Área
+              - textbox "Ej. Backend" [ref=f26e105]
+            - generic [ref=f26e106]:
+              - text: Módulo
+              - textbox "Ej. Auth" [ref=f26e107]
+            - generic [ref=f26e108]:
+              - text: Prioridad
+              - combobox [ref=f26e109]:
+                - generic: Normal
+              - combobox [ref=f26e110]
+            - generic [ref=f26e111]:
+              - text: Importancia
+              - combobox [ref=f26e112]:
+                - generic: Normal
+              - combobox [ref=f26e113]
+          - generic [ref=f26e114]:
+            - link "Cancelar" [ref=f26e115] [cursor=pointer]:
+              - /url: /freelance/projects
+            - button "Guardar Proyecto" [ref=f26e116]

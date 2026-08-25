@@ -33,7 +33,7 @@ export default function CurrenciesIndex({ currencies }: Props) {
                     <div>
                         <h2 className="text-3xl font-black tracking-tight text-white lg:text-4xl">
                             Currencies</h2>
-                        <p className="mt-1 text-base font-medium text-[#92c9a4]">
+                        <p className="mt-1 text-base font-medium text-[#e8b4b4]">
                             Manage the symbols of your value.
                         </p>
                     </div>
@@ -41,67 +41,67 @@ export default function CurrenciesIndex({ currencies }: Props) {
 
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                     {/* Create Form */}
-                    <div className="rounded-2xl bg-[#193322] border border-[#23482f] p-6 h-fit shadow-xl">
+                    <div className="rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-6 h-fit shadow-xl">
                         <h3 className="mb-6 text-sm font-black uppercase tracking-widest text-white">Add New Currency</h3>
                         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                             <div className="flex flex-col gap-1.5">
-                                <Label htmlFor="code" className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">ISO Code (e.g. USD, ARS)</Label>
+                                <Label htmlFor="code" className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">ISO Code (e.g. USD, ARS)</Label>
                                 <Input
                                     id="code"
                                     maxLength={3}
                                     value={data.code}
                                     onChange={e => setData('code', e.target.value.toUpperCase())}
-                                    className="bg-[#102216] border-[#23482f] text-white h-10"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white h-10"
                                     placeholder="USD"
                                     required
                                 />
                                 {errors.code && <span className="text-[10px] font-bold text-rose-500">{errors.code}</span>}
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Name</Label>
+                                <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Name</Label>
                                 <Input
                                     id="name"
                                     value={data.name}
                                     onChange={e => setData('name', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white h-10"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white h-10"
                                     placeholder="US Dollar"
                                     required
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <Label htmlFor="symbol" className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Symbol</Label>
+                                <Label htmlFor="symbol" className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Symbol</Label>
                                 <Input
                                     id="symbol"
                                     value={data.symbol}
                                     onChange={e => setData('symbol', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white h-10"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white h-10"
                                     placeholder="$"
                                     required
                                 />
                             </div>
-                            <Button disabled={processing} className="mt-2 bg-primary font-black text-[#102216] hover:bg-green-400">
+                            <Button disabled={processing} className="mt-2 bg-primary font-black text-white hover:bg-primary/90">
                                 {processing ? '...' : 'Create Currency'}
                             </Button>
                         </form>
                     </div>
 
                     {/* Currencies Table */}
-                    <div className="lg:col-span-2 overflow-hidden rounded-2xl bg-[#193322] border border-[#23482f] shadow-xl">
+                    <div className="lg:col-span-2 overflow-hidden rounded-2xl bg-[#2b1a1a] border border-[#3e2121] shadow-xl">
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="border-b border-[#23482f] bg-[#102216]/50">
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Code</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Name</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Symbol</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Status</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]"></th>
+                                <tr className="border-b border-[#3e2121] bg-[#1c0f0f]/50">
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Code</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Name</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Symbol</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]"></th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#23482f]/30">
+                            <tbody className="divide-y divide-[#3e2121]/30">
                                 {currencies.map((c) => (
                                     <tr key={c.id} className="group hover:bg-white/[0.02] transition-colors">
                                         <td className="px-6 py-4 font-black text-white">{c.code}</td>
-                                        <td className="px-6 py-4 text-sm font-bold text-[#92c9a4]">{c.name}</td>
+                                        <td className="px-6 py-4 text-sm font-bold text-[#e8b4b4]">{c.name}</td>
                                         <td className="px-6 py-4 text-sm font-black text-primary">{c.symbol}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-widest border ${c.is_active ? 'bg-primary/10 text-primary border-primary/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
@@ -124,7 +124,7 @@ export default function CurrenciesIndex({ currencies }: Props) {
                                                     href={finance.currencies.restore(c.id).url}
                                                     method="patch"
                                                     as="button"
-                                                    className="text-primary hover:text-green-400 transition-colors"
+                                                    className="text-primary hover:text-primary transition-colors"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">settings_backup_restore</span>
                                                 </Link>

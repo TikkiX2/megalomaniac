@@ -38,7 +38,7 @@ class ProjectTaskController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|array', // Rich text or string? Model casts to array.
+            'description' => 'nullable', // acepta string (Dialog textarea) o array (Yoopta JSON) — cast array en modelo
             'status' => 'required|string', // Flexible for Notion
             'responsible' => 'nullable|string',
             'urgency' => 'nullable|string',
@@ -49,6 +49,12 @@ class ProjectTaskController extends Controller
             'area' => 'nullable|string',
             'due_date' => 'nullable|date',
         ]);
+
+        // Normaliza description string del Dialog (textarea) a null si vacío
+        if (isset($validated['description']) && is_string($validated['description'])) {
+            $trim = trim($validated['description']);
+            $validated['description'] = $trim === '' ? null : $trim;
+        }
 
         $task = $project->tasks()->create($validated);
 
@@ -64,9 +70,9 @@ class ProjectTaskController extends Controller
     public function update(Request $request, ProjectTask $task)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|array',
-            'status' => 'required|string',
+            'title' => 'sometimes|required|string|max:255',
+            'description' => 'nullable',
+            'status' => 'sometimes|required|string',
             'responsible' => 'nullable|string',
             'urgency' => 'nullable|string',
             'importance' => 'nullable|string',
@@ -76,6 +82,11 @@ class ProjectTaskController extends Controller
             'area' => 'nullable|string',
             'due_date' => 'nullable|date',
         ]);
+
+        if (isset($validated['description']) && is_string($validated['description'])) {
+            $trim = trim($validated['description']);
+            $validated['description'] = $trim === '' ? null : $trim;
+        }
 
         $task->update($validated);
 

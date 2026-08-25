@@ -33,7 +33,7 @@ export default function QuoteShow({ quote }: any) {
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 max-w-4xl mx-auto w-full animate-in fade-in duration-700 pb-20">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="outline" size="icon" asChild className="bg-[#193322] border-[#23482f] text-[#92c9a4] hover:bg-white/5">
+                        <Button variant="outline" size="icon" asChild className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5">
                             <Link href={freelance.quotes.index().url}>
                                 <ArrowLeft className="h-4 w-4" />
                             </Link>
@@ -49,17 +49,17 @@ export default function QuoteShow({ quote }: any) {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline" asChild className="bg-[#193322] border-[#23482f] text-[#92c9a4] hover:bg-white/5">
+                        <Button variant="outline" asChild className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5">
                             <a href={freelance.quotes.pdf(quote.id).url} target="_blank" rel="noopener noreferrer">
                                 <Download className="mr-2 h-4 w-4" /> PDF
                             </a>
                         </Button>
                         {quote.status !== 'accepted' && (
-                            <Button variant="outline" onClick={handleConvert} className="bg-[#193322] border-[#23482f] text-[#92c9a4] hover:bg-white/5">
+                            <Button variant="outline" onClick={handleConvert} className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5">
                                 <Briefcase className="mr-2 h-4 w-4" /> Convertir a Proyecto
                             </Button>
                         )}
-                        <Button asChild className="bg-primary text-[#102216] font-bold">
+                        <Button asChild className="bg-primary text-white font-bold">
                             <Link href={freelance.quotes.edit(quote.id).url}>
                                 Editar
                             </Link>
@@ -67,12 +67,12 @@ export default function QuoteShow({ quote }: any) {
                     </div>
                 </div>
 
-                <Card className="bg-[#193322] border-[#23482f] text-white overflow-hidden shadow-xl">
-                    <CardHeader className="bg-[#102216] border-b border-[#23482f] p-8">
+                <Card className="bg-[#2b1a1a] border-[#3e2121] text-white overflow-hidden shadow-xl">
+                    <CardHeader className="bg-[#1c0f0f] border-b border-[#3e2121] p-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4] mb-2">Cliente</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4] mb-2">Cliente</p>
                                     <p className="text-xl font-bold text-white flex items-center gap-2">
                                         <Building className="h-4 w-4 text-primary" /> {quote.client?.name}
                                     </p>
@@ -84,7 +84,7 @@ export default function QuoteShow({ quote }: any) {
                             </div>
                             <div className="md:text-right space-y-4">
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4] mb-2">Detalles del Presupuesto</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4] mb-2">Detalles del Presupuesto</p>
                                     <div className="space-y-1 text-sm">
                                         <p className="text-white/80"><span className="text-white/40 font-medium">Fecha:</span> {new Date(quote.issue_date).toLocaleDateString()}</p>
                                         {quote.expiry_date && (
@@ -98,17 +98,17 @@ export default function QuoteShow({ quote }: any) {
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
-                            <TableHeader className="bg-[#102216]/50">
-                                <TableRow className="hover:bg-transparent border-[#23482f]">
-                                    <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest h-12">Descripción</TableHead>
-                                    <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest text-center h-12">Horas</TableHead>
-                                    <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest text-right h-12">Tarifa</TableHead>
-                                    <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest text-right h-12">Subtotal</TableHead>
+                            <TableHeader className="bg-[#1c0f0f]/50">
+                                <TableRow className="hover:bg-transparent border-[#3e2121]">
+                                    <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest h-12">Descripción</TableHead>
+                                    <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest text-center h-12">Horas</TableHead>
+                                    <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest text-right h-12">Tarifa</TableHead>
+                                    <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest text-right h-12">Subtotal</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {quote.items.map((item: any, index: number) => (
-                                    <TableRow key={index} className="hover:bg-white/5 border-[#23482f]">
+                                    <TableRow key={index} className="hover:bg-white/5 border-[#3e2121]">
                                         <TableCell className="text-white/90 py-4 font-medium">{item.description}</TableCell>
                                         <TableCell className="text-center text-white/70">{item.hours || '-'}</TableCell>
                                         <TableCell className="text-right text-white/70">{quote.currency?.symbol} {Number(item.hourly_rate).toLocaleString()}</TableCell>
@@ -120,9 +120,9 @@ export default function QuoteShow({ quote }: any) {
                             </TableBody>
                         </Table>
                     </CardContent>
-                    <CardFooter className="flex flex-col items-end gap-2 border-t border-[#23482f] bg-[#102216] p-8">
+                    <CardFooter className="flex flex-col items-end gap-2 border-t border-[#3e2121] bg-[#1c0f0f] p-8">
                         <div className="flex justify-between items-center w-full md:w-1/2">
-                            <span className="text-sm font-black uppercase tracking-widest text-[#92c9a4]">Total Presupuestado</span>
+                            <span className="text-sm font-black uppercase tracking-widest text-[#e8b4b4]">Total Presupuestado</span>
                             <span className="text-3xl font-black text-primary">
                                 {quote.currency?.symbol} {Number(quote.total_amount).toLocaleString()}
                             </span>
@@ -133,9 +133,9 @@ export default function QuoteShow({ quote }: any) {
                 {(quote.notes || quote.terms_and_conditions) && (
                     <div className="grid gap-6 md:grid-cols-2">
                         {quote.notes && (
-                            <Card className="bg-[#193322] border-[#23482f] text-white">
+                            <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                 <CardHeader>
-                                    <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Notas</CardTitle>
+                                    <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Notas</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-white/70 whitespace-pre-wrap">{quote.notes}</p>
@@ -143,9 +143,9 @@ export default function QuoteShow({ quote }: any) {
                             </Card>
                         )}
                         {quote.terms_and_conditions && (
-                            <Card className="bg-[#193322] border-[#23482f] text-white">
+                            <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                 <CardHeader>
-                                    <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Términos y Condiciones</CardTitle>
+                                    <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Términos y Condiciones</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-white/70 whitespace-pre-wrap">{quote.terms_and_conditions}</p>

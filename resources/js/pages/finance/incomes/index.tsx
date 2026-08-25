@@ -34,14 +34,14 @@ export default function IncomesIndex({ incomes, incomeSources, currencies, summa
                     <div>
                         <h2 className="text-3xl font-black tracking-tight text-white lg:text-4xl">
                             Incomes</h2>
-                        <p className="mt-1 text-base font-medium text-[#92c9a4]">
+                        <p className="mt-1 text-base font-medium text-[#e8b4b4]">
                             Harvest the fruits of your labor.
                         </p>
                     </div>
                     <div className="flex gap-3">
                         <Link
                             href={finance.incomes.create().url}
-                            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-[#102216] shadow-[0_0_20px_rgba(19,236,91,0.25)] transition hover:bg-green-400 active:scale-95">
+                            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-white shadow-[0_0_20px_rgba(239,68,68,0.25)] transition hover:bg-primary/90 active:scale-95">
                             <span className="material-symbols-outlined font-bold" style={{ fontSize: '20px' }}>add_circle</span>
                             Add Income
                         </Link>
@@ -51,38 +51,38 @@ export default function IncomesIndex({ incomes, incomeSources, currencies, summa
                 {/* Summary Widgets */}
                 <div className="flex flex-wrap gap-4">
                     {summary.map((s) => (
-                        <div key={s.currency_id} className="rounded-2xl bg-[#193322] border border-[#23482f] p-4 flex flex-col gap-1 min-w-[150px]">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Total {s.currency.code}</span>
+                        <div key={s.currency_id} className="rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-4 flex flex-col gap-1 min-w-[150px]">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Total {s.currency.code}</span>
                             <span className="text-xl font-black text-white">{s.currency.symbol} {parseFloat(s.total as any).toLocaleString()}</span>
                         </div>
                     ))}
                 </div>
 
                 {/* Incomes Table */}
-                <div className="overflow-hidden rounded-2xl bg-[#193322] border border-[#23482f] shadow-xl">
+                <div className="overflow-hidden rounded-2xl bg-[#2b1a1a] border border-[#3e2121] shadow-xl">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="border-b border-[#23482f] bg-[#102216]/50">
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Date</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Source</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Description</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4] text-right">Amount</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Type</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]"></th>
+                            <tr className="border-b border-[#3e2121] bg-[#1c0f0f]/50">
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Date</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Source</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Description</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4] text-right">Amount</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Type</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]"></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#23482f]/30">
+                        <tbody className="divide-y divide-[#3e2121]/30">
                             {incomes.data.length > 0 ? (
                                 incomes.data.map((i) => (
                                     <tr key={i.id} className="group hover:bg-white/[0.02] transition-colors">
                                         <td className="px-6 py-4">
-                                            <span className="text-sm font-medium text-[#92c9a4]">{new Date(i.received_date).toLocaleDateString()}</span>
+                                            <span className="text-sm font-medium text-[#e8b4b4]">{new Date(i.received_date).toLocaleDateString()}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="text-sm font-bold text-white">{i.income_source?.name}</span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm text-[#92c9a4]">{i.description || '-'}</span>
+                                            <span className="text-sm text-[#e8b4b4]">{i.description || '-'}</span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <span className="text-sm font-black text-primary">{i.currency?.symbol} {parseFloat(i.amount as any).toLocaleString()}</span>
@@ -93,13 +93,13 @@ export default function IncomesIndex({ incomes, incomeSources, currencies, summa
                                                     <span className="material-symbols-outlined text-[12px]">replay</span> Recurring
                                                 </span>
                                             ) : (
-                                                <span className="text-[10px] font-bold text-[#92c9a4] uppercase tracking-widest">One-time</span>
+                                                <span className="text-[10px] font-bold text-[#e8b4b4] uppercase tracking-widest">One-time</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <Link
                                                 href={finance.incomes.show(i.id).url}
-                                                className="rounded-lg p-2 text-[#92c9a4] hover:bg-white/5 hover:text-white transition-all"
+                                                className="rounded-lg p-2 text-[#e8b4b4] hover:bg-white/5 hover:text-white transition-all"
                                             >
                                                 <span className="material-symbols-outlined text-[20px]">visibility</span>
                                             </Link>
@@ -109,7 +109,7 @@ export default function IncomesIndex({ incomes, incomeSources, currencies, summa
                             ) : (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center">
-                                        <p className="text-sm font-bold text-[#92c9a4] uppercase italic">No incomes recorded yet.</p>
+                                        <p className="text-sm font-bold text-[#e8b4b4] uppercase italic">No incomes recorded yet.</p>
                                     </td>
                                 </tr>
                             )}

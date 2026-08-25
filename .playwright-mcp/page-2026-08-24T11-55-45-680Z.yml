@@ -1,0 +1,64 @@
+- generic [ref=f21e3]:
+  - complementary [ref=f21e4]:
+    - generic [ref=f21e5]:
+      - generic [ref=f21e6]:
+        - generic [ref=f21e7]:
+          - generic [ref=f21e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f21e11]
+        - navigation [ref=f21e12]:
+          - link "dashboard Dashboard" [ref=f21e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f21e14]: dashboard
+            - generic [ref=f21e15]: Dashboard
+          - link "work Freelance" [ref=f21e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f21e17]: work
+            - generic [ref=f21e18]: Freelance
+          - link "payments Finance" [ref=f21e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f21e20]: payments
+            - generic [ref=f21e21]: Finance
+          - link "exercise Workout Log" [ref=f21e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f21e23]: exercise
+            - generic [ref=f21e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f21e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f21e26]: restaurant
+            - generic [ref=f21e27]: Nutrition
+          - link "medication Supplements" [ref=f21e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f21e29]: medication
+            - generic [ref=f21e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f21e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f21e32]: shopping_cart
+            - generic [ref=f21e33]: Grocery List
+      - generic [ref=f21e34]:
+        - link "settings Settings" [ref=f21e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f21e36]: settings
+          - generic [ref=f21e37]: Settings
+        - generic [ref=f21e38]:
+          - generic [ref=f21e39]: T
+          - paragraph [ref=f21e41]: Test User
+  - main [ref=f21e42]:
+    - generic [ref=f21e44]:
+      - generic [ref=f21e45]:
+        - generic [ref=f21e46]:
+          - heading "Supplements" [level=1] [ref=f21e47]
+          - paragraph [ref=f21e48]: Stack & Inventory
+        - button "Add Supplement" [ref=f21e49]
+      - generic [ref=f21e50]:
+        - heading "Inventory Stack" [level=2] [ref=f21e54]
+        - generic [ref=f21e56]:
+          - generic [ref=f21e57]:
+            - heading "Recent Activity" [level=2] [ref=f21e58]
+            - generic [ref=f21e59]: history
+          - list [ref=f21e60]:
+            - generic [ref=f21e61]:
+              - generic [ref=f21e62]: event_busy
+              - paragraph [ref=f21e63]: No recent intake
+          - generic [ref=f21e65]:
+            - paragraph [ref=f21e66]: Stack Strength
+            - generic [ref=f21e67]: 100%

@@ -1,0 +1,164 @@
+- generic [ref=f46e3]:
+  - generic [ref=f46e7]:
+    - generic [ref=f46e8]:
+      - list [ref=f46e9]:
+        - listitem [ref=f46e10]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f46e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f46e15]: Megalomaniac Pro
+            - generic [ref=f46e17]: Megalomaniac Pro
+      - generic [ref=f46e18]:
+        - generic [ref=f46e19]: Navegación
+        - button "Sidebar fijado" [ref=f46e20]:
+          - generic [ref=f46e21]: push_pin
+    - generic [ref=f46e22]:
+      - generic [ref=f46e23]:
+        - generic [ref=f46e24]: Principal
+        - list [ref=f46e25]:
+          - listitem [ref=f46e26]:
+            - link "Panel" [ref=f46e27] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f46e34]:
+            - link "Entrenamiento" [ref=f46e35] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f46e43]:
+            - link "Nutrición" [ref=f46e44] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f46e49]:
+            - link "Suplementos" [ref=f46e50] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f46e55]:
+            - link "Compras" [ref=f46e56] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f46e62]:
+        - generic [ref=f46e63]: Freelance
+        - list [ref=f46e64]:
+          - listitem [ref=f46e65]:
+            - link "Panel Freelance" [ref=f46e66] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f46e71]:
+            - listitem [ref=f46e72]:
+              - link "Clientes" [ref=f46e73] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f46e80]:
+              - link "Proyectos" [ref=f46e81] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f46e86]:
+              - link "Cotizaciones" [ref=f46e87] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f46e92]:
+        - generic [ref=f46e93]: Finanzas
+        - list [ref=f46e94]:
+          - listitem [ref=f46e95]:
+            - link "Finanzas" [ref=f46e96] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f46e101]:
+            - link "Compras" [ref=f46e102] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f46e108]:
+            - link "Ingresos" [ref=f46e109] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f46e114]:
+      - listitem [ref=f46e115]:
+        - button "TU Test User" [ref=f46e116]:
+          - generic [ref=f46e117]: TU
+          - generic [ref=f46e119]: Test User
+  - main [ref=f46e124]:
+    - generic [ref=f46e125]:
+      - button "Toggle Sidebar" [ref=f46e126]
+      - generic [ref=f46e129]: Megalomaniac Pro · Panel
+    - generic [ref=f46e131]:
+      - generic [ref=f46e132]:
+        - generic [ref=f46e133]:
+          - heading "Today's Session" [level=2] [ref=f46e134]
+          - paragraph [ref=f46e135]: Keep pushing, you're doing great.
+        - generic [ref=f46e136]:
+          - generic [ref=f46e137]:
+            - generic [ref=f46e138]: timer
+            - generic [ref=f46e139]: 00:00:00
+          - button "history Historial" [ref=f46e140]:
+            - generic [ref=f46e141]: history
+            - text: Historial
+          - button "check_circle Finish Workout" [disabled] [ref=f46e142]:
+            - generic [ref=f46e143]: check_circle
+            - text: Finish Workout
+      - generic [ref=f46e144]:
+        - generic [ref=f46e145]:
+          - generic [ref=f46e146]:
+            - generic [ref=f46e147]:
+              - generic [ref=f46e148]:
+                - heading "Monday, Aug 24 • Quick Session" [level=1] [ref=f46e149]
+                - button "edit_calendar Set Routine" [ref=f46e150]:
+                  - generic [ref=f46e151]: edit_calendar
+                  - generic [ref=f46e152]: Set Routine
+              - paragraph [ref=f46e153]: "Focus: Custom Training"
+            - generic [ref=f46e155]:
+              - generic: search
+              - textbox "Search exercises to add..." [ref=f46e156]
+          - generic [ref=f46e157]:
+            - generic [ref=f46e158]:
+              - generic [ref=f46e159]: local_fire_department
+              - text: Racha 1 días
+            - generic [ref=f46e161]:
+              - generic [ref=f46e162]:
+                - generic "Tue 2026-08-18" [ref=f46e163]
+                - generic [ref=f46e165]: Tu
+              - generic [ref=f46e166]:
+                - generic "Wed 2026-08-19" [ref=f46e167]
+                - generic [ref=f46e169]: We
+              - generic [ref=f46e170]:
+                - generic "Thu 2026-08-20" [ref=f46e171]
+                - generic [ref=f46e173]: Th
+              - generic [ref=f46e174]:
+                - generic "Fri 2026-08-21" [ref=f46e175]
+                - generic [ref=f46e177]: Fr
+              - generic [ref=f46e178]:
+                - generic "Sat 2026-08-22" [ref=f46e179]
+                - generic [ref=f46e181]: Sa
+              - generic [ref=f46e182]:
+                - generic "Sun 2026-08-23" [ref=f46e183]
+                - generic [ref=f46e185]: Su
+              - generic [ref=f46e186]:
+                - generic "Mon 2026-08-24 · entrenado" [ref=f46e187]: check
+                - generic [ref=f46e189]: Mo
+            - generic [ref=f46e190]: Últimos 7 días · dot rojo = día con workout
+          - generic [ref=f46e192] [cursor=pointer]:
+            - generic [ref=f46e193]: play_arrow
+            - generic [ref=f46e195]:
+              - heading "Start a New Workout" [level=3] [ref=f46e196]
+              - paragraph [ref=f46e197]: No active session found. Ready to train?
+          - generic [ref=f46e198]:
+            - paragraph [ref=f46e199]: © 2026 Megalomaniac Pro. All progress saved to profile.
+            - generic [ref=f46e200]:
+              - generic [ref=f46e201]:
+                - generic [ref=f46e202]: Total Volume
+                - generic [ref=f46e203]: kg
+              - generic [ref=f46e204]: Completed Sets
+        - complementary [ref=f46e206]:
+          - generic [ref=f46e207]:
+            - generic [ref=f46e208]:
+              - heading "Quick Library" [level=3] [ref=f46e209]
+              - button "add Nuevo Ejercicio" [ref=f46e210]:
+                - generic [ref=f46e211]: add
+                - text: Nuevo Ejercicio
+            - paragraph [ref=f46e212]: Tap to add to your session
+          - generic [ref=f46e213]:
+            - button "All" [ref=f46e214]
+            - button "Chest" [active] [ref=f46e215]
+            - button "Back" [ref=f46e216]
+            - button "Legs" [ref=f46e217]
+            - button "Arms" [ref=f46e218]
+            - button "Shoulders" [ref=f46e219]
+          - generic [ref=f46e220]:
+            - generic [ref=f46e221] [cursor=pointer]:
+              - generic [ref=f46e222]: fitness_center
+              - generic [ref=f46e224]:
+                - heading "Bench Press" [level=4] [ref=f46e225]
+                - paragraph [ref=f46e226]: Chest • Strength
+              - button "add_circle" [ref=f46e227]
+            - generic [ref=f46e261] [cursor=pointer]:
+              - generic [ref=f46e262]: fitness_center
+              - generic [ref=f46e264]:
+                - heading "et Press" [level=4] [ref=f46e265]
+                - paragraph [ref=f46e266]: Chest • Machine
+              - button "add_circle" [ref=f46e267]

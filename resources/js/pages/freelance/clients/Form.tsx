@@ -42,7 +42,7 @@ export default function ClientForm({ client }: ClientFormProps) {
 
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 max-w-2xl mx-auto w-full animate-in fade-in duration-700">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" asChild className="bg-[#193322] border-[#23482f] text-[#92c9a4] hover:bg-white/5">
+                    <Button variant="outline" size="icon" asChild className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5">
                         <Link href={freelance.clients.index().url}>
                             <ArrowLeft className="h-4 w-4" />
                         </Link>
@@ -55,9 +55,9 @@ export default function ClientForm({ client }: ClientFormProps) {
                 </div>
 
                 <form onSubmit={submit}>
-                    <Card className="bg-[#193322] border-[#23482f] text-white">
+                    <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                         <CardHeader>
-                            <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Información Básica</CardTitle>
+                            <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Información Básica</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
@@ -66,7 +66,7 @@ export default function ClientForm({ client }: ClientFormProps) {
                                     id="name"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f]"
+                                    className="bg-[#1c0f0f] border-[#3e2121]"
                                     placeholder="Juan Pérez"
                                 />
                                 {errors.name && <p className="text-sm text-rose-400">{errors.name}</p>}
@@ -80,7 +80,7 @@ export default function ClientForm({ client }: ClientFormProps) {
                                         type="email"
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
-                                        className="bg-[#102216] border-[#23482f]"
+                                        className="bg-[#1c0f0f] border-[#3e2121]"
                                     />
                                     {errors.email && <p className="text-sm text-rose-400">{errors.email}</p>}
                                 </div>
@@ -90,7 +90,7 @@ export default function ClientForm({ client }: ClientFormProps) {
                                         id="phone"
                                         value={data.phone}
                                         onChange={(e) => setData('phone', e.target.value)}
-                                        className="bg-[#102216] border-[#23482f]"
+                                        className="bg-[#1c0f0f] border-[#3e2121]"
                                     />
                                 </div>
                             </div>
@@ -101,7 +101,7 @@ export default function ClientForm({ client }: ClientFormProps) {
                                     id="company"
                                     value={data.company}
                                     onChange={(e) => setData('company', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f]"
+                                    className="bg-[#1c0f0f] border-[#3e2121]"
                                 />
                             </div>
 
@@ -111,7 +111,7 @@ export default function ClientForm({ client }: ClientFormProps) {
                                     id="tax_id"
                                     value={data.tax_id}
                                     onChange={(e) => setData('tax_id', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f]"
+                                    className="bg-[#1c0f0f] border-[#3e2121]"
                                 />
                             </div>
 
@@ -121,7 +121,7 @@ export default function ClientForm({ client }: ClientFormProps) {
                                     id="address"
                                     value={data.address}
                                     onChange={(e) => setData('address', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f]"
+                                    className="bg-[#1c0f0f] border-[#3e2121]"
                                     rows={2}
                                 />
                             </div>
@@ -132,16 +132,16 @@ export default function ClientForm({ client }: ClientFormProps) {
                                     id="notes"
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f]"
+                                    className="bg-[#1c0f0f] border-[#3e2121]"
                                     rows={3}
                                 />
                             </div>
                         </CardContent>
-                        <CardFooter className="flex justify-end gap-2 border-t border-[#23482f] pt-6">
-                            <Button variant="ghost" type="button" asChild className="text-[#92c9a4] hover:bg-white/5">
+                        <CardFooter className="flex justify-end gap-2 border-t border-[#3e2121] pt-6">
+                            <Button variant="ghost" type="button" asChild className="text-[#e8b4b4] hover:bg-white/5">
                                 <Link href={freelance.clients.index().url}>Cancelar</Link>
                             </Button>
-                            <Button type="submit" disabled={processing} className="bg-primary text-[#102216] font-bold">
+                            <Button type="submit" disabled={processing} className="bg-primary text-white font-bold">
                                 <Save className="mr-2 h-4 w-4" />
                                 {isEditing ? 'Actualizar Cliente' : 'Guardar Cliente'}
                             </Button>

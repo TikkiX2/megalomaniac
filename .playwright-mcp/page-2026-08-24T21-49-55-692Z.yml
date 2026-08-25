@@ -1,0 +1,204 @@
+- generic [ref=f33e3]:
+  - complementary [ref=f33e4]:
+    - generic [ref=f33e5]:
+      - generic [ref=f33e6]:
+        - generic [ref=f33e7]:
+          - generic [ref=f33e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f33e11]
+        - navigation [ref=f33e12]:
+          - link "dashboard Dashboard" [ref=f33e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f33e14]: dashboard
+            - generic [ref=f33e15]: Dashboard
+          - link "work Freelance" [ref=f33e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f33e17]: work
+            - generic [ref=f33e18]: Freelance
+          - link "payments Finance" [ref=f33e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f33e20]: payments
+            - generic [ref=f33e21]: Finance
+          - link "exercise Workout Log" [ref=f33e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f33e23]: exercise
+            - generic [ref=f33e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f33e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f33e26]: restaurant
+            - generic [ref=f33e27]: Nutrition
+          - link "medication Supplements" [ref=f33e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f33e29]: medication
+            - generic [ref=f33e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f33e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f33e32]: shopping_cart
+            - generic [ref=f33e33]: Grocery List
+      - generic [ref=f33e34]:
+        - link "settings Settings" [ref=f33e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f33e36]: settings
+          - generic [ref=f33e37]: Settings
+        - generic [ref=f33e38]:
+          - generic [ref=f33e39]: t
+          - paragraph [ref=f33e41]: tikki
+  - main [ref=f33e42]:
+    - generic [ref=f33e44]:
+      - generic [ref=f33e45]:
+        - generic [ref=f33e46]:
+          - heading "Financial Overview" [level=2] [ref=f33e47]
+          - paragraph [ref=f33e48]: Master your money, control your destiny.
+        - generic [ref=f33e49]:
+          - link "currency_exchange New Exchange" [ref=f33e50] [cursor=pointer]:
+            - /url: /finance/currency-exchanges/create
+            - generic [ref=f33e51]: currency_exchange
+            - text: New Exchange
+          - link "add_shopping_cart New Purchase" [ref=f33e52] [cursor=pointer]:
+            - /url: /finance/purchases/create
+            - generic [ref=f33e53]: add_shopping_cart
+            - text: New Purchase
+          - link "payments Add Income" [ref=f33e54] [cursor=pointer]:
+            - /url: /finance/incomes/create
+            - generic [ref=f33e55]: payments
+            - text: Add Income
+      - generic [ref=f33e56]:
+        - generic [ref=f33e59]:
+          - generic [ref=f33e60]: Balance USD
+          - generic [ref=f33e61]: $ -600.5
+          - generic [ref=f33e62]:
+            - generic [ref=f33e63]: "Income: 0"
+            - generic [ref=f33e64]: "Spent: 600.5"
+        - generic [ref=f33e67]:
+          - generic [ref=f33e68]: Active Debts
+          - generic [ref=f33e69]: "0"
+          - generic [ref=f33e70]: No pending debts
+      - generic [ref=f33e71]:
+        - generic [ref=f33e72]:
+          - generic [ref=f33e73]:
+            - generic [ref=f33e74]:
+              - generic [ref=f33e75]: account_balance_wallet
+              - heading "Budget Mensual" [level=3] [ref=f33e77]
+            - generic [ref=f33e78]: En control
+          - generic [ref=f33e79]:
+            - generic [ref=f33e80]: $600.50
+            - generic [ref=f33e81]: / $1,000
+            - generic [ref=f33e82]: 2 compras
+          - generic [ref=f33e86]:
+            - generic [ref=f33e87]: 60.1% usado
+            - generic [ref=f33e88]: $399.50 restante
+          - paragraph [ref=f33e89]:
+            - text: Meta mensual
+            - generic [ref=f33e90]: $1.000
+            - text: • Vas bien, sigue controlando tus gastos.
+        - generic [ref=f33e91]:
+          - generic [ref=f33e92]:
+            - generic [ref=f33e93]:
+              - generic [ref=f33e94]: savings
+              - heading "Savings Goals" [level=3] [ref=f33e96]
+            - link "Ver todo" [ref=f33e97] [cursor=pointer]:
+              - /url: /finance/savings-reserves
+          - generic [ref=f33e98]:
+            - generic [ref=f33e99]:
+              - generic [ref=f33e100]:
+                - generic [ref=f33e101]:
+                  - generic [ref=f33e102]: shield
+                  - generic [ref=f33e104]: Fondo Emergencia
+                - generic [ref=f33e105]: $2,350.00 / $5,000
+              - generic [ref=f33e108]:
+                - generic [ref=f33e109]: 47%
+                - generic [ref=f33e110]: USD
+            - generic [ref=f33e111]:
+              - generic [ref=f33e112]:
+                - generic [ref=f33e113]:
+                  - generic [ref=f33e114]: flight
+                  - generic [ref=f33e116]: Viaje Europa
+                - generic [ref=f33e117]: $850.00 / $3,000
+              - generic [ref=f33e120]:
+                - generic [ref=f33e121]: 28.3%
+                - generic [ref=f33e122]: USD
+            - generic [ref=f33e123]:
+              - generic [ref=f33e124]:
+                - generic [ref=f33e125]:
+                  - generic [ref=f33e126]: fitness_center
+                  - generic [ref=f33e128]: Setup Gym Home
+                - generic [ref=f33e129]: $1,100.00 / $1,200
+              - generic [ref=f33e132]:
+                - generic [ref=f33e133]: 91.7%
+                - generic [ref=f33e134]: USD
+            - link "add Nueva meta" [ref=f33e135] [cursor=pointer]:
+              - /url: /finance/savings-reserves/create
+              - generic [ref=f33e136]: add
+              - text: Nueva meta
+      - generic [ref=f33e137]:
+        - generic [ref=f33e138]:
+          - generic [ref=f33e139]:
+            - heading "Recent Transactions" [level=3] [ref=f33e140]
+            - link "View All" [ref=f33e141] [cursor=pointer]:
+              - /url: /finance/purchases
+          - generic [ref=f33e142]:
+            - generic [ref=f33e143]:
+              - generic [ref=f33e144]:
+                - generic [ref=f33e145]: remove_circle
+                - generic [ref=f33e147]:
+                  - generic [ref=f33e148]: Proteína whey + Creatina
+                  - generic [ref=f33e149]:
+                    - generic [ref=f33e150]: 8/22/2026
+                    - generic [ref=f33e151]: Suplementos
+              - generic [ref=f33e152]: "-$420.50"
+            - generic [ref=f33e153]:
+              - generic [ref=f33e154]:
+                - generic [ref=f33e155]: remove_circle
+                - generic [ref=f33e157]:
+                  - generic [ref=f33e158]: Grocery mensual
+                  - generic [ref=f33e159]:
+                    - generic [ref=f33e160]: 8/19/2026
+                    - generic [ref=f33e161]: Suplementos
+              - generic [ref=f33e162]: "-$180.00"
+        - generic [ref=f33e163]:
+          - generic [ref=f33e164]:
+            - heading "Monthly Stats" [level=3] [ref=f33e165]
+            - generic [ref=f33e166]:
+              - generic [ref=f33e167]:
+                - generic [ref=f33e168]: Purchases
+                - generic [ref=f33e169]: "2"
+              - generic [ref=f33e170]:
+                - generic [ref=f33e171]: Incomes
+                - generic [ref=f33e172]: "0"
+              - generic [ref=f33e173]:
+                - generic [ref=f33e174]: Withdrawals
+                - generic [ref=f33e175]: "0"
+          - generic [ref=f33e176]:
+            - heading "Management" [level=3] [ref=f33e177]
+            - generic [ref=f33e178]:
+              - link "receipt_long Withdrawals & Services" [ref=f33e179] [cursor=pointer]:
+                - /url: /finance/withdrawals
+                - generic [ref=f33e180]: receipt_long
+                - text: Withdrawals & Services
+              - link "savings Savings & Reserves" [ref=f33e181] [cursor=pointer]:
+                - /url: /finance/savings-reserves
+                - generic [ref=f33e182]: savings
+                - text: Savings & Reserves
+              - link "credit_card Credit Cards" [ref=f33e183] [cursor=pointer]:
+                - /url: /finance/credit-cards
+                - generic [ref=f33e184]: credit_card
+                - text: Credit Cards
+              - link "currency_exchange Currencies & Rates" [ref=f33e185] [cursor=pointer]:
+                - /url: /finance/currencies
+                - generic [ref=f33e186]: currency_exchange
+                - text: Currencies & Rates
+              - link "category Purchase Categories" [ref=f33e187] [cursor=pointer]:
+                - /url: /finance/categories
+                - generic [ref=f33e188]: category
+                - text: Purchase Categories
+              - link "source Income Sources" [ref=f33e189] [cursor=pointer]:
+                - /url: /finance/income-sources
+                - generic [ref=f33e190]: source
+                - text: Income Sources
+              - link "account_balance_wallet Debts Tracking" [ref=f33e191] [cursor=pointer]:
+                - /url: /finance/debts
+                - generic [ref=f33e192]: account_balance_wallet
+                - text: Debts Tracking
+              - link "analytics Full Statistics" [ref=f33e193] [cursor=pointer]:
+                - /url: /finance/statistics
+                - generic [ref=f33e194]: analytics
+                - text: Full Statistics

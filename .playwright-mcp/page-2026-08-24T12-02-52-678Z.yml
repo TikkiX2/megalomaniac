@@ -1,0 +1,97 @@
+- generic [ref=f27e3]:
+  - complementary [ref=f27e4]:
+    - generic [ref=f27e5]:
+      - generic [ref=f27e6]:
+        - generic [ref=f27e7]:
+          - generic [ref=f27e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f27e11]
+        - navigation [ref=f27e12]:
+          - link "dashboard Dashboard" [ref=f27e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f27e14]: dashboard
+            - generic [ref=f27e15]: Dashboard
+          - link "work Freelance" [ref=f27e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f27e17]: work
+            - generic [ref=f27e18]: Freelance
+          - link "payments Finance" [ref=f27e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f27e20]: payments
+            - generic [ref=f27e21]: Finance
+          - link "exercise Workout Log" [ref=f27e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f27e23]: exercise
+            - generic [ref=f27e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f27e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f27e26]: restaurant
+            - generic [ref=f27e27]: Nutrition
+          - link "medication Supplements" [ref=f27e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f27e29]: medication
+            - generic [ref=f27e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f27e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f27e32]: shopping_cart
+            - generic [ref=f27e33]: Grocery List
+      - generic [ref=f27e34]:
+        - link "settings Settings" [ref=f27e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f27e36]: settings
+          - generic [ref=f27e37]: Settings
+        - generic [ref=f27e38]:
+          - generic [ref=f27e39]: T
+          - paragraph [ref=f27e41]: Test User
+  - main [ref=f27e42]:
+    - generic [ref=f27e44]:
+      - generic [ref=f27e45]:
+        - generic [ref=f27e46]:
+          - heading "Panel de Control Freelance" [level=1] [ref=f27e47]
+          - paragraph [ref=f27e48]: Resumen de tu actividad y proyectos.
+        - generic [ref=f27e49]:
+          - link "Cliente" [ref=f27e50] [cursor=pointer]:
+            - /url: /freelance/clients/create
+          - link "Proyecto" [ref=f27e51] [cursor=pointer]:
+            - /url: /freelance/projects/create
+          - link "Cotización" [ref=f27e52] [cursor=pointer]:
+            - /url: /freelance/quotes/create
+      - generic [ref=f27e53]:
+        - generic [ref=f27e55]:
+          - paragraph [ref=f27e57]: Proyectos Activos
+          - generic [ref=f27e61]:
+            - generic [ref=f27e62]: "1"
+            - paragraph [ref=f27e63]: En progreso
+        - generic [ref=f27e65]:
+          - paragraph [ref=f27e67]: Cotizaciones Pendientes
+          - generic [ref=f27e71]:
+            - generic [ref=f27e72]: "0"
+            - paragraph [ref=f27e73]: Esperando respuesta
+        - generic [ref=f27e75]:
+          - paragraph [ref=f27e77]: Ingresos del Mes
+          - generic [ref=f27e81]:
+            - generic [ref=f27e82]: $0
+            - paragraph [ref=f27e83]: Pagos recibidos
+        - generic [ref=f27e85]:
+          - paragraph [ref=f27e87]: Tareas Pendientes
+          - generic [ref=f27e91]:
+            - generic [ref=f27e92]: "1"
+            - paragraph [ref=f27e93]: Próximos vencimientos
+      - generic [ref=f27e94]:
+        - generic [ref=f27e95]:
+          - generic [ref=f27e96]:
+            - generic [ref=f27e97]: Proyectos Recientes
+            - link "Ver todo" [ref=f27e98] [cursor=pointer]:
+              - /url: /freelance/projects
+          - generic [ref=f27e101]:
+            - generic [ref=f27e102]:
+              - generic [ref=f27e103]: App Titan Redesign
+              - generic [ref=f27e104]: Gimnasio Titan
+            - generic [ref=f27e105]:
+              - generic [ref=f27e106]: in progress
+              - link [ref=f27e107] [cursor=pointer]:
+                - /url: /freelance/projects/1
+        - generic [ref=f27e108]:
+          - generic [ref=f27e109]: Próximas Tareas
+          - generic [ref=f27e117]:
+            - generic [ref=f27e118]: Auditoría QA diaria
+            - generic [ref=f27e119]: 8/26/2026

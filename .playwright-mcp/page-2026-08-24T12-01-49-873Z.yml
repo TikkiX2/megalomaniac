@@ -1,0 +1,80 @@
+- generic [ref=f25e69]:
+  - complementary [ref=f25e70]:
+    - generic [ref=f25e71]:
+      - generic [ref=f25e72]:
+        - generic [ref=f25e73]:
+          - generic [ref=f25e74]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f25e77]
+        - navigation [ref=f25e78]:
+          - link "dashboard Dashboard" [ref=f25e79] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f25e80]: dashboard
+            - generic [ref=f25e81]: Dashboard
+          - link "work Freelance" [ref=f25e82] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f25e83]: work
+            - generic [ref=f25e84]: Freelance
+          - link "payments Finance" [ref=f25e85] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f25e86]: payments
+            - generic [ref=f25e87]: Finance
+          - link "exercise Workout Log" [ref=f25e88] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f25e89]: exercise
+            - generic [ref=f25e90]: Workout Log
+          - link "restaurant Nutrition" [ref=f25e91] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f25e92]: restaurant
+            - generic [ref=f25e93]: Nutrition
+          - link "medication Supplements" [ref=f25e94] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f25e95]: medication
+            - generic [ref=f25e96]: Supplements
+          - link "shopping_cart Grocery List" [ref=f25e97] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f25e98]: shopping_cart
+            - generic [ref=f25e99]: Grocery List
+      - generic [ref=f25e100]:
+        - link "settings Settings" [ref=f25e101] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f25e102]: settings
+          - generic [ref=f25e103]: Settings
+        - generic [ref=f25e104]:
+          - generic [ref=f25e105]: T
+          - paragraph [ref=f25e107]: Test User
+  - main [ref=f25e108]:
+    - generic [ref=f25e110]:
+      - generic [ref=f25e111]:
+        - link [ref=f25e112] [cursor=pointer]:
+          - /url: /freelance/clients
+        - heading "Nuevo Cliente" [level=1] [ref=f25e114]
+      - generic [ref=f25e116]:
+        - generic [ref=f25e117]: Información Básica
+        - generic [ref=f25e119]:
+          - generic [ref=f25e120]:
+            - text: Nombre Completo *
+            - textbox "Nombre Completo *" [ref=f25e121]:
+              - /placeholder: Juan Pérez
+          - generic [ref=f25e122]:
+            - generic [ref=f25e123]:
+              - text: Email
+              - textbox "Email" [ref=f25e124]
+            - generic [ref=f25e125]:
+              - text: Teléfono
+              - textbox "Teléfono" [ref=f25e126]
+          - generic [ref=f25e127]:
+            - text: Empresa
+            - textbox "Empresa" [ref=f25e128]
+          - generic [ref=f25e129]:
+            - text: Identificación Fiscal (RIT/CUIT/NIT)
+            - textbox "Identificación Fiscal (RIT/CUIT/NIT)" [ref=f25e130]
+          - generic [ref=f25e131]:
+            - text: Dirección
+            - textbox "Dirección" [ref=f25e132]
+          - generic [ref=f25e133]:
+            - text: Notas Adicionales
+            - textbox "Notas Adicionales" [ref=f25e134]
+        - generic [ref=f25e135]:
+          - link "Cancelar" [ref=f25e136] [cursor=pointer]:
+            - /url: /freelance/clients
+          - button "Guardar Cliente" [ref=f25e137]

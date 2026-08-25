@@ -1,0 +1,12 @@
+[     131ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://127.0.0.1:8010/_boost/browser-logs @ http://127.0.0.1:8010/freelance/dashboard:24
+[     181ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:0
+[     209ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/Dashboard-B-KsUmof.js:0
+[     260ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/index-GUPvvvtl.js:0
+[     262ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/card-D2zCdzT9.js:0
+[     277ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/badge-Ctvxq7o_.js:0
+[     286ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/file-text-xdRfdweh.js:0
+[     305ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/main-layout-D9ClHDWA.js:0
+[     321ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/button-CJR9fq33.js:0
+[     341ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/createLucideIcon-DtM9Hsx6.js:0
+[     361ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/index-CSEUMRIG.js:0
+[     389ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/index-C3RC5eky.js:0

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -16,8 +17,8 @@ return new class extends Migration
         });
 
         // Backfill existing rows as freelance
-        \Illuminate\Support\Facades\DB::table('projects')->whereNull('type')->orWhere('type', '')->update(['type' => 'freelance']);
-        \Illuminate\Support\Facades\DB::table('projects')->where('type', 'freelance')->update(['type' => 'freelance']);
+        DB::table('projects')->whereNull('type')->orWhere('type', '')->update(['type' => 'freelance']);
+        DB::table('projects')->where('type', 'freelance')->update(['type' => 'freelance']);
     }
 
     public function down(): void

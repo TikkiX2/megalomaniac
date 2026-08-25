@@ -12,16 +12,73 @@ use Inertia\Response;
 
 class NutritionController extends Controller
 {
-    // Food Methods
     public function index(Request $request): Response
     {
         $date = $request->query('date', now()->toDateString());
 
+        $logs = MealLog::with('items.food')
+            ->where('user_id', $request->user()->id)
+            ->whereDate('date', $date)
+            ->get();
+
         return Inertia::render('fitness/nutrition', [
-            'logs' => MealLog::with('items.food')
-                ->where('user_id', $request->user()->id)
-                ->whereDate('date', $date)
-                ->get(),
+            'logs' => $logs,
+            'currentDate' => $date,
+        ]);
+    }
+
+    public function searchFoods(Request $request)
+    {
+        $query = $request->query('query', '');
+
+        if (blank($query)) {
+            return response()->json([]);
+        }
+
+        $foods = Food::where('name', 'like', "%{$query}%")
+            ->limit(10)
+            ->get();
+
+        return response()->json($foods);
+    }
+
+    public function storeFood(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'brand' => 'nullable|string|max:255',
+            'calories' => 'required|integer|min:0',
+            'protein' => 'required|numeric|min:0',
+            'carbs' => 'required|numeric|min:0',
+            'fats' => 'required|numeric|min:0',
+            'serving_size' => 'nullable|numeric|min:0',
+            'serving_unit' => 'nullable|string|max:50',
+        ]);
+
+        $food = Food::create($validated);
+
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json($food, 201);
+        }
+
+        return back()->with('success', 'Alimento creado');
+    }
+
+    public function getDailyLog(Request $request)
+    {
+        $date = $request->query('date', now()->toDateString());
+
+        $logs = MealLog::with('items.food')
+            ->where('user_id', $request->user()->id)
+            ->whereDate('date', $date)
+            ->get();
+
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json($logs);
+        }
+
+        return Inertia::render('fitness/nutrition', [
+            'logs' => $logs,
             'currentDate' => $date,
         ]);
     }
@@ -52,13 +109,26 @@ class NutritionController extends Controller
             'fats_snapshot' => $food->fats * $validated['quantity'],
         ]);
 
-        return $mealItem->load('food');
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json($mealItem->load('food'), 201);
+        }
+
+        return back()->with('success', 'Alimento añadido');
     }
 
-    public function deleteMealItem(MealItem $mealItem)
+    public function deleteMealItem(Request $request, MealItem $mealItem)
     {
+        // Ensure belongs to user's log
+        if ($mealItem->mealLog && $mealItem->mealLog->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
         $mealItem->delete();
 
-        return response()->noContent();
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->noContent();
+        }
+
+        return back()->with('success', 'Alimento eliminado');
     }
 }

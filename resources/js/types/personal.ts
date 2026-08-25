@@ -2,7 +2,7 @@ export interface PersonalProject {
     id: number;
     user_id: number;
     name: string;
-    description: unknown | null;
+    description: string | null;
     type: 'personal';
     status: string;
     color: string | null;
@@ -30,7 +30,7 @@ export interface PersonalTask {
     project_id: number | null;
     user_id: number | null;
     title: string;
-    description: unknown | null;
+    description: string | null;
     status: string;
     priority: string | null;
     due_date: string | null;

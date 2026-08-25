@@ -14,7 +14,7 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         icon: 'shopping_bag',
-        color: '#13ec5b',
+        color: '#ef4444',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -32,25 +32,25 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <h1 className="text-3xl font-black tracking-tight text-white">Categories</h1>
-                        <p className="text-[#92c9a4] font-medium mt-1">Organize your expenses with style</p>
+                        <p className="text-[#e8b4b4] font-medium mt-1">Organize your expenses with style</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
                     {/* Create Form */}
-                    <div className="rounded-2xl bg-[#193322] border border-[#23482f] p-6 shadow-xl h-fit">
+                    <div className="rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-6 shadow-xl h-fit">
                         <h2 className="mb-6 text-xl font-bold text-white flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary">add_circle</span>
                             New Category
                         </h2>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Name</Label>
+                                <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Name</Label>
                                 <Input
                                     id="name"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white focus:ring-primary"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary"
                                     placeholder="e.g. Food, Transport..."
                                     required
                                 />
@@ -58,31 +58,31 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="icon" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Icon Name (Material)</Label>
+                                <Label htmlFor="icon" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Icon Name (Material)</Label>
                                 <Input
                                     id="icon"
                                     value={data.icon || ''}
                                     onChange={(e) => setData('icon', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white focus:ring-primary font-mono"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary font-mono"
                                     placeholder="shopping_bag, home, etc."
                                 />
                                 {errors.icon && <p className="text-xs text-rose-400">{errors.icon}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="color" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Color</Label>
+                                <Label htmlFor="color" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Color</Label>
                                 <div className="flex gap-2">
                                     <Input
                                         id="color"
                                         type="color"
-                                        value={data.color || '#13ec5b'}
+                                        value={data.color || '#ef4444'}
                                         onChange={(e) => setData('color', e.target.value)}
-                                        className="w-12 h-10 p-1 bg-[#102216] border-[#23482f] cursor-pointer"
+                                        className="w-12 h-10 p-1 bg-[#1c0f0f] border-[#3e2121] cursor-pointer"
                                     />
                                     <Input
-                                        value={data.color || '#13ec5b'}
+                                        value={data.color || '#ef4444'}
                                         onChange={(e) => setData('color', e.target.value)}
-                                        className="bg-[#102216] border-[#23482f] text-white flex-1 font-mono"
+                                        className="bg-[#1c0f0f] border-[#3e2121] text-white flex-1 font-mono"
                                     />
                                 </div>
                                 {errors.color && <p className="text-xs text-rose-400">{errors.color}</p>}
@@ -91,7 +91,7 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full bg-primary font-black text-[#102216] hover:bg-green-400 shadow-[0_0_15px_rgba(19,236,91,0.2)]"
+                                className="w-full bg-primary font-black text-white hover:bg-primary/90 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                             >
                                 {processing ? 'Creating...' : 'Create Category'}
                             </Button>
@@ -101,7 +101,7 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
                     {/* Categories Grid */}
                     <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                         {categories.length === 0 ? (
-                            <div className="col-span-full rounded-2xl border border-[#23482f] border-dashed p-12 text-center text-[#92c9a4]">
+                            <div className="col-span-full rounded-2xl border border-[#3e2121] border-dashed p-12 text-center text-[#e8b4b4]">
                                 <span className="material-symbols-outlined text-4xl mb-2">category</span>
                                 <p>No categories found. Create your first one to start tracking!</p>
                             </div>
@@ -109,23 +109,23 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
                             categories.map((c) => (
                                 <div
                                     key={c.id}
-                                    className="group relative overflow-hidden rounded-2xl border border-[#23482f] bg-[#193322]/40 p-5 transition-all hover:bg-[#193322]/60 hover:border-primary/30"
+                                    className="group relative overflow-hidden rounded-2xl border border-[#3e2121] bg-[#2b1a1a]/40 p-5 transition-all hover:bg-[#2b1a1a]/60 hover:border-primary/30"
                                 >
                                     <div
                                         className="absolute top-0 left-0 w-1 h-full"
-                                        style={{ backgroundColor: c.color || '#13ec5b' }}
+                                        style={{ backgroundColor: c.color || '#ef4444' }}
                                     />
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-4">
                                             <div
                                                 className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/5"
-                                                style={{ backgroundColor: `${c.color || '#13ec5b'}20`, color: c.color || '#13ec5b' }}
+                                                style={{ backgroundColor: `${c.color || '#ef4444'}20`, color: c.color || '#ef4444' }}
                                             >
                                                 <span className="material-symbols-outlined">{c.icon || 'category'}</span>
                                             </div>
                                             <div>
                                                 <h3 className="font-bold text-white group-hover:text-primary transition-colors">{c.name}</h3>
-                                                <p className="text-xs text-[#92c9a4] font-medium">{c.purchases_count} transactions</p>
+                                                <p className="text-xs text-[#e8b4b4] font-medium">{c.purchases_count} transactions</p>
                                             </div>
                                         </div>
 
@@ -144,7 +144,7 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
                                             className="h-full rounded-full opacity-30"
                                             style={{
                                                 width: '100%',
-                                                backgroundColor: c.color || '#13ec5b'
+                                                backgroundColor: c.color || '#ef4444'
                                             }}
                                         />
                                     </div>

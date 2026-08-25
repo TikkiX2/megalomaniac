@@ -28,7 +28,7 @@ const columns = [
     { id: 'To Do', title: 'Por Hacer', statuses: ['Pending', 'To Do', 'pendiente', 'Pendiente'], color: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
     { id: 'In Progress', title: 'En Progreso', statuses: ['In Progress', 'En Progreso', 'in_progress', 'En progreso'], color: 'bg-primary/15 text-primary border-primary/30' },
     { id: 'Done', title: 'Hecho', statuses: ['Done', 'Completada', 'Completed', 'done', 'completada'], color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-] as const;
+];
 
 function normalizeStatus(status: string): string {
     for (const col of columns) {

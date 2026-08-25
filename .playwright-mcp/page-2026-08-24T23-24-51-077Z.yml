@@ -1,0 +1,162 @@
+- generic [ref=f47e3]:
+  - generic [ref=f47e7]:
+    - generic [ref=f47e8]:
+      - list [ref=f47e9]:
+        - listitem [ref=f47e10]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f47e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f47e15]: Megalomaniac Pro
+            - generic [ref=f47e17]: Megalomaniac Pro
+      - generic [ref=f47e18]:
+        - generic [ref=f47e19]: Navegación
+        - button "Sidebar fijado" [ref=f47e20]:
+          - generic [ref=f47e21]: push_pin
+    - generic [ref=f47e22]:
+      - generic [ref=f47e23]:
+        - generic [ref=f47e24]: Principal
+        - list [ref=f47e25]:
+          - listitem [ref=f47e26]:
+            - link "Panel" [ref=f47e27] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f47e34]:
+            - link "Entrenamiento" [ref=f47e35] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f47e43]:
+            - link "Nutrición" [ref=f47e44] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f47e49]:
+            - link "Suplementos" [ref=f47e50] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f47e55]:
+            - link "Compras" [ref=f47e56] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f47e62]:
+        - generic [ref=f47e63]: Freelance
+        - list [ref=f47e64]:
+          - listitem [ref=f47e65]:
+            - link "Panel Freelance" [ref=f47e66] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f47e71]:
+            - listitem [ref=f47e72]:
+              - link "Clientes" [ref=f47e73] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f47e80]:
+              - link "Proyectos" [ref=f47e81] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f47e86]:
+              - link "Cotizaciones" [ref=f47e87] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f47e92]:
+        - generic [ref=f47e93]: Finanzas
+        - list [ref=f47e94]:
+          - listitem [ref=f47e95]:
+            - link "Finanzas" [ref=f47e96] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f47e101]:
+            - link "Compras" [ref=f47e102] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f47e108]:
+            - link "Ingresos" [ref=f47e109] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f47e114]:
+      - listitem [ref=f47e115]:
+        - button "TU Test User" [ref=f47e116]:
+          - generic [ref=f47e117]: TU
+          - generic [ref=f47e119]: Test User
+  - main [ref=f47e124]:
+    - generic [ref=f47e125]:
+      - button "Toggle Sidebar" [ref=f47e126]
+      - generic [ref=f47e129]: Megalomaniac Pro · Panel
+    - generic [ref=f47e131]:
+      - generic [ref=f47e132]:
+        - generic [ref=f47e133]:
+          - heading "Grocery Tracker" [level=1] [ref=f47e134]
+          - generic [ref=f47e135]:
+            - button "arrow_back_ios" [ref=f47e136]
+            - generic [ref=f47e138]: August 2026
+            - button "arrow_forward_ios" [ref=f47e139]
+        - generic [ref=f47e141]:
+          - button "download Export Report" [ref=f47e142]:
+            - generic [ref=f47e143]: download
+            - text: Export Report
+          - generic [ref=f47e144]:
+            - button "Inventory" [ref=f47e145]
+            - button "History" [ref=f47e146]
+          - button "shopping_cart_checkout Complete Shopping 1" [ref=f47e147]:
+            - generic [ref=f47e148]: shopping_cart_checkout
+            - text: Complete Shopping
+            - generic [ref=f47e149]: "1"
+          - button "add Add Item" [ref=f47e150]:
+            - generic [ref=f47e151]: add
+            - text: Add Item
+      - generic [ref=f47e152]:
+        - generic [ref=f47e153]:
+          - generic [ref=f47e154]: payments
+          - generic [ref=f47e156]:
+            - paragraph [ref=f47e157]: Total Expenditure
+            - generic [ref=f47e158]:
+              - paragraph [ref=f47e159]: $8.50
+              - generic [ref=f47e160]:
+                - generic [ref=f47e161]: trending_up
+                - text: +12%
+            - paragraph [ref=f47e162]: Reflected from purchased items
+        - generic [ref=f47e163]:
+          - generic [ref=f47e164]: shopping_basket
+          - generic [ref=f47e166]:
+            - paragraph [ref=f47e167]: Total Items
+            - paragraph [ref=f47e168]: "1"
+            - paragraph [ref=f47e169]: Current Stock Level
+        - generic [ref=f47e170]:
+          - generic [ref=f47e171]: analytics
+          - generic [ref=f47e173]:
+            - paragraph [ref=f47e174]: Low Stock Items
+            - paragraph [ref=f47e175]: "1"
+            - paragraph [ref=f47e176]: Need Restocking
+      - generic [ref=f47e177]:
+        - generic [ref=f47e178]:
+          - heading "Active Stock & History" [level=2] [ref=f47e179]
+          - generic [ref=f47e180]:
+            - generic [ref=f47e181]:
+              - generic [ref=f47e182]: search
+              - textbox "Search items..." [ref=f47e183]
+            - combobox [ref=f47e184] [cursor=pointer]:
+              - option "All Categories" [selected]
+              - option "Protein"
+            - button "filter_list" [ref=f47e185]
+        - generic [ref=f47e187]:
+          - table [ref=f47e189]:
+            - rowgroup [ref=f47e190]:
+              - row [ref=f47e191]:
+                - columnheader "Item Name" [ref=f47e192]
+                - columnheader "Category" [ref=f47e193]
+                - columnheader "Stock Level" [ref=f47e194]
+                - columnheader "Unit" [ref=f47e195]
+                - columnheader "Est. Price" [ref=f47e196]
+                - columnheader "Total Value" [ref=f47e197]
+                - columnheader "Actions" [ref=f47e198]
+            - rowgroup [ref=f47e199]:
+              - row [ref=f47e200]:
+                - cell "egg_alt Pollo Pechuga" [ref=f47e201]:
+                  - generic [ref=f47e202]:
+                    - generic [ref=f47e203]: egg_alt
+                    - generic [ref=f47e205]: Pollo Pechuga
+                - cell "Protein" [ref=f47e206]
+                - cell "1.00 / 6.00 Low Stock" [ref=f47e208]:
+                  - generic [ref=f47e209]:
+                    - generic [ref=f47e210]: "1.00"
+                    - generic [ref=f47e211]: / 6.00
+                  - generic [ref=f47e212]: Low Stock
+                - cell "kg" [ref=f47e213]
+                - cell "$8.50" [ref=f47e214]
+                - cell "$8.50" [ref=f47e215]
+                - cell [ref=f47e216]:
+                  - generic [ref=f47e217]:
+                    - button "water_drop" [ref=f47e218]
+                    - button "edit" [ref=f47e220]
+                    - button "delete" [ref=f47e222]
+          - generic [ref=f47e224]:
+            - generic [ref=f47e225]: Showing 1 of 1 records
+            - generic [ref=f47e226]:
+              - button "Prev" [disabled] [ref=f47e227]
+              - button "1" [ref=f47e228]
+              - button "Next" [disabled] [ref=f47e229]

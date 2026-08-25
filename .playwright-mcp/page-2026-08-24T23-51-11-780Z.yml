@@ -1,0 +1,103 @@
+- generic [ref=f52e3]:
+  - generic [ref=f52e7]:
+    - generic [ref=f52e8]:
+      - list [ref=f52e9]:
+        - listitem [ref=f52e10]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f52e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f52e15]: Megalomaniac Pro
+            - generic [ref=f52e17]: Megalomaniac Pro
+      - generic [ref=f52e18]:
+        - generic [ref=f52e19]: Navegación
+        - button "Sidebar fijado" [ref=f52e20]:
+          - generic [ref=f52e21]: push_pin
+    - generic [ref=f52e22]:
+      - generic [ref=f52e23]:
+        - generic [ref=f52e24]: Principal
+        - list [ref=f52e25]:
+          - listitem [ref=f52e26]:
+            - link "Panel" [ref=f52e27] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f52e34]:
+            - link "Entrenamiento" [ref=f52e35] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f52e43]:
+            - link "Nutrición" [ref=f52e44] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f52e49]:
+            - link "Suplementos" [ref=f52e50] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f52e55]:
+            - link "Compras" [ref=f52e56] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f52e62]:
+        - generic [ref=f52e63]: Freelance
+        - list [ref=f52e64]:
+          - listitem [ref=f52e65]:
+            - link "Panel Freelance" [ref=f52e66] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f52e71]:
+            - listitem [ref=f52e72]:
+              - link "Clientes" [ref=f52e73] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f52e80]:
+              - link "Proyectos" [ref=f52e81] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f52e86]:
+              - link "Cotizaciones" [ref=f52e87] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f52e92]:
+        - generic [ref=f52e93]: Finanzas
+        - list [ref=f52e94]:
+          - listitem [ref=f52e95]:
+            - link "Finanzas" [ref=f52e96] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f52e101]:
+            - link "Compras" [ref=f52e102] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f52e108]:
+            - link "Ingresos" [ref=f52e109] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f52e114]:
+      - listitem [ref=f52e115]:
+        - button "TU Test User" [ref=f52e116]:
+          - generic [ref=f52e117]: TU
+          - generic [ref=f52e119]: Test User
+  - main [ref=f52e124]:
+    - generic [ref=f52e125]:
+      - button "Toggle Sidebar" [ref=f52e126]
+      - generic [ref=f52e129]: Megalomaniac Pro · Panel
+    - generic [ref=f52e131]:
+      - generic [ref=f52e132]:
+        - generic [ref=f52e133]:
+          - heading "Proyectos" [level=1] [ref=f52e134]
+          - paragraph [ref=f52e135]: Gestiona tus trabajos y su progreso.
+        - link "Nuevo Proyecto" [ref=f52e136] [cursor=pointer]:
+          - /url: /freelance/projects/create
+      - textbox "Buscar proyectos..." [ref=f52e142]
+      - table [ref=f52e145]:
+        - rowgroup [ref=f52e146]:
+          - row [ref=f52e147]:
+            - columnheader "Proyecto" [ref=f52e148]
+            - columnheader "Cliente" [ref=f52e149]
+            - columnheader "Estado" [ref=f52e150]
+            - columnheader "Presupuesto" [ref=f52e151]
+            - columnheader "Fecha Entrega" [ref=f52e152]
+            - columnheader [ref=f52e153]
+        - rowgroup [ref=f52e154]:
+          - row [ref=f52e155]:
+            - cell "App Titan Redesign /" [ref=f52e156]:
+              - generic [ref=f52e157]:
+                - generic [ref=f52e158]: App Titan Redesign
+                - generic [ref=f52e159]: /
+            - cell "Gimnasio Titan" [ref=f52e160]
+            - cell "in progress" [ref=f52e161]
+            - cell "$0 / $0" [ref=f52e163]:
+              - generic [ref=f52e164]:
+                - generic [ref=f52e165]:
+                  - generic [ref=f52e166]: $0
+                  - generic [ref=f52e167]: / $0
+                - progressbar [ref=f52e168]
+            - cell "-" [ref=f52e170]
+            - cell [ref=f52e171]:
+              - button [ref=f52e172]

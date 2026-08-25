@@ -51,7 +51,7 @@ export default function QuotesIndex({ quotes, filters }: any) {
     };
 
     const handleDuplicate = (id: number) => {
-        router.post(route('freelance.quotes.duplicate', id));
+        router.post(freelance.quotes.duplicate(id).url);
     };
 
     const getStatusBadge = (status: string) => {
@@ -75,7 +75,7 @@ export default function QuotesIndex({ quotes, filters }: any) {
                         <h1 className="text-2xl font-bold tracking-tight text-white">Cotizaciones</h1>
                         <p className="text-muted-foreground">Crea y gestiona presupuestos para tus prospectos.</p>
                     </div>
-                    <Button asChild className="bg-primary text-[#102216] font-bold">
+                    <Button asChild className="bg-primary text-white font-bold">
                         <Link href={freelance.quotes.create().url}>
                             <Plus className="mr-2 h-4 w-4" /> Nueva Cotización
                         </Link>
@@ -87,36 +87,36 @@ export default function QuotesIndex({ quotes, filters }: any) {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Buscar por número o cliente..."
-                            className="pl-8 bg-[#193322] border-[#23482f]"
+                            className="pl-8 bg-[#2b1a1a] border-[#3e2121]"
                             value={search}
                             onChange={(e) => handleSearch(e.target.value)}
                         />
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-[#23482f] bg-[#193322] overflow-hidden">
+                <div className="rounded-xl border border-[#3e2121] bg-[#2b1a1a] overflow-hidden">
                     <Table>
-                        <TableHeader className="bg-[#102216]">
-                            <TableRow className="hover:bg-transparent border-[#23482f]">
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Número</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Cliente</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Fecha</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Vence</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Total</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Estado</TableHead>
+                        <TableHeader className="bg-[#1c0f0f]">
+                            <TableRow className="hover:bg-transparent border-[#3e2121]">
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Número</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Cliente</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Fecha</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Vence</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Total</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Estado</TableHead>
                                 <TableHead className="w-[80px]"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {quotes.data.length === 0 ? (
-                                <TableRow className="hover:bg-transparent border-[#23482f]">
+                                <TableRow className="hover:bg-transparent border-[#3e2121]">
                                     <TableCell colSpan={7} className="text-center h-24 text-muted-foreground italic">
                                         No se encontraron cotizaciones.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 quotes.data.map((quote: any) => (
-                                    <TableRow key={quote.id} className="hover:bg-white/5 border-[#23482f]">
+                                    <TableRow key={quote.id} className="hover:bg-white/5 border-[#3e2121]">
                                         <TableCell className="font-bold text-white">{quote.quote_number}</TableCell>
                                         <TableCell className="text-white/80">{quote.client?.name}</TableCell>
                                         <TableCell className="text-white/80 text-sm">{new Date(quote.issue_date).toLocaleDateString()}</TableCell>
@@ -132,29 +132,29 @@ export default function QuotesIndex({ quotes, filters }: any) {
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-[#193322] border-[#23482f] text-white">
-                                                    <DropdownMenuItem asChild className="focus:bg-[#23482f] focus:text-white">
+                                                <DropdownMenuContent align="end" className="bg-[#2b1a1a] border-[#3e2121] text-white">
+                                                    <DropdownMenuItem asChild className="focus:bg-[#3e2121] focus:text-white">
                                                         <Link href={freelance.quotes.show(quote.id).url}>
                                                             <Eye className="mr-2 h-4 w-4" /> Ver
                                                         </Link>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem asChild className="focus:bg-[#23482f] focus:text-white">
+                                                    <DropdownMenuItem asChild className="focus:bg-[#3e2121] focus:text-white">
                                                         <Link href={freelance.quotes.edit(quote.id).url}>
                                                             <Pencil className="mr-2 h-4 w-4" /> Editar
                                                         </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
-                                                        className="focus:bg-[#23482f] focus:text-white"
+                                                        className="focus:bg-[#3e2121] focus:text-white"
                                                         onClick={() => handleDuplicate(quote.id)}
                                                     >
                                                         <Copy className="mr-2 h-4 w-4" /> Duplicar
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem asChild className="focus:bg-[#23482f] focus:text-white">
-                                                        <a href={route('freelance.quotes.pdf', quote.id)} target="_blank">
+                                                    <DropdownMenuItem asChild className="focus:bg-[#3e2121] focus:text-white">
+                                                        <a href={freelance.quotes.pdf(quote.id).url} target="_blank">
                                                             <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
                                                         </a>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuSeparator className="bg-[#23482f]" />
+                                                    <DropdownMenuSeparator className="bg-[#3e2121]" />
                                                     <DropdownMenuItem
                                                         className="text-rose-400 focus:bg-rose-500/20 focus:text-rose-400"
                                                         onClick={() => handleDelete(quote.id)}

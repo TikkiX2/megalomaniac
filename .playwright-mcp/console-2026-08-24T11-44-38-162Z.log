@@ -1,0 +1,6 @@
+[  147507ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/app-Bas-TuPT.css:0
+[  219861ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://127.0.0.1:8010/_boost/browser-logs @ http://127.0.0.1:8010/fitness/gym:24
+[  220394ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/app-ScgeDdCa.js:0
+[  220505ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/gym-routine-DFcwqWW3.js:0
+[  220535ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/gym-layout-fTjDtcgl.js:0
+[  220559ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:8010/build/assets/main-layout-D9ClHDWA.js:0

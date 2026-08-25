@@ -29,24 +29,24 @@ export default function CreditCardCreate() {
             <Head title="Add Credit Card" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex items-center gap-4">
-                    <Link href={finance.creditCards.index().url} className="rounded-full p-2 hover:bg-white/5 text-[#92c9a4] transition-all">
+                    <Link href={finance.creditCards.index().url} className="rounded-full p-2 hover:bg-white/5 text-[#e8b4b4] transition-all">
                         <span className="material-symbols-outlined">arrow_back</span>
                     </Link>
                     <div>
                         <h2 className="text-3xl font-black tracking-tight text-white">Add Credit Card</h2>
-                        <p className="text-sm font-medium text-[#92c9a4]">Configure your financial tools.</p>
+                        <p className="text-sm font-medium text-[#e8b4b4]">Configure your financial tools.</p>
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-2xl bg-[#193322] border border-[#23482f] p-8 shadow-xl">
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6 rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-8 shadow-xl">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div className="flex flex-col gap-2 md:col-span-2">
-                            <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Card Name</Label>
+                            <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Card Name</Label>
                             <Input
                                 id="name"
                                 value={data.name}
                                 onChange={e => setData('name', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white focus:ring-primary h-12"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary h-12"
                                 placeholder="E.g. Visa Signature, BBVA Mastercard..."
                                 required
                             />
@@ -54,13 +54,13 @@ export default function CreditCardCreate() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="last_four_digits" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Last 4 Digits</Label>
+                            <Label htmlFor="last_four_digits" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Last 4 Digits</Label>
                             <Input
                                 id="last_four_digits"
                                 maxLength={4}
                                 value={data.last_four_digits}
                                 onChange={e => setData('last_four_digits', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white focus:ring-primary h-12"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary h-12"
                                 placeholder="1234"
                             />
                         </div>
@@ -75,30 +75,30 @@ export default function CreditCardCreate() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="interest_rate" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Interest Rate (%)</Label>
+                            <Label htmlFor="interest_rate" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Interest Rate (%)</Label>
                             <Input
                                 id="interest_rate"
                                 type="number"
                                 step="0.01"
                                 value={data.interest_rate}
                                 onChange={e => setData('interest_rate', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white focus:ring-primary h-12"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary h-12"
                             />
                         </div>
 
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="tax_percentage" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Tax Percentage (%)</Label>
+                            <Label htmlFor="tax_percentage" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Tax Percentage (%)</Label>
                             <Input
                                 id="tax_percentage"
                                 type="number"
                                 step="0.01"
                                 value={data.tax_percentage}
                                 onChange={e => setData('tax_percentage', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white focus:ring-primary h-12"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary h-12"
                             />
                         </div>
 
-                        <div className="flex flex-col gap-4 md:col-span-2 rounded-xl bg-[#102216]/50 p-4 border border-[#23482f]/30">
+                        <div className="flex flex-col gap-4 md:col-span-2 rounded-xl bg-[#1c0f0f]/50 p-4 border border-[#3e2121]/30">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
@@ -120,12 +120,12 @@ export default function CreditCardCreate() {
                         </div>
 
                         <div className="flex flex-col gap-2 md:col-span-2">
-                            <Label htmlFor="notes" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Notes</Label>
+                            <Label htmlFor="notes" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Notes</Label>
                             <textarea
                                 id="notes"
                                 value={data.notes}
                                 onChange={e => setData('notes', e.target.value)}
-                                className="flex min-h-[80px] w-full rounded-md border border-[#23482f] bg-[#102216] px-3 py-2 text-sm text-white shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                className="flex min-h-[80px] w-full rounded-md border border-[#3e2121] bg-[#1c0f0f] px-3 py-2 text-sm text-white shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                 placeholder="Extra info about this card..."
                             />
                         </div>
@@ -133,7 +133,7 @@ export default function CreditCardCreate() {
 
                     <Button
                         disabled={processing}
-                        className="mt-4 bg-primary px-8 py-6 text-base font-black text-[#102216] hover:bg-green-400 shadow-[0_4px_20px_rgba(19,236,91,0.2)]"
+                        className="mt-4 bg-primary px-8 py-6 text-base font-black text-white hover:bg-primary/90 shadow-[0_4px_20px_rgba(239,68,68,0.2)]"
                     >
                         {processing ? 'Processing...' : 'Save Card'}
                     </Button>

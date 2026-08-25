@@ -1,0 +1,65 @@
+- generic [ref=f9e3]:
+  - complementary [ref=f9e4]:
+    - generic [ref=f9e5]:
+      - generic [ref=f9e6]:
+        - generic [ref=f9e7]:
+          - generic [ref=f9e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f9e11]
+        - navigation [ref=f9e12]:
+          - link "dashboard Dashboard" [ref=f9e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f9e14]: dashboard
+            - generic [ref=f9e15]: Dashboard
+          - link "work Freelance" [ref=f9e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f9e17]: work
+            - generic [ref=f9e18]: Freelance
+          - link "payments Finance" [ref=f9e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f9e20]: payments
+            - generic [ref=f9e21]: Finance
+          - link "exercise Workout Log" [ref=f9e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f9e23]: exercise
+            - generic [ref=f9e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f9e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f9e26]: restaurant
+            - generic [ref=f9e27]: Nutrition
+          - link "medication Supplements" [ref=f9e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f9e29]: medication
+            - generic [ref=f9e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f9e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f9e32]: shopping_cart
+            - generic [ref=f9e33]: Grocery List
+      - generic [ref=f9e34]:
+        - link "settings Settings" [ref=f9e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f9e36]: settings
+          - generic [ref=f9e37]: Settings
+        - generic [ref=f9e38]:
+          - generic [ref=f9e39]: T
+          - paragraph [ref=f9e41]: Test User
+  - main [ref=f9e42]:
+    - generic [ref=f9e44]:
+      - generic [ref=f9e45]:
+        - generic [ref=f9e46]:
+          - heading "Proyectos" [level=1] [ref=f9e47]
+          - paragraph [ref=f9e48]: Gestiona tus trabajos y su progreso.
+        - link "Nuevo Proyecto" [ref=f9e49] [cursor=pointer]:
+          - /url: /freelance/projects/create
+      - textbox "Buscar proyectos..." [ref=f9e55]
+      - table [ref=f9e58]:
+        - rowgroup [ref=f9e59]:
+          - row [ref=f9e60]:
+            - columnheader "Proyecto" [ref=f9e61]
+            - columnheader "Cliente" [ref=f9e62]
+            - columnheader "Estado" [ref=f9e63]
+            - columnheader "Presupuesto" [ref=f9e64]
+            - columnheader "Fecha Entrega" [ref=f9e65]
+            - columnheader [ref=f9e66]
+        - rowgroup [ref=f9e67]:
+          - row [ref=f9e68]:
+            - cell "No se encontraron proyectos." [ref=f9e69]

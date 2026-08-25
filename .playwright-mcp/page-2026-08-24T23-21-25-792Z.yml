@@ -1,0 +1,93 @@
+- generic [ref=f39e358]:
+  - generic [ref=f39e362]:
+    - generic [ref=f39e363]:
+      - list [ref=f39e364]:
+        - listitem [ref=f39e365]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f39e366] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f39e370]: Megalomaniac Pro
+            - generic [ref=f39e372]: Megalomaniac Pro
+      - generic [ref=f39e373]:
+        - generic [ref=f39e374]: Navegación
+        - button "Sidebar fijado" [ref=f39e375]:
+          - generic [ref=f39e376]: push_pin
+    - generic [ref=f39e377]:
+      - generic [ref=f39e378]:
+        - generic [ref=f39e379]: Principal
+        - list [ref=f39e380]:
+          - listitem [ref=f39e381]:
+            - link "Panel" [ref=f39e382] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f39e389]:
+            - link "Entrenamiento" [ref=f39e390] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f39e398]:
+            - link "Nutrición" [ref=f39e399] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f39e404]:
+            - link "Suplementos" [ref=f39e405] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f39e410]:
+            - link "Compras" [ref=f39e411] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f39e417]:
+        - generic [ref=f39e418]: Freelance
+        - list [ref=f39e419]:
+          - listitem [ref=f39e420]:
+            - link "Panel Freelance" [ref=f39e421] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f39e426]:
+            - listitem [ref=f39e427]:
+              - link "Clientes" [ref=f39e428] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f39e435]:
+              - link "Proyectos" [ref=f39e436] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f39e441]:
+              - link "Cotizaciones" [ref=f39e442] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f39e447]:
+        - generic [ref=f39e448]: Finanzas
+        - list [ref=f39e449]:
+          - listitem [ref=f39e450]:
+            - link "Finanzas" [ref=f39e451] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f39e456]:
+            - link "Compras" [ref=f39e457] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f39e463]:
+            - link "Ingresos" [ref=f39e464] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f39e469]:
+      - listitem [ref=f39e470]:
+        - button "TU Test User" [ref=f39e471]:
+          - generic [ref=f39e472]: TU
+          - generic [ref=f39e474]: Test User
+  - main [ref=f39e479]:
+    - generic [ref=f39e480]:
+      - button "Toggle Sidebar" [ref=f39e481]
+      - generic [ref=f39e484]: Megalomaniac Pro · Panel
+    - generic [ref=f39e486]:
+      - generic [ref=f39e487]:
+        - generic [ref=f39e488]:
+          - heading "Clientes" [level=1] [ref=f39e489]
+          - paragraph [ref=f39e490]: Gestiona tu base de clientes y sus proyectos.
+        - link "Nuevo Cliente" [ref=f39e491] [cursor=pointer]:
+          - /url: /freelance/clients/create
+      - textbox "Buscar clientes por nombre o empresa..." [ref=f39e497]
+      - table [ref=f39e500]:
+        - rowgroup [ref=f39e501]:
+          - row [ref=f39e502]:
+            - columnheader "Nombre" [ref=f39e503]
+            - columnheader "Empresa" [ref=f39e504]
+            - columnheader "Email" [ref=f39e505]
+            - columnheader "Estado" [ref=f39e506]
+            - columnheader [ref=f39e507]
+        - rowgroup [ref=f39e508]:
+          - row [ref=f39e509]:
+            - cell "Gimnasio Titan" [ref=f39e510]
+            - cell "Titan Fitness SRL" [ref=f39e511]
+            - cell "contacto@titan.fitness" [ref=f39e512]
+            - cell "Activo" [ref=f39e513]
+            - cell [ref=f39e514]:
+              - button "Abrir menú" [ref=f39e515]

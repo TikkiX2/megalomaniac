@@ -47,21 +47,21 @@ export default function WithdrawalsIndex({ withdrawals, categories, currencies, 
                     <div>
                         <h2 className="text-3xl font-black tracking-tight text-white lg:text-4xl">
                             Withdrawals & Services</h2>
-                        <p className="mt-1 text-base font-medium text-[#92c9a4]">
+                        <p className="mt-1 text-base font-medium text-[#e8b4b4]">
                             Manage your expenses, recurring payments, and obligations.
                         </p>
                     </div>
                     <div className="flex gap-3">
                         <Link
                             href={finance.withdrawalCategories.index().url}
-                            className="flex items-center gap-2 rounded-lg border border-[#23482f] bg-[#193322] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/5"
+                            className="flex items-center gap-2 rounded-lg border border-[#3e2121] bg-[#2b1a1a] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/5"
                         >
                             <span className="material-symbols-outlined text-[20px]">category</span>
                             Categories
                         </Link>
                         <Link
                             href={finance.withdrawals.create().url}
-                            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-[#102216] shadow-[0_0_20px_rgba(19,236,91,0.25)] transition hover:bg-green-400 active:scale-95">
+                            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-white shadow-[0_0_20px_rgba(239,68,68,0.25)] transition hover:bg-primary/90 active:scale-95">
                             <span className="material-symbols-outlined font-bold" style={{ fontSize: '20px' }}>add</span>
                             Add Withdrawal
                         </Link>
@@ -69,42 +69,42 @@ export default function WithdrawalsIndex({ withdrawals, categories, currencies, 
                 </div>
 
                 {/* Filters */}
-                <div className="rounded-2xl bg-[#193322] border border-[#23482f] p-6 shadow-xl">
+                <div className="rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-6 shadow-xl">
                     <form onSubmit={handleFilter} className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5 items-end">
                         <div className="flex flex-col gap-1.5">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Category</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Category</Label>
                             <select
                                 value={data.category_id}
                                 onChange={e => setData('category_id', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white rounded-lg px-3 py-2 text-sm h-10"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white rounded-lg px-3 py-2 text-sm h-10"
                             >
                                 <option value="">All Categories</option>
                                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Date Range</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Date Range</Label>
                             <div className="flex gap-2">
                                 <Input
                                     type="date"
                                     value={data.start_date}
                                     onChange={e => setData('start_date', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white h-10 text-xs"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white h-10 text-xs"
                                 />
                                 <Input
                                     type="date"
                                     value={data.end_date}
                                     onChange={e => setData('end_date', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white h-10 text-xs"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white h-10 text-xs"
                                 />
                             </div>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Currency</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Currency</Label>
                             <select
                                 value={data.currency_id}
                                 onChange={e => setData('currency_id', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white rounded-lg px-3 py-2 text-sm h-10"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white rounded-lg px-3 py-2 text-sm h-10"
                             >
                                 <option value="">All Currencies</option>
                                 {currencies.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
@@ -118,30 +118,30 @@ export default function WithdrawalsIndex({ withdrawals, categories, currencies, 
                             />
                             <Label htmlFor="recurring_only" className="text-xs font-bold text-white cursor-pointer">Recurring Only</Label>
                         </div>
-                        <Button disabled={processing} className="bg-primary font-black text-[#102216] hover:bg-green-400 h-10">
+                        <Button disabled={processing} className="bg-primary font-black text-white hover:bg-primary/90 h-10">
                             Apply Filters
                         </Button>
                     </form>
                 </div>
 
                 {/* Withdrawals List */}
-                <div className="overflow-hidden rounded-2xl bg-[#193322] border border-[#23482f] shadow-xl">
+                <div className="overflow-hidden rounded-2xl bg-[#2b1a1a] border border-[#3e2121] shadow-xl">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="border-b border-[#23482f] bg-[#102216]/50">
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Date</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Description</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Category</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Type</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4] text-right">Amount</th>
-                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]"></th>
+                            <tr className="border-b border-[#3e2121] bg-[#1c0f0f]/50">
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Date</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Description</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Category</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Type</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4] text-right">Amount</th>
+                                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]"></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#23482f]/30">
+                        <tbody className="divide-y divide-[#3e2121]/30">
                             {withdrawals.data.length > 0 ? (
                                 withdrawals.data.map((withdrawal) => (
                                     <tr key={withdrawal.id} className="group hover:bg-white/[0.02] transition-colors">
-                                        <td className="px-6 py-4 text-sm font-medium text-[#92c9a4] whitespace-nowrap">
+                                        <td className="px-6 py-4 text-sm font-medium text-[#e8b4b4] whitespace-nowrap">
                                             {new Date(withdrawal.withdrawal_date).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4">
@@ -193,7 +193,7 @@ export default function WithdrawalsIndex({ withdrawals, categories, currencies, 
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-[#92c9a4]">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-[#e8b4b4]">
                                         <span className="material-symbols-outlined text-4xl mb-2 opacity-50">receipt_long</span>
                                         <p className="text-sm font-medium">No withdrawals found matching your filters.</p>
                                     </td>

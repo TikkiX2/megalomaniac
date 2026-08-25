@@ -1,0 +1,128 @@
+- generic [ref=f2e3]:
+  - complementary [ref=f2e4]:
+    - generic [ref=f2e5]:
+      - generic [ref=f2e6]:
+        - generic [ref=f2e7]:
+          - generic [ref=f2e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f2e11]
+        - navigation [ref=f2e12]:
+          - link "dashboard Dashboard" [ref=f2e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f2e14]: dashboard
+            - generic [ref=f2e15]: Dashboard
+          - link "work Freelance" [ref=f2e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f2e17]: work
+            - generic [ref=f2e18]: Freelance
+          - link "payments Finance" [ref=f2e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f2e20]: payments
+            - generic [ref=f2e21]: Finance
+          - link "exercise Workout Log" [ref=f2e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f2e23]: exercise
+            - generic [ref=f2e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f2e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f2e26]: restaurant
+            - generic [ref=f2e27]: Nutrition
+          - link "medication Supplements" [ref=f2e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f2e29]: medication
+            - generic [ref=f2e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f2e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f2e32]: shopping_cart
+            - generic [ref=f2e33]: Grocery List
+      - generic [ref=f2e34]:
+        - link "settings Settings" [ref=f2e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f2e36]: settings
+          - generic [ref=f2e37]: Settings
+        - generic [ref=f2e38]:
+          - generic [ref=f2e39]: T
+          - paragraph [ref=f2e41]: Test User
+  - main [ref=f2e42]:
+    - generic [ref=f2e44]:
+      - generic [ref=f2e45]:
+        - generic [ref=f2e46]:
+          - heading "Daily Nutrition" [level=1] [ref=f2e47]
+          - paragraph [ref=f2e48]: Track your macros & meals
+        - generic [ref=f2e50]:
+          - button "chevron_left" [ref=f2e51]
+          - textbox [ref=f2e53] [cursor=pointer]: 2026-08-24
+          - button "chevron_right" [ref=f2e54]
+      - generic [ref=f2e56]:
+        - generic [ref=f2e57]:
+          - text: Calories
+          - generic [ref=f2e58]:
+            - generic [ref=f2e59]: 1,850
+            - generic [ref=f2e60]: / 2,400
+        - generic [ref=f2e63]:
+          - text: Protein
+          - generic [ref=f2e64]:
+            - generic [ref=f2e65]: 145g
+            - generic [ref=f2e66]: / 180g
+        - generic [ref=f2e69]:
+          - text: Carbs
+          - generic [ref=f2e70]:
+            - generic [ref=f2e71]: 220g
+            - generic [ref=f2e72]: / 250g
+        - generic [ref=f2e75]:
+          - text: Fats
+          - generic [ref=f2e76]:
+            - generic [ref=f2e77]: 65g
+            - generic [ref=f2e78]: / 70g
+      - generic [ref=f2e81]:
+        - generic [ref=f2e82]:
+          - generic [ref=f2e83]:
+            - generic [ref=f2e84]:
+              - generic [ref=f2e85]: bakery_dining
+              - generic [ref=f2e87]:
+                - heading "breakfast" [level=2] [ref=f2e88]
+                - paragraph [ref=f2e89]: "Recommended: 600 - 800 kcal"
+            - button "add_circle Add Food" [ref=f2e90]:
+              - generic [ref=f2e91]: add_circle
+              - text: Add Food
+          - generic [ref=f2e92]:
+            - generic [ref=f2e93]: no_food
+            - paragraph [ref=f2e94]: No items logged yet
+        - generic [ref=f2e95]:
+          - generic [ref=f2e96]:
+            - generic [ref=f2e97]:
+              - generic [ref=f2e98]: restaurant
+              - generic [ref=f2e100]:
+                - heading "lunch" [level=2] [ref=f2e101]
+                - paragraph [ref=f2e102]: "Recommended: 600 - 800 kcal"
+            - button "add_circle Add Food" [ref=f2e103]:
+              - generic [ref=f2e104]: add_circle
+              - text: Add Food
+          - generic [ref=f2e105]:
+            - generic [ref=f2e106]: no_food
+            - paragraph [ref=f2e107]: No items logged yet
+        - generic [ref=f2e108]:
+          - generic [ref=f2e109]:
+            - generic [ref=f2e110]:
+              - generic [ref=f2e111]: dinner_dining
+              - generic [ref=f2e113]:
+                - heading "dinner" [level=2] [ref=f2e114]
+                - paragraph [ref=f2e115]: "Recommended: 600 - 800 kcal"
+            - button "add_circle Add Food" [ref=f2e116]:
+              - generic [ref=f2e117]: add_circle
+              - text: Add Food
+          - generic [ref=f2e118]:
+            - generic [ref=f2e119]: no_food
+            - paragraph [ref=f2e120]: No items logged yet
+        - generic [ref=f2e121]:
+          - generic [ref=f2e122]:
+            - generic [ref=f2e123]:
+              - generic [ref=f2e124]: icecream
+              - generic [ref=f2e126]:
+                - heading "snack" [level=2] [ref=f2e127]
+                - paragraph [ref=f2e128]: "Recommended: 600 - 800 kcal"
+            - button "add_circle Add Food" [ref=f2e129]:
+              - generic [ref=f2e130]: add_circle
+              - text: Add Food
+          - generic [ref=f2e131]:
+            - generic [ref=f2e132]: no_food
+            - paragraph [ref=f2e133]: No items logged yet

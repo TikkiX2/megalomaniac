@@ -1,0 +1,88 @@
+- generic [ref=f8e3]:
+  - complementary [ref=f8e4]:
+    - generic [ref=f8e5]:
+      - generic [ref=f8e6]:
+        - generic [ref=f8e7]:
+          - generic [ref=f8e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f8e11]
+        - navigation [ref=f8e12]:
+          - link "dashboard Dashboard" [ref=f8e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f8e14]: dashboard
+            - generic [ref=f8e15]: Dashboard
+          - link "work Freelance" [ref=f8e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f8e17]: work
+            - generic [ref=f8e18]: Freelance
+          - link "payments Finance" [ref=f8e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f8e20]: payments
+            - generic [ref=f8e21]: Finance
+          - link "exercise Workout Log" [ref=f8e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f8e23]: exercise
+            - generic [ref=f8e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f8e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f8e26]: restaurant
+            - generic [ref=f8e27]: Nutrition
+          - link "medication Supplements" [ref=f8e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f8e29]: medication
+            - generic [ref=f8e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f8e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f8e32]: shopping_cart
+            - generic [ref=f8e33]: Grocery List
+      - generic [ref=f8e34]:
+        - link "settings Settings" [ref=f8e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f8e36]: settings
+          - generic [ref=f8e37]: Settings
+        - generic [ref=f8e38]:
+          - generic [ref=f8e39]: T
+          - paragraph [ref=f8e41]: Test User
+  - main [ref=f8e42]:
+    - generic [ref=f8e44]:
+      - generic [ref=f8e45]:
+        - generic [ref=f8e46]:
+          - heading "Panel de Control Freelance" [level=1] [ref=f8e47]
+          - paragraph [ref=f8e48]: Resumen de tu actividad y proyectos.
+        - generic [ref=f8e49]:
+          - link "Cliente" [ref=f8e50] [cursor=pointer]:
+            - /url: /freelance/clients/create
+          - link "Proyecto" [ref=f8e51] [cursor=pointer]:
+            - /url: /freelance/projects/create
+          - link "Cotización" [ref=f8e52] [cursor=pointer]:
+            - /url: /freelance/quotes/create
+      - generic [ref=f8e53]:
+        - generic [ref=f8e55]:
+          - paragraph [ref=f8e57]: Proyectos Activos
+          - generic [ref=f8e61]:
+            - generic [ref=f8e62]: "0"
+            - paragraph [ref=f8e63]: En progreso
+        - generic [ref=f8e65]:
+          - paragraph [ref=f8e67]: Cotizaciones Pendientes
+          - generic [ref=f8e71]:
+            - generic [ref=f8e72]: "0"
+            - paragraph [ref=f8e73]: Esperando respuesta
+        - generic [ref=f8e75]:
+          - paragraph [ref=f8e77]: Ingresos del Mes
+          - generic [ref=f8e81]:
+            - generic [ref=f8e82]: $0
+            - paragraph [ref=f8e83]: Pagos recibidos
+        - generic [ref=f8e85]:
+          - paragraph [ref=f8e87]: Tareas Pendientes
+          - generic [ref=f8e91]:
+            - generic [ref=f8e92]: "0"
+            - paragraph [ref=f8e93]: Próximos vencimientos
+      - generic [ref=f8e94]:
+        - generic [ref=f8e95]:
+          - generic [ref=f8e96]:
+            - generic [ref=f8e97]: Proyectos Recientes
+            - link "Ver todo" [ref=f8e98] [cursor=pointer]:
+              - /url: /freelance/projects
+          - paragraph [ref=f8e101]: No hay proyectos recientes.
+        - generic [ref=f8e102]:
+          - generic [ref=f8e103]: Próximas Tareas
+          - paragraph [ref=f8e107]: No hay tareas pendientes.

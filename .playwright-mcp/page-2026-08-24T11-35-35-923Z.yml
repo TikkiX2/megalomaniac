@@ -1,0 +1,175 @@
+- generic [ref=f12e2]:
+  - generic [ref=f12e4]:
+    - generic [ref=f12e5]: Internal Server Error
+    - button "Copy as Markdown" [ref=f12e11] [cursor=pointer]
+  - generic [ref=f12e18]:
+    - generic [ref=f12e19]:
+      - heading "Illuminate\\Foundation\\ViteManifestNotFoundException" [level=1] [ref=f12e20]
+      - generic [ref=f12e21]: vendor/laravel/framework/src/Illuminate/Foundation/Vite.php:946
+      - paragraph [ref=f12e23]: "Vite manifest not found at: /opt/dev/megalomaniac/public/build/manifest.json"
+    - generic [ref=f12e24]:
+      - generic [ref=f12e25]:
+        - generic [ref=f12e26]:
+          - generic [ref=f12e27]: LARAVEL
+          - generic [ref=f12e28]: 12.50.0
+        - generic [ref=f12e29]:
+          - generic [ref=f12e30]: PHP
+          - generic [ref=f12e31]: 8.4.23
+      - generic [ref=f12e32]: UNHANDLED
+      - generic [ref=f12e36]: CODE 0
+    - generic [ref=f12e38]:
+      - generic [ref=f12e39]: "500"
+      - generic [ref=f12e43]: GET
+      - generic [ref=f12e47]: http://127.0.0.1:8010/fitness/groceries
+      - button [ref=f12e48] [cursor=pointer]
+  - generic [ref=f12e53]:
+    - generic [ref=f12e54]:
+      - heading "Exception trace" [level=3] [ref=f12e60]
+      - generic [ref=f12e61]:
+        - generic [ref=f12e63] [cursor=pointer]:
+          - generic [ref=f12e68]: 2 vendor frames
+          - button [ref=f12e69]
+        - generic [ref=f12e74]:
+          - generic [ref=f12e75] [cursor=pointer]:
+            - generic [ref=f12e78]:
+              - code [ref=f12e82]:
+                - generic [ref=f12e83]: resources/views/app.blade.php
+              - generic [ref=f12e84]: resources/views/app.blade.php:20
+            - button [ref=f12e87]
+          - code [ref=f12e96]:
+            - generic [ref=f12e97]: "15"
+            - generic [ref=f12e98]: "16 {{-- Material Symbols --}}"
+            - generic [ref=f12e99]: 17 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+            - generic [ref=f12e100]: "18"
+            - generic [ref=f12e101]: 19 @viteReactRefresh
+            - generic [ref=f12e102]: "20 @vite(['resources/js/app.tsx', \"resources/js/pages/{$page['component']}.tsx\"])"
+            - generic [ref=f12e103]: 21 @inertiaHead
+            - generic [ref=f12e104]: 22 </head>
+            - generic [ref=f12e105]: 23 <body class="font-sans antialiased bg-[#1c0f0f] text-white">
+            - generic [ref=f12e106]: 24 @inertia
+            - generic [ref=f12e107]: 25 </body>
+            - generic [ref=f12e108]: 26</html>
+            - generic [ref=f12e109]: "27"
+        - generic [ref=f12e111] [cursor=pointer]:
+          - generic [ref=f12e116]: 25 vendor frames
+          - button [ref=f12e117]
+        - generic [ref=f12e123] [cursor=pointer]:
+          - generic [ref=f12e126]:
+            - code [ref=f12e130]:
+              - generic [ref=f12e131]: App\Http\Middleware\HandleAppearance->handle()
+            - generic [ref=f12e132]: app/Http/Middleware/HandleAppearance.php:21
+          - button [ref=f12e135]
+        - generic [ref=f12e141] [cursor=pointer]:
+          - generic [ref=f12e146]: 45 vendor frames
+          - button [ref=f12e147]
+        - generic [ref=f12e153] [cursor=pointer]:
+          - generic [ref=f12e156]:
+            - code [ref=f12e160]:
+              - generic [ref=f12e161]: public/index.php
+            - generic [ref=f12e162]: public/index.php:20
+          - button [ref=f12e165]
+        - generic [ref=f12e171] [cursor=pointer]:
+          - generic [ref=f12e176]: 1 vendor frame
+          - button [ref=f12e177]
+    - generic [ref=f12e182]:
+      - generic [ref=f12e183]:
+        - heading "Queries" [level=3] [ref=f12e188]
+        - generic [ref=f12e189]: 1-5 of 5
+      - generic [ref=f12e191]:
+        - generic [ref=f12e192]:
+          - generic [ref=f12e193]:
+            - generic [ref=f12e194]: sqlite
+            - code [ref=f12e201]:
+              - generic [ref=f12e202]: select * from "sessions" where "id" = 'HzFu4in9PL9IYRHVI6FM7GmJh8lIDwyvcL6BjdBS' limit 1
+          - generic [ref=f12e203]: 1.39ms
+        - generic [ref=f12e204]:
+          - generic [ref=f12e205]:
+            - generic [ref=f12e206]: sqlite
+            - code [ref=f12e213]:
+              - generic [ref=f12e214]: select * from "users" where "id" = 2 limit 1
+          - generic [ref=f12e215]: 0.15ms
+        - generic [ref=f12e216]:
+          - generic [ref=f12e217]:
+            - generic [ref=f12e218]: sqlite
+            - code [ref=f12e225]:
+              - generic [ref=f12e226]: select * from "grocery_price_history" where exists (select * from "grocery_items" where "grocery_price_history"."grocery_item_id" = "grocery_items"."id" and "user_id" = 2) order by "purchased_at" desc
+          - generic [ref=f12e227]: 0.19ms
+        - generic [ref=f12e228]:
+          - generic [ref=f12e229]:
+            - generic [ref=f12e230]: sqlite
+            - code [ref=f12e237]:
+              - generic [ref=f12e238]: select * from "grocery_items" where "user_id" = 2 order by "name" asc
+          - generic [ref=f12e239]: 0.13ms
+        - generic [ref=f12e240]:
+          - generic [ref=f12e241]:
+            - generic [ref=f12e242]: sqlite
+            - code [ref=f12e249]:
+              - generic [ref=f12e250]: select distinct "category" from "grocery_items" where "user_id" = 2 and "category" is not null
+          - generic [ref=f12e251]: 0.1ms
+  - generic [ref=f12e253]:
+    - generic [ref=f12e254]:
+      - heading "Headers" [level=2] [ref=f12e255]
+      - generic [ref=f12e256]:
+        - generic [ref=f12e257]:
+          - generic [ref=f12e258]: host
+          - generic [ref=f12e260]: 127.0.0.1:8010
+        - generic [ref=f12e261]:
+          - generic [ref=f12e262]: connection
+          - generic [ref=f12e264]: keep-alive
+        - generic [ref=f12e265]:
+          - generic [ref=f12e266]: sec-ch-ua
+          - generic [ref=f12e268]: "\"Not=A?Brand\";v=\"99\", \"Google Chrome\";v=\"151\", \"Chromium\";v=\"151\""
+        - generic [ref=f12e269]:
+          - generic [ref=f12e270]: sec-ch-ua-mobile
+          - generic [ref=f12e272]: "?0"
+        - generic [ref=f12e273]:
+          - generic [ref=f12e274]: sec-ch-ua-platform
+          - generic [ref=f12e276]: "\"Linux\""
+        - generic [ref=f12e277]:
+          - generic [ref=f12e278]: upgrade-insecure-requests
+          - generic [ref=f12e280]: "1"
+        - generic [ref=f12e281]:
+          - generic [ref=f12e282]: user-agent
+          - generic [ref=f12e284]: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36
+        - generic [ref=f12e285]:
+          - generic [ref=f12e286]: accept
+          - generic [ref=f12e288]: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+        - generic [ref=f12e289]:
+          - generic [ref=f12e290]: sec-fetch-site
+          - generic [ref=f12e292]: none
+        - generic [ref=f12e293]:
+          - generic [ref=f12e294]: sec-fetch-mode
+          - generic [ref=f12e296]: navigate
+        - generic [ref=f12e297]:
+          - generic [ref=f12e298]: sec-fetch-user
+          - generic [ref=f12e300]: "?1"
+        - generic [ref=f12e301]:
+          - generic [ref=f12e302]: sec-fetch-dest
+          - generic [ref=f12e304]: document
+        - generic [ref=f12e305]:
+          - generic [ref=f12e306]: accept-encoding
+          - generic [ref=f12e308]: gzip, deflate, br, zstd
+        - generic [ref=f12e309]:
+          - generic [ref=f12e310]: accept-language
+          - generic [ref=f12e312]: en-US,en;q=0.9
+        - generic [ref=f12e313]:
+          - generic [ref=f12e314]: cookie
+          - generic [ref=f12e316]: appearance=system; XSRF-TOKEN=eyJpdiI6IkhnaCtqaUJ2a1N4STBKNGkxeVdST1E9PSIsInZhbHVlIjoiWCtJQzlXNWZod2d1NXNSZkRLRkJuUXRQYk5CRk4xbEhvSzdOWDcvQkQrUDlMOEduV1RZSDNNWVhVa0FBVENXWlZoTlZBSnVUbDNYZVZmTDRRL0pwYjlpTHdCQmtFWEh5eHBkTHBYV1NqejUrakgwTzJRLzZqK0RjcUJSRzZEVSsiLCJtYWMiOiJjZDQxOTJhY2EzZTViYzg1ZjczZTAyMjExZjQ1NzljMWJlY2E0OTQ4ZTI0NzQyMzE5NzVkMTRlYmJlMGYyOTMxIiwidGFnIjoiIn0%3D; laravel-session=eyJpdiI6InpDazJZQ3ByWGtib0xjUGtsRVY3cGc9PSIsInZhbHVlIjoiM2ZScUUvYUFyV2FZNUdPUkUxQ0VWS1U4Z0VTQkhDdVREVE52NFpQVkZIaHIwUWYwSEZjK01MMjM5T0RWWVZqRmFSN1A3TlVMeGh2QWkyUGJzVVhvMGRlRlpCOWs1anNwN2YvYTNzRXpRVXIxY2oyNTVYMHQvMWJmNWNGaldOUVYiLCJtYWMiOiI4OGU3NjdlZGU5NGVjZTg3OWYxMDc1YmJmZjhmMWYyNjNlMzU3ZjkzZWM0YmZjY2QwY2U1MmYzZWJkM2YxOWRkIiwidGFnIjoiIn0%3D
+    - generic [ref=f12e317]:
+      - heading "Body" [level=2] [ref=f12e318]
+      - generic [ref=f12e319]: // No request body
+    - generic [ref=f12e320]:
+      - heading "Routing" [level=2] [ref=f12e321]
+      - generic [ref=f12e322]:
+        - generic [ref=f12e323]:
+          - generic [ref=f12e324]: controller
+          - generic [ref=f12e326]: App\Http\Controllers\Grocery\GroceryController@index
+        - generic [ref=f12e327]:
+          - generic [ref=f12e328]: route name
+          - generic [ref=f12e330]: fitness.groceries
+        - generic [ref=f12e331]:
+          - generic [ref=f12e332]: middleware
+          - generic [ref=f12e334]: web, auth, verified
+    - generic [ref=f12e335]:
+      - heading "Routing parameters" [level=2] [ref=f12e336]
+      - generic [ref=f12e337]: // No routing parameters

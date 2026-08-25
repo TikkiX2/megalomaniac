@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -17,7 +18,7 @@ return new class extends Migration
             $table->boolean('is_archived')->default(false)->after('sort_order');
         });
 
-        \Illuminate\Support\Facades\DB::statement('UPDATE project_tasks SET user_id = (SELECT user_id FROM projects WHERE projects.id = project_tasks.project_id) WHERE user_id IS NULL');
+        DB::statement('UPDATE project_tasks SET user_id = (SELECT user_id FROM projects WHERE projects.id = project_tasks.project_id) WHERE user_id IS NULL');
     }
 
     public function down(): void

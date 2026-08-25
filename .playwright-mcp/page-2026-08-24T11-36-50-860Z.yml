@@ -1,0 +1,159 @@
+- generic:
+  - generic:
+    - generic:
+      - complementary:
+        - generic:
+          - generic:
+            - generic:
+              - generic: bolt
+              - generic:
+                - heading [level=1]: Megalomaniac
+            - navigation:
+              - link:
+                - /url: /dashboard
+                - generic: dashboard
+                - generic: Dashboard
+              - link:
+                - /url: /freelance/dashboard
+                - generic: work
+                - generic: Freelance
+              - link:
+                - /url: /finance/dashboard
+                - generic: payments
+                - generic: Finance
+              - link:
+                - /url: /fitness/gym
+                - generic: exercise
+                - generic: Workout Log
+              - link:
+                - /url: /fitness/nutrition
+                - generic: restaurant
+                - generic: Nutrition
+              - link:
+                - /url: /fitness/supplements
+                - generic: medication
+                - generic: Supplements
+              - link:
+                - /url: /fitness/groceries
+                - generic: shopping_cart
+                - generic: Grocery List
+          - generic:
+            - link:
+              - /url: /settings/profile
+              - generic: settings
+              - generic: Settings
+            - generic:
+              - generic: T
+              - generic:
+                - paragraph: Test User
+      - main:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - heading [level=1]: Grocery Tracker
+                - generic:
+                  - button:
+                    - generic: arrow_back_ios
+                  - generic: August 2026
+                  - button:
+                    - generic: arrow_forward_ios
+              - generic:
+                - button:
+                  - generic: download
+                  - text: Export Report
+                - generic:
+                  - button: Inventory
+                  - button: History
+                - button:
+                  - generic: shopping_cart_checkout
+                  - text: Complete Shopping
+                - button [expanded]:
+                  - generic: add
+                  - text: Add Item
+            - generic:
+              - generic:
+                - generic: payments
+                - generic:
+                  - paragraph: Total Expenditure
+                  - generic:
+                    - paragraph: $0.00
+                    - generic:
+                      - generic: trending_up
+                      - text: +12%
+                  - paragraph: Reflected from purchased items
+              - generic:
+                - generic: shopping_basket
+                - generic:
+                  - paragraph: Total Items
+                  - paragraph: "0"
+                  - paragraph: Current Stock Level
+              - generic:
+                - generic: analytics
+                - generic:
+                  - paragraph: Low Stock Items
+                  - paragraph: "0"
+                  - paragraph: Need Restocking
+            - generic:
+              - generic:
+                - heading [level=2]: Active Stock & History
+                - generic:
+                  - generic:
+                    - generic: search
+                    - textbox:
+                      - /placeholder: Search items...
+                  - combobox
+                  - button:
+                    - generic: filter_list
+              - generic:
+                - generic:
+                  - table:
+                    - rowgroup:
+                      - row:
+                        - columnheader: Item Name
+                        - columnheader: Category
+                        - columnheader: Stock Level
+                        - columnheader: Unit
+                        - columnheader: Est. Price
+                        - columnheader: Total Value
+                        - columnheader: Actions
+                    - rowgroup:
+                      - row:
+                        - cell: No items found
+                - generic:
+                  - generic: Showing 0 of 0 records
+                  - generic:
+                    - button [disabled]: Prev
+                    - button: "1"
+                    - button [disabled]: Next
+  - dialog [ref=f13e121]:
+    - generic [ref=f13e122]:
+      - heading "Add New Item" [level=2] [ref=f13e123]
+      - paragraph [ref=f13e124]: Fill in the details for your new stock item.
+    - generic [ref=f13e125]:
+      - generic [ref=f13e126]:
+        - generic [ref=f13e127]: Item Name
+        - textbox "Item Name" [ref=f13e128]:
+          - /placeholder: e.g. Greek Yogurt
+          - text: Pollo Pechuga
+      - generic [ref=f13e129]:
+        - generic [ref=f13e130]:
+          - generic [ref=f13e131]: Current Stock
+          - spinbutton "Current Stock" [ref=f13e132]: "2"
+        - generic [ref=f13e133]:
+          - generic [ref=f13e134]: Target Stock
+          - spinbutton "Target Stock" [ref=f13e135]: "6"
+        - generic [ref=f13e136]:
+          - generic [ref=f13e137]: Unit
+          - textbox "Unit" [ref=f13e138]:
+            - /placeholder: pcs, kg, etc.
+            - text: kg
+      - generic [ref=f13e139]:
+        - generic [ref=f13e140]:
+          - generic [ref=f13e141]: Category
+          - combobox "Category" [active] [ref=f13e142]
+        - generic [ref=f13e143]:
+          - generic [ref=f13e144]: Est. Price
+          - spinbutton "Est. Price" [ref=f13e145]: "8.50"
+      - button "Add to stock list" [ref=f13e147]
+    - button "Close" [ref=f13e148]

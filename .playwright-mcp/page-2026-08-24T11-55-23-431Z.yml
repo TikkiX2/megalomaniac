@@ -1,0 +1,129 @@
+- generic [ref=f20e3]:
+  - complementary [ref=f20e4]:
+    - generic [ref=f20e5]:
+      - generic [ref=f20e6]:
+        - generic [ref=f20e7]:
+          - generic [ref=f20e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f20e11]
+        - navigation [ref=f20e12]:
+          - link "dashboard Dashboard" [ref=f20e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f20e14]: dashboard
+            - generic [ref=f20e15]: Dashboard
+          - link "work Freelance" [ref=f20e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f20e17]: work
+            - generic [ref=f20e18]: Freelance
+          - link "payments Finance" [ref=f20e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f20e20]: payments
+            - generic [ref=f20e21]: Finance
+          - link "exercise Workout Log" [ref=f20e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f20e23]: exercise
+            - generic [ref=f20e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f20e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f20e26]: restaurant
+            - generic [ref=f20e27]: Nutrition
+          - link "medication Supplements" [ref=f20e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f20e29]: medication
+            - generic [ref=f20e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f20e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f20e32]: shopping_cart
+            - generic [ref=f20e33]: Grocery List
+      - generic [ref=f20e34]:
+        - link "settings Settings" [ref=f20e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f20e36]: settings
+          - generic [ref=f20e37]: Settings
+        - generic [ref=f20e38]:
+          - generic [ref=f20e39]: T
+          - paragraph [ref=f20e41]: Test User
+  - main [ref=f20e42]:
+    - generic [ref=f20e44]:
+      - generic [ref=f20e45]:
+        - generic [ref=f20e46]:
+          - heading "Today's Session" [level=2] [ref=f20e47]
+          - paragraph [ref=f20e48]: Keep pushing, you're doing great.
+        - generic [ref=f20e49]:
+          - generic [ref=f20e50]:
+            - generic [ref=f20e51]: timer
+            - generic [ref=f20e52]: 00:00:00
+          - button "check_circle Finish Workout" [disabled] [ref=f20e53]:
+            - generic [ref=f20e54]: check_circle
+            - text: Finish Workout
+      - generic [ref=f20e55]:
+        - generic [ref=f20e56]:
+          - generic [ref=f20e57]:
+            - generic [ref=f20e58]:
+              - generic [ref=f20e59]:
+                - heading "Monday, Aug 24 • Quick Session" [level=1] [ref=f20e60]
+                - button "edit_calendar Set Routine" [ref=f20e61]:
+                  - generic [ref=f20e62]: edit_calendar
+                  - generic [ref=f20e63]: Set Routine
+              - paragraph [ref=f20e64]: "Focus: Custom Training"
+            - generic [ref=f20e66]:
+              - generic: search
+              - textbox "Search exercises to add..." [ref=f20e67]
+          - generic [ref=f20e172] [cursor=pointer]:
+            - generic [ref=f20e173]: play_arrow
+            - generic [ref=f20e175]:
+              - heading "Start a New Workout" [level=3] [ref=f20e176]
+              - paragraph [ref=f20e177]: No active session found. Ready to train?
+          - generic [ref=f20e104]:
+            - paragraph [ref=f20e105]: © 2026 Megalomaniac Pro. All progress saved to profile.
+            - generic [ref=f20e106]:
+              - generic [ref=f20e107]:
+                - generic [ref=f20e108]: Total Volume
+                - generic [ref=f20e109]: kg
+              - generic [ref=f20e110]: Completed Sets
+        - complementary [ref=f20e113]:
+          - generic [ref=f20e114]:
+            - heading "Quick Library" [level=3] [ref=f20e115]
+            - paragraph [ref=f20e116]: Tap to add to your session
+          - generic [ref=f20e117]:
+            - button "All" [ref=f20e118]
+            - button "Chest" [ref=f20e119]
+            - button "Back" [ref=f20e120]
+            - button "Legs" [ref=f20e121]
+            - button "Arms" [ref=f20e122]
+          - generic [ref=f20e123]:
+            - generic [ref=f20e124] [cursor=pointer]:
+              - generic [ref=f20e125]: fitness_center
+              - generic [ref=f20e127]:
+                - heading "Bench Press" [level=4] [ref=f20e128]
+                - paragraph [ref=f20e129]: Chest • Strength
+              - button "add_circle" [ref=f20e130]
+            - generic [ref=f20e132] [cursor=pointer]:
+              - generic [ref=f20e133]: fitness_center
+              - generic [ref=f20e135]:
+                - heading "Deadlift" [level=4] [ref=f20e136]
+                - paragraph [ref=f20e137]: Back • Strength
+              - button "add_circle" [ref=f20e138]
+            - generic [ref=f20e140] [cursor=pointer]:
+              - generic [ref=f20e141]: fitness_center
+              - generic [ref=f20e143]:
+                - heading "Pull Up" [level=4] [ref=f20e144]
+                - paragraph [ref=f20e145]: Back • Strength
+              - button "add_circle" [ref=f20e146]
+            - generic [ref=f20e148] [cursor=pointer]:
+              - generic [ref=f20e149]: fitness_center
+              - generic [ref=f20e151]:
+                - heading "Shoulder Press" [level=4] [ref=f20e152]
+                - paragraph [ref=f20e153]: Shoulders • Strength
+              - button "add_circle" [ref=f20e154]
+            - generic [ref=f20e156] [cursor=pointer]:
+              - generic [ref=f20e157]: fitness_center
+              - generic [ref=f20e159]:
+                - heading "Squat" [level=4] [ref=f20e160]
+                - paragraph [ref=f20e161]: Legs • Strength
+              - button "add_circle" [ref=f20e162]
+            - generic [ref=f20e164]:
+              - generic [ref=f20e165]: bolt
+              - generic [ref=f20e167]: bolt
+              - heading "Go Premium" [level=5] [ref=f20e169]
+              - paragraph [ref=f20e170]: Unlock advanced analytics, AI coaching & custom plans.
+              - button "Upgrade Now" [ref=f20e171]

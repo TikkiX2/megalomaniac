@@ -35,25 +35,25 @@ export default function IncomeSourcesIndex({ sources, currencies }: Props) {
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <h1 className="text-3xl font-black tracking-tight text-white">Income Sources</h1>
-                        <p className="text-[#92c9a4] font-medium mt-1">Manage where your money comes from</p>
+                        <p className="text-[#e8b4b4] font-medium mt-1">Manage where your money comes from</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                     {/* Create Form */}
-                    <div className="rounded-2xl bg-[#193322] border border-[#23482f] p-6 shadow-xl h-fit">
+                    <div className="rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-6 shadow-xl h-fit">
                         <h2 className="mb-6 text-xl font-bold text-white flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary">add_circle</span>
                             New Source
                         </h2>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Name</Label>
+                                <Label htmlFor="name" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Name</Label>
                                 <Input
                                     id="name"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white focus:ring-primary"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary"
                                     placeholder="e.g. Salary, Freelance..."
                                     required
                                 />
@@ -61,27 +61,27 @@ export default function IncomeSourcesIndex({ sources, currencies }: Props) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="description" className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Description</Label>
+                                <Label htmlFor="description" className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Description</Label>
                                 <Input
                                     id="description"
                                     value={data.description || ''}
                                     onChange={(e) => setData('description', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white focus:ring-primary"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary"
                                     placeholder="Brief description..."
                                 />
                                 {errors.description && <p className="text-xs text-rose-400">{errors.description}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-xs font-black uppercase tracking-widest text-[#92c9a4]">Default Currency</Label>
+                                <Label className="text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Default Currency</Label>
                                 <Select
                                     value={data.default_currency_id}
                                     onValueChange={(v) => setData('default_currency_id', v)}
                                 >
-                                    <SelectTrigger className="bg-[#102216] border-[#23482f] text-white">
+                                    <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121] text-white">
                                         <SelectValue placeholder="Select currency" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                    <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                         {currencies.map((c) => (
                                             <SelectItem key={c.id} value={c.id.toString()}>
                                                 {c.code} ({c.symbol})
@@ -94,7 +94,7 @@ export default function IncomeSourcesIndex({ sources, currencies }: Props) {
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full bg-primary font-black text-[#102216] hover:bg-green-400 shadow-[0_0_15px_rgba(19,236,91,0.2)]"
+                                className="w-full bg-primary font-black text-white hover:bg-primary/90 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
                             >
                                 {processing ? 'Creating...' : 'Create Source'}
                             </Button>
@@ -102,20 +102,20 @@ export default function IncomeSourcesIndex({ sources, currencies }: Props) {
                     </div>
 
                     {/* Sources List */}
-                    <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-[#23482f] bg-[#193322]/50 backdrop-blur-sm">
+                    <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-[#3e2121] bg-[#2b1a1a]/50 backdrop-blur-sm">
                         <table className="w-full border-collapse text-left">
                             <thead>
-                                <tr className="border-b border-[#23482f] bg-[#193322]">
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#92c9a4]">Source</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#92c9a4]">Currency</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#92c9a4]">Status</th>
-                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#92c9a4] text-right">Actions</th>
+                                <tr className="border-b border-[#3e2121] bg-[#2b1a1a]">
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Source</th>
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Currency</th>
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#e8b4b4]">Status</th>
+                                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-[#e8b4b4] text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#23482f]">
+                            <tbody className="divide-y divide-[#3e2121]">
                                 {sources.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-12 text-center text-[#92c9a4]">
+                                        <td colSpan={4} className="px-6 py-12 text-center text-[#e8b4b4]">
                                             No income sources registered yet.
                                         </td>
                                     </tr>
@@ -124,10 +124,10 @@ export default function IncomeSourcesIndex({ sources, currencies }: Props) {
                                         <tr key={s.id} className="hover:bg-white/5 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="font-bold text-white">{s.name}</div>
-                                                <div className="text-xs text-[#92c9a4]">{s.description || 'No description'}</div>
+                                                <div className="text-xs text-[#e8b4b4]">{s.description || 'No description'}</div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-[#102216] px-2.5 py-1 text-xs font-bold text-primary border border-primary/20">
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-[#1c0f0f] px-2.5 py-1 text-xs font-bold text-primary border border-primary/20">
                                                     {s.default_currency?.code}
                                                 </span>
                                             </td>

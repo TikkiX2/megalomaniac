@@ -54,7 +54,7 @@ export default function ProjectsIndex({ projects, filters }: any) {
         const styles: Record<string, string> = {
             'pending': 'bg-gray-500/20 text-gray-500',
             'in_progress': 'bg-primary/20 text-primary border-primary/20',
-            'completed': 'bg-green-500/20 text-green-500',
+            'completed': 'bg-primary/20 text-primary',
             'maintenance': 'bg-purple-500/20 text-purple-500',
             'cancelled': 'bg-rose-500/20 text-rose-500',
         };
@@ -71,7 +71,7 @@ export default function ProjectsIndex({ projects, filters }: any) {
                         <h1 className="text-2xl font-bold tracking-tight text-white">Proyectos</h1>
                         <p className="text-muted-foreground">Gestiona tus trabajos y su progreso.</p>
                     </div>
-                    <Button asChild className="bg-primary text-[#102216] font-bold">
+                    <Button asChild className="bg-primary text-white font-bold">
                         <Link href={freelance.projects.create().url}>
                             <Plus className="mr-2 h-4 w-4" /> Nuevo Proyecto
                         </Link>
@@ -83,35 +83,35 @@ export default function ProjectsIndex({ projects, filters }: any) {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Buscar proyectos..."
-                            className="pl-8 bg-[#193322] border-[#23482f]"
+                            className="pl-8 bg-[#2b1a1a] border-[#3e2121]"
                             value={search}
                             onChange={(e) => handleSearch(e.target.value)}
                         />
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-[#23482f] bg-[#193322] overflow-hidden">
+                <div className="rounded-xl border border-[#3e2121] bg-[#2b1a1a] overflow-hidden">
                     <Table>
-                        <TableHeader className="bg-[#102216]">
-                            <TableRow className="hover:bg-transparent border-[#23482f]">
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Proyecto</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Cliente</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Estado</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Presupuesto</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Fecha Entrega</TableHead>
+                        <TableHeader className="bg-[#1c0f0f]">
+                            <TableRow className="hover:bg-transparent border-[#3e2121]">
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Proyecto</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Cliente</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Estado</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Presupuesto</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Fecha Entrega</TableHead>
                                 <TableHead className="w-[80px]"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {projects.data.length === 0 ? (
-                                <TableRow className="hover:bg-transparent border-[#23482f]">
+                                <TableRow className="hover:bg-transparent border-[#3e2121]">
                                     <TableCell colSpan={6} className="text-center h-24 text-muted-foreground italic">
                                         No se encontraron proyectos.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 projects.data.map((project: any) => (
-                                    <TableRow key={project.id} className="hover:bg-white/5 border-[#23482f]">
+                                    <TableRow key={project.id} className="hover:bg-white/5 border-[#3e2121]">
                                         <TableCell>
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-white">{project.name}</span>
@@ -123,7 +123,7 @@ export default function ProjectsIndex({ projects, filters }: any) {
                                         <TableCell>
                                             <div className="flex flex-col gap-1 w-32">
                                                 <div className="flex justify-between text-[10px] font-bold">
-                                                    <span className="text-[#92c9a4]">{project.currency?.symbol}{Number(project.paid_amount).toLocaleString()}</span>
+                                                    <span className="text-[#e8b4b4]">{project.currency?.symbol}{Number(project.paid_amount).toLocaleString()}</span>
                                                     <span className="text-white/60">/ {project.currency?.symbol}{Number(project.total_amount).toLocaleString()}</span>
                                                 </div>
                                                 <Progress value={(project.paid_amount / project.total_amount) * 100} className="h-1" />
@@ -139,18 +139,18 @@ export default function ProjectsIndex({ projects, filters }: any) {
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-[#193322] border-[#23482f] text-white">
-                                                    <DropdownMenuItem asChild className="focus:bg-[#23482f] focus:text-white">
+                                                <DropdownMenuContent align="end" className="bg-[#2b1a1a] border-[#3e2121] text-white">
+                                                    <DropdownMenuItem asChild className="focus:bg-[#3e2121] focus:text-white">
                                                         <Link href={freelance.projects.show(project.id).url}>
                                                             <Eye className="mr-2 h-4 w-4" /> Ver Detalles
                                                         </Link>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem asChild className="focus:bg-[#23482f] focus:text-white">
+                                                    <DropdownMenuItem asChild className="focus:bg-[#3e2121] focus:text-white">
                                                         <Link href={freelance.projects.edit(project.id).url}>
                                                             <Pencil className="mr-2 h-4 w-4" /> Editar
                                                         </Link>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuSeparator className="bg-[#23482f]" />
+                                                    <DropdownMenuSeparator className="bg-[#3e2121]" />
                                                     <DropdownMenuItem
                                                         className="text-rose-400 focus:bg-rose-500/20 focus:text-rose-400"
                                                         onClick={() => handleDelete(project.id)}

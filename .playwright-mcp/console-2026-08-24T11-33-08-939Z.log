@@ -1,0 +1,11 @@
+[     429ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://127.0.0.1:8010/_boost/browser-logs @ http://127.0.0.1:8010/freelance/quotes:24
+[     486ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/createLucideIcon-DtM9Hsx6.js:0
+[     486ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/search-CQwuNI3l.js:0
+[     486ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/index-CSEUMRIG.js:0
+[     486ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/index-C3RC5eky.js:0
+[     486ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/index-Butgxz-O.js:0
+[     487ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/index-CcxrKleo.js:0
+[     487ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/Combination-3pPCr4lV.js:0
+[     487ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/index-BBzsJUY3.js:0
+[     487ms] [ERROR] Failed to load resource: net::ERR_NETWORK_CHANGED @ http://127.0.0.1:8010/build/assets/index-CFdL31ue.js:0
+[     510ms] Failed to fetch dynamically imported module: http://127.0.0.1:8010/build/assets/Index-BhIBDWJq.js

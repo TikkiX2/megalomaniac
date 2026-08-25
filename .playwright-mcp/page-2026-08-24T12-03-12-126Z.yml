@@ -1,0 +1,125 @@
+- generic [ref=f28e3]:
+  - complementary [ref=f28e4]:
+    - generic [ref=f28e5]:
+      - generic [ref=f28e6]:
+        - generic [ref=f28e7]:
+          - generic [ref=f28e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f28e11]
+        - navigation [ref=f28e12]:
+          - link "dashboard Dashboard" [ref=f28e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f28e14]: dashboard
+            - generic [ref=f28e15]: Dashboard
+          - link "work Freelance" [ref=f28e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f28e17]: work
+            - generic [ref=f28e18]: Freelance
+          - link "payments Finance" [ref=f28e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f28e20]: payments
+            - generic [ref=f28e21]: Finance
+          - link "exercise Workout Log" [ref=f28e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f28e23]: exercise
+            - generic [ref=f28e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f28e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f28e26]: restaurant
+            - generic [ref=f28e27]: Nutrition
+          - link "medication Supplements" [ref=f28e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f28e29]: medication
+            - generic [ref=f28e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f28e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f28e32]: shopping_cart
+            - generic [ref=f28e33]: Grocery List
+      - generic [ref=f28e34]:
+        - link "settings Settings" [ref=f28e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f28e36]: settings
+          - generic [ref=f28e37]: Settings
+        - generic [ref=f28e38]:
+          - generic [ref=f28e39]: T
+          - paragraph [ref=f28e41]: Test User
+  - main [ref=f28e42]:
+    - generic [ref=f28e43]:
+      - generic [ref=f28e44]:
+        - generic [ref=f28e45]: bolt
+        - generic [ref=f28e47]: Megalomaniac
+      - button "menu" [ref=f28e48]
+    - generic [ref=f28e51]:
+      - generic [ref=f28e52]:
+        - generic [ref=f28e53]:
+          - heading "Welcome back, Test!" [level=2] [ref=f28e54]
+          - paragraph [ref=f28e55]: Today is Monday, Aug 24
+        - generic [ref=f28e56]:
+          - button "add Log Meal" [ref=f28e57]:
+            - generic [ref=f28e58]: add
+            - text: Log Meal
+          - button "bolt Quick Start" [ref=f28e59]:
+            - generic [ref=f28e60]: bolt
+            - text: Quick Start
+      - generic [ref=f28e61]:
+        - generic [ref=f28e62]:
+          - generic [ref=f28e64]:
+            - generic [ref=f28e65]:
+              - generic [ref=f28e66]:
+                - generic [ref=f28e67]: local_fire_department
+                - text: Calories Remaining
+              - generic [ref=f28e68]:
+                - generic [ref=f28e69]: 2,800
+                - generic [ref=f28e70]: kcal
+            - generic [ref=f28e71]:
+              - generic [ref=f28e72]: Daily Goal
+              - generic [ref=f28e73]: 2,800
+          - generic [ref=f28e75]:
+            - generic [ref=f28e76]: Day Progress
+            - generic [ref=f28e77]: 0%
+        - generic [ref=f28e79]:
+          - generic [ref=f28e80]:
+            - generic [ref=f28e82]:
+              - generic [ref=f28e83]: Protein
+              - generic [ref=f28e84]: 145 / 180g
+            - generic [ref=f28e85]:
+              - generic [ref=f28e86]: 80%
+              - generic [ref=f28e87]: On Track
+          - generic [ref=f28e90]:
+            - generic [ref=f28e92]:
+              - generic [ref=f28e93]: Carbs
+              - generic [ref=f28e94]: 210 / 250g
+            - generic [ref=f28e95]:
+              - generic [ref=f28e96]: 84%
+              - generic [ref=f28e97]: Normal
+        - generic [ref=f28e103]:
+          - generic [ref=f28e104]:
+            - generic [ref=f28e105]: Last Session
+            - generic [ref=f28e107]: 8/24/2026
+          - heading "Power Builder" [level=3] [ref=f28e108]
+          - paragraph [ref=f28e109]: Your last session was intense. Keep pushing!
+          - button "Start Workout arrow_forward" [ref=f28e111]:
+            - text: Start Workout
+            - generic [ref=f28e112]: arrow_forward
+        - generic [ref=f28e113]:
+          - generic [ref=f28e114]:
+            - heading "Inventory" [level=3] [ref=f28e115]
+            - generic [ref=f28e116]: 0 Low
+          - generic [ref=f28e118]:
+            - generic [ref=f28e119]: check_circle
+            - paragraph [ref=f28e120]: All stocked up!
+        - generic [ref=f28e121]:
+          - generic [ref=f28e122]:
+            - heading "Hydration" [level=3] [ref=f28e123]
+            - generic [ref=f28e124]: opacity
+          - generic [ref=f28e125]: 1.8 liters
+        - link "Freelance work BUSINESS Manage projects & quotes Go to Panel arrow_forward" [ref=f28e136] [cursor=pointer]:
+          - /url: /freelance/dashboard
+          - generic [ref=f28e137]:
+            - heading "Freelance" [level=3] [ref=f28e138]
+            - generic [ref=f28e139]: work
+          - generic [ref=f28e140]:
+            - generic [ref=f28e141]: BUSINESS
+            - generic [ref=f28e142]: Manage projects & quotes
+          - generic [ref=f28e143]:
+            - text: Go to Panel
+            - generic [ref=f28e144]: arrow_forward

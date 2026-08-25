@@ -1,0 +1,81 @@
+- generic [ref=f23e3]:
+  - complementary [ref=f23e4]:
+    - generic [ref=f23e5]:
+      - generic [ref=f23e6]:
+        - generic [ref=f23e7]:
+          - generic [ref=f23e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f23e11]
+        - navigation [ref=f23e12]:
+          - link "dashboard Dashboard" [ref=f23e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f23e14]: dashboard
+            - generic [ref=f23e15]: Dashboard
+          - link "work Freelance" [ref=f23e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f23e17]: work
+            - generic [ref=f23e18]: Freelance
+          - link "payments Finance" [ref=f23e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f23e20]: payments
+            - generic [ref=f23e21]: Finance
+          - link "exercise Workout Log" [ref=f23e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f23e23]: exercise
+            - generic [ref=f23e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f23e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f23e26]: restaurant
+            - generic [ref=f23e27]: Nutrition
+          - link "medication Supplements" [ref=f23e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f23e29]: medication
+            - generic [ref=f23e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f23e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f23e32]: shopping_cart
+            - generic [ref=f23e33]: Grocery List
+      - generic [ref=f23e34]:
+        - link "settings Settings" [ref=f23e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f23e36]: settings
+          - generic [ref=f23e37]: Settings
+        - generic [ref=f23e38]:
+          - generic [ref=f23e39]: T
+          - paragraph [ref=f23e41]: Test User
+  - main [ref=f23e42]:
+    - generic [ref=f23e44]:
+      - generic [ref=f23e45]:
+        - link "arrow_back" [ref=f23e46] [cursor=pointer]:
+          - /url: /finance/purchases
+        - generic [ref=f23e48]:
+          - heading "Record Purchase" [level=2] [ref=f23e49]
+          - paragraph [ref=f23e50]: Log your expenses to stay on track.
+      - generic [ref=f23e51]:
+        - generic [ref=f23e52]:
+          - generic [ref=f23e53]:
+            - generic [ref=f23e54]: Description
+            - textbox "Description" [ref=f23e55]:
+              - /placeholder: What did you buy?
+          - generic [ref=f23e56]:
+            - generic [ref=f23e57]: Amount
+            - spinbutton "Amount" [ref=f23e58]
+          - generic [ref=f23e59]:
+            - generic [ref=f23e60]: Currency
+            - combobox "Currency" [ref=f23e61]:
+              - option "Select Currency"
+              - option "USD ($)" [selected]
+          - generic [ref=f23e62]:
+            - generic [ref=f23e63]: Category
+            - combobox "Category" [ref=f23e64]:
+              - option "Select Category" [selected]
+          - generic [ref=f23e65]:
+            - generic [ref=f23e66]: Date
+            - textbox "Date" [ref=f23e67]: 2026-08-24
+          - generic [ref=f23e68]:
+            - generic [ref=f23e69]: Receipt (Optional)
+            - button "Receipt (Optional)" [ref=f23e70]
+          - generic [ref=f23e71]:
+            - generic [ref=f23e72]: Notes
+            - textbox "Notes" [ref=f23e73]:
+              - /placeholder: Extra details...
+        - button "Save Purchase" [ref=f23e74]

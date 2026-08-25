@@ -1,0 +1,102 @@
+- generic [ref=f44e3]:
+  - generic [ref=f44e7]:
+    - generic [ref=f44e8]:
+      - list [ref=f44e9]:
+        - listitem [ref=f44e10]:
+          - link "Megalomaniac Pro Megalomaniac Pro" [ref=f44e11] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f44e15]: Megalomaniac Pro
+            - generic [ref=f44e17]: Megalomaniac Pro
+      - generic [ref=f44e18]:
+        - generic [ref=f44e19]: Navegación
+        - button "Sidebar fijado" [ref=f44e20]:
+          - generic [ref=f44e21]: push_pin
+    - generic [ref=f44e22]:
+      - generic [ref=f44e23]:
+        - generic [ref=f44e24]: Principal
+        - list [ref=f44e25]:
+          - listitem [ref=f44e26]:
+            - link "Panel" [ref=f44e27] [cursor=pointer]:
+              - /url: /dashboard
+          - listitem [ref=f44e34]:
+            - link "Entrenamiento" [ref=f44e35] [cursor=pointer]:
+              - /url: /fitness/gym
+          - listitem [ref=f44e43]:
+            - link "Nutrición" [ref=f44e44] [cursor=pointer]:
+              - /url: /fitness/nutrition
+          - listitem [ref=f44e49]:
+            - link "Suplementos" [ref=f44e50] [cursor=pointer]:
+              - /url: /fitness/supplements
+          - listitem [ref=f44e55]:
+            - link "Compras" [ref=f44e56] [cursor=pointer]:
+              - /url: /fitness/groceries
+      - generic [ref=f44e62]:
+        - generic [ref=f44e63]: Freelance
+        - list [ref=f44e64]:
+          - listitem [ref=f44e65]:
+            - link "Panel Freelance" [ref=f44e66] [cursor=pointer]:
+              - /url: /freelance/dashboard
+          - list [ref=f44e71]:
+            - listitem [ref=f44e72]:
+              - link "Clientes" [ref=f44e73] [cursor=pointer]:
+                - /url: /freelance/clients
+            - listitem [ref=f44e80]:
+              - link "Proyectos" [ref=f44e81] [cursor=pointer]:
+                - /url: /freelance/projects
+            - listitem [ref=f44e86]:
+              - link "Cotizaciones" [ref=f44e87] [cursor=pointer]:
+                - /url: /freelance/quotes
+      - generic [ref=f44e92]:
+        - generic [ref=f44e93]: Finanzas
+        - list [ref=f44e94]:
+          - listitem [ref=f44e95]:
+            - link "Finanzas" [ref=f44e96] [cursor=pointer]:
+              - /url: /finance/dashboard
+          - listitem [ref=f44e101]:
+            - link "Compras" [ref=f44e102] [cursor=pointer]:
+              - /url: /finance/purchases
+          - listitem [ref=f44e108]:
+            - link "Ingresos" [ref=f44e109] [cursor=pointer]:
+              - /url: /finance/incomes
+    - list [ref=f44e114]:
+      - listitem [ref=f44e115]:
+        - button "TU Test User" [ref=f44e116]:
+          - generic [ref=f44e117]: TU
+          - generic [ref=f44e119]: Test User
+  - main [ref=f44e124]:
+    - generic [ref=f44e125]:
+      - button "Toggle Sidebar" [ref=f44e126]
+      - generic [ref=f44e129]: Megalomaniac Pro · Panel
+    - generic [ref=f44e131]:
+      - generic [ref=f44e132]:
+        - generic [ref=f44e133]:
+          - heading "history Historial" [level=1] [ref=f44e134]:
+            - generic [ref=f44e135]: history
+            - text: Historial
+          - paragraph [ref=f44e137]: 1 entrenamientos completados · paginado 10 por página
+        - link "arrow_back Volver a Entrenamiento" [ref=f44e139] [cursor=pointer]:
+          - /url: /fitness/gym
+          - generic [ref=f44e140]: arrow_back
+          - text: Volver a Entrenamiento
+      - table [ref=f44e143]:
+        - rowgroup [ref=f44e144]:
+          - row [ref=f44e145]:
+            - columnheader "Fecha" [ref=f44e146]
+            - columnheader "Rutina" [ref=f44e147]
+            - columnheader "Volumen" [ref=f44e148]
+            - columnheader "Sets" [ref=f44e149]
+            - columnheader "Ejercicios" [ref=f44e150]
+        - rowgroup [ref=f44e151]:
+          - row [ref=f44e152]:
+            - 'cell "24 ago 2026, 11:55 ID #1" [ref=f44e153]':
+              - generic [ref=f44e154]:
+                - generic [ref=f44e155]: 24 ago 2026, 11:55
+                - generic [ref=f44e156]: "ID #1"
+            - cell "exercise Quick Session" [ref=f44e157]:
+              - generic [ref=f44e158]:
+                - generic [ref=f44e159]: exercise
+                - text: Quick Session
+            - cell "800 kg" [ref=f44e160]
+            - cell "1" [ref=f44e162]
+            - cell "1" [ref=f44e164]
+      - paragraph [ref=f44e165]: "Historial vía WorkoutController@history · Inertia paginate(10) · Ember palette #EF4444"

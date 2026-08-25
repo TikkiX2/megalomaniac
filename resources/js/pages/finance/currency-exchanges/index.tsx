@@ -27,31 +27,31 @@ export default function ExchangeIndex({ exchanges }: Props) {
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
                     <div>
                         <h2 className="text-3xl font-black tracking-tight text-white lg:text-4xl uppercase">Currency Exchanges</h2>
-                        <p className="mt-1 text-base font-medium text-[#92c9a4]">History of your currency swaps.</p>
+                        <p className="mt-1 text-base font-medium text-[#e8b4b4]">History of your currency swaps.</p>
                     </div>
                     <Link
                         href={finance.currencyExchanges.create().url}
-                        className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-[#102216] shadow-[0_0_20px_rgba(19,236,91,0.25)] transition hover:bg-green-400 active:scale-95"
+                        className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-white shadow-[0_0_20px_rgba(239,68,68,0.25)] transition hover:bg-primary/90 active:scale-95"
                     >
                         <span className="material-symbols-outlined font-bold" style={{ fontSize: '20px' }}>currency_exchange</span>
                         New Exchange
                     </Link>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-[#23482f] bg-[#193322]">
+                <div className="overflow-hidden rounded-2xl border border-[#3e2121] bg-[#2b1a1a]">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-[#23482f] bg-[#102216]/50">
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Date</th>
+                                <tr className="border-b border-[#3e2121] bg-[#1c0f0f]/50">
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Date</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-rose-400">Sold (Egreso)</th>
                                     <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-primary">Bought (Ingreso)</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Rate</th>
-                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Notes</th>
-                                    <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Actions</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Rate</th>
+                                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Notes</th>
+                                    <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#23482f]/50">
+                            <tbody className="divide-y divide-[#3e2121]/50">
                                 {exchanges.data.length > 0 ? (
                                     exchanges.data.map((ex) => (
                                         <tr key={ex.id} className="hover:bg-white/5 transition-colors">
@@ -63,7 +63,7 @@ export default function ExchangeIndex({ exchanges }: Props) {
                                                     <span className="text-sm font-black text-rose-400">
                                                         -{ex.from_currency?.symbol}{ex.from_amount.toLocaleString()}
                                                     </span>
-                                                    <span className="text-[10px] text-[#92c9a4] uppercase font-bold">{ex.from_currency?.code}</span>
+                                                    <span className="text-[10px] text-[#e8b4b4] uppercase font-bold">{ex.from_currency?.code}</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -77,22 +77,22 @@ export default function ExchangeIndex({ exchanges }: Props) {
                                                             {ex.to_reserve.name}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[10px] text-[#92c9a4] uppercase font-bold">Balance</span>
+                                                        <span className="text-[10px] text-[#e8b4b4] uppercase font-bold">Balance</span>
                                                     )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-xs font-mono text-white bg-[#102216] px-2 py-1 rounded border border-[#23482f]">
+                                                <span className="text-xs font-mono text-white bg-[#1c0f0f] px-2 py-1 rounded border border-[#3e2121]">
                                                     1:{ex.exchange_rate}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-[#92c9a4] max-w-xs truncate">
+                                            <td className="px-6 py-4 text-sm text-[#e8b4b4] max-w-xs truncate">
                                                 {ex.notes || '-'}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <button
                                                     onClick={() => handleDelete(ex.id)}
-                                                    className="text-[#92c9a4] hover:text-rose-400 transition-colors"
+                                                    className="text-[#e8b4b4] hover:text-rose-400 transition-colors"
                                                 >
                                                     <span className="material-symbols-outlined text-lg">delete</span>
                                                 </button>
@@ -101,7 +101,7 @@ export default function ExchangeIndex({ exchanges }: Props) {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-[#92c9a4] italic font-bold text-sm uppercase">
+                                        <td colSpan={6} className="px-6 py-12 text-center text-[#e8b4b4] italic font-bold text-sm uppercase">
                                             No exchanges recorded yet.
                                         </td>
                                     </tr>

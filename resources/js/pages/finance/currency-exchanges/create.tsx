@@ -64,17 +64,17 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                 <div className="mb-8 flex items-center justify-between">
                     <div>
                         <h2 className="text-2xl font-black text-white uppercase tracking-tight">Record Exchange</h2>
-                        <p className="text-sm font-medium text-[#92c9a4]">Swap currencies and update balances.</p>
+                        <p className="text-sm font-medium text-[#e8b4b4]">Swap currencies and update balances.</p>
                     </div>
                     <Link
                         href={finance.dashboard().url}
-                        className="text-xs font-bold text-[#92c9a4] hover:text-white transition-colors uppercase tracking-widest"
+                        className="text-xs font-bold text-[#e8b4b4] hover:text-white transition-colors uppercase tracking-widest"
                     >
                         Cancel
                     </Link>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-[#193322] border border-[#23482f] p-8 shadow-xl">
+                <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-8 shadow-xl">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* FROM Section */}
                         <div className="space-y-4">
@@ -84,15 +84,15 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="from_currency_id" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Source Currency</Label>
+                                <Label htmlFor="from_currency_id" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Source Currency</Label>
                                 <Select
                                     value={data.from_currency_id}
                                     onValueChange={value => setData('from_currency_id', value)}
                                 >
-                                    <SelectTrigger id="from_currency_id" className="bg-[#102216] border-[#23482f] text-white focus:ring-primary">
+                                    <SelectTrigger id="from_currency_id" className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary">
                                         <SelectValue placeholder="Select currency" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                    <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                         {currencies.map(c => (
                                             <SelectItem key={c.id} value={c.id.toString()}>{c.code} - {c.name}</SelectItem>
                                         ))}
@@ -102,29 +102,29 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="from_amount" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Amount Sent</Label>
+                                <Label htmlFor="from_amount" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Amount Sent</Label>
                                 <Input
                                     id="from_amount"
                                     type="number"
                                     step="0.01"
                                     value={data.from_amount}
                                     onChange={e => setData('from_amount', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white focus:ring-primary h-10"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary h-10"
                                     placeholder="0.00"
                                 />
                                 {errors.from_amount && <p className="text-[10px] font-bold text-rose-400 uppercase">{errors.from_amount}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="withdrawal_category_id" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Category (Optional)</Label>
+                                <Label htmlFor="withdrawal_category_id" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Category (Optional)</Label>
                                 <Select
                                     value={data.withdrawal_category_id}
                                     onValueChange={value => setData('withdrawal_category_id', value)}
                                 >
-                                    <SelectTrigger id="withdrawal_category_id" className="bg-[#102216] border-[#23482f] text-white focus:ring-primary">
+                                    <SelectTrigger id="withdrawal_category_id" className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary">
                                         <SelectValue placeholder="Select category" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                    <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                         {withdrawalCategories.map(c => (
                                             <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
                                         ))}
@@ -141,7 +141,7 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                             </div>
 
                             {/* Target Type Toggle */}
-                            <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#102216] p-1 border border-[#23482f]/50">
+                            <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#1c0f0f] p-1 border border-[#3e2121]/50">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -150,7 +150,7 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                                     }}
                                     className={cn(
                                         "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all",
-                                        targetType === 'balance' ? "bg-primary text-[#102216] shadow-lg" : "text-[#92c9a4] hover:bg-white/5"
+                                        targetType === 'balance' ? "bg-primary text-white shadow-lg" : "text-[#e8b4b4] hover:bg-white/5"
                                     )}
                                 >
                                     Balance
@@ -160,7 +160,7 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                                     onClick={() => setTargetType('reserve')}
                                     className={cn(
                                         "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all",
-                                        targetType === 'reserve' ? "bg-primary text-[#102216] shadow-lg" : "text-[#92c9a4] hover:bg-white/5"
+                                        targetType === 'reserve' ? "bg-primary text-white shadow-lg" : "text-[#e8b4b4] hover:bg-white/5"
                                     )}
                                 >
                                     Reserve
@@ -169,15 +169,15 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
 
                             {targetType === 'reserve' ? (
                                 <div className="space-y-2">
-                                    <Label htmlFor="to_reserve_id" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Target Reserve</Label>
+                                    <Label htmlFor="to_reserve_id" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Target Reserve</Label>
                                     <Select
                                         value={data.to_reserve_id}
                                         onValueChange={value => setData('to_reserve_id', value)}
                                     >
-                                        <SelectTrigger id="to_reserve_id" className="bg-[#102216] border-[#23482f] text-white focus:ring-primary">
+                                        <SelectTrigger id="to_reserve_id" className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary">
                                             <SelectValue placeholder="Select reserve" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                        <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                             {savingsReserves.map(r => (
                                                 <SelectItem key={r.id} value={r.id.toString()}>
                                                     {r.name} ({r.currency?.code})
@@ -189,15 +189,15 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    <Label htmlFor="to_currency_id" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Target Currency</Label>
+                                    <Label htmlFor="to_currency_id" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Target Currency</Label>
                                     <Select
                                         value={data.to_currency_id}
                                         onValueChange={value => setData('to_currency_id', value)}
                                     >
-                                        <SelectTrigger id="to_currency_id" className="bg-[#102216] border-[#23482f] text-white focus:ring-primary">
+                                        <SelectTrigger id="to_currency_id" className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary">
                                             <SelectValue placeholder="Select currency" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                        <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                             {currencies.map(c => (
                                                 <SelectItem key={c.id} value={c.id.toString()}>{c.code} - {c.name}</SelectItem>
                                             ))}
@@ -208,14 +208,14 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="to_amount" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Amount Received</Label>
+                                <Label htmlFor="to_amount" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Amount Received</Label>
                                 <Input
                                     id="to_amount"
                                     type="number"
                                     step="0.01"
                                     value={data.to_amount}
                                     onChange={e => setData('to_amount', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white focus:ring-primary h-10"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary h-10"
                                     placeholder="0.00"
                                 />
                                 {errors.to_amount && <p className="text-[10px] font-bold text-rose-400 uppercase">{errors.to_amount}</p>}
@@ -223,15 +223,15 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
 
                             {targetType === 'balance' && (
                                 <div className="space-y-2">
-                                    <Label htmlFor="income_source_id" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Source (Optional)</Label>
+                                    <Label htmlFor="income_source_id" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Source (Optional)</Label>
                                     <Select
                                         value={data.income_source_id}
                                         onValueChange={value => setData('income_source_id', value)}
                                     >
-                                        <SelectTrigger id="income_source_id" className="bg-[#102216] border-[#23482f] text-white focus:ring-primary">
+                                        <SelectTrigger id="income_source_id" className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary">
                                             <SelectValue placeholder="Select source" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                        <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                             {incomeSources.map(s => (
                                                 <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>
                                             ))}
@@ -242,35 +242,35 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                         </div>
                     </div>
 
-                    <div className="border-t border-[#23482f]/50 pt-6 space-y-4">
+                    <div className="border-t border-[#3e2121]/50 pt-6 space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
-                                <Label htmlFor="exchange_date" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Exchange Date</Label>
+                                <Label htmlFor="exchange_date" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Exchange Date</Label>
                                 <Input
                                     id="exchange_date"
                                     type="date"
                                     value={data.exchange_date}
                                     onChange={e => setData('exchange_date', e.target.value)}
-                                    className="bg-[#102216] border-[#23482f] text-white focus:ring-primary"
+                                    className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary"
                                 />
                                 {errors.exchange_date && <p className="text-[10px] font-bold text-rose-400 uppercase">{errors.exchange_date}</p>}
                             </div>
 
                             {effectiveRate && (
                                 <div className="text-right">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">Effective Rate</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Effective Rate</span>
                                     <div className="text-lg font-black text-primary">1 : {effectiveRate}</div>
                                 </div>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="notes" className="text-xs font-bold text-[#92c9a4] uppercase tracking-wider">Notes</Label>
+                            <Label htmlFor="notes" className="text-xs font-bold text-[#e8b4b4] uppercase tracking-wider">Notes</Label>
                             <Textarea
                                 id="notes"
                                 value={data.notes}
                                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setData('notes', e.target.value)}
-                                className="bg-[#102216] border-[#23482f] text-white focus:ring-primary min-h-[80px]"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white focus:ring-primary min-h-[80px]"
                                 placeholder="Details about the exchange..."
                             />
                         </div>
@@ -279,7 +279,7 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                     <Button
                         type="submit"
                         disabled={processing}
-                        className="w-full bg-primary font-black uppercase tracking-[0.2em] text-[#102216] shadow-[0_0_20px_rgba(19,236,91,0.2)] hover:bg-green-400 py-6"
+                        className="w-full bg-primary font-black uppercase tracking-[0.2em] text-white shadow-[0_0_20px_rgba(239,68,68,0.2)] hover:bg-primary/90 py-6"
                     >
                         {processing ? 'Recording...' : 'Record Exchange'}
                     </Button>

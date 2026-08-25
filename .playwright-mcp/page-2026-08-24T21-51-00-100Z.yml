@@ -1,0 +1,28 @@
+- generic [ref=f37e5]:
+  - generic [ref=f37e6]:
+    - link "Log in to your account" [ref=f37e7] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f37e12]:
+      - heading "Log in to your account" [level=1] [ref=f37e13]
+      - paragraph [ref=f37e14]: Enter your email and password below to log in
+  - generic [ref=f37e15]:
+    - generic [ref=f37e16]:
+      - generic [ref=f37e17]:
+        - generic [ref=f37e18]: Email address
+        - textbox "Email address" [active] [ref=f37e19]:
+          - /placeholder: email@example.com
+      - generic [ref=f37e20]:
+        - generic [ref=f37e21]:
+          - generic [ref=f37e22]: Password
+          - link "Forgot password?" [ref=f37e23] [cursor=pointer]:
+            - /url: /forgot-password
+        - textbox "Password" [ref=f37e24]
+      - generic [ref=f37e25]:
+        - checkbox "Remember me" [ref=f37e26]
+        - checkbox
+        - generic [ref=f37e27]: Remember me
+      - button "Log in" [ref=f37e28]
+    - generic [ref=f37e29]:
+      - text: Don't have an account?
+      - link "Sign up" [ref=f37e30] [cursor=pointer]:
+        - /url: /register

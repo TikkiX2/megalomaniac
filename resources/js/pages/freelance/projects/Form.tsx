@@ -61,7 +61,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
 
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 max-w-4xl mx-auto w-full animate-in fade-in duration-700 pb-20">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" asChild className="bg-[#193322] border-[#23482f] text-[#92c9a4] hover:bg-white/5">
+                    <Button variant="outline" size="icon" asChild className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5">
                         <Link href={freelance.projects.index().url}>
                             <ArrowLeft className="h-4 w-4" />
                         </Link>
@@ -74,9 +74,9 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                 </div>
 
                 <form onSubmit={submit} className="space-y-6">
-                    <Card className="bg-[#193322] border-[#23482f] text-white">
+                    <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                         <CardHeader>
-                            <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Información General</CardTitle>
+                            <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Información General</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -86,10 +86,10 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                         value={String(data.client_id)}
                                         onValueChange={(val) => setData('client_id', val)}
                                     >
-                                        <SelectTrigger className="bg-[#102216] border-[#23482f]">
+                                        <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121]">
                                             <SelectValue placeholder="Seleccionar cliente" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                        <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                             {clients.map(client => (
                                                 <SelectItem key={client.id} value={String(client.id)}>
                                                     {client.name}
@@ -104,7 +104,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                     <Input
                                         value={data.name}
                                         onChange={(e) => setData('name', e.target.value)}
-                                        className="bg-[#102216] border-[#23482f]"
+                                        className="bg-[#1c0f0f] border-[#3e2121]"
                                         required
                                     />
                                     {errors.name && <p className="text-xs text-rose-400">{errors.name}</p>}
@@ -116,7 +116,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                 <RichTextEditor
                                     value={data.description}
                                     onChange={(val) => setData('description', val)}
-                                    className="min-h-[200px] bg-[#102216]/50 border-[#23482f] rounded-md"
+                                    className="min-h-[200px] bg-[#1c0f0f]/50 border-[#3e2121] rounded-md"
                                 />
                                 {errors.description && <p className="text-xs text-rose-400">{errors.description}</p>}
                             </div>
@@ -124,9 +124,9 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                     </Card>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card className="bg-[#193322] border-[#23482f] text-white">
+                        <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                             <CardHeader>
-                                <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Estado y Fechas</CardTitle>
+                                <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Estado y Fechas</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
@@ -135,10 +135,10 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                         value={data.status}
                                         onValueChange={(val) => setData('status', val)}
                                     >
-                                        <SelectTrigger className="bg-[#102216] border-[#23482f]">
+                                        <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121]">
                                             <SelectValue placeholder="Seleccionar estado" />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                        <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                             <SelectItem value="pending">Pendiente</SelectItem>
                                             <SelectItem value="in_progress">En Progreso</SelectItem>
                                             <SelectItem value="completed">Completado</SelectItem>
@@ -154,7 +154,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                             type="date"
                                             value={data.start_date}
                                             onChange={(e) => setData('start_date', e.target.value)}
-                                            className="bg-[#102216] border-[#23482f]"
+                                            className="bg-[#1c0f0f] border-[#3e2121]"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -163,16 +163,16 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                             type="date"
                                             value={data.deadline}
                                             onChange={(e) => setData('deadline', e.target.value)}
-                                            className="bg-[#102216] border-[#23482f]"
+                                            className="bg-[#1c0f0f] border-[#3e2121]"
                                         />
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-[#193322] border-[#23482f] text-white">
+                        <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                             <CardHeader>
-                                <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Presupuesto</CardTitle>
+                                <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Presupuesto</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex gap-4">
@@ -182,10 +182,10 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                             value={String(data.currency_id)}
                                             onValueChange={(val) => setData('currency_id', val)}
                                         >
-                                            <SelectTrigger className="bg-[#102216] border-[#23482f]">
+                                            <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121]">
                                                 <SelectValue />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                            <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                                 {currencies.map(c => (
                                                     <SelectItem key={c.id} value={String(c.id)}>
                                                         {c.code} ({c.symbol})
@@ -201,7 +201,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                             step="0.01"
                                             value={data.total_amount}
                                             onChange={(e) => setData('total_amount', e.target.value)}
-                                            className="bg-[#102216] border-[#23482f]"
+                                            className="bg-[#1c0f0f] border-[#3e2121]"
                                         />
                                     </div>
                                 </div>
@@ -213,7 +213,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                             step="0.01"
                                             value={data.hourly_rate}
                                             onChange={(e) => setData('hourly_rate', e.target.value)}
-                                            className="bg-[#102216] border-[#23482f]"
+                                            className="bg-[#1c0f0f] border-[#3e2121]"
                                         />
                                     </div>
                                     <div className="flex-1 space-y-2">
@@ -223,7 +223,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                             step="0.1"
                                             value={data.estimated_hours}
                                             onChange={(e) => setData('estimated_hours', e.target.value)}
-                                            className="bg-[#102216] border-[#23482f]"
+                                            className="bg-[#1c0f0f] border-[#3e2121]"
                                         />
                                     </div>
                                 </div>
@@ -231,9 +231,9 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                         </Card>
                     </div>
 
-                    <Card className="bg-[#193322] border-[#23482f] text-white">
+                    <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                         <CardHeader>
-                            <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Propiedades Notion</CardTitle>
+                            <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Propiedades Notion</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -242,7 +242,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                     <Input
                                         value={data.area}
                                         onChange={(e) => setData('area', e.target.value)}
-                                        className="bg-[#102216] border-[#23482f]"
+                                        className="bg-[#1c0f0f] border-[#3e2121]"
                                         placeholder="Ej. Backend"
                                     />
                                 </div>
@@ -251,7 +251,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                     <Input
                                         value={data.module}
                                         onChange={(e) => setData('module', e.target.value)}
-                                        className="bg-[#102216] border-[#23482f]"
+                                        className="bg-[#1c0f0f] border-[#3e2121]"
                                         placeholder="Ej. Auth"
                                     />
                                 </div>
@@ -261,8 +261,8 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                         value={data.priority}
                                         onValueChange={(val) => setData('priority', val)}
                                     >
-                                        <SelectTrigger className="bg-[#102216] border-[#23482f]"><SelectValue /></SelectTrigger>
-                                        <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                        <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121]"><SelectValue /></SelectTrigger>
+                                        <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                             <SelectItem value="Low">Baja</SelectItem>
                                             <SelectItem value="Normal">Normal</SelectItem>
                                             <SelectItem value="High">Alta</SelectItem>
@@ -276,8 +276,8 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                         value={data.importance}
                                         onValueChange={(val) => setData('importance', val)}
                                     >
-                                        <SelectTrigger className="bg-[#102216] border-[#23482f]"><SelectValue /></SelectTrigger>
-                                        <SelectContent className="bg-[#193322] border-[#23482f] text-white">
+                                        <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121]"><SelectValue /></SelectTrigger>
+                                        <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                             <SelectItem value="Low">Baja</SelectItem>
                                             <SelectItem value="Normal">Normal</SelectItem>
                                             <SelectItem value="High">Alta</SelectItem>
@@ -286,11 +286,11 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                 </div>
                             </div>
                         </CardContent>
-                        <CardFooter className="flex justify-end gap-2 border-t border-[#23482f] pt-4">
+                        <CardFooter className="flex justify-end gap-2 border-t border-[#3e2121] pt-4">
                             <Button variant="ghost" type="button" asChild className="text-white hover:bg-white/5">
                                 <Link href={freelance.projects.index().url}>Cancelar</Link>
                             </Button>
-                            <Button type="submit" disabled={processing} className="bg-primary text-[#102216] font-bold">
+                            <Button type="submit" disabled={processing} className="bg-primary text-white font-bold">
                                 <Save className="mr-2 h-4 w-4" />
                                 {isEditing ? 'Actualizar Proyecto' : 'Guardar Proyecto'}
                             </Button>

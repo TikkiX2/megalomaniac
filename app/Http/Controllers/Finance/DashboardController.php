@@ -8,6 +8,7 @@ use App\Models\Debt;
 use App\Models\Income;
 use App\Models\Purchase;
 use App\Models\ReserveTransaction;
+use App\Models\SavingsReserve;
 use App\Models\Withdrawal;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -165,12 +166,55 @@ class DashboardController extends Controller
             'overdue_debts_count' => $overdueDebts->count(),
         ];
 
+        // Monthly budget — purchases this month vs 1000 meta (rojizo)
+        $budgetLimit = 1000;
+        $monthlyBudgetSpent = (float) Purchase::where('user_id', $userId)
+            ->whereBetween('purchase_date', [
+                Carbon::now()->startOfMonth(),
+                Carbon::now()->endOfMonth(),
+            ])
+            ->sum('amount');
+
+        $monthlyBudgetCount = $stats['total_purchases_this_month'];
+        $monthlyBudgetPercent = $budgetLimit > 0
+            ? min(100, round(($monthlyBudgetSpent / $budgetLimit) * 100, 1))
+            : 0;
+        $monthlyBudgetRemaining = $budgetLimit - $monthlyBudgetSpent;
+
+        // Primary currency for budget display (prefer USD active else first active)
+        $primaryCurrency = $currencies->firstWhere('code', 'USD') ?? $currencies->first() ?? Currency::first();
+
+        $monthlyBudget = [
+            'spent' => $monthlyBudgetSpent,
+            'limit' => (float) $budgetLimit,
+            'percent' => $monthlyBudgetPercent,
+            'remaining' => (float) $monthlyBudgetRemaining,
+            'count' => $monthlyBudgetCount,
+            'currency' => $primaryCurrency,
+        ];
+
+        // Savings goals — 2-3 reservas activas con progress rojizo
+        $savingsGoals = SavingsReserve::where('user_id', $userId)
+            ->where('is_active', true)
+            ->with('currency')
+            ->orderByDesc('updated_at')
+            ->take(3)
+            ->get()
+            ->map(function (SavingsReserve $reserve) {
+                $reserve->progress = $reserve->progress();
+
+                return $reserve;
+            })
+            ->values();
+
         return Inertia::render('finance/dashboard', [
             'balances' => $balances,
             'pendingDebts' => $pendingDebts,
             'recentTransactions' => $recentTransactions,
             'overdueDebts' => $overdueDebts,
             'stats' => $stats,
+            'monthlyBudget' => $monthlyBudget,
+            'savingsGoals' => $savingsGoals,
         ]);
     }
 }

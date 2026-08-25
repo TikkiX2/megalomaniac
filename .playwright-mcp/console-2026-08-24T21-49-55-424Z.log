@@ -1,0 +1,5 @@
+[     103ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://localhost:8010/_boost/browser-logs @ http://localhost:8010/finance/dashboard:24
+[   10476ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://localhost:8010/_boost/browser-logs @ http://localhost:8010/login:24
+[   13895ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://localhost:8010/_boost/browser-logs @ http://localhost:8010/finance/dashboard:24
+[   28857ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:8010/login:0
+[   28884ms] [LOG] 🔍 Browser logger active (MCP server detected). Posting to: http://localhost:8010/_boost/browser-logs @ http://localhost:8010/login:21

@@ -1,0 +1,120 @@
+- generic [ref=e80]:
+  - complementary [ref=e81]:
+    - generic [ref=e82]:
+      - generic [ref=e83]:
+        - generic [ref=e84]:
+          - generic [ref=e85]: bolt
+          - heading "Megalomaniac" [level=1] [ref=e88]
+        - navigation [ref=e89]:
+          - link "dashboard Dashboard" [ref=e90] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=e91]: dashboard
+            - generic [ref=e92]: Dashboard
+          - link "work Freelance" [ref=e93] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=e94]: work
+            - generic [ref=e95]: Freelance
+          - link "payments Finance" [ref=e96] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=e97]: payments
+            - generic [ref=e98]: Finance
+          - link "exercise Workout Log" [ref=e99] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=e100]: exercise
+            - generic [ref=e101]: Workout Log
+          - link "restaurant Nutrition" [ref=e102] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=e103]: restaurant
+            - generic [ref=e104]: Nutrition
+          - link "medication Supplements" [ref=e105] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=e106]: medication
+            - generic [ref=e107]: Supplements
+          - link "shopping_cart Grocery List" [ref=e108] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=e109]: shopping_cart
+            - generic [ref=e110]: Grocery List
+      - generic [ref=e111]:
+        - link "settings Settings" [ref=e112] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=e113]: settings
+          - generic [ref=e114]: Settings
+        - generic [ref=e115]:
+          - generic [ref=e116]: T
+          - paragraph [ref=e118]: Test User
+  - main [ref=e119]:
+    - generic [ref=e121]:
+      - generic [ref=e122]:
+        - generic [ref=e123]:
+          - heading "Welcome back, Test!" [level=2] [ref=e124]
+          - paragraph [ref=e125]: Today is Monday, Aug 24
+        - generic [ref=e126]:
+          - button "add Log Meal" [ref=e127]:
+            - generic [ref=e128]: add
+            - text: Log Meal
+          - button "bolt Quick Start" [ref=e129]:
+            - generic [ref=e130]: bolt
+            - text: Quick Start
+      - generic [ref=e131]:
+        - generic [ref=e132]:
+          - generic [ref=e134]:
+            - generic [ref=e135]:
+              - generic [ref=e136]:
+                - generic [ref=e137]: local_fire_department
+                - text: Calories Remaining
+              - generic [ref=e138]:
+                - generic [ref=e139]: 2,800
+                - generic [ref=e140]: kcal
+            - generic [ref=e141]:
+              - generic [ref=e142]: Daily Goal
+              - generic [ref=e143]: 2,800
+          - generic [ref=e145]:
+            - generic [ref=e146]: Day Progress
+            - generic [ref=e147]: 0%
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e152]:
+              - generic [ref=e153]: Protein
+              - generic [ref=e154]: 145 / 180g
+            - generic [ref=e155]:
+              - generic [ref=e156]: 80%
+              - generic [ref=e157]: On Track
+          - generic [ref=e160]:
+            - generic [ref=e162]:
+              - generic [ref=e163]: Carbs
+              - generic [ref=e164]: 210 / 250g
+            - generic [ref=e165]:
+              - generic [ref=e166]: 84%
+              - generic [ref=e167]: Normal
+        - generic [ref=e173]:
+          - generic [ref=e174]:
+            - generic [ref=e175]: Ready?
+            - generic [ref=e177]: "--"
+          - heading "Power Builder" [level=3] [ref=e178]
+          - paragraph [ref=e179]: Start your first routine and track your gains today.
+          - button "Start Workout arrow_forward" [ref=e181]:
+            - text: Start Workout
+            - generic [ref=e182]: arrow_forward
+        - generic [ref=e183]:
+          - generic [ref=e184]:
+            - heading "Inventory" [level=3] [ref=e185]
+            - generic [ref=e186]: 0 Low
+          - generic [ref=e188]:
+            - generic [ref=e189]: check_circle
+            - paragraph [ref=e190]: All stocked up!
+        - generic [ref=e191]:
+          - generic [ref=e192]:
+            - heading "Hydration" [level=3] [ref=e193]
+            - generic [ref=e194]: opacity
+          - generic [ref=e195]: 1.8 liters
+        - link "Freelance work BUSINESS Manage projects & quotes Go to Panel arrow_forward" [ref=e206] [cursor=pointer]:
+          - /url: /freelance/dashboard
+          - generic [ref=e207]:
+            - heading "Freelance" [level=3] [ref=e208]
+            - generic [ref=e209]: work
+          - generic [ref=e210]:
+            - generic [ref=e211]: BUSINESS
+            - generic [ref=e212]: Manage projects & quotes
+          - generic [ref=e213]:
+            - text: Go to Panel
+            - generic [ref=e214]: arrow_forward

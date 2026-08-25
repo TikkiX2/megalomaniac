@@ -125,11 +125,11 @@ export default function Routines({ routines, exercises }: Props) {
                 <header className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <div>
                         <h1 className="text-4xl font-black text-white tracking-tight leading-none mb-3">Your Routines</h1>
-                        <p className="text-[#92c9a4] font-medium uppercase text-xs tracking-[0.2em]">Build and Schedule Your Training</p>
+                        <p className="text-[#e8b4b4] font-medium uppercase text-xs tracking-[0.2em]">Build and Schedule Your Training</p>
                     </div>
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="bg-primary hover:bg-primary-hover text-[#102216] px-8 py-3 rounded-xl font-black text-sm transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2"
+                        className="bg-primary hover:bg-primary-hover text-white px-8 py-3 rounded-xl font-black text-sm transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2"
                     >
                         <span className="material-symbols-outlined font-black">add</span>
                         Create New Routine
@@ -147,9 +147,9 @@ export default function Routines({ routines, exercises }: Props) {
                             {days.map((day) => {
                                 const routine = routines.find(r => r.scheduled_date === day);
                                 return (
-                                    <div key={day} className={`p-5 rounded-2xl border transition-all ${routine ? 'bg-[#193322] border-[#23482f] shadow-md' : 'bg-[#102216] border-[#23482f]/50 border-dashed'}`}>
+                                    <div key={day} className={`p-5 rounded-2xl border transition-all ${routine ? 'bg-[#2b1a1a] border-[#3e2121] shadow-md' : 'bg-[#1c0f0f] border-[#3e2121]/50 border-dashed'}`}>
                                         <div className="flex justify-between items-start mb-3">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#92c9a4]">{day}</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">{day}</span>
                                             {routine && (
                                                 <span className="bg-primary/10 text-primary text-[9px] font-black px-2 py-0.5 rounded border border-primary/20 uppercase">Scheduled</span>
                                             )}
@@ -161,23 +161,23 @@ export default function Routines({ routines, exercises }: Props) {
                                                     <div className="flex gap-1">
                                                         <button
                                                             onClick={() => handleEditRoutine(routine)}
-                                                            className="p-1 hover:text-primary transition-colors text-[#92c9a4]"
+                                                            className="p-1 hover:text-primary transition-colors text-[#e8b4b4]"
                                                         >
                                                             <span className="material-symbols-outlined text-base">edit</span>
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteRoutine(routine.id)}
-                                                            className="p-1 hover:text-red-400 transition-colors text-[#92c9a4]"
+                                                            className="p-1 hover:text-red-400 transition-colors text-[#e8b4b4]"
                                                         >
                                                             <span className="material-symbols-outlined text-base">delete</span>
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <p className="text-xs text-[#92c9a4] font-medium mb-4">{routine.focus}</p>
+                                                <p className="text-xs text-[#e8b4b4] font-medium mb-4">{routine.focus}</p>
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleStartRoutine(routine.id)}
-                                                        className="flex-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg border border-[#23482f] transition-all"
+                                                        className="flex-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg border border-[#3e2121] transition-all"
                                                     >
                                                         Start Today
                                                     </button>
@@ -203,33 +203,33 @@ export default function Routines({ routines, exercises }: Props) {
                         </h3>
                         <div className="space-y-4">
                             {routines.map((routine) => (
-                                <div key={routine.id} className="bg-[#193322] border border-[#23482f] rounded-2xl p-5 hover:border-primary/50 transition-all group">
+                                <div key={routine.id} className="bg-[#2b1a1a] border border-[#3e2121] rounded-2xl p-5 hover:border-primary/50 transition-all group">
                                     <h4 className="font-bold text-white mb-1 flex items-center justify-between">
                                         {routine.name}
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => handleEditRoutine(routine)}
-                                                className="p-1 hover:text-primary transition-colors text-[#92c9a4]"
+                                                className="p-1 hover:text-primary transition-colors text-[#e8b4b4]"
                                             >
                                                 <span className="material-symbols-outlined text-lg">edit</span>
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteRoutine(routine.id)}
-                                                className="p-1 hover:text-red-400 transition-colors text-[#92c9a4]"
+                                                className="p-1 hover:text-red-400 transition-colors text-[#e8b4b4]"
                                             >
                                                 <span className="material-symbols-outlined text-lg">delete</span>
                                             </button>
                                         </div>
                                     </h4>
                                     <div className="flex items-center justify-between mb-4">
-                                        <p className="text-xs text-[#92c9a4] font-medium uppercase tracking-tighter">{routine.focus}</p>
+                                        <p className="text-xs text-[#e8b4b4] font-medium uppercase tracking-tighter">{routine.focus}</p>
                                         {routine.scheduled_date && (
                                             <span className="bg-primary/10 text-primary text-[9px] font-black px-2 py-0.5 rounded border border-primary/20 uppercase">
                                                 {routine.scheduled_date.slice(0, 3)}
                                             </span>
                                         )}
                                     </div>
-                                    <div className="flex items-center justify-between text-[10px] font-black text-[#92c9a4]">
+                                    <div className="flex items-center justify-between text-[10px] font-black text-[#e8b4b4]">
                                         <span>{routine.exercises.length} Exercises</span>
                                         <button
                                             onClick={() => handleStartRoutine(routine.id)}
@@ -248,8 +248,8 @@ export default function Routines({ routines, exercises }: Props) {
                 {/* Create Routine Modal */}
                 {isCreateModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                        <div className="bg-[#102216] border border-[#23482f] rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-                            <div className="p-6 border-b border-[#23482f] flex items-center justify-between bg-[#193322]">
+                        <div className="bg-[#1c0f0f] border border-[#3e2121] rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+                            <div className="p-6 border-b border-[#3e2121] flex items-center justify-between bg-[#2b1a1a]">
                                 <h3 className="text-2xl font-black text-white">
                                     {editingRoutineId ? 'Edit Routine' : 'Create New Routine'}
                                 </h3>
@@ -259,7 +259,7 @@ export default function Routines({ routines, exercises }: Props) {
                                         setEditingRoutineId(null);
                                         reset();
                                     }}
-                                    className="text-[#92c9a4] hover:text-white transition-colors"
+                                    className="text-[#e8b4b4] hover:text-white transition-colors"
                                 >
                                     <span className="material-symbols-outlined">close</span>
                                 </button>
@@ -268,29 +268,29 @@ export default function Routines({ routines, exercises }: Props) {
                             <form onSubmit={submit} className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-black text-[#92c9a4] uppercase tracking-widest">Routine Name</label>
+                                        <label className="text-xs font-black text-[#e8b4b4] uppercase tracking-widest">Routine Name</label>
                                         <input
                                             type="text"
                                             value={data.name}
                                             onChange={e => setData('name', e.target.value)}
-                                            className="w-full bg-[#193322] border border-[#23482f] rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none"
+                                            className="w-full bg-[#2b1a1a] border border-[#3e2121] rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none"
                                             placeholder="e.g. Chest & Triceps"
                                         />
                                         {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-xs font-black text-[#92c9a4] uppercase tracking-widest">Focus</label>
+                                        <label className="text-xs font-black text-[#e8b4b4] uppercase tracking-widest">Focus</label>
                                         <input
                                             type="text"
                                             value={data.focus}
                                             onChange={e => setData('focus', e.target.value)}
-                                            className="w-full bg-[#193322] border border-[#23482f] rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none"
+                                            className="w-full bg-[#2b1a1a] border border-[#3e2121] rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary transition-all outline-none"
                                             placeholder="e.g. Strength"
                                         />
                                         {errors.focus && <p className="text-red-400 text-xs mt-1">{errors.focus}</p>}
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
-                                        <label className="text-xs font-black text-[#92c9a4] uppercase tracking-widest">Scheduled Day</label>
+                                        <label className="text-xs font-black text-[#e8b4b4] uppercase tracking-widest">Scheduled Day</label>
                                         <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
                                             {days.map(day => (
                                                 <button
@@ -298,8 +298,8 @@ export default function Routines({ routines, exercises }: Props) {
                                                     type="button"
                                                     onClick={() => setData('scheduled_date', data.scheduled_date === day ? '' : day)}
                                                     className={`px-2 py-2 rounded-lg text-xs font-bold border transition-all ${data.scheduled_date === day
-                                                            ? 'bg-primary text-[#102216] border-primary'
-                                                            : 'bg-[#102216] text-[#92c9a4] border-[#23482f] hover:border-primary/50'
+                                                            ? 'bg-primary text-white border-primary'
+                                                            : 'bg-[#1c0f0f] text-[#e8b4b4] border-[#3e2121] hover:border-primary/50'
                                                         }`}
                                                 >
                                                     {day.slice(0, 3)}
@@ -311,7 +311,7 @@ export default function Routines({ routines, exercises }: Props) {
 
                                 <div className="space-y-4 mb-8">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-black text-[#92c9a4] uppercase tracking-widest">Exercises</label>
+                                        <label className="text-xs font-black text-[#e8b4b4] uppercase tracking-widest">Exercises</label>
                                         <button
                                             type="button"
                                             onClick={handleAddExerciseRow}
@@ -323,7 +323,7 @@ export default function Routines({ routines, exercises }: Props) {
                                     </div>
 
                                     {data.exercises.map((exercise, index) => (
-                                        <div key={index} className="bg-[#193322]/50 border border-[#23482f] rounded-xl p-4 animate-in fade-in slide-in-from-top-2">
+                                        <div key={index} className="bg-[#2b1a1a]/50 border border-[#3e2121] rounded-xl p-4 animate-in fade-in slide-in-from-top-2">
                                             <div className="flex justify-between items-start gap-4 mb-3">
                                                 <div className="flex-1">
                                                     <input
@@ -331,7 +331,7 @@ export default function Routines({ routines, exercises }: Props) {
                                                         list={`exercises-list-${index}`}
                                                         value={exercise.name}
                                                         onChange={e => handleExerciseChange(index, 'name', e.target.value)}
-                                                        className="w-full bg-[#102216] border border-[#23482f] rounded-lg px-3 py-2 text-sm text-white focus:border-primary outline-none"
+                                                        className="w-full bg-[#1c0f0f] border border-[#3e2121] rounded-lg px-3 py-2 text-sm text-white focus:border-primary outline-none"
                                                         placeholder="Exercise Name"
                                                     />
                                                     <datalist id={`exercises-list-${index}`}>
@@ -352,7 +352,7 @@ export default function Routines({ routines, exercises }: Props) {
                                                         type="number"
                                                         value={exercise.target_sets}
                                                         onChange={e => handleExerciseChange(index, 'target_sets', e.target.value)}
-                                                        className="w-full bg-[#102216] border border-[#23482f] rounded-lg px-3 py-2 text-xs text-white focus:border-primary outline-none"
+                                                        className="w-full bg-[#1c0f0f] border border-[#3e2121] rounded-lg px-3 py-2 text-xs text-white focus:border-primary outline-none"
                                                         placeholder="Sets"
                                                     />
                                                 </div>
@@ -361,7 +361,7 @@ export default function Routines({ routines, exercises }: Props) {
                                                         type="text"
                                                         value={exercise.target_reps}
                                                         onChange={e => handleExerciseChange(index, 'target_reps', e.target.value)}
-                                                        className="w-full bg-[#102216] border border-[#23482f] rounded-lg px-3 py-2 text-xs text-white focus:border-primary outline-none"
+                                                        className="w-full bg-[#1c0f0f] border border-[#3e2121] rounded-lg px-3 py-2 text-xs text-white focus:border-primary outline-none"
                                                         placeholder="Reps (e.g. 8-12)"
                                                     />
                                                 </div>
@@ -370,7 +370,7 @@ export default function Routines({ routines, exercises }: Props) {
                                                         type="text"
                                                         value={exercise.target_weight}
                                                         onChange={e => handleExerciseChange(index, 'target_weight', e.target.value)}
-                                                        className="w-full bg-[#102216] border border-[#23482f] rounded-lg px-3 py-2 text-xs text-white focus:border-primary outline-none"
+                                                        className="w-full bg-[#1c0f0f] border border-[#3e2121] rounded-lg px-3 py-2 text-xs text-white focus:border-primary outline-none"
                                                         placeholder="Weight (kg)"
                                                     />
                                                 </div>
@@ -379,7 +379,7 @@ export default function Routines({ routines, exercises }: Props) {
                                                         type="text"
                                                         value={exercise.notes}
                                                         onChange={e => handleExerciseChange(index, 'notes', e.target.value)}
-                                                        className="w-full bg-[#102216] border border-[#23482f] rounded-lg px-3 py-2 text-xs text-white focus:border-primary outline-none"
+                                                        className="w-full bg-[#1c0f0f] border border-[#3e2121] rounded-lg px-3 py-2 text-xs text-white focus:border-primary outline-none"
                                                         placeholder="Notes"
                                                     />
                                                 </div>
@@ -388,8 +388,8 @@ export default function Routines({ routines, exercises }: Props) {
                                     ))}
 
                                     {data.exercises.length === 0 && (
-                                        <div className="text-center py-8 border-2 border-dashed border-[#23482f] rounded-xl">
-                                            <p className="text-[#92c9a4] text-sm mb-2">No exercises added yet.</p>
+                                        <div className="text-center py-8 border-2 border-dashed border-[#3e2121] rounded-xl">
+                                            <p className="text-[#e8b4b4] text-sm mb-2">No exercises added yet.</p>
                                             <button
                                                 type="button"
                                                 onClick={handleAddExerciseRow}
@@ -402,7 +402,7 @@ export default function Routines({ routines, exercises }: Props) {
                                 </div>
                             </form>
 
-                            <div className="p-6 border-t border-[#23482f] bg-[#193322] flex justify-end gap-3">
+                            <div className="p-6 border-t border-[#3e2121] bg-[#2b1a1a] flex justify-end gap-3">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -410,14 +410,14 @@ export default function Routines({ routines, exercises }: Props) {
                                         setEditingRoutineId(null);
                                         reset();
                                     }}
-                                    className="px-6 py-2 rounded-xl font-bold text-[#92c9a4] hover:text-white transition-colors"
+                                    className="px-6 py-2 rounded-xl font-bold text-[#e8b4b4] hover:text-white transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={submit}
                                     disabled={processing}
-                                    className="bg-primary hover:bg-primary-hover text-[#102216] px-8 py-2 rounded-xl font-black transition-all shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="bg-primary hover:bg-primary-hover text-white px-8 py-2 rounded-xl font-black transition-all shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {processing ? 'Saving...' : (editingRoutineId ? 'Update Routine' : 'Create Routine')}
                                 </button>
@@ -431,8 +431,8 @@ export default function Routines({ routines, exercises }: Props) {
                 __html: `
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #23482f; border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #13ec5b; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #3e2121; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ef4444; }
             `}} />
         </GymLayout>
     );

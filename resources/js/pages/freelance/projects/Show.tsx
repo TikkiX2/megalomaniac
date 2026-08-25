@@ -52,7 +52,7 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
         const styles: Record<string, string> = {
             'pending': 'bg-gray-500/20 text-gray-500',
             'in_progress': 'bg-primary/20 text-primary border-primary/20',
-            'completed': 'bg-green-500/20 text-green-500',
+            'completed': 'bg-primary/20 text-primary',
             'maintenance': 'bg-purple-500/20 text-purple-500',
             'cancelled': 'bg-rose-500/20 text-rose-500',
         };
@@ -67,7 +67,7 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-4">
-                        <Button variant="outline" size="icon" asChild className="bg-[#193322] border-[#23482f] text-[#92c9a4] hover:bg-white/5">
+                        <Button variant="outline" size="icon" asChild className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5">
                             <Link href={freelance.projects.index().url}>
                                 <ArrowLeft className="h-4 w-4" />
                             </Link>
@@ -86,7 +86,7 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline" asChild className="bg-[#193322] border-[#23482f] text-[#92c9a4] hover:bg-white/5">
+                        <Button variant="outline" asChild className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5">
                             <Link href={freelance.projects.edit(project.id).url}>
                                 <Pencil className="mr-2 h-4 w-4" /> Editar
                             </Link>
@@ -98,17 +98,17 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
                     {/* Main Content Area */}
                     <div className="lg:col-span-3 space-y-6">
                         <Tabs defaultValue="overview" className="w-full">
-                            <TabsList className="bg-[#193322] border border-[#23482f] p-1 h-12">
-                                <TabsTrigger value="overview" className="data-[state=active]:bg-[#102216] data-[state=active]:text-primary px-6">Resumen</TabsTrigger>
-                                <TabsTrigger value="tasks" className="data-[state=active]:bg-[#102216] data-[state=active]:text-primary px-6">Tareas</TabsTrigger>
-                                <TabsTrigger value="comments" className="data-[state=active]:bg-[#102216] data-[state=active]:text-primary px-6">Discusión</TabsTrigger>
-                                <TabsTrigger value="files" className="data-[state=active]:bg-[#102216] data-[state=active]:text-primary px-6">Archivos</TabsTrigger>
+                            <TabsList className="bg-[#2b1a1a] border border-[#3e2121] p-1 h-12">
+                                <TabsTrigger value="overview" className="data-[state=active]:bg-[#1c0f0f] data-[state=active]:text-primary px-6">Resumen</TabsTrigger>
+                                <TabsTrigger value="tasks" className="data-[state=active]:bg-[#1c0f0f] data-[state=active]:text-primary px-6">Tareas</TabsTrigger>
+                                <TabsTrigger value="comments" className="data-[state=active]:bg-[#1c0f0f] data-[state=active]:text-primary px-6">Discusión</TabsTrigger>
+                                <TabsTrigger value="files" className="data-[state=active]:bg-[#1c0f0f] data-[state=active]:text-primary px-6">Archivos</TabsTrigger>
                             </TabsList>
 
                             <TabsContent value="overview" className="mt-6 space-y-6">
-                                <Card className="bg-[#193322] border-[#23482f] text-white">
+                                <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                                     <CardHeader>
-                                        <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Descripción del Proyecto</CardTitle>
+                                        <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Descripción del Proyecto</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <RichTextEditor value={project.description} readOnly className="border-0 p-0 shadow-none min-h-[100px]" />
@@ -125,9 +125,9 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
                             </TabsContent>
 
                             <TabsContent value="files" className="mt-6">
-                                <Card className="bg-[#193322] border-[#23482f]">
+                                <Card className="bg-[#2b1a1a] border-[#3e2121]">
                                     <CardHeader>
-                                        <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Documentos y Archivos</CardTitle>
+                                        <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Documentos y Archivos</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <MediaGallery
@@ -144,9 +144,9 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
 
                     {/* Sidebar Info */}
                     <div className="space-y-6">
-                        <Card className="bg-[#193322] border-[#23482f] text-white">
+                        <Card className="bg-[#2b1a1a] border-[#3e2121] text-white">
                             <CardHeader>
-                                <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Detalles del Proyecto</CardTitle>
+                                <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Detalles del Proyecto</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-1">
@@ -167,9 +167,9 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-[#102216] border-primary/20 text-white">
+                        <Card className="bg-[#1c0f0f] border-primary/20 text-white">
                             <CardHeader>
-                                <CardTitle className="text-[#92c9a4] text-xs uppercase font-black tracking-widest">Finanzas</CardTitle>
+                                <CardTitle className="text-[#e8b4b4] text-xs uppercase font-black tracking-widest">Finanzas</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-1">
@@ -177,7 +177,7 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
                                     <p className="text-2xl font-black text-white">{project.currency?.symbol} {Number(project.total_amount).toLocaleString()}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] text-[#92c9a4] uppercase font-bold">Pagado hasta la fecha</p>
+                                    <p className="text-[10px] text-[#e8b4b4] uppercase font-bold">Pagado hasta la fecha</p>
                                     <p className="text-lg font-bold text-primary">{project.currency?.symbol} {Number(project.paid_amount).toLocaleString()}</p>
                                 </div>
                                 <div className="space-y-2 pt-2">

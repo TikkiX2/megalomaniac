@@ -1,0 +1,119 @@
+- generic [ref=f3e3]:
+  - complementary [ref=f3e4]:
+    - generic [ref=f3e5]:
+      - generic [ref=f3e6]:
+        - generic [ref=f3e7]:
+          - generic [ref=f3e8]: bolt
+          - heading "Megalomaniac" [level=1] [ref=f3e11]
+        - navigation [ref=f3e12]:
+          - link "dashboard Dashboard" [ref=f3e13] [cursor=pointer]:
+            - /url: /dashboard
+            - generic [ref=f3e14]: dashboard
+            - generic [ref=f3e15]: Dashboard
+          - link "work Freelance" [ref=f3e16] [cursor=pointer]:
+            - /url: /freelance/dashboard
+            - generic [ref=f3e17]: work
+            - generic [ref=f3e18]: Freelance
+          - link "payments Finance" [ref=f3e19] [cursor=pointer]:
+            - /url: /finance/dashboard
+            - generic [ref=f3e20]: payments
+            - generic [ref=f3e21]: Finance
+          - link "exercise Workout Log" [ref=f3e22] [cursor=pointer]:
+            - /url: /fitness/gym
+            - generic [ref=f3e23]: exercise
+            - generic [ref=f3e24]: Workout Log
+          - link "restaurant Nutrition" [ref=f3e25] [cursor=pointer]:
+            - /url: /fitness/nutrition
+            - generic [ref=f3e26]: restaurant
+            - generic [ref=f3e27]: Nutrition
+          - link "medication Supplements" [ref=f3e28] [cursor=pointer]:
+            - /url: /fitness/supplements
+            - generic [ref=f3e29]: medication
+            - generic [ref=f3e30]: Supplements
+          - link "shopping_cart Grocery List" [ref=f3e31] [cursor=pointer]:
+            - /url: /fitness/groceries
+            - generic [ref=f3e32]: shopping_cart
+            - generic [ref=f3e33]: Grocery List
+      - generic [ref=f3e34]:
+        - link "settings Settings" [ref=f3e35] [cursor=pointer]:
+          - /url: /settings/profile
+          - generic [ref=f3e36]: settings
+          - generic [ref=f3e37]: Settings
+        - generic [ref=f3e38]:
+          - generic [ref=f3e39]: T
+          - paragraph [ref=f3e41]: Test User
+  - main [ref=f3e42]:
+    - generic [ref=f3e44]:
+      - generic [ref=f3e45]:
+        - generic [ref=f3e46]:
+          - heading "Grocery Tracker" [level=1] [ref=f3e47]
+          - generic [ref=f3e48]:
+            - button "arrow_back_ios" [ref=f3e49]
+            - generic [ref=f3e51]: August 2026
+            - button "arrow_forward_ios" [ref=f3e52]
+        - generic [ref=f3e54]:
+          - button "download Export Report" [ref=f3e55]:
+            - generic [ref=f3e56]: download
+            - text: Export Report
+          - generic [ref=f3e57]:
+            - button "Inventory" [ref=f3e58]
+            - button "History" [ref=f3e59]
+          - button "shopping_cart_checkout Complete Shopping" [ref=f3e60]:
+            - generic [ref=f3e61]: shopping_cart_checkout
+            - text: Complete Shopping
+          - button "add Add Item" [ref=f3e62]:
+            - generic [ref=f3e63]: add
+            - text: Add Item
+      - generic [ref=f3e64]:
+        - generic [ref=f3e65]:
+          - generic [ref=f3e66]: payments
+          - generic [ref=f3e68]:
+            - paragraph [ref=f3e69]: Total Expenditure
+            - generic [ref=f3e70]:
+              - paragraph [ref=f3e71]: $0.00
+              - generic [ref=f3e72]:
+                - generic [ref=f3e73]: trending_up
+                - text: +12%
+            - paragraph [ref=f3e74]: Reflected from purchased items
+        - generic [ref=f3e75]:
+          - generic [ref=f3e76]: shopping_basket
+          - generic [ref=f3e78]:
+            - paragraph [ref=f3e79]: Total Items
+            - paragraph [ref=f3e80]: "0"
+            - paragraph [ref=f3e81]: Current Stock Level
+        - generic [ref=f3e82]:
+          - generic [ref=f3e83]: analytics
+          - generic [ref=f3e85]:
+            - paragraph [ref=f3e86]: Low Stock Items
+            - paragraph [ref=f3e87]: "0"
+            - paragraph [ref=f3e88]: Need Restocking
+      - generic [ref=f3e89]:
+        - generic [ref=f3e90]:
+          - heading "Active Stock & History" [level=2] [ref=f3e91]
+          - generic [ref=f3e92]:
+            - generic [ref=f3e93]:
+              - generic [ref=f3e94]: search
+              - textbox "Search items..." [ref=f3e95]
+            - combobox [ref=f3e96] [cursor=pointer]:
+              - option "All Categories" [selected]
+            - button "filter_list" [ref=f3e97]
+        - generic [ref=f3e99]:
+          - table [ref=f3e101]:
+            - rowgroup [ref=f3e102]:
+              - row [ref=f3e103]:
+                - columnheader "Item Name" [ref=f3e104]
+                - columnheader "Category" [ref=f3e105]
+                - columnheader "Stock Level" [ref=f3e106]
+                - columnheader "Unit" [ref=f3e107]
+                - columnheader "Est. Price" [ref=f3e108]
+                - columnheader "Total Value" [ref=f3e109]
+                - columnheader "Actions" [ref=f3e110]
+            - rowgroup [ref=f3e111]:
+              - row [ref=f3e112]:
+                - cell "No items found" [ref=f3e113]
+          - generic [ref=f3e114]:
+            - generic [ref=f3e115]: Showing 0 of 0 records
+            - generic [ref=f3e116]:
+              - button "Prev" [disabled] [ref=f3e117]
+              - button "1" [ref=f3e118]
+              - button "Next" [disabled] [ref=f3e119]

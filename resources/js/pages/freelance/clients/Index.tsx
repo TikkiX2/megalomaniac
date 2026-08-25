@@ -50,7 +50,7 @@ export default function ClientsIndex({ clients, filters }: any) {
                         <h1 className="text-2xl font-bold tracking-tight text-white">Clientes</h1>
                         <p className="text-muted-foreground">Gestiona tu base de clientes y sus proyectos.</p>
                     </div>
-                    <Button asChild className="bg-primary text-[#102216] font-bold">
+                    <Button asChild className="bg-primary text-white font-bold">
                         <Link href={freelance.clients.create().url}>
                             <Plus className="mr-2 h-4 w-4" /> Nuevo Cliente
                         </Link>
@@ -62,34 +62,34 @@ export default function ClientsIndex({ clients, filters }: any) {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Buscar clientes por nombre o empresa..."
-                            className="pl-8 bg-[#193322] border-[#23482f]"
+                            className="pl-8 bg-[#2b1a1a] border-[#3e2121]"
                             value={search}
                             onChange={(e) => handleSearch(e.target.value)}
                         />
                     </div>
                 </div>
 
-                <div className="rounded-xl border border-[#23482f] bg-[#193322] overflow-hidden">
+                <div className="rounded-xl border border-[#3e2121] bg-[#2b1a1a] overflow-hidden">
                     <Table>
-                        <TableHeader className="bg-[#102216]">
-                            <TableRow className="hover:bg-transparent border-[#23482f]">
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Nombre</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Empresa</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Email</TableHead>
-                                <TableHead className="text-[#92c9a4] font-black uppercase text-[10px] tracking-widest">Estado</TableHead>
+                        <TableHeader className="bg-[#1c0f0f]">
+                            <TableRow className="hover:bg-transparent border-[#3e2121]">
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Nombre</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Empresa</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Email</TableHead>
+                                <TableHead className="text-[#e8b4b4] font-black uppercase text-[10px] tracking-widest">Estado</TableHead>
                                 <TableHead className="w-[80px]"></TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {clients.data.length === 0 ? (
-                                <TableRow className="hover:bg-transparent border-[#23482f]">
+                                <TableRow className="hover:bg-transparent border-[#3e2121]">
                                     <TableCell colSpan={5} className="text-center h-24 text-muted-foreground italic">
                                         No se encontraron clientes.
                                     </TableCell>
                                 </TableRow>
                             ) : (
                                 clients.data.map((client: any) => (
-                                    <TableRow key={client.id} className="hover:bg-white/5 border-[#23482f]">
+                                    <TableRow key={client.id} className="hover:bg-white/5 border-[#3e2121]">
                                         <TableCell className="font-bold text-white">{client.name}</TableCell>
                                         <TableCell className="text-white/80">{client.company || '-'}</TableCell>
                                         <TableCell className="text-white/80">{client.email || '-'}</TableCell>
@@ -106,14 +106,14 @@ export default function ClientsIndex({ clients, filters }: any) {
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-[#193322] border-[#23482f] text-white">
-                                                    <DropdownMenuLabel className="text-[#92c9a4] text-[10px] uppercase font-black">Acciones</DropdownMenuLabel>
-                                                    <DropdownMenuItem asChild className="focus:bg-[#23482f] focus:text-white">
+                                                <DropdownMenuContent align="end" className="bg-[#2b1a1a] border-[#3e2121] text-white">
+                                                    <DropdownMenuLabel className="text-[#e8b4b4] text-[10px] uppercase font-black">Acciones</DropdownMenuLabel>
+                                                    <DropdownMenuItem asChild className="focus:bg-[#3e2121] focus:text-white">
                                                         <Link href={freelance.clients.edit(client.id).url}>
                                                             <Pencil className="mr-2 h-4 w-4" /> Editar
                                                         </Link>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuSeparator className="bg-[#23482f]" />
+                                                    <DropdownMenuSeparator className="bg-[#3e2121]" />
                                                     <DropdownMenuItem
                                                         className="text-rose-400 focus:bg-rose-500/20 focus:text-rose-400"
                                                         onClick={() => handleDelete(client.id)}

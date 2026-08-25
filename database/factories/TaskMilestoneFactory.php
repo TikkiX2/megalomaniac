@@ -2,17 +2,19 @@
 
 namespace Database\Factories;
 
+use App\Models\Project;
+use App\Models\TaskMilestone;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\TaskMilestone>
+ * @extends Factory<TaskMilestone>
  */
 class TaskMilestoneFactory extends Factory
 {
     public function definition(): array
     {
         return [
-            'project_id' => \App\Models\Project::factory(),
+            'project_id' => Project::factory(),
             'name' => $this->faker->sentence(3),
             'description' => $this->faker->paragraph(),
             'due_date' => $this->faker->dateTimeBetween('now', '+3 months'),
