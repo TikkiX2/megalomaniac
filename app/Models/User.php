@@ -175,4 +175,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(TaskSavedView::class);
     }
+
+    public function agentSuggestions(): HasMany
+    {
+        return $this->hasMany(AgentSuggestion::class);
+    }
 }

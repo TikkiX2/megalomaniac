@@ -1,5 +1,39 @@
 <?php
 
+use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\Finance\CreditCardController;
+use App\Http\Controllers\Finance\CurrencyController;
+use App\Http\Controllers\Finance\CurrencyExchangeController;
+use App\Http\Controllers\Finance\DashboardController;
+use App\Http\Controllers\Finance\DebtController;
+use App\Http\Controllers\Finance\ExchangeRateController;
+use App\Http\Controllers\Finance\FinanceStatisticsController;
+use App\Http\Controllers\Finance\IncomeController;
+use App\Http\Controllers\Finance\IncomeSourceController;
+use App\Http\Controllers\Finance\PurchaseCategoryController;
+use App\Http\Controllers\Finance\PurchaseController;
+use App\Http\Controllers\Finance\SavingsReserveController;
+use App\Http\Controllers\Finance\WithdrawalCategoryController;
+use App\Http\Controllers\Finance\WithdrawalController;
+use App\Http\Controllers\Freelance\ClientController;
+use App\Http\Controllers\Freelance\FreelanceDashboardController;
+use App\Http\Controllers\Freelance\ProjectCommentController;
+use App\Http\Controllers\Freelance\ProjectController;
+use App\Http\Controllers\Freelance\ProjectTaskController;
+use App\Http\Controllers\Freelance\QuoteController;
+use App\Http\Controllers\Grocery\GroceryController;
+use App\Http\Controllers\Gym\ExerciseController;
+use App\Http\Controllers\Gym\RoutineController;
+use App\Http\Controllers\Gym\WorkoutController;
+use App\Http\Controllers\Nutrition\NutritionController;
+use App\Http\Controllers\Personal\PersonalProjectController;
+use App\Http\Controllers\Personal\PersonalTaskController;
+use App\Http\Controllers\Personal\TaskPropertyController;
+use App\Http\Controllers\Personal\TaskSavedViewController;
+use App\Http\Controllers\Supplement\SupplementController;
+use App\Models\MealLog;
+use App\Models\Supplement;
+use App\Models\Workout;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -15,7 +49,7 @@ Route::get('dashboard', function () {
 
     // Weekly volume: last 7 days including today, sum(weight*reps) per day from completed or any sets
     $start = now()->copy()->subDays(6)->startOfDay();
-    $weeklyWorkouts = \App\Models\Workout::with('exercises.sets')
+    $weeklyWorkouts = Workout::with('exercises.sets')
         ->where('user_id', $userId)
         ->where('started_at', '>=', $start)
         ->get();
@@ -106,7 +140,7 @@ Route::get('dashboard', function () {
     }
 
     // Nutrition sync: sum across all MealLogs of today
-    $mealLogsToday = \App\Models\MealLog::with('items')->where('user_id', $userId)->where('date', now()->toDateString())->get();
+    $mealLogsToday = MealLog::with('items')->where('user_id', $userId)->where('date', now()->toDateString())->get();
     $caloriesToday = $mealLogsToday->sum(fn ($log) => $log->total_calories ?? 0);
     $macrosToday = ['protein' => 0, 'carbs' => 0, 'fats' => 0];
     foreach ($mealLogsToday as $log) {
@@ -119,12 +153,12 @@ Route::get('dashboard', function () {
     $goals = ['calories' => 2400, 'protein' => 180, 'carbs' => 250, 'fats' => 70];
 
     return Inertia::render('fitness/dashboard', [
-        'workoutCount' => \App\Models\Workout::where('user_id', $userId)->count(),
-        'recentWorkouts' => \App\Models\Workout::with('routine')->where('user_id', $userId)->orderByDesc('started_at')->limit(5)->get(),
+        'workoutCount' => Workout::where('user_id', $userId)->count(),
+        'recentWorkouts' => Workout::with('routine')->where('user_id', $userId)->orderByDesc('started_at')->limit(5)->get(),
         'caloriesToday' => $caloriesToday,
         'macrosToday' => $macrosToday,
         'goals' => $goals,
-        'lowStockSupplements' => \App\Models\Supplement::where('user_id', $userId)->get()->filter->is_low_stock->values(),
+        'lowStockSupplements' => Supplement::where('user_id', $userId)->get()->filter->is_low_stock->values(),
         'weeklyVolumeByDay' => $weeklyVolumeByDay,
         'weeklyVolumes' => $weeklyVolumes,
         'weeklyVolumeTotal' => array_sum($weeklyVolumes),
@@ -135,141 +169,145 @@ Route::get('dashboard', function () {
 require __DIR__.'/settings.php';
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // AI Chat Routes
+    Route::post('ai/chat', [AiChatController::class, 'chat'])->name('ai.chat');
+    Route::get('ai/conversations', [AiChatController::class, 'conversations'])->name('ai.conversations');
+
     // Gym Routes
     Route::prefix('gym')->group(function () {
-        Route::apiResource('exercises', \App\Http\Controllers\Gym\ExerciseController::class);
-        Route::apiResource('routines', \App\Http\Controllers\Gym\RoutineController::class);
-        Route::apiResource('workouts', \App\Http\Controllers\Gym\WorkoutController::class);
-        Route::post('workouts/{workout}/exercises', [\App\Http\Controllers\Gym\WorkoutController::class, 'addExercise']);
-        Route::post('workout-exercises/{workoutExercise}/sets', [\App\Http\Controllers\Gym\WorkoutController::class, 'logSet']);
+        Route::apiResource('exercises', ExerciseController::class);
+        Route::apiResource('routines', RoutineController::class);
+        Route::apiResource('workouts', WorkoutController::class);
+        Route::post('workouts/{workout}/exercises', [WorkoutController::class, 'addExercise']);
+        Route::post('workout-exercises/{workoutExercise}/sets', [WorkoutController::class, 'logSet']);
     });
 
     // Nutrition Routes
     Route::prefix('nutrition')->group(function () {
-        Route::get('foods/search', [\App\Http\Controllers\Nutrition\NutritionController::class, 'searchFoods']);
-        Route::post('foods', [\App\Http\Controllers\Nutrition\NutritionController::class, 'storeFood']);
-        Route::get('logs', [\App\Http\Controllers\Nutrition\NutritionController::class, 'getDailyLog']);
-        Route::post('logs/items', [\App\Http\Controllers\Nutrition\NutritionController::class, 'storeMealItem']);
-        Route::delete('logs/items/{mealItem}', [\App\Http\Controllers\Nutrition\NutritionController::class, 'deleteMealItem']);
+        Route::get('foods/search', [NutritionController::class, 'searchFoods']);
+        Route::post('foods', [NutritionController::class, 'storeFood']);
+        Route::get('logs', [NutritionController::class, 'getDailyLog']);
+        Route::post('logs/items', [NutritionController::class, 'storeMealItem']);
+        Route::delete('logs/items/{mealItem}', [NutritionController::class, 'deleteMealItem']);
     });
 
     // Supplement Routes
     Route::prefix('supplements')->group(function () {
-        Route::apiResource('items', \App\Http\Controllers\Supplement\SupplementController::class)->names('supplements.items');
-        Route::post('{supplement}/log', [\App\Http\Controllers\Supplement\SupplementController::class, 'logIntake']);
-        Route::get('logs', [\App\Http\Controllers\Supplement\SupplementController::class, 'getLogs']);
+        Route::apiResource('items', SupplementController::class)->names('supplements.items');
+        Route::post('{supplement}/log', [SupplementController::class, 'logIntake']);
+        Route::get('logs', [SupplementController::class, 'getLogs']);
     });
 
     // Fitness App Managed Routes
     Route::prefix('fitness')->group(function () {
-        Route::get('history', [\App\Http\Controllers\Gym\WorkoutController::class, 'history'])->name('fitness.history');
-        Route::get('gym', [\App\Http\Controllers\Gym\ExerciseController::class, 'index'])->name('fitness.gym');
-        Route::get('routines', [\App\Http\Controllers\Gym\RoutineController::class, 'index'])->name('fitness.routines');
-        Route::post('routines', [\App\Http\Controllers\Gym\RoutineController::class, 'store']);
-        Route::get('nutrition', [\App\Http\Controllers\Nutrition\NutritionController::class, 'index'])->name('fitness.nutrition');
-        Route::get('supplements', [\App\Http\Controllers\Supplement\SupplementController::class, 'index'])->name('fitness.supplements');
-        Route::get('groceries', [\App\Http\Controllers\Grocery\GroceryController::class, 'index'])->name('fitness.groceries');
+        Route::get('history', [WorkoutController::class, 'history'])->name('fitness.history');
+        Route::get('gym', [ExerciseController::class, 'index'])->name('fitness.gym');
+        Route::get('routines', [RoutineController::class, 'index'])->name('fitness.routines');
+        Route::post('routines', [RoutineController::class, 'store']);
+        Route::get('nutrition', [NutritionController::class, 'index'])->name('fitness.nutrition');
+        Route::get('supplements', [SupplementController::class, 'index'])->name('fitness.supplements');
+        Route::get('groceries', [GroceryController::class, 'index'])->name('fitness.groceries');
     });
 
     // Grocery Routes
     Route::prefix('grocery')->group(function () {
-        Route::get('history', [\App\Http\Controllers\Grocery\GroceryController::class, 'history'])->name('grocery.history');
-        Route::post('bulk-restock', [\App\Http\Controllers\Grocery\GroceryController::class, 'bulkRestock'])->name('grocery.bulk-restock');
-        Route::apiResource('items', \App\Http\Controllers\Grocery\GroceryController::class)->names('grocery.items');
-        Route::post('{item}/consume', [\App\Http\Controllers\Grocery\GroceryController::class, 'consume'])->name('grocery.consume');
+        Route::get('history', [GroceryController::class, 'history'])->name('grocery.history');
+        Route::post('bulk-restock', [GroceryController::class, 'bulkRestock'])->name('grocery.bulk-restock');
+        Route::apiResource('items', GroceryController::class)->names('grocery.items');
+        Route::post('{item}/consume', [GroceryController::class, 'consume'])->name('grocery.consume');
     });
 
     // Finance Routes
     Route::prefix('finance')->name('finance.')->group(function () {
         // Dashboard
-        Route::get('dashboard', [\App\Http\Controllers\Finance\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Purchases
-        Route::resource('purchases', \App\Http\Controllers\Finance\PurchaseController::class);
+        Route::resource('purchases', PurchaseController::class);
 
         // Incomes
-        Route::resource('incomes', \App\Http\Controllers\Finance\IncomeController::class);
+        Route::resource('incomes', IncomeController::class);
 
         // Debts
-        Route::resource('debts', \App\Http\Controllers\Finance\DebtController::class);
-        Route::post('debts/{debt}/payments', [\App\Http\Controllers\Finance\DebtController::class, 'addPayment'])->name('debts.payments.store');
+        Route::resource('debts', DebtController::class);
+        Route::post('debts/{debt}/payments', [DebtController::class, 'addPayment'])->name('debts.payments.store');
 
         // Credit Cards
-        Route::resource('credit-cards', \App\Http\Controllers\Finance\CreditCardController::class);
+        Route::resource('credit-cards', CreditCardController::class);
 
         // Currencies
-        Route::resource('currencies', \App\Http\Controllers\Finance\CurrencyController::class);
-        Route::patch('currencies/{currency}/restore', [\App\Http\Controllers\Finance\CurrencyController::class, 'restore'])->name('currencies.restore');
+        Route::resource('currencies', CurrencyController::class);
+        Route::patch('currencies/{currency}/restore', [CurrencyController::class, 'restore'])->name('currencies.restore');
 
         // Exchange Rates
-        Route::resource('exchange-rates', \App\Http\Controllers\Finance\ExchangeRateController::class);
-        Route::post('exchange-rates/convert', [\App\Http\Controllers\Finance\ExchangeRateController::class, 'convert'])->name('exchange-rates.convert');
+        Route::resource('exchange-rates', ExchangeRateController::class);
+        Route::post('exchange-rates/convert', [ExchangeRateController::class, 'convert'])->name('exchange-rates.convert');
 
         // Income Sources
-        Route::resource('income-sources', \App\Http\Controllers\Finance\IncomeSourceController::class);
+        Route::resource('income-sources', IncomeSourceController::class);
 
         // Purchase Categories
-        Route::resource('categories', \App\Http\Controllers\Finance\PurchaseCategoryController::class);
+        Route::resource('categories', PurchaseCategoryController::class);
 
         // Statistics
-        Route::get('statistics', [\App\Http\Controllers\Finance\FinanceStatisticsController::class, 'index'])->name('statistics');
+        Route::get('statistics', [FinanceStatisticsController::class, 'index'])->name('statistics');
 
         // Withdrawals
-        Route::resource('withdrawal-categories', \App\Http\Controllers\Finance\WithdrawalCategoryController::class);
-        Route::resource('withdrawals', \App\Http\Controllers\Finance\WithdrawalController::class);
+        Route::resource('withdrawal-categories', WithdrawalCategoryController::class);
+        Route::resource('withdrawals', WithdrawalController::class);
 
         // Savings Reserves
-        Route::resource('savings-reserves', \App\Http\Controllers\Finance\SavingsReserveController::class)->parameters([
+        Route::resource('savings-reserves', SavingsReserveController::class)->parameters([
             'savings-reserves' => 'savings_reserve',
         ]);
-        Route::post('savings-reserves/{savings_reserve}/deposit', [\App\Http\Controllers\Finance\SavingsReserveController::class, 'deposit'])->name('savings-reserves.deposit');
-        Route::post('savings-reserves/{savings_reserve}/withdraw', [\App\Http\Controllers\Finance\SavingsReserveController::class, 'withdraw'])->name('savings-reserves.withdraw');
+        Route::post('savings-reserves/{savings_reserve}/deposit', [SavingsReserveController::class, 'deposit'])->name('savings-reserves.deposit');
+        Route::post('savings-reserves/{savings_reserve}/withdraw', [SavingsReserveController::class, 'withdraw'])->name('savings-reserves.withdraw');
 
         // Currency Exchanges
-        Route::resource('currency-exchanges', \App\Http\Controllers\Finance\CurrencyExchangeController::class);
+        Route::resource('currency-exchanges', CurrencyExchangeController::class);
     });
 
     // Freelance Routes
     Route::prefix('freelance')->name('freelance.')->group(function () {
-        Route::get('dashboard', [\App\Http\Controllers\Freelance\FreelanceDashboardController::class, 'index'])->name('dashboard');
+        Route::get('dashboard', [FreelanceDashboardController::class, 'index'])->name('dashboard');
 
-        Route::resource('clients', \App\Http\Controllers\Freelance\ClientController::class);
+        Route::resource('clients', ClientController::class);
 
-        Route::resource('projects', \App\Http\Controllers\Freelance\ProjectController::class);
-        Route::post('projects/{project}/payments', [\App\Http\Controllers\Freelance\ProjectController::class, 'addPayment'])->name('projects.payments.store');
-        Route::post('projects/{project}/media', [\App\Http\Controllers\Freelance\ProjectController::class, 'uploadFile'])->name('projects.media.upload');
-        Route::get('media/{media}/download', [\App\Http\Controllers\Freelance\ProjectController::class, 'downloadFile'])->name('media.download');
-        Route::delete('media/{media}', [\App\Http\Controllers\Freelance\ProjectController::class, 'deleteFile'])->name('media.delete');
+        Route::resource('projects', ProjectController::class);
+        Route::post('projects/{project}/payments', [ProjectController::class, 'addPayment'])->name('projects.payments.store');
+        Route::post('projects/{project}/media', [ProjectController::class, 'uploadFile'])->name('projects.media.upload');
+        Route::get('media/{media}/download', [ProjectController::class, 'downloadFile'])->name('media.download');
+        Route::delete('media/{media}', [ProjectController::class, 'deleteFile'])->name('media.delete');
 
         // Comments
-        Route::get('projects/{project}/comments', [\App\Http\Controllers\Freelance\ProjectCommentController::class, 'index'])->name('projects.comments.index');
-        Route::post('projects/{project}/comments', [\App\Http\Controllers\Freelance\ProjectCommentController::class, 'store'])->name('projects.comments.store');
-        Route::patch('comments/{comment}', [\App\Http\Controllers\Freelance\ProjectCommentController::class, 'update'])->name('comments.update');
-        Route::delete('comments/{comment}', [\App\Http\Controllers\Freelance\ProjectCommentController::class, 'destroy'])->name('comments.destroy');
+        Route::get('projects/{project}/comments', [ProjectCommentController::class, 'index'])->name('projects.comments.index');
+        Route::post('projects/{project}/comments', [ProjectCommentController::class, 'store'])->name('projects.comments.store');
+        Route::patch('comments/{comment}', [ProjectCommentController::class, 'update'])->name('comments.update');
+        Route::delete('comments/{comment}', [ProjectCommentController::class, 'destroy'])->name('comments.destroy');
 
-        Route::resource('quotes', \App\Http\Controllers\Freelance\QuoteController::class);
-        Route::get('quotes/{quote}/pdf', [\App\Http\Controllers\Freelance\QuoteController::class, 'generatePDF'])->name('quotes.pdf');
-        Route::post('quotes/{quote}/duplicate', [\App\Http\Controllers\Freelance\QuoteController::class, 'duplicate'])->name('quotes.duplicate');
-        Route::post('quotes/{quote}/convert', [\App\Http\Controllers\Freelance\QuoteController::class, 'convertToProject'])->name('quotes.convert');
+        Route::resource('quotes', QuoteController::class);
+        Route::get('quotes/{quote}/pdf', [QuoteController::class, 'generatePDF'])->name('quotes.pdf');
+        Route::post('quotes/{quote}/duplicate', [QuoteController::class, 'duplicate'])->name('quotes.duplicate');
+        Route::post('quotes/{quote}/convert', [QuoteController::class, 'convertToProject'])->name('quotes.convert');
 
-        Route::resource('projects.tasks', \App\Http\Controllers\Freelance\ProjectTaskController::class)->shallow();
-        Route::post('tasks/{task}/sync-to-notion', [\App\Http\Controllers\Freelance\ProjectTaskController::class, 'syncToNotion'])->name('tasks.sync-to-notion');
-        Route::post('tasks/{task}/sync-from-notion', [\App\Http\Controllers\Freelance\ProjectTaskController::class, 'syncFromNotion'])->name('tasks.sync-from-notion');
+        Route::resource('projects.tasks', ProjectTaskController::class)->shallow();
+        Route::post('tasks/{task}/sync-to-notion', [ProjectTaskController::class, 'syncToNotion'])->name('tasks.sync-to-notion');
+        Route::post('tasks/{task}/sync-from-notion', [ProjectTaskController::class, 'syncFromNotion'])->name('tasks.sync-from-notion');
 
-        Route::post('notion/webhook', [\App\Http\Controllers\Freelance\ProjectTaskController::class, 'notionWebhook'])
+        Route::post('notion/webhook', [ProjectTaskController::class, 'notionWebhook'])
             ->name('notion.webhook')
             ->withoutMiddleware(['auth', 'verified']);
     });
 
     // Personal Tasks & Projects Routes
     Route::prefix('personal')->name('personal.')->group(function () {
-        Route::resource('projects', \App\Http\Controllers\Personal\PersonalProjectController::class);
-        Route::post('projects/{project}/milestones', [\App\Http\Controllers\Personal\PersonalProjectController::class, 'storeMilestone'])->name('projects.milestones.store');
-        Route::resource('tasks', \App\Http\Controllers\Personal\PersonalTaskController::class)->except(['create', 'edit']);
-        Route::patch('tasks/{task}/move', [\App\Http\Controllers\Personal\PersonalTaskController::class, 'move'])->name('tasks.move');
-        Route::post('tasks/{task}/properties', [\App\Http\Controllers\Personal\TaskPropertyController::class, 'store'])->name('tasks.properties.store');
-        Route::patch('task-properties/{property}', [\App\Http\Controllers\Personal\TaskPropertyController::class, 'update'])->name('task-properties.update');
-        Route::delete('task-properties/{property}', [\App\Http\Controllers\Personal\TaskPropertyController::class, 'destroy'])->name('task-properties.destroy');
-        Route::resource('saved-views', \App\Http\Controllers\Personal\TaskSavedViewController::class)->only(['index', 'store', 'destroy']);
+        Route::resource('projects', PersonalProjectController::class);
+        Route::post('projects/{project}/milestones', [PersonalProjectController::class, 'storeMilestone'])->name('projects.milestones.store');
+        Route::resource('tasks', PersonalTaskController::class)->except(['create', 'edit']);
+        Route::patch('tasks/{task}/move', [PersonalTaskController::class, 'move'])->name('tasks.move');
+        Route::post('tasks/{task}/properties', [TaskPropertyController::class, 'store'])->name('tasks.properties.store');
+        Route::patch('task-properties/{property}', [TaskPropertyController::class, 'update'])->name('task-properties.update');
+        Route::delete('task-properties/{property}', [TaskPropertyController::class, 'destroy'])->name('task-properties.destroy');
+        Route::resource('saved-views', TaskSavedViewController::class)->only(['index', 'store', 'destroy']);
     });
 });
