@@ -148,6 +148,12 @@ return [
             'key' => env('VOYAGEAI_API_KEY'),
         ],
 
+        'user' => [
+            'driver' => 'openai-compatible',
+            'url' => fn () => auth()->user()?->ai_provider_url,
+            'key' => fn () => auth()->user()?->ai_provider_key,
+        ],
+
         'xai' => [
             'driver' => 'xai',
             'key' => env('XAI_API_KEY'),

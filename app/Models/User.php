@@ -28,6 +28,10 @@ class User extends Authenticatable
         'weight',
         'height',
         'target_weight',
+        'ai_provider_url',
+        'ai_provider_key',
+        'ai_model',
+        'ai_enabled',
     ];
 
     /**
@@ -56,6 +60,8 @@ class User extends Authenticatable
             'weight' => 'decimal:2',
             'height' => 'decimal:2',
             'target_weight' => 'decimal:2',
+            'ai_provider_key' => 'encrypted',
+            'ai_enabled' => 'boolean',
         ];
     }
 
