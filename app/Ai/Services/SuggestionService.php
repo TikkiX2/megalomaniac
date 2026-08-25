@@ -23,11 +23,9 @@ class SuggestionService
                     'title' => $data['title'],
                 ],
                 [
-                    'description' => $data['description'],
-                    'action_label' => $data['action_label'] ?? null,
-                    'action_url' => $data['action_url'] ?? null,
-                    'priority' => $data['priority'] ?? 'normal',
-                    'dismissed' => false,
+                    'content' => $data['content'],
+                    'data' => $data['data'] ?? null,
+                    'dismissed_at' => null,
                 ]
             );
         }
@@ -47,19 +45,15 @@ class SuggestionService
             $suggestions[] = [
                 'type' => 'workout_reminder',
                 'title' => 'No has entrenado esta semana',
-                'description' => 'Llevas toda la semana sin entrenar. Un entrenamiento ligero puede ayudarte a mantener el ritmo.',
-                'action_label' => 'Ver rutinas',
-                'action_url' => '/fitness/routines',
-                'priority' => 'high',
+                'content' => 'Llevas toda la semana sin entrenar. Un entrenamiento ligero puede ayudarte a mantener el ritmo.',
+                'data' => ['action_url' => '/fitness/routines'],
             ];
         } elseif ($workoutsThisWeek <= 2) {
             $suggestions[] = [
                 'type' => 'workout_frequency',
                 'title' => 'Puedes entrenar más esta semana',
-                'description' => "Has entrenado {$workoutsThisWeek} veces esta semana. Considera agregar otra sesión para alcanzar tus objetivos.",
-                'action_label' => 'Iniciar entrenamiento',
-                'action_url' => '/fitness/gym',
-                'priority' => 'normal',
+                'content' => "Has entrenado {$workoutsThisWeek} veces esta semana. Considera agregar otra sesión para alcanzar tus objetivos.",
+                'data' => ['action_url' => '/fitness/gym'],
             ];
         }
 
@@ -82,10 +76,8 @@ class SuggestionService
             [
                 'type' => 'low_stock',
                 'title' => 'Suplementos con stock bajo',
-                'description' => "Los siguientes suplementos necesitan reabastecimiento: {$names}.",
-                'action_label' => 'Ver suplementos',
-                'action_url' => '/fitness/supplements',
-                'priority' => 'high',
+                'content' => "Los siguientes suplementos necesitan reabastecimiento: {$names}.",
+                'data' => ['action_url' => '/fitness/supplements'],
             ],
         ];
     }
@@ -109,10 +101,8 @@ class SuggestionService
                 [
                     'type' => 'budget_alert',
                     'title' => 'Gastos este mes',
-                    'description' => 'Has gastado $'.number_format($purchasesThisMonth, 2).' este mes sin ingresos registrados.',
-                    'action_label' => 'Ver finanzas',
-                    'action_url' => '/finance/dashboard',
-                    'priority' => 'normal',
+                    'content' => 'Has gastado $'.number_format($purchasesThisMonth, 2).' este mes sin ingresos registrados.',
+                    'data' => ['action_url' => '/finance/dashboard'],
                 ],
             ];
         }
@@ -124,10 +114,8 @@ class SuggestionService
                 [
                     'type' => 'budget_alert',
                     'title' => 'Alerta de presupuesto',
-                    'description' => 'Ya has gastado el '.round($ratio * 100).'% de tus ingresos este mes.',
-                    'action_label' => 'Ver finanzas',
-                    'action_url' => '/finance/dashboard',
-                    'priority' => 'high',
+                    'content' => 'Ya has gastado el '.round($ratio * 100).'% de tus ingresos este mes.',
+                    'data' => ['action_url' => '/finance/dashboard'],
                 ],
             ];
         }

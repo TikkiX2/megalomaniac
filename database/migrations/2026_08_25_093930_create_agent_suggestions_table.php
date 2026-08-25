@@ -13,14 +13,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('type', 50);
             $table->string('title');
-            $table->text('description');
-            $table->string('action_label')->nullable();
-            $table->string('action_url')->nullable();
-            $table->string('priority', 20)->default('normal');
-            $table->boolean('dismissed')->default(false);
+            $table->text('content');
+            $table->json('data')->nullable();
+            $table->timestamp('dismissed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'dismissed', 'created_at']);
+            $table->index(['user_id', 'type', 'dismissed_at']);
         });
     }
 

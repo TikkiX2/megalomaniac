@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgentSuggestionController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\Finance\CreditCardController;
 use App\Http\Controllers\Finance\CurrencyController;
@@ -172,6 +173,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // AI Chat Routes
     Route::post('ai/chat', [AiChatController::class, 'chat'])->name('ai.chat');
     Route::get('ai/conversations', [AiChatController::class, 'conversations'])->name('ai.conversations');
+
+    // AI Suggestions Routes
+    Route::get('ai/suggestions', [AgentSuggestionController::class, 'index'])->name('ai.suggestions.index');
+    Route::post('ai/suggestions/{suggestion}/dismiss', [AgentSuggestionController::class, 'dismiss'])->name('ai.suggestions.dismiss');
 
     // Gym Routes
     Route::prefix('gym')->group(function () {
