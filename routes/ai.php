@@ -1,5 +1,6 @@
 <?php
 
+use App\Mcp\Servers\MegalomaniacServer;
 use Laravel\Mcp\Facades\Mcp;
 
-// Mcp::web('/mcp/demo', \App\Mcp\Servers\PublicServer::class);
+Mcp::web('/mcp/megalomaniac', MegalomaniacServer::class)->middleware(['auth:sanctum', 'throttle:mcp']);
