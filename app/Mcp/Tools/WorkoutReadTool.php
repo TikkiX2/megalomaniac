@@ -22,8 +22,8 @@ class WorkoutReadTool extends Tool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'days' => $schema->integer()->description('Number of past days to include (default: 30)')->minimum(1)->maximum(365),
-            'limit' => $schema->integer()->description('Maximum number of workouts to return (default: 20)')->minimum(1)->maximum(100),
+            'days' => $schema->integer()->description('Number of past days to include (default: 30)')->min(1)->max(365),
+            'limit' => $schema->integer()->description('Maximum number of workouts to return (default: 20)')->min(1)->max(100),
         ];
     }
 

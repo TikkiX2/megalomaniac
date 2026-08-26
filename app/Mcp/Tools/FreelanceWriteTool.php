@@ -23,20 +23,20 @@ class FreelanceWriteTool extends Tool
     {
         return [
             'action' => $schema->string()->description('Action to perform: create_client, create_project, create_task')->enum(['create_client', 'create_project', 'create_task'])->required(),
-            'name' => $schema->string()->description('Name (required for all actions)')->maxLength(255),
-            'email' => $schema->string()->description('Email (for create_client)')->maxLength(255),
-            'phone' => $schema->string()->description('Phone (for create_client)')->maxLength(50),
-            'company' => $schema->string()->description('Company name (for create_client)')->maxLength(255),
+            'name' => $schema->string()->description('Name (required for all actions)')->max(255),
+            'email' => $schema->string()->description('Email (for create_client)')->max(255),
+            'phone' => $schema->string()->description('Phone (for create_client)')->max(50),
+            'company' => $schema->string()->description('Company name (for create_client)')->max(255),
             'client_id' => $schema->integer()->description('Client ID (required for create_project)'),
             'project_id' => $schema->integer()->description('Project ID (required for create_task)'),
             'description' => $schema->string()->description('Description (for create_project and create_task)'),
-            'status' => $schema->string()->description('Status (for create_project and create_task)')->maxLength(50),
+            'status' => $schema->string()->description('Status (for create_project and create_task)')->max(50),
             'type' => $schema->string()->description('Project type: personal or freelance (for create_project)')->enum(['personal', 'freelance']),
-            'total_amount' => $schema->number()->description('Total amount (for create_project)')->minimum(0),
+            'total_amount' => $schema->number()->description('Total amount (for create_project)')->min(0),
             'currency_id' => $schema->integer()->description('Currency ID (for create_project)'),
             'due_date' => $schema->string()->description('Due date in YYYY-MM-DD format (for create_task)'),
             'priority' => $schema->string()->description('Priority: low, medium, high (for create_task)')->enum(['low', 'medium', 'high']),
-            'responsible' => $schema->string()->description('Responsible person (for create_task)')->maxLength(255),
+            'responsible' => $schema->string()->description('Responsible person (for create_task)')->max(255),
         ];
     }
 
@@ -114,7 +114,7 @@ class FreelanceWriteTool extends Tool
     private function createTask(Request $request, $user): Response|ResponseFactory
     {
         $request->validate([
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'status' => ['nullable', 'string', 'max:50'],
@@ -123,18 +123,24 @@ class FreelanceWriteTool extends Tool
             'responsible' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $project = Project::where('id', $request->get('project_id'))
-            ->where('user_id', $user->id)
-            ->first();
+        $projectId = $request->get('project_id');
 
-        if (! $project) {
-            return Response::error('Project not found or unauthorized.');
+        if ($projectId) {
+            $project = Project::where('id', $projectId)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (! $project) {
+                return Response::error('Project not found or unauthorized.');
+            }
+
+            $order = $project->tasks()->max('sort_order') ?? 0;
+        } else {
+            $order = ProjectTask::where('user_id', $user->id)->whereNull('project_id')->max('sort_order') ?? 0;
         }
 
-        $order = $project->tasks()->max('sort_order') ?? 0;
-
         $task = ProjectTask::create([
-            'project_id' => $project->id,
+            'project_id' => $projectId,
             'user_id' => $user->id,
             'title' => $request->get('name'),
             'description' => $request->get('description'),

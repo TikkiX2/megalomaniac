@@ -17,6 +17,8 @@ class StorePersonalProjectRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable'],
             'status' => ['sometimes', 'string', 'in:pending,in_progress,completed,maintenance,archived'],
+            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
+            'currency_id' => ['nullable', 'integer', 'exists:currencies,id'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date'],
             'deadline' => ['nullable', 'date'],

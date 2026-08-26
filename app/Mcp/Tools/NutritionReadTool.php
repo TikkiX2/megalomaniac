@@ -22,8 +22,8 @@ class NutritionReadTool extends Tool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'days' => $schema->integer()->description('Number of past days to include (default: 7)')->minimum(1)->maximum(90),
-            'limit' => $schema->integer()->description('Maximum number of meal logs to return (default: 20)')->minimum(1)->maximum(100),
+            'days' => $schema->integer()->description('Number of past days to include (default: 7)')->min(1)->max(90),
+            'limit' => $schema->integer()->description('Maximum number of meal logs to return (default: 20)')->min(1)->max(100),
         ];
     }
 

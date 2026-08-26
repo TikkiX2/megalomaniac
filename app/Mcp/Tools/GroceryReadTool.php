@@ -23,7 +23,7 @@ class GroceryReadTool extends Tool
     {
         return [
             'low_stock' => $schema->boolean()->description('If true, only return items where current_stock <= target_stock (default: false)'),
-            'limit' => $schema->integer()->description('Maximum number of items to return (default: 50)')->minimum(1)->maximum(200),
+            'limit' => $schema->integer()->description('Maximum number of items to return (default: 50)')->min(1)->max(200),
         ];
     }
 

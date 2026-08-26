@@ -25,7 +25,7 @@ class FreelanceReadTool extends Tool
     {
         return [
             'type' => $schema->string()->description('Data type to read: clients, projects, or tasks (default: clients)')->enum(['clients', 'projects', 'tasks']),
-            'limit' => $schema->integer()->description('Maximum records to return (default: 20)')->minimum(1)->maximum(100),
+            'limit' => $schema->integer()->description('Maximum records to return (default: 20)')->min(1)->max(100),
         ];
     }
 
@@ -47,12 +47,14 @@ class FreelanceReadTool extends Tool
                 ->limit($limit)
                 ->get(),
             'projects' => Project::where('user_id', $user->id)
+                ->where('type', 'freelance')
                 ->with(['client', 'currency'])
                 ->withCount('tasks')
                 ->latest()
                 ->limit($limit)
                 ->get(),
             'tasks' => ProjectTask::where('user_id', $user->id)
+                ->whereHas('project', fn ($q) => $q->where('type', 'freelance'))
                 ->with('project')
                 ->latest()
                 ->limit($limit)

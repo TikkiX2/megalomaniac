@@ -27,7 +27,7 @@ class NutritionWriteTool extends Tool
             'meal_type' => $schema->string()->description('Meal type: breakfast, lunch, dinner, snack (for create_meal_log)')->enum(['breakfast', 'lunch', 'dinner', 'snack']),
             'meal_log_id' => $schema->integer()->description('Meal log ID (required for add_food_item)'),
             'food_id' => $schema->integer()->description('Food ID (required for add_food_item)'),
-            'quantity' => $schema->number()->description('Quantity in grams (required for add_food_item)')->minimum(1),
+            'quantity' => $schema->number()->description('Quantity in grams (required for add_food_item)')->min(1),
         ];
     }
 

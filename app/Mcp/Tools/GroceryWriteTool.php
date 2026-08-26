@@ -21,14 +21,14 @@ class GroceryWriteTool extends Tool
     {
         return [
             'action' => $schema->string()->description('Action to perform: create_grocery_item, consume_item')->enum(['create_grocery_item', 'consume_item'])->required(),
-            'name' => $schema->string()->description('Item name (required for create_grocery_item)')->maxLength(255),
-            'category' => $schema->string()->description('Category (for create_grocery_item)')->maxLength(100),
-            'current_stock' => $schema->number()->description('Initial stock quantity (for create_grocery_item)')->minimum(0),
-            'target_stock' => $schema->number()->description('Target stock level (for create_grocery_item)')->minimum(0),
-            'unit' => $schema->string()->description('Unit of measurement (for create_grocery_item)')->maxLength(50),
-            'price' => $schema->number()->description('Price per unit (for create_grocery_item)')->minimum(0),
+            'name' => $schema->string()->description('Item name (required for create_grocery_item)')->max(255),
+            'category' => $schema->string()->description('Category (for create_grocery_item)')->max(100),
+            'current_stock' => $schema->number()->description('Initial stock quantity (for create_grocery_item)')->min(0),
+            'target_stock' => $schema->number()->description('Target stock level (for create_grocery_item)')->min(0),
+            'unit' => $schema->string()->description('Unit of measurement (for create_grocery_item)')->max(50),
+            'price' => $schema->number()->description('Price per unit (for create_grocery_item)')->min(0),
             'grocery_item_id' => $schema->integer()->description('Grocery item ID (required for consume_item)'),
-            'quantity' => $schema->number()->description('Quantity consumed (required for consume_item)')->minimum(0.01),
+            'quantity' => $schema->number()->description('Quantity consumed (required for consume_item)')->min(0.01),
         ];
     }
 
