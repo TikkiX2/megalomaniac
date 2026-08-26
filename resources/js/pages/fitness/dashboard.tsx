@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Head, usePage, Link } from '@inertiajs/react';
 import MainLayout from '@/layouts/main-layout';
+import { SuggestionList } from '@/components/ai/SuggestionList';
+import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import type { SharedData } from '@/types';
 
 interface WeeklyDay {
@@ -28,6 +31,24 @@ interface Props {
 
 export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday, macrosToday, goals, lowStockSupplements, weeklyVolumeByDay, weeklyVolumes, weeklyVolumeTotal, streak }: Props) {
     const { auth } = usePage<SharedData>().props;
+
+    const [workoutInsight, setWorkoutInsight] = useState<string | null>(null);
+    const [insightLoading, setInsightLoading] = useState(true);
+    const [hasSuggestions, setHasSuggestions] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        fetch('/ai/insights/workout')
+            .then((res) => (res.ok ? res.json() : { insight: null }))
+            .then((data) => setWorkoutInsight(data.insight))
+            .catch(() => {})
+            .finally(() => setInsightLoading(false));
+
+        fetch('/ai/suggestions')
+            .then((res) => (res.ok ? res.json() : []))
+            .then((data) => setHasSuggestions(data.length > 0))
+            .catch(() => setHasSuggestions(false));
+    }, []);
+
     const calorieGoal = goals?.calories ?? 2400;
     const proteinGoal = goals?.protein ?? 180;
     const carbsGoal = goals?.carbs ?? 250;
@@ -231,6 +252,19 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
                         </div>
                     </Link>
                 </div>
+
+                {/* AI Insights Section */}
+                {(workoutInsight || insightLoading || hasSuggestions !== false) && (
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        {hasSuggestions !== false && <SuggestionList />}
+                        <AiInsightCard
+                            title="Insights de Entrenamiento"
+                            insight={workoutInsight}
+                            loading={insightLoading}
+                            icon="fitness_center"
+                        />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <div className="lg:col-span-2 rounded-2xl bg-card border border-border p-6 shadow-xl relative overflow-hidden">

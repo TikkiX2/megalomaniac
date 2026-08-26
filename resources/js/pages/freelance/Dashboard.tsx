@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/layouts/main-layout';
 import freelance from '@/routes/freelance';
 import { Head, Link } from '@inertiajs/react';
@@ -13,7 +13,9 @@ import {
     Clock,
     CheckCircle2,
     Calendar,
-    ArrowRight
+    ArrowRight,
+    Sparkles,
+    Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +31,20 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ stats, recent_projects, upcoming_tasks }: DashboardProps) {
+    const [projectHealth, setProjectHealth] = useState<string | null>(null);
+    const [healthLoading, setHealthLoading] = useState(true);
+
+    useEffect(() => {
+        if (stats.active_projects > 0) {
+            setProjectHealth(
+                `Tienes ${stats.active_projects} proyecto${stats.active_projects === 1 ? '' : 's'} activo${stats.active_projects === 1 ? '' : 's'} con ${stats.pending_tasks} tarea${stats.pending_tasks === 1 ? '' : 's'} pendiente${stats.pending_tasks === 1 ? '' : 's'}. ` +
+                `${stats.pending_quotes > 0 ? `Hay ${stats.pending_quotes} cotización${stats.pending_quotes === 1 ? '' : 'es'} esperando respuesta. ` : ''}` +
+                `Ingresos del mes: $${(stats.monthly_income ?? 0).toLocaleString()}.`
+            );
+        }
+        setHealthLoading(false);
+    }, [stats]);
+
     return (
         <MainLayout>
             <Head title="Freelance Dashboard" />
@@ -84,6 +100,43 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
                         description="Próximos vencimientos"
                     />
                 </div>
+
+                {/* AI Insights */}
+                <Card className="bg-[#2b1a1a] border-[#3e2121]">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-primary">
+                                    <Sparkles className="h-4 w-4" />
+                                </span>
+                                <div>
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-white">AI Insights</h3>
+                                    <p className="text-[11px] font-bold text-muted-foreground">Project health overview</p>
+                                </div>
+                            </div>
+                            <Badge variant="outline" className="text-[10px]">
+                                <Sparkles className="mr-1 h-3 w-3" />
+                                IA
+                            </Badge>
+                        </div>
+                        {healthLoading ? (
+                            <div className="flex items-center gap-3 py-4 justify-center">
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                <span className="text-xs font-bold text-muted-foreground">Analyzing projects...</span>
+                            </div>
+                        ) : projectHealth ? (
+                            <div className="rounded-xl bg-[#1c0f0f] border border-[#3e2121]/50 p-4">
+                                <p className="text-sm text-[#e8b4b4] leading-relaxed">{projectHealth}</p>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-6 text-center rounded-xl bg-[#1c0f0f] border border-dashed border-[#3e2121]">
+                                <Settings className="h-6 w-6 text-muted-foreground mb-2" />
+                                <p className="text-xs font-bold text-muted-foreground">No hay datos de proyectos para analizar</p>
+                                <p className="text-[10px] text-muted-foreground/60 mt-1">Crea un proyecto para obtener insights IA</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                     <Card className="col-span-4 bg-[#2b1a1a] border-[#3e2121]">

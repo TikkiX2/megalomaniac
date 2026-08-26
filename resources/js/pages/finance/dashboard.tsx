@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import MainLayout from '@/layouts/main-layout';
+import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import finance from '@/routes/finance';
 import type { Currency, Debt } from '@/types/finance';
 
@@ -64,6 +66,17 @@ interface Props {
 }
 
 export default function FinanceDashboard({ balances, pendingDebts, recentTransactions, overdueDebts, stats, monthlyBudget, savingsGoals }: Props) {
+    const [financeInsight, setFinanceInsight] = useState<string | null>(null);
+    const [insightLoading, setInsightLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/ai/insights/finance')
+            .then((res) => (res.ok ? res.json() : { insight: null }))
+            .then((data) => setFinanceInsight(data.insight))
+            .catch(() => {})
+            .finally(() => setInsightLoading(false));
+    }, []);
+
     return (
         <MainLayout>
             <Head title="Finance Dashboard" />
@@ -340,6 +353,14 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
 
                 {/* Bento Grid */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    {/* AI Insights */}
+                    <AiInsightCard
+                        title="Finance Insights"
+                        insight={financeInsight}
+                        loading={insightLoading}
+                        icon="account_balance"
+                    />
+
                     {/* Recent Transactions */}
                     <div className="rounded-2xl bg-[#2b1a1a] border border-[#3e2121] p-6 lg:col-span-2">
                         <div className="mb-6 flex items-center justify-between">
