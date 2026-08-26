@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Briefcase, Calendar, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, GalleryVertical, Kanban, LayoutGrid, ListTodo, Pill, Pin, PinOff, ShoppingCart, Table, Users, Utensils, Wallet } from 'lucide-react';
+import { BookOpen, Brain, Briefcase, Calendar, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, GalleryVertical, Kanban, LayoutGrid, ListTodo, Pill, Pin, PinOff, ShoppingCart, Table, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -195,6 +195,20 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Asistente IA</SidebarGroupLabel>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild tooltip="Asistente IA" isActive={window.location.pathname === '/ai/chat'}>
+                                <Link href="/ai/chat" prefetch>
+                                    <Brain className="h-4 w-4" />
+                                    <span>Chat IA</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>

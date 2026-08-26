@@ -2,8 +2,13 @@
 
 namespace App\Ai\Tools;
 
+use App\Models\Debt;
+use App\Models\GroceryItem;
+use App\Models\Income;
 use App\Models\MealLog;
+use App\Models\ProjectTask;
 use App\Models\Purchase;
+use App\Models\SupplementLog;
 use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
@@ -19,7 +24,7 @@ class ActionTool implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Perform actions on behalf of the user: create workouts, log meals, add purchases. Use this when the user asks to record or create something.';
+        return 'Perform actions on behalf of the user: create workouts, log sets, log meals, add purchases, add income, add debts, create tasks, log supplements, add grocery items. Use this when the user asks to record or create something.';
     }
 
     public function handle(Request $request): Stringable|string
@@ -31,7 +36,12 @@ class ActionTool implements Tool
             'log_set' => $this->logSet($request),
             'log_meal' => $this->logMeal($request),
             'add_purchase' => $this->addPurchase($request),
-            default => json_encode(['error' => 'Invalid action. Use: create_workout, log_set, log_meal, add_purchase']),
+            'add_income' => $this->addIncome($request),
+            'add_debt' => $this->addDebt($request),
+            'create_task' => $this->createTask($request),
+            'log_supplement' => $this->logSupplement($request),
+            'add_grocery_item' => $this->addGroceryItem($request),
+            default => json_encode(['error' => 'Invalid action. Use: create_workout, log_set, log_meal, add_purchase, add_income, add_debt, create_task, log_supplement, add_grocery_item']),
         };
     }
 
@@ -103,31 +113,145 @@ class ActionTool implements Tool
         ], JSON_PRETTY_PRINT);
     }
 
+    private function addIncome(Request $request): string
+    {
+        $income = Income::create([
+            'user_id' => $this->user->id,
+            'amount' => $request['amount'] ?? 0,
+            'description' => $request['description'] ?? $request['name'] ?? 'Income',
+            'received_date' => $request['received_date'] ?? $request['date'] ?? now()->toDateString(),
+            'income_source_id' => $request['income_source_id'] ?? $request['source_id'] ?? null,
+            'currency_id' => $request['currency_id'] ?? null,
+        ]);
+
+        return json_encode([
+            'success' => true,
+            'message' => 'Income added',
+            'income' => $income->toArray(),
+        ], JSON_PRETTY_PRINT);
+    }
+
+    private function addDebt(Request $request): string
+    {
+        $totalAmount = $request['amount'] ?? 0;
+        $debt = Debt::create([
+            'user_id' => $this->user->id,
+            'original_amount' => $totalAmount,
+            'remaining_amount' => $totalAmount,
+            'total_amount' => $totalAmount,
+            'due_date' => $request['due_date'] ?? null,
+            'status' => 'pending',
+            'notes' => $request['description'] ?? $request['name'] ?? null,
+        ]);
+
+        return json_encode([
+            'success' => true,
+            'message' => 'Debt added',
+            'debt' => $debt->toArray(),
+        ], JSON_PRETTY_PRINT);
+    }
+
+    private function createTask(Request $request): string
+    {
+        $task = ProjectTask::create([
+            'user_id' => $this->user->id,
+            'project_id' => $request['project_id'] ?? null,
+            'title' => $request['title'] ?? 'Task',
+            'description' => $request['description'] ?? null,
+            'priority' => $request['priority'] ?? null,
+            'status' => 'To Do',
+        ]);
+
+        return json_encode([
+            'success' => true,
+            'message' => 'Task created',
+            'task' => $task->toArray(),
+        ], JSON_PRETTY_PRINT);
+    }
+
+    private function logSupplement(Request $request): string
+    {
+        $log = SupplementLog::create([
+            'user_id' => $this->user->id,
+            'supplement_id' => $request['supplement_id'],
+            'taken_at' => $request['taken_at'] ?? now()->toIso8601String(),
+        ]);
+
+        return json_encode([
+            'success' => true,
+            'message' => 'Supplement logged',
+            'supplement_log' => $log->toArray(),
+        ], JSON_PRETTY_PRINT);
+    }
+
+    private function addGroceryItem(Request $request): string
+    {
+        $item = GroceryItem::create([
+            'user_id' => $this->user->id,
+            'name' => $request['name'] ?? 'Grocery item',
+            'current_stock' => $request['quantity'] ?? $request['current_stock'] ?? 1,
+            'target_stock' => $request['target_stock'] ?? 1,
+            'unit' => $request['unit'] ?? null,
+            'price' => $request['price'] ?? null,
+        ]);
+
+        return json_encode([
+            'success' => true,
+            'message' => 'Grocery item added',
+            'grocery_item' => $item->toArray(),
+        ], JSON_PRETTY_PRINT);
+    }
+
     public function schema(JsonSchema $schema): array
     {
         return [
             'action' => $schema->string()
-                ->enum(['create_workout', 'log_set', 'log_meal', 'add_purchase'])
+                ->enum([
+                    'create_workout', 'log_set', 'log_meal', 'add_purchase',
+                    'add_income', 'add_debt', 'create_task', 'log_supplement', 'add_grocery_item',
+                ])
                 ->description('Action to perform')
                 ->required(),
+            // Workout params
             'started_at' => $schema->string()->description('ISO 8601 datetime (for create_workout)'),
-            'notes' => $schema->string()->description('Notes (for create_workout)'),
+            'notes' => $schema->string()->description('Notes (for create_workout, add_debt)'),
+            // Log set params
             'workout_exercise_id' => $schema->integer()->description('Workout Exercise ID (for log_set)'),
             'weight' => $schema->number()->description('Weight in kg/lbs (for log_set)'),
             'reps' => $schema->integer()->description('Number of reps (for log_set)'),
             'rpe' => $schema->number()->description('Rate of perceived exertion 1-10 (for log_set)'),
-            'date' => $schema->string()->description('Date YYYY-MM-DD (for log_meal, add_purchase)'),
+            // Meal params
+            'date' => $schema->string()->description('Date YYYY-MM-DD (for log_meal, add_purchase, add_income)'),
             'food_name' => $schema->string()->description('Food name (for log_meal)'),
             'calories' => $schema->number()->description('Calories (for log_meal)'),
             'protein' => $schema->number()->description('Protein in grams (for log_meal)'),
             'carbs' => $schema->number()->description('Carbs in grams (for log_meal)'),
             'fats' => $schema->number()->description('Fats in grams (for log_meal)'),
-            'quantity' => $schema->number()->description('Quantity (for log_meal)'),
+            'quantity' => $schema->number()->description('Quantity (for log_meal, add_grocery_item)'),
             'meal_type' => $schema->string()->description('Meal type: breakfast, lunch, dinner, snack (for log_meal)'),
-            'name' => $schema->string()->description('Purchase name (for add_purchase)'),
-            'amount' => $schema->number()->description('Amount (for add_purchase)'),
+            // Purchase params
+            'name' => $schema->string()->description('Name (for add_purchase, add_income, add_debt, add_grocery_item)'),
+            'amount' => $schema->number()->description('Amount (for add_purchase, add_income, add_debt)'),
             'category_id' => $schema->integer()->description('Category ID (for add_purchase)'),
-            'currency_id' => $schema->integer()->description('Currency ID (for add_purchase)'),
+            'currency_id' => $schema->integer()->description('Currency ID (for add_purchase, add_income)'),
+            // Income params
+            'income_source_id' => $schema->integer()->description('Income source ID (for add_income)'),
+            'source_id' => $schema->integer()->description('Alias for income_source_id (for add_income)'),
+            'received_date' => $schema->string()->description('Date YYYY-MM-DD (for add_income)'),
+            // Debt params
+            'due_date' => $schema->string()->description('Due date YYYY-MM-DD (for add_debt)'),
+            'description' => $schema->string()->description('Description (for add_purchase, add_debt, create_task)'),
+            // Task params
+            'project_id' => $schema->integer()->description('Project ID (for create_task)'),
+            'title' => $schema->string()->description('Title (for create_task)'),
+            'priority' => $schema->string()->description('Priority (for create_task)'),
+            // Supplement params
+            'supplement_id' => $schema->integer()->description('Supplement ID (for log_supplement)'),
+            'taken_at' => $schema->string()->description('ISO 8601 datetime (for log_supplement)'),
+            // Grocery params
+            'target_stock' => $schema->number()->description('Target stock (for add_grocery_item)'),
+            'unit' => $schema->string()->description('Unit (for add_grocery_item)'),
+            'price' => $schema->number()->description('Price (for add_grocery_item)'),
         ];
     }
 }
