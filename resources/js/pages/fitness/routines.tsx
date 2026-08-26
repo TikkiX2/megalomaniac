@@ -1,6 +1,22 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import GymLayout from '@/layouts/gym-layout';
+import type { SharedData } from '@/types';
+
+interface AiRoutine {
+    name: string;
+    focus: string;
+    exercises: {
+        name: string;
+        sets: number;
+        reps: string;
+        notes?: string;
+    }[];
+}
+
+interface AiEnabled {
+    ai_enabled?: boolean;
+}
 
 interface Routine {
     id: number;
@@ -16,8 +32,18 @@ interface Props {
 }
 
 export default function Routines({ routines, exercises }: Props) {
+    const { auth } = usePage<SharedData>().props;
+    const user = auth.user as unknown as AiEnabled;
+    const aiEnabled = user?.ai_enabled ?? false;
+
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    // AI Routine Builder state
+    const [aiRoutine, setAiRoutine] = useState<AiRoutine | null>(null);
+    const [loadingAiRoutine, setLoadingAiRoutine] = useState(false);
+    const [aiRoutineError, setAiRoutineError] = useState('');
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         focus: '',
@@ -117,6 +143,47 @@ export default function Routines({ routines, exercises }: Props) {
         });
     };
 
+    const fetchAiRoutine = async () => {
+        setLoadingAiRoutine(true);
+        setAiRoutineError('');
+        try {
+            const res = await fetch('/ai/generate-routine', {
+                headers: { Accept: 'application/json' },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.routine) {
+                    setAiRoutine(data.routine);
+                } else {
+                    setAiRoutineError(data.message || 'Could not generate a routine.');
+                }
+            } else {
+                setAiRoutineError('Failed to generate routine.');
+            }
+        } catch {
+            setAiRoutineError('Network error. Please try again.');
+        } finally {
+            setLoadingAiRoutine(false);
+        }
+    };
+
+    const handleUseAiRoutine = (routine: AiRoutine) => {
+        setData({
+            name: routine.name,
+            focus: routine.focus || '',
+            scheduled_date: '',
+            exercises: routine.exercises.map((e) => ({
+                name: e.name,
+                target_sets: e.sets,
+                target_reps: e.reps,
+                target_weight: '',
+                notes: e.notes || '',
+            }))
+        });
+        setAiRoutine(null);
+        setIsCreateModalOpen(true);
+    };
+
     return (
         <GymLayout>
             <Head title="Workout Routines" />
@@ -135,6 +202,108 @@ export default function Routines({ routines, exercises }: Props) {
                         Create New Routine
                     </button>
                 </header>
+
+                {/* AI Routine Builder */}
+                <div className="bg-[#2b1a1a] border border-[#3e2121] rounded-2xl p-6 mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                            <span className="material-symbols-outlined">auto_awesome</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-white">AI Routine Builder</h3>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Generate a routine based on your workout history</p>
+                        </div>
+                    </div>
+
+                    {!aiEnabled ? (
+                        <div className="bg-[#1c0f0f] rounded-xl border border-[#3e2121] p-4 text-center">
+                            <span className="material-symbols-outlined text-[#3e2121] text-3xl mb-2 block">settings</span>
+                            <p className="text-sm text-[#e8b4b4]">
+                                AI not configured. Enable it in <a href="/settings/profile" className="text-primary underline">Settings</a>.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            {!aiRoutine && !aiRoutineError && (
+                                <button
+                                    type="button"
+                                    onClick={fetchAiRoutine}
+                                    disabled={loadingAiRoutine}
+                                    className="w-full bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary font-black text-sm py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    {loadingAiRoutine ? (
+                                        <>
+                                            <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                            Analyzing your workouts...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="material-symbols-outlined">fitness_center</span>
+                                            Generate Routine
+                                        </>
+                                    )}
+                                </button>
+                            )}
+
+                            {aiRoutineError && (
+                                <div className="bg-red-400/10 border border-red-400/20 rounded-xl p-4 text-center">
+                                    <p className="text-sm text-red-400">{aiRoutineError}</p>
+                                    <button
+                                        type="button"
+                                        onClick={fetchAiRoutine}
+                                        className="mt-2 text-xs font-bold text-primary hover:underline"
+                                    >
+                                        Try Again
+                                    </button>
+                                </div>
+                            )}
+
+                            {aiRoutine && (
+                                <div className="bg-[#1c0f0f] rounded-xl border border-primary/20 p-5">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h4 className="text-lg font-black text-white">{aiRoutine.name}</h4>
+                                            <p className="text-xs text-[#e8b4b4] font-medium uppercase tracking-tighter">{aiRoutine.focus}</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAiRoutine(null)}
+                                            className="text-xs text-[#e8b4b4] hover:text-white"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2 mb-4">
+                                        {aiRoutine.exercises.map((ex, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 text-sm">
+                                                <span className="text-primary font-black">{idx + 1}.</span>
+                                                <span className="text-white font-bold flex-1">{ex.name}</span>
+                                                <span className="text-[#e8b4b4]">{ex.sets} × {ex.reps}</span>
+                                                {ex.notes && <span className="text-[#e8b4b4] text-xs">({ex.notes})</span>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleUseAiRoutine(aiRoutine)}
+                                            className="flex-1 bg-primary hover:bg-primary-hover text-white text-[10px] font-black uppercase tracking-widest py-2 rounded-lg border border-primary/20 transition-all"
+                                        >
+                                            Use This Routine
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={fetchAiRoutine}
+                                            className="bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest py-2 px-4 rounded-lg border border-[#3e2121] transition-all"
+                                        >
+                                            Regenerate
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
                     {/* Weekly Schedule Overview */}

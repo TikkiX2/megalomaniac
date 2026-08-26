@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AgentSuggestionController;
+use App\Http\Controllers\Ai\AiFitnessController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\Finance\CreditCardController;
@@ -183,6 +184,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('ai/insights/workout', [AiInsightController::class, 'workout'])->name('ai.insights.workout');
     Route::get('ai/insights/finance', [AiInsightController::class, 'finance'])->name('ai.insights.finance');
     Route::get('ai/insights/nutrition', [AiInsightController::class, 'nutrition'])->name('ai.insights.nutrition');
+
+    // AI Fitness Routes
+    Route::get('ai/suggest-meal', [AiFitnessController::class, 'suggestMeal'])->name('ai.suggest-meal');
+    Route::get('ai/generate-routine', [AiFitnessController::class, 'generateRoutine'])->name('ai.generate-routine');
 
     // Gym Routes
     Route::prefix('gym')->group(function () {

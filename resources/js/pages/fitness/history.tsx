@@ -1,5 +1,11 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import MainLayout from '@/layouts/main-layout';
+import type { SharedData } from '@/types';
+
+interface AiEnabled {
+    ai_enabled?: boolean;
+}
 
 interface Set {
     id: number;
@@ -60,7 +66,46 @@ function formatDate(dt: string): string {
 }
 
 export default function History({ workouts }: Props) {
+    const { auth } = usePage<SharedData>().props;
+    const user = auth.user as unknown as AiEnabled;
+    const aiEnabled = user?.ai_enabled ?? false;
+
     const data = workouts?.data ?? [];
+
+    // AI Analysis state
+    const [aiInsight, setAiInsight] = useState<string | null>(null);
+    const [loadingAiInsight, setLoadingAiInsight] = useState(false);
+    const [aiInsightError, setAiInsightError] = useState('');
+
+    useEffect(() => {
+        if (aiEnabled && data.length > 0 && !aiInsight && !loadingAiInsight && !aiInsightError) {
+            fetchAiInsight();
+        }
+    }, [aiEnabled, data.length]);
+
+    const fetchAiInsight = async () => {
+        setLoadingAiInsight(true);
+        setAiInsightError('');
+        try {
+            const res = await fetch('/ai/insights/workout', {
+                headers: { Accept: 'application/json' },
+            });
+            if (res.ok) {
+                const result = await res.json();
+                if (result.insight) {
+                    setAiInsight(result.insight);
+                } else {
+                    setAiInsightError(result.message || 'No insights available.');
+                }
+            } else {
+                setAiInsightError('Failed to fetch insights.');
+            }
+        } catch {
+            setAiInsightError('Network error. Please try again.');
+        } finally {
+            setLoadingAiInsight(false);
+        }
+    };
 
     return (
         <MainLayout>
@@ -85,6 +130,58 @@ export default function History({ workouts }: Props) {
                         </Link>
                     </div>
                 </div>
+
+                {/* AI Analysis Section */}
+                {aiEnabled && data.length > 0 && (
+                    <div className="bg-[#2b1a1a] border border-[#3e2121] rounded-2xl p-6 mb-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                                <span className="material-symbols-outlined">auto_awesome</span>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black text-white">AI Analysis</h3>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Insights from your workout history</p>
+                            </div>
+                        </div>
+
+                        {loadingAiInsight && (
+                            <div className="text-center py-6">
+                                <span className="material-symbols-outlined animate-spin text-primary text-3xl">progress_activity</span>
+                                <p className="text-sm text-[#e8b4b4] mt-2">Analyzing your workouts...</p>
+                            </div>
+                        )}
+
+                        {aiInsightError && (
+                            <div className="bg-[#1c0f0f] rounded-xl border border-[#3e2121] p-4 text-center">
+                                <p className="text-sm text-[#e8b4b4]">{aiInsightError}</p>
+                                <button
+                                    type="button"
+                                    onClick={fetchAiInsight}
+                                    className="mt-2 text-xs font-bold text-primary hover:underline"
+                                >
+                                    Try Again
+                                </button>
+                            </div>
+                        )}
+
+                        {aiInsight && (
+                            <div className="bg-[#1c0f0f] rounded-xl border border-primary/20 p-5">
+                                <div className="prose prose-invert prose-sm max-w-none">
+                                    {aiInsight.split('\n').map((line, idx) => (
+                                        <p key={idx} className="text-sm text-[#e8b4b4] leading-relaxed">{line}</p>
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={fetchAiInsight}
+                                    className="mt-4 text-xs font-bold text-primary hover:underline"
+                                >
+                                    Refresh Analysis
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="overflow-hidden rounded-2xl border border-[#3e2121] bg-[#2b1a1a] shadow-xl">
                     <div className="overflow-x-auto">

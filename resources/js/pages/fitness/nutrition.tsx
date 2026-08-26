@@ -13,6 +13,19 @@ import {
 } from '@/components/ui/dialog';
 import type { SharedData } from '@/types';
 
+interface MealSuggestion {
+    name: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fats: number;
+    reason: string;
+}
+
+interface AiEnabled {
+    ai_enabled?: boolean;
+}
+
 interface Food {
     id: number;
     name: string;
@@ -60,6 +73,7 @@ function calcIMC(weight: number | null, height: number | null): { imc: number | 
 export default function Nutrition({ logs, currentDate }: Props) {
     const { auth } = usePage<SharedData>().props;
     const user = auth.user as unknown as { weight?: number | string | null; height?: number | string | null; target_weight?: number | string | null };
+    const aiEnabled = (user as unknown as AiEnabled).ai_enabled ?? false;
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedMeal, setSelectedMeal] = useState<string>('breakfast');
@@ -68,6 +82,11 @@ export default function Nutrition({ logs, currentDate }: Props) {
     const [searching, setSearching] = useState(false);
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [showCreateFood, setShowCreateFood] = useState(false);
+
+    // AI Meal Assistant state
+    const [mealSuggestion, setMealSuggestion] = useState<MealSuggestion | null>(null);
+    const [loadingMealSuggestion, setLoadingMealSuggestion] = useState(false);
+    const [mealSuggestionError, setMealSuggestionError] = useState('');
 
     const form = useForm({
         date: currentDate,
@@ -176,6 +195,30 @@ export default function Nutrition({ logs, currentDate }: Props) {
     const handleDelete = (id: number) => {
         if (!confirm('¿Eliminar alimento?')) return;
         router.delete(`/nutrition/logs/items/${id}`, { preserveScroll: true });
+    };
+
+    const fetchMealSuggestion = async () => {
+        setLoadingMealSuggestion(true);
+        setMealSuggestionError('');
+        try {
+            const res = await fetch(`/ai/suggest-meal?date=${currentDate}`, {
+                headers: { Accept: 'application/json' },
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.suggestion) {
+                    setMealSuggestion(data.suggestion);
+                } else {
+                    setMealSuggestionError(data.message || 'Could not generate a suggestion.');
+                }
+            } else {
+                setMealSuggestionError('Failed to fetch suggestion.');
+            }
+        } catch {
+            setMealSuggestionError('Network error. Please try again.');
+        } finally {
+            setLoadingMealSuggestion(false);
+        }
     };
 
     // Totals
@@ -371,6 +414,119 @@ export default function Nutrition({ logs, currentDate }: Props) {
                             </div>
                         ))}
                     </div>
+                </div>
+
+                {/* AI Meal Assistant */}
+                <div className="rounded-2xl bg-card border border-border p-6 mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                            <span className="material-symbols-outlined">auto_awesome</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black text-white">AI Meal Assistant</h3>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Get a meal suggestion to hit your targets</p>
+                        </div>
+                    </div>
+
+                    {!aiEnabled ? (
+                        <div className="bg-background rounded-xl border border-border p-4 text-center">
+                            <span className="material-symbols-outlined text-muted-foreground text-3xl mb-2 block">settings</span>
+                            <p className="text-sm text-muted-foreground">
+                                AI not configured. Enable it in <a href="/settings/profile" className="text-primary underline">Settings</a>.
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-4 gap-3 mb-4">
+                                {[
+                                    { label: 'Remaining Calories', val: `${Math.max(0, goals.calories - totals.cal)}`, unit: 'kcal', color: 'text-primary' },
+                                    { label: 'Remaining Protein', val: `${Math.max(0, goals.protein - Math.round(totals.pro))}`, unit: 'g', color: 'text-blue-400' },
+                                    { label: 'Remaining Carbs', val: `${Math.max(0, goals.carbs - Math.round(totals.carb))}`, unit: 'g', color: 'text-orange-400' },
+                                    { label: 'Remaining Fats', val: `${Math.max(0, goals.fats - Math.round(totals.fat))}`, unit: 'g', color: 'text-yellow-400' },
+                                ].map((r) => (
+                                    <div key={r.label} className="bg-background rounded-xl border border-border p-3 text-center">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{r.label}</p>
+                                        <p className={`text-xl font-black mt-1 ${r.color}`}>{r.val}<span className="text-xs">{r.unit}</span></p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {!mealSuggestion && !mealSuggestionError && (
+                                <button
+                                    type="button"
+                                    onClick={fetchMealSuggestion}
+                                    disabled={loadingMealSuggestion}
+                                    className="w-full bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary font-black text-sm py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    {loadingMealSuggestion ? (
+                                        <>
+                                            <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                            Analyzing your macros...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="material-symbols-outlined">restaurant</span>
+                                            Suggest Meal
+                                        </>
+                                    )}
+                                </button>
+                            )}
+
+                            {mealSuggestionError && (
+                                <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-center">
+                                    <p className="text-sm text-destructive">{mealSuggestionError}</p>
+                                    <button
+                                        type="button"
+                                        onClick={fetchMealSuggestion}
+                                        className="mt-2 text-xs font-bold text-primary hover:underline"
+                                    >
+                                        Try Again
+                                    </button>
+                                </div>
+                            )}
+
+                            {mealSuggestion && (
+                                <div className="bg-background rounded-xl border border-primary/20 p-5">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h4 className="text-lg font-black text-white">{mealSuggestion.name}</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMealSuggestion(null)}
+                                            className="text-xs text-muted-foreground hover:text-white"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-3 mb-3">
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Calories</p>
+                                            <p className="text-lg font-black text-primary">{mealSuggestion.calories} kcal</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Protein</p>
+                                            <p className="text-lg font-black text-blue-400">{mealSuggestion.protein}g</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Carbs</p>
+                                            <p className="text-lg font-black text-orange-400">{mealSuggestion.carbs}g</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Fats</p>
+                                            <p className="text-lg font-black text-yellow-400">{mealSuggestion.fats}g</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{mealSuggestion.reason}</p>
+                                    <button
+                                        type="button"
+                                        onClick={fetchMealSuggestion}
+                                        className="mt-3 text-xs font-bold text-primary hover:underline"
+                                    >
+                                        Get Another Suggestion
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 <div className="space-y-6">
