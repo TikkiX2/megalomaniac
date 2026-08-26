@@ -45,17 +45,23 @@ interface RichTextEditorProps {
     className?: string;
 }
 
+function sanitizeYooptaValue(val: any): any {
+    if (!val || !Array.isArray(val)) return undefined;
+    return val.map((block: any) => ({
+        ...block,
+        children: Array.isArray(block.children)
+            ? block.children.map((child: any) => ({
+                  ...child,
+                  text: child.text ?? '',
+              }))
+            : block.children,
+    }));
+}
+
 export default function RichTextEditor({ value, onChange, readOnly = false, className }: RichTextEditorProps) {
     const editor = useMemo(() => createYooptaEditor(), []);
 
-    // Convert initial value if string (from DB text) to Yoopta format or keep as is if JSON behavior is correct
-    // Yoopta usually handles its own format.
-
-    useEffect(() => {
-        // If value changes externally and is different, set it? 
-        // Yoopta is uncontrolled mainly but can be controlled.
-        // For simplicity we rely on internal state and onChange.
-    }, [value]);
+    const sanitizedValue = useMemo(() => sanitizeYooptaValue(value), [value]);
 
     return (
         <div className={`yoopta-wrapper border rounded-md p-2 ${className}`}>
@@ -64,7 +70,7 @@ export default function RichTextEditor({ value, onChange, readOnly = false, clas
                 plugins={plugins}
                 tools={TOOLS}
                 readOnly={readOnly}
-                value={value}
+                value={sanitizedValue}
                 onChange={onChange}
                 placeholder="Escribe aquí..."
                 width="100%"
