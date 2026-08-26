@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
 import MainLayout from '@/layouts/main-layout';
 import type { Currency } from '@/types/finance';
+import { AiInsightCard } from '@/components/ai/AiInsightCard';
 
 interface Props {
     currencies: Currency[];
@@ -18,6 +20,17 @@ interface Props {
 }
 
 export default function StatisticsIndex({ currencies, currentCurrencyId, filters, stats }: Props) {
+    const [financeInsight, setFinanceInsight] = useState<string | null>(null);
+    const [insightLoading, setInsightLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('/ai/insights/finance')
+            .then((res) => (res.ok ? res.json() : { insight: null }))
+            .then((data) => setFinanceInsight(data.insight))
+            .catch(() => {})
+            .finally(() => setInsightLoading(false));
+    }, []);
+
     return (
         <MainLayout>
             <Head title="Finance Statistics" />
@@ -46,6 +59,17 @@ export default function StatisticsIndex({ currencies, currentCurrencyId, filters
                         <input type="date" value={filters.date_to} className="bg-[#1c0f0f] border-[#3e2121] text-white rounded-lg px-3 py-2 text-sm" />
                     </div>
                 </div>
+
+                {/* AI Analysis Section */}
+                {(financeInsight || insightLoading) && (
+                    <AiInsightCard
+                        title="AI Financial Analysis"
+                        insight={financeInsight}
+                        loading={insightLoading}
+                        icon="account_balance"
+                        className="lg:col-span-2"
+                    />
+                )}
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Expenses by Category List (Basic for now) */}

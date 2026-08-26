@@ -70,4 +70,62 @@ class InsightService
 
         return $response->text;
     }
+
+    public function generateGroceryInsights(User $user): ?string
+    {
+        if (! $user->ai_enabled) {
+            return null;
+        }
+
+        $agent = new MegalomaniacAgent($user);
+        $items = $user->groceryItems()->get();
+        $recentHistory = $user->groceryItems()
+            ->with('priceHistory')
+            ->whereHas('priceHistory')
+            ->get();
+
+        if ($items->isEmpty()) {
+            return 'No grocery items to analyze.';
+        }
+
+        $prompt = "Analyze the user's grocery inventory and provide concise insights on:\n";
+        $prompt .= "- Low stock items that need restocking\n";
+        $prompt .= "- Shopping list suggestions based on current stock levels\n";
+        $prompt .= "- Price trends if available\n";
+        $prompt .= "- Category distribution and recommendations\n\n";
+        $prompt .= "Current inventory (JSON):\n".$items->toJson()."\n";
+        if ($recentHistory->isNotEmpty()) {
+            $prompt .= "Price history (JSON):\n".$recentHistory->toJson();
+        }
+
+        $response = $agent->forUser($user)->prompt($prompt);
+
+        return $response->text;
+    }
+
+    public function generateTaskInsights(User $user): ?string
+    {
+        if (! $user->ai_enabled) {
+            return null;
+        }
+
+        $agent = new MegalomaniacAgent($user);
+        $tasks = $user->personalTasks()
+            ->where('status', '!=', 'Done')
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        if ($tasks->isEmpty()) {
+            return 'No active tasks to prioritize.';
+        }
+
+        $prompt = "Analyze the user's pending tasks and provide a prioritized ranking.\n";
+        $prompt .= "Consider: deadline proximity, importance (priority field), and urgency.\n";
+        $prompt .= "Provide a concise ranked list with brief reasoning for each task's priority.\n\n";
+        $prompt .= "Pending tasks (JSON):\n".$tasks->toJson();
+
+        $response = $agent->forUser($user)->prompt($prompt);
+
+        return $response->text;
+    }
 }

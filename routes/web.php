@@ -184,10 +184,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('ai/insights/workout', [AiInsightController::class, 'workout'])->name('ai.insights.workout');
     Route::get('ai/insights/finance', [AiInsightController::class, 'finance'])->name('ai.insights.finance');
     Route::get('ai/insights/nutrition', [AiInsightController::class, 'nutrition'])->name('ai.insights.nutrition');
+    Route::get('ai/insights/grocery', [AiInsightController::class, 'grocery'])->name('ai.insights.grocery');
+    Route::get('ai/insights/tasks', [AiInsightController::class, 'tasks'])->name('ai.insights.tasks');
 
     // AI Fitness Routes
     Route::get('ai/suggest-meal', [AiFitnessController::class, 'suggestMeal'])->name('ai.suggest-meal');
     Route::get('ai/generate-routine', [AiFitnessController::class, 'generateRoutine'])->name('ai.generate-routine');
+
+    // AI Freelance Routes
+    Route::post('ai/generate-quote', [AiInsightController::class, 'generateQuote'])->name('ai.generate-quote');
 
     // Gym Routes
     Route::prefix('gym')->group(function () {

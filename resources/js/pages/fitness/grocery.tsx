@@ -1,10 +1,11 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import GroceryLayout from '@/layouts/grocery-layout';
 import groceryItems from '@/routes/grocery/items';
+import { AiInsightCard } from '@/components/ai/AiInsightCard';
 
 interface GroceryItem {
     id: number;
@@ -39,6 +40,8 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
+    const [groceryInsight, setGroceryInsight] = useState<string | null>(null);
+    const [insightLoading, setInsightLoading] = useState(true);
     const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
         name: '',
         category: '',
@@ -49,6 +52,14 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
     });
 
     const [restockData, setRestockData] = useState<{ id: number; quantity: number; price: number }[]>([]);
+
+    useEffect(() => {
+        fetch('/ai/insights/grocery')
+            .then((res) => (res.ok ? res.json() : { insight: null }))
+            .then((data) => setGroceryInsight(data.insight))
+            .catch(() => {})
+            .finally(() => setInsightLoading(false));
+    }, []);
 
     const deficitItems = items.filter(item => item.current_stock < item.target_stock);
 
@@ -168,6 +179,18 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                         </div>
                     </div>
                     <div className="flex gap-3">
+                        <button
+                            onClick={() => {
+                                fetch('/ai/insights/grocery')
+                                    .then((res) => (res.ok ? res.json() : { insight: null }))
+                                    .then((data) => setGroceryInsight(data.insight))
+                                    .catch(() => {});
+                            }}
+                            className="flex items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all"
+                        >
+                            <span className="material-symbols-outlined text-lg">psychology</span>
+                            AI Shopping List
+                        </button>
                         <button className="flex items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all">
                             <span className="material-symbols-outlined text-lg">download</span>
                             Export Report
@@ -435,6 +458,16 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                 </div>
                             </div>
                         </section>
+
+                        {/* AI Restock Suggestions */}
+                        {(groceryInsight || insightLoading) && (
+                            <AiInsightCard
+                                title="AI Restock Suggestions"
+                                insight={groceryInsight}
+                                loading={insightLoading}
+                                icon="shopping_cart"
+                            />
+                        )}
 
                         {Object.keys(history).length > 0 && (
                             <section className="rounded-2xl bg-card border border-border p-6">

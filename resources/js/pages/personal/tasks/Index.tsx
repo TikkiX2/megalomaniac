@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Table as TableIcon, Kanban, Calendar as CalendarIcon, ListTodo, GalleryVertical, GanttChart } from 'lucide-react';
+import { Plus, Table as TableIcon, Kanban, Calendar as CalendarIcon, ListTodo, GalleryVertical, GanttChart, Sparkles } from 'lucide-react';
 import ProjectSidebar from '@/components/personal/ProjectSidebar';
 import TaskFilters from '@/components/personal/TaskFilters';
 import SavedViewsBar from '@/components/personal/SavedViewsBar';
@@ -22,6 +22,7 @@ import TaskGallery from '@/components/personal/views/TaskGallery';
 import TaskTimeline from '@/components/personal/views/TaskTimeline';
 import type { PersonalProject, PersonalTask, TaskSavedView, TaskViewType } from '@/types/personal';
 import YooptaEditor from '@/components/freelance/YooptaEditor';
+import { AiInsightCard } from '@/components/ai/AiInsightCard';
 
 interface Props {
     tasks: { data: PersonalTask[]; links: any; meta?: any };
@@ -38,6 +39,8 @@ export default function PersonalTasksIndex({ tasks, projects, savedViews, filter
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<PersonalTask | null>(null);
     const [description, setDescription] = useState<any>(null);
+    const [taskInsight, setTaskInsight] = useState<string | null>(null);
+    const [insightLoading, setInsightLoading] = useState(false);
 
     useEffect(() => {
         localStorage.setItem('personal-tasks-view', view);
@@ -111,15 +114,27 @@ export default function PersonalTasksIndex({ tasks, projects, savedViews, filter
 
                 {/* Main content */}
                 <div className="flex-1 flex flex-col gap-4 min-w-0">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Tareas Personales</h1>
-                            <p className="text-muted-foreground text-sm">Gestiona tus tareas con vistas flexibles.</p>
-                        </div>
-                        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button className="bg-primary font-bold shrink-0"><Plus className="mr-2 h-4 w-4" />Nueva Tarea</Button>
-                            </DialogTrigger>
+                        <div className="flex items-center gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setInsightLoading(true);
+                                    fetch('/ai/insights/tasks')
+                                        .then((res) => (res.ok ? res.json() : { insight: null }))
+                                        .then((data) => setTaskInsight(data.insight))
+                                        .catch(() => {})
+                                        .finally(() => setInsightLoading(false));
+                                }}
+                                disabled={insightLoading}
+                                className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5 font-bold shrink-0"
+                            >
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                {insightLoading ? 'Analyzing...' : 'AI Prioritize'}
+                            </Button>
+                            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="bg-primary font-bold shrink-0"><Plus className="mr-2 h-4 w-4" />Nueva Tarea</Button>
+                                </DialogTrigger>
                             <DialogContent className="bg-card border-border max-w-lg">
                                 <DialogHeader><DialogTitle>Nueva Tarea</DialogTitle></DialogHeader>
                                 <form onSubmit={handleCreate} className="flex flex-col gap-4">
@@ -206,6 +221,16 @@ export default function PersonalTasksIndex({ tasks, projects, savedViews, filter
                             <TabsTrigger value="timeline" className="gap-1"><GanttChart className="h-4 w-4" />Timeline</TabsTrigger>
                         </TabsList>
                     </Tabs>
+
+                    {/* AI Task Prioritization */}
+                    {(taskInsight || insightLoading) && (
+                        <AiInsightCard
+                            title="AI Task Prioritization"
+                            insight={taskInsight}
+                            loading={insightLoading}
+                            icon="auto_awesome"
+                        />
+                    )}
 
                     <div className="min-h-[400px]">
                         {view === 'table' && <TaskTable tasks={tasks.data} sortField={filters.sort} sortDirection={filters.direction} onTaskClick={handleTaskClick} onSort={handleSort} />}

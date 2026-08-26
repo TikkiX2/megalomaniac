@@ -72,4 +72,78 @@ class AiInsightController extends Controller
             'message' => null,
         ]);
     }
+
+    public function grocery(Request $request): JsonResponse
+    {
+        $insight = $this->insightService->generateGroceryInsights($request->user());
+
+        return response()->json([
+            'insight' => $insight,
+            'message' => $insight ? null : 'AI not configured or no data available.',
+        ]);
+    }
+
+    public function tasks(Request $request): JsonResponse
+    {
+        $insight = $this->insightService->generateTaskInsights($request->user());
+
+        return response()->json([
+            'insight' => $insight,
+            'message' => $insight ? null : 'AI not configured or no data available.',
+        ]);
+    }
+
+    public function generateQuote(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'client_name' => 'required|string|max:255',
+            'project_description' => 'required|string|max:2000',
+            'project_type' => 'nullable|string|max:255',
+        ]);
+
+        $user = $request->user();
+
+        if (! $user->ai_enabled) {
+            return response()->json([
+                'suggestion' => null,
+                'message' => 'AI not configured.',
+            ]);
+        }
+
+        $agent = new MegalomaniacAgent($user);
+        $prompt = "Generate a professional quote/proposal for a freelance project.\n\n";
+        $prompt .= "Client: {$validated['client_name']}\n";
+        $prompt .= "Project Description: {$validated['project_description']}\n";
+        if (! empty($validated['project_type'])) {
+            $prompt .= "Project Type: {$validated['project_type']}\n";
+        }
+        $prompt .= "\nPlease provide:\n";
+        $prompt .= "1. A list of 3-6 line items with descriptions, estimated hours, and hourly rates\n";
+        $prompt .= "2. A brief project summary/description\n";
+        $prompt .= "3. A suggested timeline\n\n";
+        $prompt .= "Return as JSON with this structure:\n";
+        $prompt .= '{"items": [{"description": "...", "hours": N, "hourly_rate": N}], "summary": "...", "timeline": "..."}';
+
+        $response = $agent->forUser($user)->prompt($prompt);
+
+        try {
+            $json = json_decode($response->text, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return response()->json([
+                    'suggestion' => null,
+                    'message' => 'Could not parse AI response.',
+                ]);
+            }
+
+            return response()->json([
+                'suggestion' => $json,
+                'message' => null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'suggestion' => null,
+                'message' => 'Error processing AI response.',
+            ]);
+        }
+    }
 }

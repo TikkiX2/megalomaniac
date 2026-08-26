@@ -20,7 +20,9 @@ import {
     ArrowLeft,
     Save,
     Calculator,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    Sparkles,
+    Loader2
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
@@ -33,6 +35,8 @@ interface QuoteFormProps {
 
 export default function QuoteForm({ quote, clients, projects, currencies }: QuoteFormProps) {
     const isEditing = !!quote;
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState<string | null>(null);
 
     const { data, setData, post, put, processing, errors } = useForm({
         client_id: quote?.client_id || '',
@@ -87,6 +91,57 @@ export default function QuoteForm({ quote, clients, projects, currencies }: Quot
         }
     };
 
+    const handleAiAssist = async () => {
+        setAiLoading(true);
+        setAiError(null);
+
+        const clientName = clients.find(c => c.id.toString() === data.client_id.toString())?.name || '';
+        const projectDescription = data.items.map((item: any) => item.description).filter(Boolean).join(', ') || 'General project work';
+
+        try {
+            const response = await fetch('/ai/generate-quote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    client_name: clientName,
+                    project_description: projectDescription,
+                    project_type: '',
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to get AI suggestions');
+            }
+
+            const result = await response.json();
+
+            if (result.suggestion) {
+                if (result.suggestion.items && Array.isArray(result.suggestion.items)) {
+                    const newItems = result.suggestion.items.map((item: any, index: number) => ({
+                        description: item.description || '',
+                        hours: item.hours || 1,
+                        hourly_rate: item.hourly_rate || 0,
+                        subtotal: (item.hours || 1) * (item.hourly_rate || 0),
+                        order: index + 1,
+                    }));
+                    setData('items', newItems);
+                }
+                if (result.suggestion.summary) {
+                    setData('notes', result.suggestion.summary);
+                }
+            } else if (result.message) {
+                setAiError(result.message);
+            }
+        } catch (err) {
+            setAiError('AI service unavailable. Please try again later.');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
     return (
         <MainLayout>
             <Head title={isEditing ? 'Editar Cotización' : 'Nueva Cotización'} />
@@ -101,7 +156,31 @@ export default function QuoteForm({ quote, clients, projects, currencies }: Quot
                     <h1 className="text-2xl font-bold tracking-tight text-white">
                         {isEditing ? `Editar Cotización: ${quote.quote_number}` : 'Nueva Cotización'}
                     </h1>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleAiAssist}
+                        disabled={aiLoading}
+                        className="ml-auto bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5 font-bold"
+                    >
+                        {aiLoading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                AI Assist
+                            </>
+                        )}
+                    </Button>
                 </div>
+                {aiError && (
+                    <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 p-3 text-sm text-orange-400">
+                        {aiError}
+                    </div>
+                )}
 
                 <form onSubmit={submit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
