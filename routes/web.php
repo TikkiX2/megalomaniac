@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AgentSuggestionController;
 use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\Finance\CreditCardController;
 use App\Http\Controllers\Finance\CurrencyController;
 use App\Http\Controllers\Finance\CurrencyExchangeController;
@@ -177,6 +178,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // AI Suggestions Routes
     Route::get('ai/suggestions', [AgentSuggestionController::class, 'index'])->name('ai.suggestions.index');
     Route::post('ai/suggestions/{suggestion}/dismiss', [AgentSuggestionController::class, 'dismiss'])->name('ai.suggestions.dismiss');
+
+    // AI Insights Routes
+    Route::get('ai/insights/workout', [AiInsightController::class, 'workout'])->name('ai.insights.workout');
+    Route::get('ai/insights/finance', [AiInsightController::class, 'finance'])->name('ai.insights.finance');
+    Route::get('ai/insights/nutrition', [AiInsightController::class, 'nutrition'])->name('ai.insights.nutrition');
 
     // Gym Routes
     Route::prefix('gym')->group(function () {
