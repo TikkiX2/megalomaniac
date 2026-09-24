@@ -104,3 +104,49 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Código resaltado — paleta Ember */
+.hljs-comment,
+.hljs-quote {
+    color: #a18686;
+    font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-tag {
+    color: #f87171;
+}
+
+.hljs-string,
+.hljs-attr,
+.hljs-addition {
+    color: #fca5a5;
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet {
+    color: #fdba74;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-name {
+    color: #fecaca;
+}
+
+.hljs-built_in,
+.hljs-type,
+.hljs-attribute {
+    color: #f97316;
+}
+
+.hljs-deletion {
+    color: #ef4444;
+}
+
+.hljs-meta {
+    color: #e8b4b4;
+}
