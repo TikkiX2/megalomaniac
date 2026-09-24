@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AgentSuggestionController;
 use App\Http\Controllers\Ai\AiFitnessController;
-use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\Ai\ChatController;
 use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\Finance\CreditCardController;
 use App\Http\Controllers\Finance\CurrencyController;
@@ -172,9 +172,11 @@ Route::get('dashboard', function () {
 require __DIR__.'/settings.php';
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // AI Chat Routes
-    Route::post('ai/chat', [AiChatController::class, 'chat'])->name('ai.chat');
-    Route::get('ai/conversations', [AiChatController::class, 'conversations'])->name('ai.conversations');
+    // AI Chat
+    Route::get('ai/chat', [ChatController::class, 'index'])->name('ai.chat.index');
+    Route::get('ai/chat/{thread}', [ChatController::class, 'show'])->name('ai.chat.show');
+    Route::patch('ai/chat/{thread}', [ChatController::class, 'update'])->name('ai.chat.update');
+    Route::delete('ai/chat/{thread}', [ChatController::class, 'destroy'])->name('ai.chat.destroy');
 
     // AI Suggestions Routes
     Route::get('ai/suggestions', [AgentSuggestionController::class, 'index'])->name('ai.suggestions.index');
