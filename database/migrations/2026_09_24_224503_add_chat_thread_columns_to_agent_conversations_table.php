@@ -25,6 +25,7 @@ return new class extends AiMigration
         $conversationsTable = config('ai.conversations.tables.conversations', 'agent_conversations');
 
         Schema::table($conversationsTable, function (Blueprint $table) {
+            $table->dropIndex(['space_id']);
             $table->dropColumn(['space_id', 'agent', 'model', 'mode', 'pinned_at', 'archived_at']);
         });
     }
