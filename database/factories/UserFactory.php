@@ -57,4 +57,17 @@ class UserFactory extends Factory
             'two_factor_confirmed_at' => now(),
         ]);
     }
+
+    /**
+     * Indicate that the user has a configured AI provider.
+     */
+    public function withAiProvider(string $model = 'test-model'): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'ai_enabled' => true,
+            'ai_provider_url' => 'https://api.example.com/v1',
+            'ai_provider_key' => 'sk-test',
+            'ai_model' => $model,
+        ]);
+    }
 }
