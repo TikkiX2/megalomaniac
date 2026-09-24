@@ -177,6 +177,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('ai/chat/{thread}', [ChatController::class, 'show'])->name('ai.chat.show');
     Route::patch('ai/chat/{thread}', [ChatController::class, 'update'])->name('ai.chat.update');
     Route::delete('ai/chat/{thread}', [ChatController::class, 'destroy'])->name('ai.chat.destroy');
+    Route::post('ai/chat', [ChatController::class, 'send'])->middleware('throttle:30,1')->name('ai.chat.send');
+    Route::post('ai/chat/{thread}/regenerate', [ChatController::class, 'regenerate'])->middleware('throttle:30,1')->name('ai.chat.regenerate');
+    Route::post('ai/chat/{thread}/edit', [ChatController::class, 'edit'])->middleware('throttle:30,1')->name('ai.chat.edit');
 
     // AI Suggestions Routes
     Route::get('ai/suggestions', [AgentSuggestionController::class, 'index'])->name('ai.suggestions.index');
