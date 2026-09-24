@@ -180,6 +180,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('ai/chat', [ChatController::class, 'send'])->middleware('throttle:30,1')->name('ai.chat.send');
     Route::post('ai/chat/{thread}/regenerate', [ChatController::class, 'regenerate'])->middleware('throttle:30,1')->name('ai.chat.regenerate');
     Route::post('ai/chat/{thread}/edit', [ChatController::class, 'edit'])->middleware('throttle:30,1')->name('ai.chat.edit');
+    Route::get('ai/models', [ChatController::class, 'models'])->name('ai.models');
 
     // AI Suggestions Routes
     Route::get('ai/suggestions', [AgentSuggestionController::class, 'index'])->name('ai.suggestions.index');

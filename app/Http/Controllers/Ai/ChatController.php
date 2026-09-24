@@ -12,8 +12,10 @@ use App\Http\Resources\ChatThreadResource;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Ai\Responses\StreamableAgentResponse;
@@ -77,6 +79,19 @@ class ChatController extends Controller
         $this->service->deleteThread($thread);
 
         return to_route('ai.chat.index');
+    }
+
+    public function models(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($request->boolean('refresh')) {
+            Cache::forget("ai.models.{$user->getKey()}");
+        }
+
+        return response()->json([
+            'models' => $this->service->availableModels($user),
+        ]);
     }
 
     public function send(SendChatMessageRequest $request): StreamedResponse
