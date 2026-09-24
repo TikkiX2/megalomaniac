@@ -6,7 +6,7 @@ export interface ChatStreamHandlers {
     onCitation?: (citation: Citation) => void;
     onToolCall?: (tool: { id: string; name: string }) => void;
     onToolResult?: (tool: { id: string; name: string; successful: boolean }) => void;
-    onError?: (message: string) => void;
+    onError?: (message: string, recoverable: boolean) => void;
 }
 
 interface StreamEvent {
@@ -18,6 +18,7 @@ interface StreamEvent {
     tool_name?: string;
     successful?: boolean;
     message?: string;
+    recoverable?: boolean;
 }
 
 function readCookie(name: string): string {
@@ -55,7 +56,7 @@ function dispatch(event: StreamEvent, handlers: ChatStreamHandlers): void {
             }
             break;
         case 'error':
-            handlers.onError?.(event.message ?? 'La generación falló.');
+            handlers.onError?.(event.message ?? 'La generación falló.', event.recoverable === true);
             break;
         default:
             break;

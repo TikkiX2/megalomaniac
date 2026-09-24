@@ -29,6 +29,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
     const [error, setError] = useState<string | null>(null);
 
     const abortRef = useRef<AbortController | null>(null);
+    const erroredRef = useRef(false);
     const optionsRef = useRef(options);
     const textRef = useRef('');
     const citationsRef = useRef<Citation[]>([]);
@@ -44,6 +45,9 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
     }, []);
 
     const reset = useCallback(() => {
+        abortRef.current?.abort();
+        abortRef.current = null;
+
         textRef.current = '';
         citationsRef.current = [];
         setText('');
@@ -56,8 +60,11 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
     const clearError = useCallback(() => setError(null), []);
 
     const start = useCallback(async (url: string, body: Record<string, unknown>) => {
+        abortRef.current?.abort();
+
         const controller = new AbortController();
         abortRef.current = controller;
+        erroredRef.current = false;
 
         textRef.current = '';
         citationsRef.current = [];
@@ -96,15 +103,31 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
                             ),
                         );
                     },
-                    onError: (message) => setError(message),
+                    onError: (message, recoverable) => {
+                        setError(message);
+
+                        if (!recoverable) {
+                            erroredRef.current = true;
+                        }
+                    },
                 },
                 controller.signal,
             );
 
+            if (abortRef.current !== controller) return;
+
             abortRef.current = null;
+
+            if (erroredRef.current) {
+                setStatus('error');
+                return;
+            }
+
             setStatus('idle');
             optionsRef.current.onComplete?.({ text: textRef.current, citations: citationsRef.current });
         } catch (caught) {
+            if (abortRef.current !== controller) return;
+
             abortRef.current = null;
 
             if (caught instanceof DOMException && caught.name === 'AbortError') {
