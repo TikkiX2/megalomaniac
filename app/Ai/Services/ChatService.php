@@ -22,6 +22,13 @@ class ChatService
         return (bool) ($user->ai_enabled && $user->ai_provider_url && $user->ai_provider_key);
     }
 
+    protected function ensureConfigured(User $user): void
+    {
+        if (! $this->isConfigured($user)) {
+            throw new RuntimeException('El proveedor de IA no está configurado.');
+        }
+    }
+
     public function createThread(User $user, string $firstMessage, ?string $model = null): ChatThread
     {
         return ChatThread::create([
@@ -49,6 +56,8 @@ class ChatService
 
     public function regenerate(User $user, ChatThread $thread): ?StreamableAgentResponse
     {
+        $this->ensureConfigured($user);
+
         $content = $this->dropLastExchange($thread);
 
         return $content === null
@@ -78,6 +87,8 @@ class ChatService
 
     public function editAndResend(User $user, ChatThread $thread, string $messageId, string $content): ?StreamableAgentResponse
     {
+        $this->ensureConfigured($user);
+
         $start = $thread->messages()->whereKey($messageId)->first();
 
         if (! $start instanceof ChatMessage || ! $start->isUser()) {

@@ -79,6 +79,17 @@ test('edit and resend rejects messages that are not user messages', function () 
     expect($result)->toBeNull();
 });
 
+test('regenerate throws and keeps history when provider is not configured', function () {
+    $thread = ChatThread::factory()->create();
+    ChatMessage::factory()->create(['conversation_id' => $thread->id, 'content' => 'Pregunta']);
+    ChatMessage::factory()->assistant()->create(['conversation_id' => $thread->id, 'content' => 'Respuesta']);
+
+    expect(fn () => (new ChatService)->regenerate(User::factory()->create(), $thread))
+        ->toThrow(RuntimeException::class);
+
+    expect($thread->messages()->count())->toBe(2);
+});
+
 test('available models returns endpoint list and caches it', function () {
     Http::fake([
         'api.example.com/v1/models' => Http::response([
