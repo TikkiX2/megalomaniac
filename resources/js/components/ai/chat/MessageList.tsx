@@ -55,7 +55,7 @@ export function MessageList({
     };
 
     const lastAssistantId = [...messages].reverse().find((message) => message.role === 'assistant')?.id ?? null;
-    const showLive = streaming || liveText !== '';
+    const showLive = streaming || liveText !== '' || liveReasoning !== '';
 
     return (
         <div className="relative min-h-0 flex-1">

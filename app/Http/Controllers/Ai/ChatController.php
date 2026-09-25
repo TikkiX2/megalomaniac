@@ -212,6 +212,7 @@ class ChatController extends Controller
 
             $reasoning = '';
             $reasoningStartedAt = null;
+            $assistantIdBefore = $thread->messages()->where('role', 'assistant')->orderByDesc('id')->value('id');
 
             try {
                 foreach ($stream as $event) {
@@ -238,7 +239,7 @@ class ChatController extends Controller
             }
 
             if ($reasoning !== '') {
-                $this->storeReasoning($thread, $reasoning, $reasoningStartedAt);
+                $this->storeReasoning($thread, $reasoning, $reasoningStartedAt, $assistantIdBefore);
             }
 
             echo "data: [DONE]\n\n";
@@ -250,11 +251,14 @@ class ChatController extends Controller
         ]);
     }
 
-    protected function storeReasoning(ChatThread $thread, string $reasoning, ?float $startedAt): void
+    protected function storeReasoning(ChatThread $thread, string $reasoning, ?float $startedAt, ?string $assistantIdBefore = null): void
     {
         $message = $thread->messages()->orderByDesc('id')->first();
 
-        if (! $message instanceof ChatMessage || $message->role !== 'assistant') {
+        // Only a new assistant message stored by this turn may receive the
+        // reasoning; otherwise (failed or approval-resume turn) it would be
+        // attached to the previous turn's message.
+        if (! $message instanceof ChatMessage || $message->role !== 'assistant' || $message->id === $assistantIdBefore) {
             return;
         }
 

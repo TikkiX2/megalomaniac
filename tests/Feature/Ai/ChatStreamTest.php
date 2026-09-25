@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Agents\MegalomaniacAgent;
+use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -177,6 +178,35 @@ test('reasoning deltas are persisted on the assistant message meta', function ()
 
     expect($assistant->meta['reasoning']['text'])->toBe('Analizo');
     expect($assistant->meta['reasoning'])->toHaveKey('duration_ms');
+});
+
+test('a failed turn does not overwrite the previous assistant reasoning', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->getKey(),
+    ]);
+    $previous = ChatMessage::factory()->assistant()->create([
+        'conversation_id' => $thread->id,
+        'meta' => ['reasoning' => ['text' => 'razonamiento previo', 'duration_ms' => 123]],
+    ]);
+
+    $sse = implode("\n\n", [
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['reasoning_content' => 'parcial'], 'finish_reason' => null]]]),
+        'data: '.json_encode(['error' => ['code' => 'server_error', 'message' => 'boom']]),
+        'data: [DONE]',
+    ])."\n\n";
+    Http::fake(['*' => Http::response($sse, 200, ['Content-Type' => 'text/event-stream'])]);
+
+    $content = $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => 'algo',
+        'thread_id' => $thread->id,
+    ])->streamedContent();
+
+    expect($content)->toContain('reasoning_delta')->toContain('"type":"error"');
+
+    expect($previous->refresh()->meta['reasoning']['text'])->toBe('razonamiento previo');
+    expect($thread->messages()->where('role', 'assistant')->count())->toBe(1);
 });
 
 test('message is required and limited', function () {
