@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Ai;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SendChatMessageRequest extends FormRequest
 {
@@ -12,7 +13,7 @@ class SendChatMessageRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, mixed>
      */
     public function rules(): array
     {
@@ -25,6 +26,15 @@ class SendChatMessageRequest extends FormRequest
             'tools_policy.mode' => ['required_with:tools_policy', 'string', 'in:auto,manual'],
             'tools_policy.groups' => ['nullable', 'array'],
             'tools_policy.groups.*' => ['string', 'max:30'],
+            'attachment_ids' => ['nullable', 'array', 'max:5'],
+            'attachment_ids.*' => [
+                'string',
+                'size:36',
+                Rule::exists('chat_attachments', 'id')
+                    ->where('user_id', $this->user()?->getKey())
+                    ->where('kind', 'image')
+                    ->where('status', 'ready'),
+            ],
         ];
     }
 }

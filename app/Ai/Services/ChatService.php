@@ -8,6 +8,7 @@ use App\Ai\Support\AiProviderResolver;
 use App\Ai\Tools\ToolCatalog;
 use App\Ai\Tools\ToolRouter;
 use App\Models\AgentDefinition;
+use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Laravel\Ai\Files\StoredImage;
 use Laravel\Ai\Responses\StreamableAgentResponse;
 use RuntimeException;
 use Throwable;
@@ -60,8 +62,18 @@ class ChatService
         AiProviderResolver::configureUserProvider($user, $sessionId);
     }
 
-    public function streamTurn(User $user, ChatThread $thread, string $message, ?string $model = null, ?array $toolsPolicy = null): StreamableAgentResponse
-    {
+    /**
+     * @param  array<string, mixed>|null  $toolsPolicy
+     * @param  array<int, string>|null  $attachmentIds
+     */
+    public function streamTurn(
+        User $user,
+        ChatThread $thread,
+        string $message,
+        ?string $model = null,
+        ?array $toolsPolicy = null,
+        ?array $attachmentIds = null,
+    ): StreamableAgentResponse {
         if (! $this->isConfigured($user)) {
             throw new RuntimeException('El proveedor de IA no está configurado.');
         }
@@ -71,9 +83,18 @@ class ChatService
         $policy = $this->prepareToolPolicy($thread, $message, $toolsPolicy);
         $this->lastToolPolicy = $policy;
 
+        $attachments = ChatAttachment::query()
+            ->forUser($user)
+            ->whereIn('id', $attachmentIds ?? [])
+            ->images()
+            ->ready()
+            ->get()
+            ->map(fn (ChatAttachment $attachment) => new StoredImage($attachment->path, $attachment->disk))
+            ->all();
+
         return $this->agentFor($user, $thread, $policy['groups'])
             ->continue($thread->id, as: $user)
-            ->stream($message, provider: $provider, model: $model ?: $defaultModel);
+            ->stream($message, attachments: $attachments, provider: $provider, model: $model ?: $defaultModel);
     }
 
     /**

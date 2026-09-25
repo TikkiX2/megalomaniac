@@ -11,6 +11,7 @@ use App\Http\Requests\Ai\UpdateChatThreadRequest;
 use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatThreadResource;
 use App\Models\AgentDefinition;
+use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -56,7 +57,7 @@ class ChatController extends Controller
         return Inertia::render('ai/thread', [
             'thread' => (new ChatThreadResource($thread))->resolve($request),
             'messages' => ChatMessageResource::collection(
-                $thread->messages()->orderBy('id')->get()
+                $thread->messages()->with('attachments')->orderBy('id')->get()
             )->resolve($request),
             'threads' => ChatThreadResource::collection($this->threadsFor($user))->resolve($request),
             'models' => $this->service->availableModels($user),
@@ -123,6 +124,7 @@ class ChatController extends Controller
 
         $threadId = $request->validated('thread_id');
         $model = $request->validated('model');
+        $attachmentIds = $request->validated('attachment_ids');
 
         if ($threadId !== null) {
             $thread = ChatThread::query()->forUser($user)->find($threadId);
@@ -144,9 +146,10 @@ class ChatController extends Controller
             $request->validated('message'),
             $model ?? $thread->model,
             $request->validated('tools_policy'),
+            $attachmentIds,
         );
 
-        return $this->streamResponse($stream, $thread, $this->service->lastToolPolicy);
+        return $this->streamResponse($stream, $thread, $this->service->lastToolPolicy, $attachmentIds);
     }
 
     public function regenerate(Request $request, ChatThread $thread): StreamedResponse
@@ -190,10 +193,15 @@ class ChatController extends Controller
 
     /**
      * @param  array{mode?: string, groups?: string[]}  $toolPolicy
+     * @param  array<int, string>|null  $attachmentIds
      */
-    protected function streamResponse(StreamableAgentResponse $stream, ChatThread $thread, array $toolPolicy = []): StreamedResponse
-    {
-        return response()->stream(function () use ($stream, $thread, $toolPolicy): void {
+    protected function streamResponse(
+        StreamableAgentResponse $stream,
+        ChatThread $thread,
+        array $toolPolicy = [],
+        ?array $attachmentIds = null,
+    ): StreamedResponse {
+        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds): void {
             if (function_exists('set_time_limit')) {
                 set_time_limit(0);
             }
@@ -213,6 +221,7 @@ class ChatController extends Controller
             $reasoning = '';
             $reasoningStartedAt = null;
             $assistantIdBefore = $thread->messages()->where('role', 'assistant')->orderByDesc('id')->value('id');
+            $userMessageIdBefore = $thread->messages()->where('role', 'user')->orderByDesc('id')->value('id');
 
             try {
                 foreach ($stream as $event) {
@@ -236,6 +245,17 @@ class ChatController extends Controller
                     'recoverable' => false,
                 ])."\n\n";
                 flush();
+            }
+
+            if ($attachmentIds !== null && $attachmentIds !== []) {
+                $userMessageId = $thread->messages()->where('role', 'user')->orderByDesc('id')->value('id');
+
+                // Only a new user message stored by this turn may receive the
+                // attachments; otherwise (failed turn) they would be linked to
+                // the previous turn's user message.
+                if ($userMessageId !== null && $userMessageId !== $userMessageIdBefore) {
+                    ChatAttachment::query()->whereIn('id', $attachmentIds)->update(['message_id' => $userMessageId]);
+                }
             }
 
             if ($reasoning !== '') {

@@ -1,11 +1,14 @@
 <?php
 
 use App\Ai\Agents\MegalomaniacAgent;
+use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -221,4 +224,129 @@ test('message is required and limited', function () {
         ->postJson(route('ai.chat.send'), ['message' => str_repeat('a', 4001)])
         ->assertStatus(422)
         ->assertJsonValidationErrors('message');
+});
+
+test('an image attachment is sent to the provider and linked to the user message', function () {
+    Storage::fake('local');
+    $user = User::factory()->withAiProvider()->create();
+    $path = 'ai-attachments/'.$user->id.'/foto.png';
+    Storage::disk('local')->put($path, 'fake-image-bytes');
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'status' => 'ready',
+        'path' => $path,
+        'mime' => 'image/png',
+        'original_name' => 'foto.png',
+    ]);
+
+    Http::fake(['*' => Http::response("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream'])]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => '¿Qué ves?',
+        'attachment_ids' => [$attachment->id],
+    ])->streamedContent();
+
+    Http::assertSent(function ($request): bool {
+        return str_contains(json_encode($request->data()), 'image_url');
+    });
+
+    expect($attachment->refresh()->message_id)->not->toBeNull();
+});
+
+test('only own images can be attached', function () {
+    Http::fake();
+    $user = User::factory()->withAiProvider()->create();
+    $foreign = ChatAttachment::factory()->create(['kind' => 'image']);
+
+    $this->actingAs($user)
+        ->postJson(route('ai.chat.send'), ['message' => 'x', 'attachment_ids' => [$foreign->id]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('attachment_ids.0');
+});
+
+test('a non ready image cannot be attached', function () {
+    Http::fake();
+    $user = User::factory()->withAiProvider()->create();
+    $pending = ChatAttachment::factory()->create(['user_id' => $user->id, 'status' => 'pending']);
+
+    $this->actingAs($user)
+        ->postJson(route('ai.chat.send'), ['message' => 'x', 'attachment_ids' => [$pending->id]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('attachment_ids.0');
+});
+
+test('a failed turn leaves the attachment unlinked', function () {
+    Storage::fake('local');
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->getKey(),
+    ]);
+    ChatMessage::factory()->create([
+        'conversation_id' => $thread->id,
+        'role' => 'user',
+        'content' => 'mensaje previo',
+    ]);
+
+    $path = 'ai-attachments/'.$user->id.'/fallo.png';
+    Storage::disk('local')->put($path, 'fake-image-bytes');
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'status' => 'ready',
+        'path' => $path,
+        'mime' => 'image/png',
+        'original_name' => 'fallo.png',
+    ]);
+
+    $sse = implode("\n\n", [
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['content' => 'parcial'], 'finish_reason' => null]]]),
+        'data: '.json_encode(['error' => ['code' => 'server_error', 'message' => 'boom']]),
+        'data: [DONE]',
+    ])."\n\n";
+    Http::fake(['*' => Http::response($sse, 200, ['Content-Type' => 'text/event-stream'])]);
+
+    $content = $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => 'algo',
+        'thread_id' => $thread->id,
+        'attachment_ids' => [$attachment->id],
+    ])->streamedContent();
+
+    expect($content)->toContain('"type":"error"');
+    expect($attachment->refresh()->message_id)->toBeNull();
+    expect($thread->messages()->where('role', 'user')->count())->toBe(1);
+});
+
+test('the thread payload exposes the attachments linked to messages', function () {
+    Storage::fake('local');
+    $user = User::factory()->withAiProvider()->create();
+    $path = 'ai-attachments/'.$user->id.'/foto.png';
+    Storage::disk('local')->put($path, 'fake-image-bytes');
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'status' => 'ready',
+        'path' => $path,
+        'mime' => 'image/png',
+        'original_name' => 'foto.png',
+    ]);
+
+    Http::fake(['*' => Http::response("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream'])]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => '¿Qué ves?',
+        'attachment_ids' => [$attachment->id],
+    ])->streamedContent();
+
+    $thread = ChatThread::query()->forUser($user)->sole();
+
+    $this->actingAs($user)
+        ->get(route('ai.chat.show', $thread))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('ai/thread')
+            ->where('messages.0.attachments.0.id', $attachment->id)
+            ->where('messages.0.attachments.0.name', 'foto.png')
+        );
 });

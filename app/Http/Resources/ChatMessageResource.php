@@ -18,6 +18,9 @@ class ChatMessageResource extends JsonResource
             'content' => $this->content,
             'citations' => $this->citations(),
             'reasoning' => $this->meta['reasoning'] ?? null,
+            'attachments' => ChatAttachmentResource::collection(
+                $this->getRelationValue('attachments')
+            )->resolve($request),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }
