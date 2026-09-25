@@ -95,8 +95,12 @@ class DirectTransport implements Transport
                 (string) ($credentials['password'] ?? ''),
             ),
             AuthType::None => $request,
-            AuthType::OAuth2 => $request->withToken((string) ($credentials['access_token'] ?? '')),
-            default => $request->withToken((string) ($credentials['token'] ?? $credentials['access_token'] ?? '')),
+            AuthType::OAuth2 => filled($credentials['access_token'] ?? null)
+                ? $request->withToken((string) $credentials['access_token'])
+                : $request,
+            default => filled($credentials['token'] ?? $credentials['access_token'] ?? null)
+                ? $request->withToken((string) ($credentials['token'] ?? $credentials['access_token']))
+                : $request,
         };
     }
 

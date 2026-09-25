@@ -4,6 +4,7 @@ namespace App\Integrations\OAuth;
 
 use App\Integrations\Enums\ConnectionStatus;
 use App\Integrations\OAuth\Presets\GoogleOAuthPreset;
+use App\Integrations\OAuth\Presets\RedditOAuthPreset;
 use App\Models\Connection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -71,6 +72,7 @@ class OAuthBroker
     {
         return match ($connection->kind) {
             'google' => app(GoogleOAuthPreset::class),
+            'reddit' => app(RedditOAuthPreset::class),
             default => throw new RuntimeException("No OAuth preset registered for [{$connection->kind}]."),
         };
     }

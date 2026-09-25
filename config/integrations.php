@@ -10,7 +10,13 @@ use App\Integrations\Connectors\Github\GithubConnector;
 use App\Integrations\Connectors\Google\GoogleConnector;
 use App\Integrations\Connectors\HomeAssistant\HomeAssistantConnector;
 use App\Integrations\Connectors\Jellyfin\JellyfinConnector;
+use App\Integrations\Connectors\Listenbrainz\ListenbrainzConnector;
+use App\Integrations\Connectors\Notion\NotionConnector;
 use App\Integrations\Connectors\Proxmox\ProxmoxConnector;
+use App\Integrations\Connectors\Reddit\RedditConnector;
+use App\Integrations\Connectors\Rss\RssConnector;
+use App\Integrations\Connectors\Telegram\TelegramConnector;
+use App\Integrations\Connectors\Youtube\YoutubeConnector;
 
 return [
 
@@ -37,6 +43,12 @@ return [
         JellyfinConnector::class,
         ProxmoxConnector::class,
         HomeAssistantConnector::class,
+        TelegramConnector::class,
+        NotionConnector::class,
+        RssConnector::class,
+        RedditConnector::class,
+        YoutubeConnector::class,
+        ListenbrainzConnector::class,
     ],
 
     /*

@@ -92,5 +92,6 @@ it('registers all bundled connectors', function () {
         'github', 'google', 'docker',
         'sonarr', 'radarr', 'prowlarr', 'jellyseerr', 'qbittorrent', 'jellyfin',
         'proxmox', 'home_assistant',
+        'telegram', 'notion', 'rss', 'reddit', 'youtube', 'listenbrainz',
     ]);
 });

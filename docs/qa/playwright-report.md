@@ -154,3 +154,22 @@ Conexiones/aprobaciones/logs creados durante el crawl fueron eliminados al cierr
 
 ### Datos de QA
 Sin conexiones persistidas (solo drafts); DB dev limpia.
+
+---
+
+## Integraciones Ola 2 — 2026-09-25
+
+> **Alcance:** 6 conectores nuevos (Telegram, Notion, RSS/Atom, Reddit, YouTube, ListenBrainz) + preset OAuth2 de Reddit + fix de URL base en RSS + `Authorization` vacío ya no se envía. Plan `docs/superpowers/plans/2026-09-25-integraciones-ola-2.md`.
+
+### Escenario ejecutado (Playwright MCP + executor real)
+1. **Wizard** → 17 servicios agrupados (Dev, Google, Infra, Media, Hogar, Comunicación, Contenido, Música). **PASS**
+2. **RSS contra Hacker News real** (`https://news.ycombinator.com/rss`) → Probar devuelve `Conexión OK: Feed OK`. **PASS**
+3. **Ingesta vía executor** (`rss.feed.fetch`, limit 5) → 5 items normalizados (`title`, `external_id`), `integration_action_logs` status `success`; datos de QA limpiados. **PASS**
+4. **Consola** → 0 errores. **PASS**
+
+### Bugs encontrados por QA y corregidos
+- **[P1] RSS con URL de feed**: `base_url` + path vacío resolvía a `/rss/` (trailing slash de Guzzle) → 404 en HN. Fix: el conector usa la URL absoluta como path + test de regresión.
+- **[P2] Auth vacío**: con credenciales sin token se enviaba `Authorization: Bearer ` (header vacío). Fix en `DirectTransport` (solo setea auth si el valor es no vacío); test de ListenBrainz sin token.
+
+### Estáticos
+`php artisan test --compact` **384 passed** / 0 failed (167 tests de integraciones) · Pint OK.

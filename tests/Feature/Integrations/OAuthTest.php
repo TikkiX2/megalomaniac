@@ -76,6 +76,43 @@ it('refreshes an expired token', function () {
         && $request['refresh_token'] === 'rt');
 });
 
+it('builds a reddit authorize url with per-connection client credentials', function () {
+    $connection = Connection::factory()->create([
+        'kind' => 'reddit',
+        'auth_type' => 'oauth2',
+        'credentials' => ['client_id' => 'reddit-client', 'client_secret' => 'reddit-secret'],
+    ]);
+
+    $url = app(OAuthBroker::class)->redirectUrl($connection);
+
+    expect($url)->toContain('www.reddit.com/api/v1/authorize')
+        ->and($url)->toContain('client_id=reddit-client')
+        ->and($url)->toContain('duration=permanent')
+        ->and($url)->toContain('scope=read')
+        ->and($url)->toContain('state=');
+});
+
+it('exchanges a reddit code and stores tokens', function () {
+    Http::fake(['www.reddit.com/api/v1/access_token' => Http::response([
+        'access_token' => 'rat', 'refresh_token' => 'rrt', 'expires_in' => 3600,
+    ])]);
+
+    $connection = Connection::factory()->create([
+        'kind' => 'reddit',
+        'auth_type' => 'oauth2',
+        'credentials' => ['client_id' => 'reddit-client', 'client_secret' => 'reddit-secret'],
+    ]);
+
+    $broker = app(OAuthBroker::class);
+    $url = $broker->redirectUrl($connection);
+    parse_str(parse_url($url, PHP_URL_QUERY), $query);
+
+    $token = $broker->handleCallback($connection, 'the-code', $query['state']);
+
+    expect($token->accessToken)->toBe('rat')
+        ->and($connection->fresh()->credentials['refresh_token'])->toBe('rrt');
+});
+
 it('does not refresh a valid token', function () {
     Http::fake();
 
