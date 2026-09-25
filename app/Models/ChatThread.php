@@ -5,7 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Models\Conversation;
+use Throwable;
 
 class ChatThread extends Conversation
 {
@@ -67,5 +69,52 @@ class ChatThread extends Conversation
     public function isPinned(): bool
     {
         return $this->pinned_at !== null;
+    }
+
+    /**
+     * Build an untrusted, formatted context block from the thread's indexed
+     * documents that match the given query. Returns null when there is
+     * nothing relevant (or the query has no usable terms).
+     */
+    public function documentContext(string $query, int $limit = 6): ?string
+    {
+        $terms = collect(preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($query)) ?: [])
+            ->filter(fn (string $term): bool => mb_strlen($term) >= 3)
+            ->unique()
+            ->values();
+
+        if ($terms->isEmpty() || $this->participant_id === null) {
+            return null;
+        }
+
+        $match = $terms
+            ->map(fn (string $term): string => $term.'*')
+            ->implode(' OR ');
+
+        try {
+            $rows = DB::select(
+                'select c.content, a.original_name
+                 from chat_document_chunks_fts
+                 join chat_document_chunks c on c.id = chat_document_chunks_fts.rowid
+                 join chat_attachments a on a.id = c.attachment_id
+                 where chat_document_chunks_fts match ?
+                   and a.thread_id = ?
+                   and a.user_id = ?
+                   and a.status = ?
+                 order by bm25(chat_document_chunks_fts)
+                 limit ?',
+                [$match, $this->id, $this->participant_id, 'indexed', $limit],
+            );
+        } catch (Throwable) {
+            return null;
+        }
+
+        if ($rows === []) {
+            return null;
+        }
+
+        return collect($rows)
+            ->map(fn (object $row): string => '### '.$row->original_name."\n".$row->content)
+            ->implode("\n\n");
     }
 }

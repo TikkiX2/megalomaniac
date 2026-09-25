@@ -92,7 +92,13 @@ class ChatService
             ->map(fn (ChatAttachment $attachment) => new StoredImage($attachment->path, $attachment->disk))
             ->all();
 
-        return $this->agentFor($user, $thread, $policy['groups'])
+        $agent = $this->agentFor($user, $thread, $policy['groups']);
+
+        if ($agent instanceof MegalomaniacAgent) {
+            $agent->withDocumentContext($message);
+        }
+
+        return $agent
             ->continue($thread->id, as: $user)
             ->stream($message, attachments: $attachments, provider: $provider, model: $model ?: $defaultModel);
     }
@@ -153,7 +159,7 @@ class ChatService
             }
         }
 
-        return new MegalomaniacAgent($user, $toolGroups);
+        return new MegalomaniacAgent($user, $toolGroups, $thread);
     }
 
     public function regenerate(User $user, ChatThread $thread): ?StreamableAgentResponse

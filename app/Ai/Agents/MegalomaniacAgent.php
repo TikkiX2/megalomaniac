@@ -2,17 +2,22 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Middleware\InjectThreadDocumentContext;
 use App\Ai\Tools\ToolCatalog;
+use App\Models\ChatThread;
 use App\Models\User;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
+use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Promptable;
 
-class MegalomaniacAgent implements Agent, Conversational, HasTools
+class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTools
 {
     use Promptable, RemembersConversations;
+
+    protected ?string $documentQuery = null;
 
     /**
      * @param  string[]  $toolGroups  Grupos de ToolCatalog; ['*'] = todos
@@ -20,7 +25,30 @@ class MegalomaniacAgent implements Agent, Conversational, HasTools
     public function __construct(
         public User $user,
         protected array $toolGroups = ['*'],
+        public ?ChatThread $thread = null,
     ) {}
+
+    /**
+     * Set the user message used to retrieve thread document context.
+     */
+    public function withDocumentContext(string $message): static
+    {
+        $this->documentQuery = $message;
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, object>
+     */
+    public function middleware(): array
+    {
+        if (! $this->thread instanceof ChatThread || blank($this->documentQuery)) {
+            return [];
+        }
+
+        return [new InjectThreadDocumentContext($this->thread, $this->documentQuery)];
+    }
 
     public function instructions(): string
     {
