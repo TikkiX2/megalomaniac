@@ -149,7 +149,7 @@ return [
         ],
 
         'user' => [
-            'driver' => 'openai-compatible',
+            'driver' => 'reasoning-compatible',
             'url' => null,
             'key' => null,
         ],
