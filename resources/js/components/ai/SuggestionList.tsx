@@ -1,5 +1,5 @@
+import { Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Lightbulb, Loader2 } from 'lucide-react';
 import { SuggestionCard } from '@/components/ai/SuggestionCard';
 
 interface Suggestion {

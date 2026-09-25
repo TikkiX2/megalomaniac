@@ -4,9 +4,14 @@ use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    Http::fake(['api.example.com/v1/models' => Http::response(['data' => [['id' => 'test-model']]])]);
+});
 
 test('chat index lists only own non empty threads ordered by pinned and recency', function () {
     $user = User::factory()->withAiProvider()->create();

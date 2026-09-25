@@ -4,6 +4,7 @@ use App\Ai\Agents\MegalomaniacAgent;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
 
@@ -83,6 +84,23 @@ test('sending without configured provider returns 422 json', function () {
         ->assertJson(['message' => 'Configura tu proveedor de IA en Settings → IA.']);
 
     expect(ChatThread::query()->count())->toBe(0);
+});
+
+test('provider failure streams an error event and still closes the stream', function () {
+    Http::fake(['*' => Http::response(['error' => ['message' => 'upstream boom']], 500)]);
+
+    $user = User::factory()->withAiProvider()->create();
+
+    $response = $this->actingAs($user)->post(route('ai.chat.send'), ['message' => '¿Qué tal?']);
+
+    $response->assertOk();
+    $content = $response->streamedContent();
+
+    expect($content)
+        ->toContain('"type":"thread"')
+        ->toContain('"type":"error"')
+        ->toContain('"recoverable":false')
+        ->toContain('[DONE]');
 });
 
 test('message is required and limited', function () {

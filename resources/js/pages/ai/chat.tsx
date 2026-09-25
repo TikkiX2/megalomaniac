@@ -1,9 +1,10 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Bot } from 'lucide-react';
+import { Bot, RotateCcw } from 'lucide-react';
 import { useRef, useState } from 'react';
 import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
 import { Composer } from '@/components/ai/chat/Composer';
 import { ProviderNotice } from '@/components/ai/chat/ProviderNotice';
+import { Button } from '@/components/ui/button';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
 import type { AiChatState, ChatThread } from '@/types/chat';
@@ -23,11 +24,27 @@ const SUGGESTIONS = [
 
 export default function ChatIndex({ threads, models, ai }: ChatIndexProps) {
     const [model, setModel] = useState<string | null>(ai.defaultModel ?? models[0] ?? null);
+    const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+    const [composerSeed, setComposerSeed] = useState('');
+    const [draftToken, setDraftToken] = useState(0);
+
     const createdThreadRef = useRef<string | null>(null);
+    const pendingMessageRef = useRef<string | null>(null);
+    const lastErrorRef = useRef<string | null>(null);
 
     const stream = useChatStream({
         onThread: (threadId) => {
             createdThreadRef.current = threadId;
+        },
+        onError: (message, recoverable) => {
+            if (recoverable || lastErrorRef.current === message) return;
+
+            lastErrorRef.current = message;
+
+            if (pendingMessageRef.current === null) return;
+
+            setComposerSeed(pendingMessageRef.current);
+            setDraftToken((token) => token + 1);
         },
         onComplete: () => {
             const threadId = createdThreadRef.current;
@@ -38,11 +55,27 @@ export default function ChatIndex({ threads, models, ai }: ChatIndexProps) {
         },
     });
 
-    const submit = (message: string) => {
+    const startSend = (message: string) => {
+        pendingMessageRef.current = message;
+        lastErrorRef.current = null;
+        setPendingMessage(message);
+        setComposerSeed('');
         stream.start(ChatController.send.url(), {
             message,
             model: model ?? undefined,
         });
+    };
+
+    const submit = (message: string) => startSend(message);
+
+    const retry = () => {
+        const message = pendingMessageRef.current;
+
+        if (message === null) return;
+
+        setComposerSeed('');
+        setDraftToken((token) => token + 1);
+        startSend(message);
     };
 
     return (
@@ -70,8 +103,10 @@ export default function ChatIndex({ threads, models, ai }: ChatIndexProps) {
                     )}
 
                     <Composer
+                        key={draftToken}
                         large
                         autoFocus
+                        initialValue={composerSeed}
                         models={models}
                         model={model}
                         onModelChange={setModel}
@@ -82,9 +117,22 @@ export default function ChatIndex({ threads, models, ai }: ChatIndexProps) {
                     />
 
                     {stream.error && (
-                        <p className="mt-2 text-center text-xs text-destructive" role="alert">
-                            {stream.error}
-                        </p>
+                        <div className="mt-2 flex items-center justify-center gap-3" role="alert">
+                            <p className="text-xs text-destructive">{stream.error}</p>
+
+                            {pendingMessage !== null && (
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={retry}
+                                    className="h-7 shrink-0 border-border bg-card text-xs text-foreground hover:bg-muted"
+                                >
+                                    <RotateCcw className="mr-1.5 h-3 w-3" />
+                                    Reintentar
+                                </Button>
+                            )}
+                        </div>
                     )}
 
                     <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -101,8 +149,16 @@ export default function ChatIndex({ threads, models, ai }: ChatIndexProps) {
                         ))}
                     </div>
 
+                    {pendingMessage !== null && stream.status !== 'idle' && (
+                        <div className="mt-6 flex justify-end">
+                            <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground">
+                                {pendingMessage}
+                            </div>
+                        </div>
+                    )}
+
                     {stream.status === 'streaming' && stream.text !== '' && (
-                        <div className="mt-6 rounded-2xl border border-border bg-card p-4">
+                        <div className="mt-3 rounded-2xl border border-border bg-card p-4">
                             <p className="whitespace-pre-wrap text-sm text-foreground">{stream.text}</p>
                         </div>
                     )}

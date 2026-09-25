@@ -15,6 +15,7 @@ interface ComposerProps {
     autoFocus?: boolean;
     large?: boolean;
     placeholder?: string;
+    initialValue?: string;
 }
 
 const MAX_LENGTH = 4000;
@@ -30,8 +31,9 @@ export function Composer({
     autoFocus = false,
     large = false,
     placeholder = 'Pregunta lo que quieras…',
+    initialValue = '',
 }: ComposerProps) {
-    const [value, setValue] = useState('');
+    const [value, setValue] = useState(initialValue);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {

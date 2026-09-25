@@ -28,6 +28,15 @@ function readCookie(name: string): string {
 }
 
 function dispatch(event: StreamEvent, handlers: ChatStreamHandlers): void {
+    const isProviderError =
+        event.type === 'error' || (typeof event.message === 'string' && typeof event.recoverable === 'boolean');
+
+    if (isProviderError) {
+        handlers.onError?.(event.message ?? 'La generación falló.', event.recoverable === true);
+
+        return;
+    }
+
     switch (event.type) {
         case 'thread':
             if (event.threadId) handlers.onThread?.(event.threadId);
@@ -54,9 +63,6 @@ function dispatch(event: StreamEvent, handlers: ChatStreamHandlers): void {
                     successful: event.successful !== false,
                 });
             }
-            break;
-        case 'error':
-            handlers.onError?.(event.message ?? 'La generación falló.', event.recoverable === true);
             break;
         default:
             break;
@@ -102,6 +108,7 @@ export async function streamChatRequest(
 
     const decoder = new TextDecoder();
     let buffer = '';
+    let sawDone = false;
 
     while (true) {
         const { done, value } = await reader.read();
@@ -122,7 +129,11 @@ export async function streamChatRequest(
 
             if (payload === '') continue;
 
-            if (payload === '[DONE]') return;
+            if (payload === '[DONE]') {
+                sawDone = true;
+
+                return;
+            }
 
             try {
                 dispatch(JSON.parse(payload) as StreamEvent, handlers);
@@ -130,5 +141,9 @@ export async function streamChatRequest(
                 // línea no JSON
             }
         }
+    }
+
+    if (!sawDone) {
+        throw new Error('La conexión con la IA se interrumpió. Inténtalo de nuevo.');
     }
 }

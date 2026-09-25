@@ -20,6 +20,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Ai\Responses\StreamableAgentResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class ChatController extends Controller
 {
@@ -176,8 +177,19 @@ class ChatController extends Controller
             echo 'data: '.json_encode(['type' => 'thread', 'threadId' => $thread->id])."\n\n";
             flush();
 
-            foreach ($stream as $event) {
-                echo 'data: '.((string) $event)."\n\n";
+            try {
+                foreach ($stream as $event) {
+                    echo 'data: '.((string) $event)."\n\n";
+                    flush();
+                }
+            } catch (Throwable $exception) {
+                report($exception);
+
+                echo 'data: '.json_encode([
+                    'type' => 'error',
+                    'message' => 'La generación se interrumpió. Inténtalo de nuevo.',
+                    'recoverable' => false,
+                ])."\n\n";
                 flush();
             }
 

@@ -13,6 +13,7 @@ interface MessageListProps {
     streaming: boolean;
     onRegenerate: () => void;
     onEdit: (messageId: string, content: string) => void;
+    pendingUser?: string | null;
 }
 
 export function MessageList({
@@ -23,6 +24,7 @@ export function MessageList({
     streaming,
     onRegenerate,
     onEdit,
+    pendingUser = null,
 }: MessageListProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [pinned, setPinned] = useState(true);
@@ -37,7 +39,7 @@ export function MessageList({
 
     useEffect(() => {
         if (pinned) scrollToBottom();
-    }, [messages, liveText, streaming, pinned]);
+    }, [messages, liveText, streaming, pinned, pendingUser]);
 
     const handleScroll = () => {
         const container = containerRef.current;
@@ -67,6 +69,14 @@ export function MessageList({
                                 disabled={streaming}
                             />
                         ),
+                    )}
+
+                    {pendingUser !== null && pendingUser !== '' && (
+                        <article className="flex justify-end">
+                            <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground">
+                                {pendingUser}
+                            </div>
+                        </article>
                     )}
 
                     {showLive && (

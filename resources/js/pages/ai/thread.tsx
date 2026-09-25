@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
-import { MoreHorizontal, Pin, PinOff, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { MoreHorizontal, Pin, PinOff, RotateCcw, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
 import { Composer } from '@/components/ai/chat/Composer';
 import { MessageList } from '@/components/ai/chat/MessageList';
@@ -38,17 +38,41 @@ export default function ChatThread({ thread, messages, threads, models, ai }: Ch
     const [renaming, setRenaming] = useState(false);
     const [title, setTitle] = useState(thread.title);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+    const [composerSeed, setComposerSeed] = useState('');
+    const [draftToken, setDraftToken] = useState(0);
+
+    const pendingMessageRef = useRef<string | null>(null);
+    const lastErrorRef = useRef<string | null>(null);
 
     const stream = useChatStream({
+        onError: (message, recoverable) => {
+            if (recoverable || lastErrorRef.current === message) return;
+
+            lastErrorRef.current = message;
+
+            if (pendingMessageRef.current === null) return;
+
+            setComposerSeed(pendingMessageRef.current);
+            setDraftToken((token) => token + 1);
+        },
         onComplete: () => {
             router.reload({
                 only: ['threads', 'messages'],
-                onSuccess: () => stream.reset(),
+                onSuccess: () => {
+                    stream.reset();
+                    pendingMessageRef.current = null;
+                    setPendingMessage(null);
+                },
             });
         },
     });
 
-    const submit = (message: string) => {
+    const startSend = (message: string) => {
+        pendingMessageRef.current = message;
+        lastErrorRef.current = null;
+        setPendingMessage(message);
+        setComposerSeed('');
         stream.start(ChatController.send.url(), {
             message,
             thread_id: thread.id,
@@ -56,11 +80,30 @@ export default function ChatThread({ thread, messages, threads, models, ai }: Ch
         });
     };
 
+    const submit = (message: string) => startSend(message);
+
+    const retry = () => {
+        const message = pendingMessageRef.current;
+
+        if (message === null) return;
+
+        setComposerSeed('');
+        setDraftToken((token) => token + 1);
+        startSend(message);
+    };
+
+    const clearPending = () => {
+        pendingMessageRef.current = null;
+        setPendingMessage(null);
+    };
+
     const regenerate = () => {
+        clearPending();
         stream.start(ChatController.regenerate.url(thread.id), {});
     };
 
     const edit = (messageId: string, content: string) => {
+        clearPending();
         stream.start(ChatController.edit.url(thread.id), { message_id: messageId, content });
     };
 
@@ -95,6 +138,7 @@ export default function ChatThread({ thread, messages, threads, models, ai }: Ch
                     {renaming ? (
                         <Input
                             autoFocus
+                            maxLength={120}
                             value={title}
                             onChange={(event) => setTitle(event.target.value)}
                             onBlur={commitRename}
@@ -163,17 +207,33 @@ export default function ChatThread({ thread, messages, threads, models, ai }: Ch
                 streaming={stream.status === 'streaming'}
                 onRegenerate={regenerate}
                 onEdit={edit}
+                pendingUser={pendingMessage}
             />
 
             {stream.error && (
-                <div className="mx-auto w-full max-w-3xl px-4" role="alert">
-                    <p className="mb-2 text-xs text-destructive">{stream.error}</p>
+                <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4" role="alert">
+                    <p className="text-xs text-destructive">{stream.error}</p>
+
+                    {pendingMessage !== null && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={retry}
+                            className="h-7 shrink-0 border-border bg-card text-xs text-foreground hover:bg-muted"
+                        >
+                            <RotateCcw className="mr-1.5 h-3 w-3" />
+                            Reintentar
+                        </Button>
+                    )}
                 </div>
             )}
 
             <div className="shrink-0 border-t border-border bg-background/80 px-4 py-3 backdrop-blur">
                 <div className="mx-auto w-full max-w-3xl">
                     <Composer
+                        key={draftToken}
+                        initialValue={composerSeed}
                         models={models}
                         model={model}
                         onModelChange={setModel}

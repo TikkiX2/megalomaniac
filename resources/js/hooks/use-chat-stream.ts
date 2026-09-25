@@ -6,6 +6,7 @@ export type ChatStreamStatus = 'idle' | 'streaming' | 'error';
 
 interface UseChatStreamOptions {
     onThread?: (threadId: string) => void;
+    onError?: (message: string, recoverable: boolean) => void;
     onComplete?: (result: { text: string; citations: Citation[] }) => void;
 }
 
@@ -109,6 +110,8 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
                         if (!recoverable) {
                             erroredRef.current = true;
                         }
+
+                        optionsRef.current.onError?.(message, recoverable);
                     },
                 },
                 controller.signal,
@@ -135,8 +138,11 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
                 return;
             }
 
-            setError(caught instanceof Error ? caught.message : 'La generación falló.');
+            const message = caught instanceof Error ? caught.message : 'La generación falló.';
+
+            setError(message);
             setStatus('error');
+            optionsRef.current.onError?.(message, false);
         }
     }, []);
 

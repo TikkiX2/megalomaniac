@@ -63,6 +63,7 @@ export function ThreadItem({ thread, active }: ThreadItemProps) {
         return (
             <Input
                 autoFocus
+                maxLength={120}
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 onBlur={commitRename}
