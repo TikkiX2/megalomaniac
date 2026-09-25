@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Ai\Agents\MegalomaniacAgent;
+use App\Ai\Support\AiProviderResolver;
 use App\Http\Controllers\Controller;
 use App\Models\MealLog;
 use App\Models\Routine;
@@ -121,7 +122,9 @@ class AiFitnessController extends Controller
         $prompt .= '{"name": "Meal Name", "calories": 500, "protein": 40, "carbs": 50, "fats": 15, "reason": "Why this meal fits your remaining macros"}\n';
         $prompt .= 'Only return the JSON object, no other text.';
 
-        $response = $agent->forUser($user)->prompt($prompt);
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
         $text = trim($response->text);
 
         $json = $this->extractJson($text);
@@ -171,7 +174,9 @@ class AiFitnessController extends Controller
         $prompt .= '{"name": "Routine Name", "focus": "Strength/Hypertrophy/etc", "exercises": [{"name": "Exercise Name", "sets": 3, "reps": "8-12", "notes": "Optional notes"}]}\n';
         $prompt .= 'Create a balanced routine that complements their recent training. Only return the JSON object, no other text.';
 
-        $response = $agent->forUser($user)->prompt($prompt);
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
         $text = trim($response->text);
 
         $json = $this->extractJson($text);

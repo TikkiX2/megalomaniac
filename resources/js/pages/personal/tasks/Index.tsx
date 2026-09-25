@@ -1,43 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import MainLayout from '@/layouts/main-layout';
 import { Head, router, useForm } from '@inertiajs/react';
+import { Plus, Table as TableIcon, Kanban, Calendar as CalendarIcon, ListTodo, GalleryVertical, GanttChart, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { update as updateTaskRoute, destroy as destroyTaskRoute } from '@/actions/App/Http/Controllers/Personal/PersonalTaskController';
+import { AiInsightCard } from '@/components/ai/AiInsightCard';
+import YooptaEditor from '@/components/freelance/YooptaEditor';
+import ProjectSidebar from '@/components/personal/ProjectSidebar';
+import SavedViewsBar from '@/components/personal/SavedViewsBar';
+import TaskFilters from '@/components/personal/TaskFilters';
+import TaskProperties from '@/components/personal/TaskProperties';
+import TaskCalendar from '@/components/personal/views/TaskCalendar';
+import TaskGallery from '@/components/personal/views/TaskGallery';
+import TaskKanban from '@/components/personal/views/TaskKanban';
+import TaskList from '@/components/personal/views/TaskList';
+import TaskTable from '@/components/personal/views/TaskTable';
+import TaskTimeline from '@/components/personal/views/TaskTimeline';
+import TaskDetailDialog from '@/components/tasks/TaskDetailDialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Table as TableIcon, Kanban, Calendar as CalendarIcon, ListTodo, GalleryVertical, GanttChart, Sparkles } from 'lucide-react';
-import ProjectSidebar from '@/components/personal/ProjectSidebar';
-import TaskFilters from '@/components/personal/TaskFilters';
-import SavedViewsBar from '@/components/personal/SavedViewsBar';
-import TaskProperties from '@/components/personal/TaskProperties';
-import TaskTable from '@/components/personal/views/TaskTable';
-import TaskKanban from '@/components/personal/views/TaskKanban';
-import TaskCalendar from '@/components/personal/views/TaskCalendar';
-import TaskList from '@/components/personal/views/TaskList';
-import TaskGallery from '@/components/personal/views/TaskGallery';
-import TaskTimeline from '@/components/personal/views/TaskTimeline';
-import type { PersonalProject, PersonalTask, TaskSavedView, TaskViewType } from '@/types/personal';
-import YooptaEditor from '@/components/freelance/YooptaEditor';
-import { AiInsightCard } from '@/components/ai/AiInsightCard';
+import { Textarea } from '@/components/ui/textarea';
+import MainLayout from '@/layouts/main-layout';
+import type { BoardColumn, PersonalProject, PersonalTask, TaskSavedView, TaskViewType } from '@/types/personal';
 
 interface Props {
     tasks: { data: PersonalTask[]; links: any; meta?: any };
     projects: PersonalProject[];
     savedViews: TaskSavedView[];
+    boardColumns: BoardColumn[];
     filters: Record<string, any>;
 }
 
-export default function PersonalTasksIndex({ tasks, projects, savedViews, filters }: Props) {
+export default function PersonalTasksIndex({ tasks, projects, savedViews, boardColumns, filters }: Props) {
     const [view, setView] = useState<TaskViewType>(() => {
         const saved = localStorage.getItem('personal-tasks-view') as TaskViewType | null;
         return saved || 'table';
     });
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedTask, setSelectedTask] = useState<PersonalTask | null>(null);
+    const [taskOverrides, setTaskOverrides] = useState<Record<number, PersonalTask>>({});
+    const [deletedTaskIds, setDeletedTaskIds] = useState<number[]>([]);
+    const [syncedTasks, setSyncedTasks] = useState(tasks);
+
+    if (tasks !== syncedTasks) {
+        setSyncedTasks(tasks);
+        setTaskOverrides({});
+        setDeletedTaskIds([]);
+    }
+
+    const mergedTasks = tasks.data
+        .filter((task) => !deletedTaskIds.includes(task.id))
+        .map((task) => (taskOverrides[task.id] ? { ...task, ...taskOverrides[task.id] } : task));
     const [description, setDescription] = useState<any>(null);
     const [taskInsight, setTaskInsight] = useState<string | null>(null);
     const [insightLoading, setInsightLoading] = useState(false);
@@ -233,40 +248,35 @@ export default function PersonalTasksIndex({ tasks, projects, savedViews, filter
                     )}
 
                     <div className="min-h-[400px]">
-                        {view === 'table' && <TaskTable tasks={tasks.data} sortField={filters.sort} sortDirection={filters.direction} onTaskClick={handleTaskClick} onSort={handleSort} />}
-                        {view === 'kanban' && <TaskKanban tasks={tasks.data} onTaskClick={handleTaskClick} />}
-                        {view === 'calendar' && <TaskCalendar tasks={tasks.data} onTaskClick={handleTaskClick} onDateClick={handleDateClick} />}
-                        {view === 'list' && <TaskList tasks={tasks.data} groupBy={filters.group_by || null} onTaskClick={handleTaskClick} />}
-                        {view === 'gallery' && <TaskGallery tasks={tasks.data} onTaskClick={handleTaskClick} />}
-                        {view === 'timeline' && <TaskTimeline tasks={tasks.data} onTaskClick={handleTaskClick} />}
+                        {view === 'table' && <TaskTable tasks={mergedTasks} sortField={filters.sort} sortDirection={filters.direction} onTaskClick={handleTaskClick} onSort={handleSort} />}
+                        {view === 'kanban' && <TaskKanban tasks={mergedTasks} columns={boardColumns} projectId={filters.project_id ? Number(filters.project_id) : null} onTaskClick={handleTaskClick} />}
+                        {view === 'calendar' && <TaskCalendar tasks={mergedTasks} onTaskClick={handleTaskClick} onDateClick={handleDateClick} />}
+                        {view === 'list' && <TaskList tasks={mergedTasks} groupBy={filters.group_by || null} onTaskClick={handleTaskClick} />}
+                        {view === 'gallery' && <TaskGallery tasks={mergedTasks} onTaskClick={handleTaskClick} />}
+                        {view === 'timeline' && <TaskTimeline tasks={mergedTasks} onTaskClick={handleTaskClick} />}
                     </div>
                 </div>
             </div>
 
-            {/* Task detail drawer */}
-            <Sheet open={!!selectedTask} onOpenChange={o => !o && setSelectedTask(null)}>
-                <SheetContent className="bg-card border-border w-full sm:max-w-lg overflow-auto">
-                    {selectedTask && (
-                        <>
-                            <SheetHeader><SheetTitle className="text-left">{selectedTask.title}</SheetTitle></SheetHeader>
-                            <div className="flex flex-col gap-6 mt-6">
-                                <div className="flex flex-col gap-2">
-                                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Descripción</Label>
-                                    <YooptaEditor value={selectedTask.description} onChange={(v) => {
-                                        // Debounced save could be added
-                                    }} readOnly />
-                                    <Button variant="outline" size="sm" onClick={() => window.location.href = `/personal/tasks/${selectedTask.id}`}>Abrir detalle completo</Button>
-                                </div>
-                                <TaskProperties task={selectedTask} />
-                                <div className="flex gap-2">
-                                    <Button variant="outline" className="flex-1" onClick={() => setSelectedTask(null)}>Cerrar</Button>
-                                    <Button className="flex-1 bg-primary" onClick={() => window.location.href = `/personal/tasks/${selectedTask.id}`}>Editar</Button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </SheetContent>
-            </Sheet>
+            {/* Task detail popup */}
+            <TaskDetailDialog
+                open={!!selectedTask}
+                onOpenChange={(open) => !open && setSelectedTask(null)}
+                task={selectedTask}
+                columns={boardColumns}
+                variant="personal"
+                updateUrl={(taskId) => updateTaskRoute.url(taskId)}
+                deleteUrl={(taskId) => destroyTaskRoute.url(taskId)}
+                onSaved={(updated) => {
+                    setTaskOverrides((prev) => ({ ...prev, [updated.id]: updated as unknown as PersonalTask }));
+                    setSelectedTask((prev) => (prev && prev.id === updated.id ? ({ ...prev, ...updated } as unknown as PersonalTask) : prev));
+                }}
+                onDeleted={(taskId) => {
+                    setDeletedTaskIds((prev) => [...prev, taskId]);
+                    setSelectedTask(null);
+                }}
+                extraFields={selectedTask ? <TaskProperties task={selectedTask} /> : null}
+            />
         </MainLayout>
     );
 }

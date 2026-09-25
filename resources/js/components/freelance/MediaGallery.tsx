@@ -1,9 +1,9 @@
+import { router } from '@inertiajs/react';
+import { FileIcon, UploadCloud, X, Download } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { FileIcon, UploadCloud, X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { router } from '@inertiajs/react';
 
 interface MediaGalleryProps {
     files?: any[]; // Spatie Media objects

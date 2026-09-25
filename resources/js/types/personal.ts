@@ -1,3 +1,21 @@
+export type YooptaBlock = {
+    id: string;
+    type: string;
+    children: Array<{ text: string } & Record<string, unknown>>;
+    [key: string]: unknown;
+};
+
+export interface BoardColumn {
+    id: number;
+    user_id: number;
+    project_id: number | null;
+    key: string;
+    label: string;
+    color: string;
+    sort_order: number;
+    is_done: boolean;
+}
+
 export interface PersonalProject {
     id: number;
     user_id: number;
@@ -30,7 +48,7 @@ export interface PersonalTask {
     project_id: number | null;
     user_id: number | null;
     title: string;
-    description: string | null;
+    description: YooptaBlock[] | null;
     status: string;
     priority: string | null;
     due_date: string | null;
@@ -45,6 +63,7 @@ export interface PersonalTask {
     responsible: string | null;
     sort_order: number;
     is_archived: boolean;
+    is_done: boolean;
     properties?: TaskProperty[];
     project?: PersonalProject | null;
     created_at: string;

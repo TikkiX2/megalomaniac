@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import MainLayout from '@/layouts/main-layout';
 import type { Currency } from '@/types/finance';
-import { AiInsightCard } from '@/components/ai/AiInsightCard';
 
 interface Props {
     currencies: Currency[];

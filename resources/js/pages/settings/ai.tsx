@@ -17,6 +17,7 @@ export default function AiSettings({
         ai_provider_url: string | null;
         has_provider_key: boolean;
         ai_model: string | null;
+        ai_embeddings_model: string | null;
         ai_enabled: boolean;
     };
 }) {
@@ -101,6 +102,22 @@ export default function AiSettings({
                                         <InputError className="mt-2" message={errors.ai_model} />
                                         <p className="text-xs text-muted-foreground">
                                             The model identifier to use for AI requests
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="ai_embeddings_model">Embeddings model (optional)</Label>
+                                        <Input
+                                            id="ai_embeddings_model"
+                                            name="ai_embeddings_model"
+                                            type="text"
+                                            className="mt-1 block w-full bg-background"
+                                            defaultValue={ai.ai_embeddings_model ?? ''}
+                                            placeholder="text-embedding-3-small"
+                                        />
+                                        <InputError className="mt-2" message={errors.ai_embeddings_model} />
+                                        <p className="text-xs text-muted-foreground">
+                                            Used for semantic ranking in the news feed. Leave empty to skip embeddings.
                                         </p>
                                     </div>
                                 </div>

@@ -1,22 +1,4 @@
-import React, { useState } from 'react';
-import MainLayout from '@/layouts/main-layout';
-import freelance from '@/routes/freelance';
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger
-} from '@/components/ui/tabs';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import {
     ArrowLeft,
     Pencil,
@@ -31,12 +13,30 @@ import {
     MessageSquare,
     Zap
 } from 'lucide-react';
-import RichTextEditor from '@/components/freelance/YooptaEditor';
+import React, { useState } from 'react';
+import CommentSection from '@/components/freelance/CommentSection';
 import MediaGallery from '@/components/freelance/MediaGallery';
 import TaskBoard from '@/components/freelance/TaskBoard';
-import CommentSection from '@/components/freelance/CommentSection';
+import RichTextEditor from '@/components/freelance/YooptaEditor';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger
+} from '@/components/ui/tabs';
+import MainLayout from '@/layouts/main-layout';
+import freelance from '@/routes/freelance';
 
-export default function ProjectShow({ project, tasks, comments, currencies }: any) {
+export default function ProjectShow({ project, tasks, comments, currencies, boardColumns }: any) {
     const { data, setData, patch, processing } = useForm({
         status: project.status,
     });
@@ -117,7 +117,7 @@ export default function ProjectShow({ project, tasks, comments, currencies }: an
                             </TabsContent>
 
                             <TabsContent value="tasks" className="mt-6">
-                                <TaskBoard project={project} tasks={tasks || project.tasks || []} />
+                                <TaskBoard project={project} tasks={tasks || project.tasks || []} columns={boardColumns || []} />
                             </TabsContent>
 
                             <TabsContent value="comments" className="mt-6">

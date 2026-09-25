@@ -6,6 +6,7 @@ use App\Http\Requests\Api\StoreProjectTaskRequest;
 use App\Http\Resources\ProjectTaskResource;
 use App\Models\Project;
 use App\Models\ProjectTask;
+use App\Services\TaskBoardColumnService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -46,9 +47,14 @@ class ProjectTaskController extends Controller
 
         abort_unless($project, 403);
 
+        $columns = TaskBoardColumnService::columnsFor($project, $request->user());
+        $column = $columns->firstWhere('key', $request->validated('status') ?? null) ?? $columns->first();
+
         $task = ProjectTask::create([
             ...$request->validated(),
             'user_id' => $request->user()->id,
+            'status' => $column->key,
+            'is_done' => $column->is_done,
         ]);
 
         return (new ProjectTaskResource($task->load('properties')))

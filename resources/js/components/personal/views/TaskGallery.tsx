@@ -1,6 +1,7 @@
+import { Calendar, Clock } from 'lucide-react';
+import { yooptaToText } from '@/components/tasks/yoopta';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Clock } from 'lucide-react';
 import type { PersonalTask } from '@/types/personal';
 
 interface Props {
@@ -21,7 +22,7 @@ export default function TaskGallery({ tasks, onTaskClick }: Props) {
                     <CardContent className="p-4 flex flex-col gap-3">
                         <div>
                             <h3 className="font-bold text-sm leading-tight line-clamp-2">{task.title}</h3>
-                            {task.description && typeof task.description === 'string' && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{task.description.slice(0, 80)}</p>}
+                            {yooptaToText(task.description) && <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{yooptaToText(task.description).slice(0, 80)}</p>}
                         </div>
                         <div className="flex gap-1 flex-wrap">
                             <Badge variant="outline" className="text-[9px] font-black uppercase">{task.status}</Badge>

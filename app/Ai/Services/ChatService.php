@@ -54,31 +54,10 @@ class ChatService
 
     /**
      * Resolve the user's BYO provider credentials into the runtime config.
-     *
-     * The config file cannot use closures: laravel/ai v0.11's openai-compatible
-     * gateway casts the configured URL to string at request time. OpenCode Go
-     * also requires a stable per-conversation session header.
      */
     public function configureUserProvider(User $user, ?string $sessionId = null): void
     {
-        $headers = ['User-Agent' => 'megalomaniac-pro/1.0'];
-
-        if ($sessionId !== null && $this->isOpenCodeEndpoint($user->ai_provider_url)) {
-            $headers['x-opencode-session'] = $sessionId;
-        }
-
-        config([
-            'ai.providers.user.url' => $user->ai_provider_url,
-            'ai.providers.user.key' => $user->ai_provider_key,
-            'ai.providers.user.headers' => $headers,
-        ]);
-    }
-
-    protected function isOpenCodeEndpoint(?string $url): bool
-    {
-        $host = parse_url((string) $url, PHP_URL_HOST);
-
-        return is_string($host) && ($host === 'opencode.ai' || str_ends_with($host, '.opencode.ai'));
+        AiProviderResolver::configureUserProvider($user, $sessionId);
     }
 
     public function streamTurn(User $user, ChatThread $thread, string $message, ?string $model = null, ?array $toolsPolicy = null): StreamableAgentResponse
@@ -87,9 +66,7 @@ class ChatService
             throw new RuntimeException('El proveedor de IA no está configurado.');
         }
 
-        $this->configureUserProvider($user, $thread->id);
-
-        [$provider, $defaultModel] = AiProviderResolver::for($user);
+        [$provider, $defaultModel] = AiProviderResolver::for($user, $thread->id);
 
         $policy = $this->prepareToolPolicy($thread, $message, $toolsPolicy);
         $this->lastToolPolicy = $policy;

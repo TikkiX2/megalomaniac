@@ -1,10 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import MainLayout from '@/layouts/main-layout';
-import { WithdrawalCategory } from '@/types/finance';
-import finance from '@/routes/finance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import MainLayout from '@/layouts/main-layout';
+import finance from '@/routes/finance';
+import type { WithdrawalCategory } from '@/types/finance';
 
 interface Props {
     categories: (WithdrawalCategory & { withdrawals_count: number })[];

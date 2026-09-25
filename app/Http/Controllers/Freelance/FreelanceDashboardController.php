@@ -26,7 +26,7 @@ class FreelanceDashboardController extends Controller
             'total_income' => Project::where('user_id', $user->id)->sum('paid_amount'),
             'pending_tasks' => ProjectTask::whereHas('project', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
-            })->whereNotIn('status', ['Done', 'Completed'])->count(),
+            })->where('is_done', false)->count(),
         ];
 
         return Inertia::render('freelance/Dashboard', [
@@ -39,8 +39,7 @@ class FreelanceDashboardController extends Controller
             'upcoming_tasks' => ProjectTask::whereHas('project', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })
-                ->where('status', '!=', 'Done')
-                ->where('status', '!=', 'Completed')
+                ->where('is_done', false)
                 ->orderBy('due_date')
                 ->take(5)
                 ->get(),

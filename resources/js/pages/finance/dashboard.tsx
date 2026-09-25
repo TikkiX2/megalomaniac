@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import MainLayout from '@/layouts/main-layout';
+import { useState, useEffect } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
+import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { Currency, Debt } from '@/types/finance';
 

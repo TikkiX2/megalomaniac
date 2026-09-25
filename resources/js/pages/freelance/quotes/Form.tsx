@@ -1,19 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import MainLayout from '@/layouts/main-layout';
-import freelance from '@/routes/freelance';
 import { Head, useForm, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from '@/components/ui/select';
 import {
     Plus,
     Trash,
@@ -24,7 +9,23 @@ import {
     Sparkles,
     Loader2
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import MainLayout from '@/layouts/main-layout';
+import { csrfHeaders } from '@/lib/csrf';
+import freelance from '@/routes/freelance';
 
 interface QuoteFormProps {
     quote?: any;
@@ -103,7 +104,7 @@ export default function QuoteForm({ quote, clients, projects, currencies }: Quot
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    ...csrfHeaders(),
                 },
                 body: JSON.stringify({
                     client_name: clientName,

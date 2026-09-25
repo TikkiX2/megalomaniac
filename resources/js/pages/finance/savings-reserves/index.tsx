@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import MainLayout from '@/layouts/main-layout';
-import { SavingsReserve, Currency } from '@/types/finance';
 import finance from '@/routes/finance';
+import type { SavingsReserve, Currency } from '@/types/finance';
 
 interface Props {
     reserves: SavingsReserve[];

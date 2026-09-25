@@ -22,6 +22,7 @@ class AiSettingsController extends Controller
                 'ai_provider_url' => $request->user()->ai_provider_url,
                 'has_provider_key' => filled($request->user()->ai_provider_key),
                 'ai_model' => $request->user()->ai_model,
+                'ai_embeddings_model' => $request->user()->ai_embeddings_model,
                 'ai_enabled' => $request->user()->ai_enabled,
             ],
         ]);
@@ -36,6 +37,7 @@ class AiSettingsController extends Controller
             'ai_provider_url' => ['nullable', 'string', 'max:500'],
             'ai_provider_key' => ['nullable', 'string', 'max:500'],
             'ai_model' => ['nullable', 'string', 'max:100'],
+            'ai_embeddings_model' => ['nullable', 'string', 'max:100'],
             'ai_enabled' => ['required', 'boolean'],
         ])->validate();
 

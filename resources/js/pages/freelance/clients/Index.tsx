@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
-import MainLayout from '@/layouts/main-layout';
-import freelance from '@/routes/freelance';
 import { Head, Link, router } from '@inertiajs/react';
+import { Plus, Search, MoreHorizontal, Eye, Pencil, Trash } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -12,15 +19,8 @@ import {
     TableHeader,
     TableRow
 } from '@/components/ui/table';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Plus, Search, MoreHorizontal, Eye, Pencil, Trash } from 'lucide-react';
+import MainLayout from '@/layouts/main-layout';
+import freelance from '@/routes/freelance';
 
 export default function ClientsIndex({ clients, filters }: any) {
     const [search, setSearch] = useState(filters.search || '');

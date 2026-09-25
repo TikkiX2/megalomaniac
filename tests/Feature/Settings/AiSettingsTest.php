@@ -52,3 +52,26 @@ test('new provider key replaces the stored key and model cache is forgotten', fu
     expect($user->refresh()->ai_provider_key)->toBe('sk-nueva');
     expect(Cache::has("ai.models.{$user->id}"))->toBeFalse();
 });
+
+test('embeddings model is saved and exposed in the settings page', function () {
+    $user = User::factory()->withAiProvider()->create();
+
+    $this->actingAs($user)
+        ->put(route('ai-settings.update'), [
+            'ai_provider_url' => 'https://api.example.com/v1',
+            'ai_model' => 'modelo',
+            'ai_embeddings_model' => 'text-embedding-3-small',
+            'ai_enabled' => true,
+        ])
+        ->assertRedirect(route('ai-settings.edit'));
+
+    expect($user->refresh()->ai_embeddings_model)->toBe('text-embedding-3-small');
+
+    $this->actingAs($user)
+        ->get(route('ai-settings.edit'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('settings/ai')
+            ->where('ai.ai_embeddings_model', 'text-embedding-3-small')
+        );
+});

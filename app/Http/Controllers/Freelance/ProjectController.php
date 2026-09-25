@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Currency;
 use App\Models\Project;
+use App\Services\TaskBoardColumnService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -97,6 +98,7 @@ class ProjectController extends Controller
 
         return Inertia::render('freelance/projects/Show', [
             'project' => $project,
+            'boardColumns' => TaskBoardColumnService::columnsFor($project, $project->user)->values(),
             'currencies' => Currency::all(),
         ]);
     }

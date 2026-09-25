@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Observers\ProjectObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+#[ObservedBy([ProjectObserver::class])]
 class Project extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia, SoftDeletes;
@@ -103,7 +106,12 @@ class Project extends Model implements HasMedia
 
     public function tasks(): HasMany
     {
-        return $this->hasMany(ProjectTask::class);
+        return $this->hasMany(ProjectTask::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function boardColumns(): HasMany
+    {
+        return $this->hasMany(TaskBoardColumn::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function payments(): HasMany
@@ -137,7 +145,7 @@ class Project extends Model implements HasMedia
         if ($total === 0) {
             return 0;
         }
-        $done = $this->tasks()->whereIn('status', ['Done', 'Completed', 'done', 'completed', 'completada', 'Completada'])->count();
+        $done = $this->tasks()->where('is_done', true)->count();
 
         return (int) round($done / $total * 100);
     }

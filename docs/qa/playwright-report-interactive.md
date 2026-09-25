@@ -63,8 +63,19 @@ Siguiente al reporte `playwright-report.md` (navegación), este es el crawl **us
 ## Pendientes
 - Nutrition add food / MealLog CRUD (requiere foods seed)
 - Finance incomes/debts/credit-cards/withdrawals/savings (flujo similar a purchases, no testeado pero sin 500)
-- Freelance tasks kanban drag, comments, media, quotes pdf (UI existe, no CRUD interactivo completo)
+- Freelance comments, media, quotes pdf (UI existe, no CRUD interactivo completo)
 - Mobile gym quick library scroll, grocery bulk restock confirm
+
+## Kanban (2026-09-22)
+- Drag-and-drop real en Personal y Freelance (toda la tarjeta, PATCH en background con cola, sin recarga).
+- Popup de detalle centrado con edición completa en ambos tableros; reemplaza el Sheet lateral.
+- Columnas configurables por proyecto (crear, renombrar, color, "cuenta como completada", reordenar, eliminar con destino).
+- Descripción generada por IA desde un prompt (requiere provider configurado en Settings → IA).
+
+## CSRF en fetch (2026-09-23)
+- **Bug**: los `fetch` usaban solo `<meta name="csrf-token">`. Fortify regenera el token en el login y la navegación Inertia no re-renderiza el documento → meta obsoleto → 419 en guardar/drag/columnas tras un login client-side.
+- **Fix**: helper `resources/js/lib/csrf.ts` que prioriza la cookie `XSRF-TOKEN` (`X-XSRF-TOKEN`, como axios/Inertia) con fallback al meta. Aplicado en `TaskDetailDialog`, `ColumnManager`, `TaskKanban`, `TaskBoard` y `quotes/Form.tsx`.
+- Verificado en el contenedor: `PATCH` con meta obsoleto = 419; con cookie = 200.
 
 ## Conclusión
 Uso diario completo **funcional** con datos reales, verde 0%, rojo Ember coherente, 5 bugs críticos corregidos, resto documentado. Server :8010 estable tras rebuild.

@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { router, usePage } from '@inertiajs/react';
 import { Send, Trash, CornerDownRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { destroy } from '@/routes/freelance/comments';
+import { store } from '@/routes/freelance/projects/comments';
 import RichTextEditor from './YooptaEditor';
 // Wayfinder — rutas tipadas generadas por vite-plugin-wayfinder (no Ziggy route() global)
-import { store } from '@/routes/freelance/projects/comments';
-import { destroy } from '@/routes/freelance/comments';
 
 interface Comment {
     id: number;

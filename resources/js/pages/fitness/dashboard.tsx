@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
 import { Head, usePage, Link } from '@inertiajs/react';
-import MainLayout from '@/layouts/main-layout';
-import { SuggestionList } from '@/components/ai/SuggestionList';
+import { useState, useEffect } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
+import { SuggestionList } from '@/components/ai/SuggestionList';
+import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 
 interface WeeklyDay {

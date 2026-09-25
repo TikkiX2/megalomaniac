@@ -1,11 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import MainLayout from '@/layouts/main-layout';
-import { IncomeSource, Currency } from '@/types/finance';
-import finance from '@/routes/finance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MainLayout from '@/layouts/main-layout';
+import finance from '@/routes/finance';
+import type { IncomeSource, Currency } from '@/types/finance';
 
 interface Props {
     sources: IncomeSource[];

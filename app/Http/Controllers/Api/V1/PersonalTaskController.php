@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Requests\Api\StorePersonalTaskRequest;
 use App\Http\Resources\ProjectTaskResource;
 use App\Models\ProjectTask;
+use App\Services\TaskBoardColumnService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\ValidationException;
 
 class PersonalTaskController extends Controller
 {
@@ -33,10 +35,15 @@ class PersonalTaskController extends Controller
 
     public function store(StorePersonalTaskRequest $request): JsonResponse
     {
+        $columns = TaskBoardColumnService::columnsFor(null, $request->user());
+        $column = $columns->firstWhere('key', $request->validated('status') ?? null) ?? $columns->first();
+
         $task = ProjectTask::create([
             ...$request->validated(),
             'user_id' => $request->user()->id,
             'project_id' => null,
+            'status' => $column->key,
+            'is_done' => $column->is_done,
         ]);
 
         return (new ProjectTaskResource($task->load('properties')))
@@ -82,7 +89,19 @@ class PersonalTaskController extends Controller
             'sort_order' => ['nullable', 'integer'],
         ]);
 
-        $task->update($validated);
+        $column = TaskBoardColumnService::columnsFor(null, $request->user())
+            ->firstWhere('key', $validated['status']);
+
+        if (! $column) {
+            throw ValidationException::withMessages([
+                'status' => 'La columna seleccionada no existe en este tablero.',
+            ]);
+        }
+
+        $task->update([
+            ...$validated,
+            'is_done' => $column->is_done,
+        ]);
 
         return new ProjectTaskResource($task->fresh('properties'));
     }

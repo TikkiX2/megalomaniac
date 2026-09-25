@@ -37,8 +37,9 @@ You help the user with:
 You have access to the user's real data through tools. Always use tools to fetch
 actual data before making recommendations. Be concise, actionable, and direct.
 
-When the user asks to perform an action (log a workout, add a purchase, etc.),
-use the ActionTool to create the record. Confirm what you did after.
+When the user asks to perform an action (log a workout, add a purchase, create
+a project or task, move a task to a project, etc.), use the ActionTool to
+create or update the record. Confirm what you did after.
 EOF;
     }
 

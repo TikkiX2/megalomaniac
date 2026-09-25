@@ -1,12 +1,12 @@
-import React from 'react';
-import MainLayout from '@/layouts/main-layout';
-import freelance from '@/routes/freelance';
 import { Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, Download, Printer, Copy, Briefcase, FileText, Calendar, Building, Mail } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Download, Printer, Copy, Briefcase, FileText, Calendar, Building, Mail } from 'lucide-react';
+import MainLayout from '@/layouts/main-layout';
+import freelance from '@/routes/freelance';
 
 export default function QuoteShow({ quote }: any) {
     const handleConvert = () => {

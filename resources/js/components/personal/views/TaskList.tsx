@@ -1,8 +1,8 @@
+import { router } from '@inertiajs/react';
+import { Calendar, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { router } from '@inertiajs/react';
-import { Calendar, Trash } from 'lucide-react';
 import type { PersonalTask } from '@/types/personal';
 
 interface Props {

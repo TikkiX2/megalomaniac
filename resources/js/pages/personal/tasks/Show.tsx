@@ -1,15 +1,15 @@
-import MainLayout from '@/layouts/main-layout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Trash, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import YooptaEditor from '@/components/freelance/YooptaEditor';
 import TaskProperties from '@/components/personal/TaskProperties';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MainLayout from '@/layouts/main-layout';
 import type { PersonalTask, PersonalProject } from '@/types/personal';
 
 interface Props {

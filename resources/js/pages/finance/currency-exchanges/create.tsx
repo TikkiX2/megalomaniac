@@ -1,14 +1,14 @@
 import { Head, useForm, Link } from '@inertiajs/react';
-import MainLayout from '@/layouts/main-layout';
-import finance from '@/routes/finance';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { Currency, IncomeSource, WithdrawalCategory, SavingsReserve } from '@/types/finance';
-import * as React from 'react';
+import MainLayout from '@/layouts/main-layout';
 import { cn } from '@/lib/utils';
+import finance from '@/routes/finance';
+import type { Currency, IncomeSource, WithdrawalCategory, SavingsReserve } from '@/types/finance';
 
 interface Props {
     currencies: Currency[];

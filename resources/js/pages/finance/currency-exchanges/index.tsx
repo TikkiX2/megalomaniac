@@ -1,8 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { CurrencyExchange } from '@/types/finance';
-import { Button } from '@/components/ui/button';
 
 interface Props {
     exchanges: {

@@ -1,11 +1,11 @@
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import MainLayout from '@/layouts/main-layout';
-import { SavingsReserve } from '@/types/finance';
-import finance from '@/routes/finance';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import MainLayout from '@/layouts/main-layout';
+import finance from '@/routes/finance';
+import type { SavingsReserve } from '@/types/finance';
 
 interface Props {
     reserve: SavingsReserve;

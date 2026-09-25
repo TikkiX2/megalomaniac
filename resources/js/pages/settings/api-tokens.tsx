@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Transition } from '@headlessui/react';
 import { Form, Head, router } from '@inertiajs/react';
+import { useState } from 'react';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';

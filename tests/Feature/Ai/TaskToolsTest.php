@@ -135,3 +135,72 @@ it('creates tasks with a due date and rejects foreign tasks', function () {
     expect($result['success'] ?? false)->toBeFalse()
         ->and($foreign->fresh()->is_done)->toBeFalse();
 });
+
+it('creates projects and moves tasks between them through the action tool', function () {
+    $user = User::factory()->create();
+    $tool = new ActionTool($user);
+
+    $created = json_decode((string) $tool->handle(new Request([
+        'action' => 'create_project',
+        'name' => 'Rediseño web',
+        'type' => 'freelance',
+        'description' => 'Landing nueva',
+        'deadline' => now()->addMonth()->toDateString(),
+    ])), true);
+
+    expect($created['success'])->toBeTrue()
+        ->and($created['project']['type'])->toBe('freelance');
+
+    $project = Project::where('name', 'Rediseño web')->first();
+
+    expect($project)->not->toBeNull()
+        ->and($project->boardColumns()->pluck('key')->all())->toBe(['To Do', 'In Progress', 'Done'])
+        ->and($project->description[0]['children'][0]['text'])->toBe('Landing nueva');
+
+    $task = personalTask($user, ['title' => 'Moverme']);
+
+    $moved = json_decode((string) $tool->handle(new Request([
+        'action' => 'update_task',
+        'task_id' => $task->id,
+        'project_id' => $project->id,
+    ])), true);
+
+    expect($moved['success'])->toBeTrue()
+        ->and($task->fresh()->project_id)->toBe($project->id)
+        ->and($task->fresh()->status)->toBe('To Do');
+
+    $detached = json_decode((string) $tool->handle(new Request([
+        'action' => 'update_task',
+        'task_id' => $task->id,
+        'project_id' => 0,
+    ])), true);
+
+    expect($detached['success'])->toBeTrue()
+        ->and($task->fresh()->project_id)->toBeNull()
+        ->and($task->fresh()->status)->toBe('Pending');
+});
+
+it('rejects moving a task to a foreign project', function () {
+    $user = User::factory()->create();
+    $foreignProject = Project::factory()->create();
+    $task = personalTask($user);
+    $tool = new ActionTool($user);
+
+    $result = json_decode((string) $tool->handle(new Request([
+        'action' => 'update_task',
+        'task_id' => $task->id,
+        'project_id' => $foreignProject->id,
+    ])), true);
+
+    expect($result['success'] ?? false)->toBeFalse()
+        ->and($task->fresh()->project_id)->toBeNull();
+});
+
+it('rejects creating a project without a name', function () {
+    $tool = new ActionTool(User::factory()->create());
+
+    $result = json_decode((string) $tool->handle(new Request(['action' => 'create_project'])), true);
+
+    expect($result['success'] ?? false)->toBeFalse()
+        ->and(Project::count())->toBe(0);
+});

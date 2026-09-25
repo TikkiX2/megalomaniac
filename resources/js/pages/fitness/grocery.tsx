@@ -1,11 +1,11 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import GroceryLayout from '@/layouts/grocery-layout';
 import groceryItems from '@/routes/grocery/items';
-import { AiInsightCard } from '@/components/ai/AiInsightCard';
 
 interface GroceryItem {
     id: number;

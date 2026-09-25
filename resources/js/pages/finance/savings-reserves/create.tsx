@@ -1,11 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import MainLayout from '@/layouts/main-layout';
-import { Currency } from '@/types/finance';
-import finance from '@/routes/finance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import MainLayout from '@/layouts/main-layout';
+import finance from '@/routes/finance';
+import type { Currency } from '@/types/finance';
 
 interface Props {
     currencies: Currency[];

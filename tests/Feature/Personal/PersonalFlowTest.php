@@ -99,6 +99,31 @@ it('can move task status via kanban', function () {
     expect($task->fresh()->status)->toBe('Done');
 });
 
+it('moves task via json and reindexes ordered ids', function () {
+    $taskA = ProjectTask::factory()->create(['user_id' => $this->user->id, 'status' => 'Pending', 'sort_order' => 0]);
+    $taskB = ProjectTask::factory()->create(['user_id' => $this->user->id, 'status' => 'In Progress', 'sort_order' => 5]);
+
+    $this->patchJson("/personal/tasks/{$taskA->id}/move", [
+        'status' => 'In Progress',
+        'ordered_ids' => [$taskA->id, $taskB->id],
+    ])->assertOk();
+
+    expect($taskA->fresh()->status)->toBe('In Progress')
+        ->and($taskA->fresh()->sort_order)->toBe(0)
+        ->and($taskB->fresh()->sort_order)->toBe(1);
+});
+
+it('cannot move another user task', function () {
+    $otherTask = ProjectTask::factory()->create(['status' => 'Pending']);
+
+    $this->patchJson("/personal/tasks/{$otherTask->id}/move", [
+        'status' => 'Done',
+        'ordered_ids' => [$otherTask->id],
+    ])->assertForbidden();
+
+    expect($otherTask->fresh()->status)->toBe('Pending');
+});
+
 it('can add custom property to task', function () {
     $task = ProjectTask::factory()->create(['user_id' => $this->user->id]);
     $this->post("/personal/tasks/{$task->id}/properties", [

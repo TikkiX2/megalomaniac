@@ -1,11 +1,11 @@
-import React from 'react';
-import MainLayout from '@/layouts/main-layout';
-import freelance from '@/routes/freelance';
 import { Head, useForm, Link } from '@inertiajs/react';
+import { ArrowLeft, Save } from 'lucide-react';
+import React from 'react';
+import RichTextEditor from '@/components/freelance/YooptaEditor';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
     Select,
     SelectContent,
@@ -13,9 +13,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Save } from 'lucide-react';
-import RichTextEditor from '@/components/freelance/YooptaEditor';
+import { Textarea } from '@/components/ui/textarea';
+import MainLayout from '@/layouts/main-layout';
+import freelance from '@/routes/freelance';
 
 interface ProjectFormProps {
     project?: any;

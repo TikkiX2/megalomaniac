@@ -1,13 +1,13 @@
-import React from 'react';
-import MainLayout from '@/layouts/main-layout';
-import freelance from '@/routes/freelance';
 import { Head, useForm, Link } from '@inertiajs/react';
+import { ArrowLeft, Save } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowLeft, Save } from 'lucide-react';
+import MainLayout from '@/layouts/main-layout';
+import freelance from '@/routes/freelance';
 
 interface ClientFormProps {
     client?: any;

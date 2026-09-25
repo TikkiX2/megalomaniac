@@ -1,8 +1,8 @@
 import { Link, router } from '@inertiajs/react';
+import { FolderKanban, Plus, Layers } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { FolderKanban, Plus, Layers } from 'lucide-react';
 import type { PersonalProject } from '@/types/personal';
 
 interface Props {

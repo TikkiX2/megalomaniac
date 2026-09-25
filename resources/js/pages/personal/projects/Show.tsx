@@ -1,10 +1,10 @@
-import MainLayout from '@/layouts/main-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, Calendar, Trash, Pencil, Target, Users, CheckSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Calendar, Trash, Pencil, Target, Users, CheckSquare } from 'lucide-react';
+import MainLayout from '@/layouts/main-layout';
 import type { PersonalProject } from '@/types/personal';
 
 interface Props {

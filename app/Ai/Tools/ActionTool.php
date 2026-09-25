@@ -2,6 +2,8 @@
 
 namespace App\Ai\Tools;
 
+use App\Models\Client;
+use App\Models\Currency;
 use App\Models\Debt;
 use App\Models\GroceryItem;
 use App\Models\Income;
@@ -16,6 +18,7 @@ use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 use App\Services\TaskBoardColumnService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Support\Str;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
@@ -26,7 +29,7 @@ class ActionTool implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Perform actions on behalf of the user: create workouts, log sets, log meals, add purchases, add income, add debts, create/complete/update tasks, log supplements, add grocery items. Use this when the user asks to record, create or update something.';
+        return 'Perform actions on behalf of the user: create projects, create workouts, log sets, log meals, add purchases, add income, add debts, create/complete/update tasks (including moving them between projects), log supplements, add grocery items. Use this when the user asks to record, create or update something.';
     }
 
     public function handle(Request $request): Stringable|string
@@ -34,6 +37,7 @@ class ActionTool implements Tool
         $action = $request['action'] ?? '';
 
         return match ($action) {
+            'create_project' => $this->createProject($request),
             'create_workout' => $this->createWorkout($request),
             'log_set' => $this->logSet($request),
             'log_meal' => $this->logMeal($request),
@@ -45,8 +49,77 @@ class ActionTool implements Tool
             'update_task' => $this->updateTask($request),
             'log_supplement' => $this->logSupplement($request),
             'add_grocery_item' => $this->addGroceryItem($request),
-            default => json_encode(['error' => 'Invalid action. Use: create_workout, log_set, log_meal, add_purchase, add_income, add_debt, create_task, complete_task, update_task, log_supplement, add_grocery_item']),
+            default => json_encode(['error' => 'Invalid action. Use: create_project, create_workout, log_set, log_meal, add_purchase, add_income, add_debt, create_task, complete_task, update_task, log_supplement, add_grocery_item']),
         };
+    }
+
+    private function createProject(Request $request): string
+    {
+        $name = trim((string) ($request['name'] ?? ''));
+
+        if ($name === '') {
+            return json_encode(['success' => false, 'error' => 'Project name is required']);
+        }
+
+        $type = in_array($request['type'] ?? null, ['personal', 'freelance'], true)
+            ? $request['type']
+            : 'personal';
+
+        $clientId = $request['client_id'] ?? null;
+
+        if ($clientId) {
+            $client = Client::where('id', $clientId)->where('user_id', $this->user->id)->first();
+
+            if (! $client) {
+                return json_encode(['success' => false, 'error' => 'Client not found']);
+            }
+
+            $clientId = $client->id;
+        }
+
+        $currencyId = $request['currency_id'] ?? null;
+
+        if ($currencyId && ! Currency::whereKey($currencyId)->exists()) {
+            return json_encode(['success' => false, 'error' => 'Currency not found']);
+        }
+
+        $project = Project::create([
+            'user_id' => $this->user->id,
+            'client_id' => $clientId,
+            'currency_id' => $currencyId,
+            'name' => $name,
+            'description' => $this->yooptaDescription($request['description'] ?? null),
+            'status' => $request['status'] ?? 'pending',
+            'type' => $type,
+            'deadline' => $request['deadline'] ?? null,
+            'priority' => $request['priority'] ?? null,
+            'total_amount' => $request['total_amount'] ?? 0,
+            'notes' => $request['notes'] ?? null,
+        ]);
+
+        return json_encode([
+            'success' => true,
+            'message' => 'Project created',
+            'project' => $project->only(['id', 'name', 'type', 'status', 'client_id', 'deadline']),
+        ], JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Wrap a plain-text description into the Yoopta block shape the UI renders.
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function yooptaDescription(mixed $description): ?array
+    {
+        if (! is_string($description) || trim($description) === '') {
+            return null;
+        }
+
+        return [[
+            'id' => (string) Str::uuid(),
+            'type' => 'paragraph',
+            'children' => [['text' => trim($description)]],
+        ]];
     }
 
     private function createWorkout(Request $request): string
@@ -162,6 +235,10 @@ class ActionTool implements Tool
             ? Project::where('id', $projectId)->where('user_id', $this->user->id)->first()
             : null;
 
+        if ($projectId && ! $project) {
+            return json_encode(['success' => false, 'error' => 'Project not found']);
+        }
+
         $statusKey = TaskBoardColumnService::firstStatusKey($project, $this->user);
         $column = TaskBoardColumnService::columnsFor($project, $this->user)->firstWhere('key', $statusKey);
 
@@ -251,10 +328,39 @@ class ActionTool implements Tool
             'due_date' => $request['due_date'] ?? null,
         ], fn (mixed $value): bool => $value !== null);
 
-        if ($status = $request['status'] ?? null) {
-            $data['status'] = $status;
-            $data['is_done'] = (bool) TaskBoardColumnService::columnsFor($task->project, $this->user)
-                ->firstWhere('key', $status)?->is_done;
+        $movesProject = $request->offsetExists('project_id');
+        $targetProject = $task->project;
+
+        if ($movesProject) {
+            $targetId = $request['project_id'];
+
+            if ($targetId) {
+                $targetProject = Project::where('id', $targetId)->where('user_id', $this->user->id)->first();
+
+                if (! $targetProject) {
+                    return json_encode(['success' => false, 'error' => 'Project not found']);
+                }
+            } else {
+                $targetProject = null;
+            }
+        }
+
+        $status = $request['status'] ?? null;
+
+        if ($status || $movesProject) {
+            $status ??= $task->status;
+
+            $columns = TaskBoardColumnService::columnsFor($targetProject, $this->user);
+
+            $column = $columns->firstWhere('key', $status) ?? $columns->first();
+
+            $data['status'] = $column?->key ?? $status;
+            $data['is_done'] = (bool) $column?->is_done;
+        }
+
+        if ($movesProject) {
+            $data['project_id'] = $targetProject?->id;
+            $data['sort_order'] = $this->nextSortOrder($targetProject);
         }
 
         $task->update($data);
@@ -262,8 +368,20 @@ class ActionTool implements Tool
         return json_encode([
             'success' => true,
             'message' => 'Task updated',
-            'task' => $task->only(['id', 'title', 'status', 'priority', 'due_date', 'is_done']),
+            'task' => $task->only(['id', 'title', 'status', 'priority', 'due_date', 'is_done', 'project_id']),
         ], JSON_PRETTY_PRINT);
+    }
+
+    private function nextSortOrder(?Project $project): int
+    {
+        return (int) ProjectTask::query()
+            ->where('user_id', $this->user->id)
+            ->when(
+                $project,
+                fn ($query) => $query->where('project_id', $project->id),
+                fn ($query) => $query->whereNull('project_id'),
+            )
+            ->max('sort_order') + 1;
     }
 
     private function findTask(mixed $taskId): ?ProjectTask
@@ -280,15 +398,20 @@ class ActionTool implements Tool
         return [
             'action' => $schema->string()
                 ->enum([
-                    'create_workout', 'log_set', 'log_meal', 'add_purchase',
+                    'create_project', 'create_workout', 'log_set', 'log_meal', 'add_purchase',
                     'add_income', 'add_debt', 'create_task', 'complete_task', 'update_task',
                     'log_supplement', 'add_grocery_item',
                 ])
                 ->description('Action to perform')
                 ->required(),
+            // Project params
+            'type' => $schema->string()->description('Project type: personal or freelance (for create_project)')->enum(['personal', 'freelance']),
+            'client_id' => $schema->integer()->description('Client ID (for create_project, freelance projects only)'),
+            'total_amount' => $schema->number()->description('Total amount (for create_project)'),
+            'deadline' => $schema->string()->description('Deadline YYYY-MM-DD (for create_project)'),
             // Workout params
             'started_at' => $schema->string()->description('ISO 8601 datetime (for create_workout)'),
-            'notes' => $schema->string()->description('Notes (for create_workout, add_debt)'),
+            'notes' => $schema->string()->description('Notes (for create_project, create_workout, add_debt)'),
             // Log set params
             'workout_exercise_id' => $schema->integer()->description('Workout Exercise ID (for log_set)'),
             'weight' => $schema->number()->description('Weight in kg/lbs (for log_set)'),
@@ -304,7 +427,7 @@ class ActionTool implements Tool
             'quantity' => $schema->number()->description('Quantity (for log_meal, add_grocery_item)'),
             'meal_type' => $schema->string()->description('Meal type: breakfast, lunch, dinner, snack (for log_meal)'),
             // Purchase params
-            'name' => $schema->string()->description('Name (for add_purchase, add_income, add_debt, add_grocery_item)'),
+            'name' => $schema->string()->description('Name (for create_project, add_purchase, add_income, add_debt, add_grocery_item)'),
             'amount' => $schema->number()->description('Amount (for add_purchase, add_income, add_debt)'),
             'category_id' => $schema->integer()->description('Category ID (for add_purchase)'),
             'currency_id' => $schema->integer()->description('Currency ID (for add_purchase, add_income)'),
@@ -313,15 +436,14 @@ class ActionTool implements Tool
             'source_id' => $schema->integer()->description('Alias for income_source_id (for add_income)'),
             'received_date' => $schema->string()->description('Date YYYY-MM-DD (for add_income)'),
             // Debt params
-            'due_date' => $schema->string()->description('Due date YYYY-MM-DD (for add_debt)'),
-            'description' => $schema->string()->description('Description (for add_purchase, add_debt, create_task)'),
+            'due_date' => $schema->string()->description('Due date YYYY-MM-DD (for add_debt, create_task, update_task)'),
+            'description' => $schema->string()->description('Description (for create_project, add_purchase, add_debt, create_task)'),
             // Task params
-            'project_id' => $schema->integer()->description('Project ID (for create_task)'),
-            'title' => $schema->string()->description('Title (for create_task)'),
-            'priority' => $schema->string()->description('Priority (for create_task, update_task)'),
+            'project_id' => $schema->integer()->description('Project ID (for create_task, update_task; use 0 to detach the task from its project)'),
+            'title' => $schema->string()->description('Title (for create_task, update_task)'),
+            'priority' => $schema->string()->description('Priority (for create_project, create_task, update_task)'),
             'task_id' => $schema->integer()->description('Task ID (for complete_task, update_task)'),
-            'status' => $schema->string()->description('Status (for update_task)'),
-            'due_date' => $schema->string()->description('Due date YYYY-MM-DD (for create_task, update_task)'),
+            'status' => $schema->string()->description('Status (for create_project, update_task; must match a board column)'),
             // Supplement params
             'supplement_id' => $schema->integer()->description('Supplement ID (for log_supplement)'),
             'taken_at' => $schema->string()->description('ISO 8601 datetime (for log_supplement)'),

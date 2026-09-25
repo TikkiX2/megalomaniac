@@ -22,6 +22,12 @@ it('adds actions when the message contains a write verb', function () {
         ->and(ToolRouter::route('Anotá que entrené pecho'))->toContain('workout', 'actions');
 });
 
+it('routes project creation and task moves to the action tools', function () {
+    expect(ToolRouter::route('Creá un proyecto para el cliente'))->toContain('actions')
+        ->and(ToolRouter::route('Moveme la tarea al proyecto Rediseño'))->toContain('tasks', 'actions')
+        ->and(ToolRouter::route('Asigná esta tarea al proyecto nuevo'))->toContain('tasks', 'actions');
+});
+
 it('falls back to the cheap default set', function () {
     expect(ToolRouter::route('Hola, ¿cómo estás?'))->toBe(['tasks', 'integrations'])
         ->and(ToolRouter::route('Contame algo interesante'))->not->toContain('actions', 'agents');

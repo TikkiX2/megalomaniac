@@ -8,7 +8,11 @@ use App\Http\Requests\Personal\UpdatePersonalTaskRequest;
 use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\TaskSavedView;
+use App\Services\TaskBoardColumnService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PersonalTaskController extends Controller
@@ -52,10 +56,15 @@ class PersonalTaskController extends Controller
 
         $savedViews = TaskSavedView::where('user_id', $request->user()->id)->orderBy('name')->get();
 
+        $projectFilter = $request->project_id
+            ? Project::where('id', $request->project_id)->where('user_id', $request->user()->id)->first()
+            : null;
+
         return Inertia::render('personal/tasks/Index', [
             'tasks' => $tasks,
             'projects' => $projects,
             'savedViews' => $savedViews,
+            'boardColumns' => TaskBoardColumnService::columnsFor($projectFilter, $request->user())->values(),
             'filters' => $request->only(['project_id', 'status', 'priority', 'search', 'due_from', 'due_to', 'tags', 'sort', 'direction']),
         ]);
     }
@@ -66,12 +75,27 @@ class PersonalTaskController extends Controller
         $validated['user_id'] = $request->user()->id;
 
         // Handle project_id nullability - if provided, verify it belongs to user and is personal
+        $project = null;
         if (! empty($validated['project_id'])) {
             $project = Project::where('id', $validated['project_id'])
                 ->where('user_id', $request->user()->id)
                 ->where('type', 'personal')
                 ->firstOrFail();
         }
+
+        if (empty($validated['status'])) {
+            $validated['status'] = TaskBoardColumnService::firstStatusKey($project, $request->user());
+        }
+
+        $column = TaskBoardColumnService::ensureColumnForScope($project, $request->user(), $validated['status']);
+
+        if (! $column) {
+            throw ValidationException::withMessages([
+                'status' => 'La columna seleccionada no existe en este tablero.',
+            ]);
+        }
+
+        $validated['is_done'] = $column->is_done;
 
         $properties = $validated['properties'] ?? null;
         unset($validated['properties']);
@@ -123,7 +147,23 @@ class PersonalTaskController extends Controller
             $validated['description'] = null;
         }
 
+        if (array_key_exists('status', $validated)) {
+            $column = TaskBoardColumnService::ensureColumnForScope($task->project, $request->user(), $validated['status']);
+
+            if (! $column) {
+                throw ValidationException::withMessages([
+                    'status' => 'La columna seleccionada no existe en este tablero.',
+                ]);
+            }
+
+            $validated['is_done'] = $column->is_done;
+        }
+
         $task->update($validated);
+
+        if ($request->expectsJson()) {
+            return response()->json(['task' => $task->fresh()->load('properties')]);
+        }
 
         return back()->with('success', 'Tarea actualizada.');
     }
@@ -145,9 +185,42 @@ class PersonalTaskController extends Controller
             'status' => ['required', 'string', 'max:50'],
             'sort_order' => ['nullable', 'integer'],
             'project_id' => ['nullable', 'exists:projects,id'],
+            'ordered_ids' => ['sometimes', 'array'],
+            'ordered_ids.*' => ['integer'],
         ]);
 
-        $task->update($validated);
+        if (array_key_exists('project_id', $validated) && $validated['project_id'] !== null) {
+            $project = Project::where('id', $validated['project_id'])
+                ->where('user_id', $request->user()->id)
+                ->firstOrFail();
+        } else {
+            $project = $task->project;
+        }
+
+        $column = TaskBoardColumnService::ensureColumnForScope($project, $request->user(), $validated['status']);
+
+        if (! $column) {
+            throw ValidationException::withMessages([
+                'status' => 'La columna seleccionada no existe en este tablero.',
+            ]);
+        }
+
+        DB::transaction(function () use ($task, $validated, $column) {
+            $task->update([
+                ...Arr::only($validated, ['status', 'sort_order', 'project_id']),
+                'is_done' => $column->is_done,
+            ]);
+
+            foreach ($validated['ordered_ids'] ?? [] as $index => $id) {
+                ProjectTask::where('user_id', $task->user_id)
+                    ->whereKey($id)
+                    ->update(['sort_order' => $index]);
+            }
+        });
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return back()->with('success', 'Tarea movida.');
     }

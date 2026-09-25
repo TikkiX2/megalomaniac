@@ -31,6 +31,7 @@ class ProjectTask extends Model
         'actual_time',
         'sort_order',
         'is_archived',
+        'is_done',
         'notion_page_id',
         'notion_last_sync',
     ];
@@ -41,6 +42,7 @@ class ProjectTask extends Model
         'due_date' => 'date',
         'start_date' => 'date',
         'is_archived' => 'boolean',
+        'is_done' => 'boolean',
         'notion_last_sync' => 'datetime',
     ];
 
@@ -61,7 +63,7 @@ class ProjectTask extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', '!=', 'Done')->where('status', '!=', 'Completed');
+        return $query->where('is_done', false);
     }
 
     public function scopePersonal($query)

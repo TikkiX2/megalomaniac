@@ -1,9 +1,9 @@
+import { router } from '@inertiajs/react';
+import { ArrowUpDown, Pencil, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { router } from '@inertiajs/react';
-import { ArrowUpDown, Pencil, Trash } from 'lucide-react';
 import type { PersonalTask } from '@/types/personal';
 
 interface Props {

@@ -31,6 +31,7 @@ class User extends Authenticatable
         'ai_provider_url',
         'ai_provider_key',
         'ai_model',
+        'ai_embeddings_model',
         'ai_enabled',
     ];
 
@@ -169,6 +170,11 @@ class User extends Authenticatable
     public function personalTasks(): HasMany
     {
         return $this->hasMany(ProjectTask::class);
+    }
+
+    public function boardColumns(): HasMany
+    {
+        return $this->hasMany(TaskBoardColumn::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function taskSavedViews(): HasMany

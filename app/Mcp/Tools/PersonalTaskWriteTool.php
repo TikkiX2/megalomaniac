@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tools;
 
 use App\Models\ProjectTask;
+use App\Services\TaskBoardColumnService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -57,12 +58,16 @@ class PersonalTaskWriteTool extends Tool
             'due_date' => ['nullable', 'date'],
         ]);
 
+        $statusKey = $request['status'] ?? TaskBoardColumnService::firstStatusKey(null, $user);
+        $column = TaskBoardColumnService::columnsFor(null, $user)->firstWhere('key', $statusKey);
+
         $task = ProjectTask::create([
             'user_id' => $user->id,
             'project_id' => null,
             'title' => $request['title'],
             'description' => $request['description'] ?? null,
-            'status' => $request['status'] ?? 'Pending',
+            'status' => $column?->key ?? $statusKey,
+            'is_done' => (bool) $column?->is_done,
             'priority' => $request['priority'] ?? null,
             'due_date' => $request['due_date'] ?? null,
             'sort_order' => ProjectTask::where('user_id', $user->id)->whereNull('project_id')->max('sort_order') + 1,

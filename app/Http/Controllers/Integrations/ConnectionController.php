@@ -60,6 +60,7 @@ class ConnectionController extends Controller
                     'options' => $field->options,
                 ], $connector->authFields()),
                 'transports' => $connector->transports(),
+                'option_fields' => method_exists($connector, 'optionFields') ? $connector->optionFields() : [],
             ])
             ->values();
 

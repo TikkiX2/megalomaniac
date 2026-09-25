@@ -15,7 +15,7 @@ return [
     'keywords' => [
         'tasks' => [
             'tarea', 'backlog', 'pendiente', 'vence', 'vencimiento', 'plazo',
-            'deadline', 'kanban', 'por hacer',
+            'deadline', 'kanban', 'por hacer', 'proyecto', 'proyectos',
         ],
         'workout' => [
             'entren', 'ejercicio', 'rutina', 'serie', 'repeticion', 'press',
@@ -60,7 +60,8 @@ return [
         'anotar', 'loguea', 'loguear', 'guarda', 'guardar', 'anadi', 'suma',
         'sumar', 'marca', 'marcar', 'actualiza', 'actualizar', 'completa',
         'completar', 'borra', 'borrar', 'modifica', 'modificar', 'cambia',
-        'cambiar',
+        'cambiar', 'mov', 'mueve', 'mueva', 'asigna', 'asignar', 'reasigna',
+        'reasignar', 'traslada', 'trasladar',
     ],
 
     /*

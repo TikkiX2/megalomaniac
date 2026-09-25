@@ -34,6 +34,7 @@ use App\Http\Controllers\Personal\PersonalTaskController;
 use App\Http\Controllers\Personal\TaskPropertyController;
 use App\Http\Controllers\Personal\TaskSavedViewController;
 use App\Http\Controllers\Supplement\SupplementController;
+use App\Http\Controllers\TaskBoardColumnController;
 use App\Models\MealLog;
 use App\Models\Supplement;
 use App\Models\Workout;
@@ -328,7 +329,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('quotes/{quote}/duplicate', [QuoteController::class, 'duplicate'])->name('quotes.duplicate');
         Route::post('quotes/{quote}/convert', [QuoteController::class, 'convertToProject'])->name('quotes.convert');
 
-        Route::resource('projects.tasks', ProjectTaskController::class)->shallow();
+        Route::resource('projects.tasks', ProjectTaskController::class)->shallow()->except(['create', 'edit', 'show']);
+        Route::patch('tasks/{task}/move', [ProjectTaskController::class, 'move'])->name('tasks.move');
         Route::post('tasks/{task}/sync-to-notion', [ProjectTaskController::class, 'syncToNotion'])->name('tasks.sync-to-notion');
         Route::post('tasks/{task}/sync-from-notion', [ProjectTaskController::class, 'syncFromNotion'])->name('tasks.sync-from-notion');
 

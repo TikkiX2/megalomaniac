@@ -7,6 +7,7 @@ namespace App\Mcp\Tools;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectTask;
+use App\Services\TaskBoardColumnService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -124,6 +125,7 @@ class FreelanceWriteTool extends Tool
         ]);
 
         $projectId = $request->get('project_id');
+        $project = null;
 
         if ($projectId) {
             $project = Project::where('id', $projectId)
@@ -139,12 +141,16 @@ class FreelanceWriteTool extends Tool
             $order = ProjectTask::where('user_id', $user->id)->whereNull('project_id')->max('sort_order') ?? 0;
         }
 
+        $statusKey = $request->get('status') ?: TaskBoardColumnService::firstStatusKey($project, $user);
+        $column = TaskBoardColumnService::columnsFor($project, $user)->firstWhere('key', $statusKey);
+
         $task = ProjectTask::create([
             'project_id' => $projectId,
             'user_id' => $user->id,
             'title' => $request->get('name'),
             'description' => $request->get('description'),
-            'status' => $request->get('status', 'Pending'),
+            'status' => $column?->key ?? $statusKey,
+            'is_done' => (bool) $column?->is_done,
             'due_date' => $request->get('due_date'),
             'priority' => $request->get('priority'),
             'responsible' => $request->get('responsible'),

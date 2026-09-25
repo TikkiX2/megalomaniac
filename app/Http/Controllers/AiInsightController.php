@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Ai\Agents\MegalomaniacAgent;
+use App\Ai\Agents\TaskDescriptionAgent;
 use App\Ai\Services\InsightService;
+use App\Ai\Support\AiProviderResolver;
+use App\Ai\Support\MarkdownToYoopta;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -65,7 +68,9 @@ class AiInsightController extends Controller
         $prompt .= "- Recommendations to reach goals\n\n";
         $prompt .= "Meal data (JSON):\n".$recentMeals->toJson();
 
-        $response = $agent->forUser($user)->prompt($prompt);
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
 
         return response()->json([
             'insight' => $response->text,
@@ -124,7 +129,9 @@ class AiInsightController extends Controller
         $prompt .= "Return as JSON with this structure:\n";
         $prompt .= '{"items": [{"description": "...", "hours": N, "hourly_rate": N}], "summary": "...", "timeline": "..."}';
 
-        $response = $agent->forUser($user)->prompt($prompt);
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
 
         try {
             $json = json_decode($response->text, true);
@@ -145,5 +152,50 @@ class AiInsightController extends Controller
                 'message' => 'Error processing AI response.',
             ]);
         }
+    }
+
+    public function generateTaskDescription(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'prompt' => 'required|string|max:2000',
+            'title' => 'nullable|string|max:255',
+            'context' => 'nullable|string|max:255',
+        ]);
+
+        $user = $request->user();
+
+        if (! $user->ai_enabled) {
+            return response()->json([
+                'description' => null,
+                'message' => 'AI not configured.',
+            ]);
+        }
+
+        $prompt = '';
+        if (! empty($validated['title'])) {
+            $prompt .= "Tarea: {$validated['title']}\n";
+        }
+        if (! empty($validated['context'])) {
+            $prompt .= "Contexto: {$validated['context']}\n";
+        }
+        $prompt .= "Escribe la descripción con este pedido: {$validated['prompt']}";
+
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = (new TaskDescriptionAgent)->prompt($prompt, provider: $provider, model: $model);
+
+        $blocks = MarkdownToYoopta::convert($response->text);
+
+        if ($blocks === []) {
+            return response()->json([
+                'description' => null,
+                'message' => 'Could not generate a description.',
+            ]);
+        }
+
+        return response()->json([
+            'description' => $blocks,
+            'message' => null,
+        ]);
     }
 }

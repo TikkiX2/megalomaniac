@@ -1,25 +1,23 @@
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+    DndContext,
+    DragOverlay,
+    KeyboardSensor,
+    PointerSensor,
+    useDroppable,
+    useSensor,
+    useSensors,
+    type DragStartEvent,
+    type DragEndEvent,
+} from '@dnd-kit/core';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+    arrayMove,
+    sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { router, useForm } from '@inertiajs/react';
 import {
     Plus,
     MoreHorizontal,
@@ -29,8 +27,25 @@ import {
     ChevronLeft,
     ChevronRight,
     AlertTriangle,
+    GripVertical,
 } from 'lucide-react';
-import { router, useForm } from '@inertiajs/react';
+import React, { useRef, useState } from 'react';
+import { store, destroy, move } from '@/actions/App/Http/Controllers/Freelance/ProjectTaskController';
+import { update as updateTaskRoute } from '@/actions/App/Http/Controllers/Freelance/ProjectTaskController';
+import { boardCollisionDetection } from '@/components/tasks/collisionDetection';
+import { AddColumnButton, ColumnMenu, columnAccentClass, columnDotClass } from '@/components/tasks/ColumnManager';
+import TaskDetailDialog from '@/components/tasks/TaskDetailDialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -38,75 +53,92 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { store, update, destroy } from '@/actions/App/Http/Controllers/Freelance/ProjectTaskController';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { csrfHeaders } from '@/lib/csrf';
+import type { BoardColumn, YooptaBlock } from '@/types/personal';
 
 interface Task {
     id: number;
     title: string;
+    description?: YooptaBlock[] | null;
     status: string;
     priority: string;
     due_date?: string | null;
     responsible?: string | null;
     tags?: string[];
     area?: string | null;
+    is_done?: boolean;
 }
 
 interface TaskBoardProps {
-    project: any;
+    project: { id: number; name?: string | null };
     tasks: Task[];
+    columns: BoardColumn[];
 }
 
-type ColumnDef = {
-    key: string;
-    label: string;
-    dot: string;
-    accent: string;
+const UNKNOWN_COLUMN: BoardColumn = {
+    id: -1,
+    user_id: 0,
+    project_id: null,
+    key: '__unknown',
+    label: 'Sin columna',
+    color: 'slate',
+    sort_order: 999,
+    is_done: false,
 };
 
-const COLUMNS: ColumnDef[] = [
-    { key: 'To Do', label: 'Pendiente', dot: 'bg-amber-500', accent: 'border-amber-500/20' },
-    { key: 'In Progress', label: 'En Progreso', dot: 'bg-primary', accent: 'border-primary/30' },
-    { key: 'Done', label: 'Completada', dot: 'bg-emerald-500', accent: 'border-emerald-500/20' },
-];
-
-// Normaliza variantes históricas a las 3 claves canónicas
-const STATUS_MAP: Record<string, string> = {
-    // Pendiente
-    'To Do': 'To Do',
-    'Todo': 'To Do',
-    'pending': 'To Do',
-    'Pending': 'To Do',
-    'Pendiente': 'To Do',
-    'pendiente': 'To Do',
-    // En Progreso
-    'In Progress': 'In Progress',
-    'in_progress': 'In Progress',
-    'En Progreso': 'In Progress',
-    'en_progreso': 'In Progress',
-    'Review': 'In Progress',
-    // Completada
-    'Done': 'Done',
-    'done': 'Done',
-    'Completed': 'Done',
-    'completed': 'Done',
-    'Completada': 'Done',
-    'completada': 'Done',
+const LEGACY_ALIASES: Record<string, number> = {
+    Pending: 0,
+    'To Do': 0,
+    Todo: 0,
+    pendiente: 0,
+    Pendiente: 0,
+    'In Progress': 1,
+    in_progress: 1,
+    'En Progreso': 1,
+    'en_progreso': 1,
+    Review: 1,
+    Done: 2,
+    Completada: 2,
+    Completed: 2,
+    done: 2,
+    completada: 2,
 };
 
-function normalizeStatus(raw: string): string {
-    if (!raw) return 'To Do';
-    return STATUS_MAP[raw] ?? raw;
+function resolveColumnKey(status: string, columns: BoardColumn[]): string {
+    if (columns.some((column) => column.key === status)) {
+        return status;
+    }
+
+    const index = LEGACY_ALIASES[status];
+
+    if (index !== undefined && columns[index]) {
+        return columns[index].key;
+    }
+
+    return UNKNOWN_COLUMN.key;
 }
 
 function isOverdue(task: Task): boolean {
     if (!task.due_date) return false;
-    if (normalizeStatus(task.status) === 'Done') return false;
+
     const due = new Date(task.due_date);
     if (isNaN(due.getTime())) return false;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     due.setHours(0, 0, 0, 0);
-    return due < today;
+
+    return due < today && !task.is_done;
 }
 
 function formatDueDate(due?: string | null): string {
@@ -116,23 +148,107 @@ function formatDueDate(due?: string | null): string {
     return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-export default function TaskBoard({ project, tasks }: TaskBoardProps) {
+export default function TaskBoard({ project, tasks, columns }: TaskBoardProps) {
     const safeTasks = Array.isArray(tasks) ? tasks : [];
+    const safeColumns = Array.isArray(columns) ? columns : [];
 
     const [open, setOpen] = useState(false);
+    const [activeTask, setActiveTask] = useState<Task | null>(null);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [boardTasks, setBoardTasks] = useState<Task[]>(safeTasks);
+    const [syncedTasks, setSyncedTasks] = useState(tasks);
+    const [boardColumns, setBoardColumns] = useState<BoardColumn[]>(safeColumns);
+    const [syncedColumns, setSyncedColumns] = useState(columns);
+
+    const moveQueue = useRef<Promise<void>>(Promise.resolve());
+    const moveFailed = useRef(false);
+    const draggingRef = useRef(false);
+
+    if (tasks !== syncedTasks) {
+        setSyncedTasks(tasks);
+        setBoardTasks(safeTasks);
+    }
+
+    if (columns !== syncedColumns) {
+        setSyncedColumns(columns);
+        setBoardColumns(safeColumns);
+    }
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    );
+
     const { data, setData, post, processing, errors, reset, transform } = useForm({
         title: '',
         description: '',
-        status: 'To Do' as string,
+        status: safeColumns[0]?.key ?? 'To Do',
         priority: 'Normal' as string,
         due_date: '',
     });
 
-    const getTasksByStatus = (colKey: string) =>
-        safeTasks.filter((t) => normalizeStatus(t.status) === colKey);
+    const hasUnknown = boardTasks.some((task) => resolveColumnKey(task.status, boardColumns) === UNKNOWN_COLUMN.key);
+    const renderedColumns = hasUnknown ? [...boardColumns, UNKNOWN_COLUMN] : boardColumns;
+
+    const grouped: Record<string, Task[]> = {};
+    renderedColumns.forEach((column) => {
+        grouped[column.key] = [];
+    });
+    boardTasks.forEach((task) => {
+        grouped[resolveColumnKey(task.status, boardColumns)].push(task);
+    });
+
+    const applyOptimisticMove = (taskId: number, targetKey: string, orderedIds: number[]) => {
+        setBoardTasks((prev) => {
+            const updated = prev.map((task) => (task.id === taskId ? { ...task, status: targetKey } : task));
+            const ordered = new Set(orderedIds);
+            const others = updated.filter((task) => !ordered.has(task.id));
+            const moved = orderedIds
+                .map((id) => updated.find((task) => task.id === id))
+                .filter((task): task is Task => Boolean(task));
+            return [...others, ...moved];
+        });
+    };
+
+    const persistMove = (taskId: number, status: string, orderedIds: number[]) => {
+        const chain = moveQueue.current
+            .then(async () => {
+                const response = await fetch(move.url(taskId), {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        ...csrfHeaders(),
+                    },
+                    body: JSON.stringify({ status, ordered_ids: orderedIds }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`No se pudo mover la tarea (${response.status})`);
+                }
+            })
+            .catch((error) => {
+                console.error(error);
+                moveFailed.current = true;
+            })
+            .then(() => {
+                if (moveQueue.current === chain && moveFailed.current) {
+                    moveFailed.current = false;
+                    router.reload();
+                }
+            });
+
+        moveQueue.current = chain;
+    };
+
+    const moveTask = (task: Task, targetKey: string, orderedIds: number[]) => {
+        applyOptimisticMove(task.id, targetKey, orderedIds);
+        persistMove(task.id, targetKey, orderedIds);
+    };
 
     const handleStatusChange = (task: Task, newStatus: string) => {
-        router.patch(update.url(task.id), { status: newStatus }, { preserveScroll: true, preserveState: true });
+        const targetIds = (grouped[newStatus] ?? []).filter((item) => item.id !== task.id).map((item) => item.id);
+        moveTask(task, newStatus, [...targetIds, task.id]);
     };
 
     const handleDelete = (id: number) => {
@@ -143,8 +259,6 @@ export default function TaskBoard({ project, tasks }: TaskBoardProps) {
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
-        // Wayfinder store: POST /freelance/projects/{project}/tasks
-        // Normaliza '' -> null para due_date/description antes de enviar (evita 422 nullable|date)
         transform((d) => ({
             ...d,
             title: d.title.trim(),
@@ -160,7 +274,75 @@ export default function TaskBoard({ project, tasks }: TaskBoardProps) {
         });
     };
 
-    const totalOverdue = safeTasks.filter(isOverdue).length;
+    const handleDragStart = (event: DragStartEvent) => {
+        draggingRef.current = true;
+        const task = boardTasks.find((item) => String(item.id) === String(event.active.id));
+        if (task) setActiveTask(task);
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        setTimeout(() => { draggingRef.current = false; }, 0);
+
+        const { active, over } = event;
+        setActiveTask(null);
+        if (!over) return;
+
+        const activeId = String(active.id);
+        const overId = String(over.id);
+        const task = boardTasks.find((item) => String(item.id) === activeId);
+        if (!task) return;
+
+        const activeCol = resolveColumnKey(task.status, boardColumns);
+
+        let overCol: string;
+        if (renderedColumns.some((column) => column.key === overId)) {
+            overCol = overId;
+        } else {
+            const overTask = boardTasks.find((item) => String(item.id) === overId);
+            overCol = overTask ? resolveColumnKey(overTask.status, boardColumns) : activeCol;
+        }
+
+        if (overCol === UNKNOWN_COLUMN.key) {
+            return;
+        }
+
+        const colIds = grouped[overCol].map((item) => String(item.id));
+
+        if (activeCol === overCol) {
+            const oldIndex = colIds.indexOf(activeId);
+            const newIndex = colIds.indexOf(overId);
+            if (oldIndex === -1 || oldIndex === newIndex) return;
+            moveTask(task, overCol, arrayMove(colIds, oldIndex, newIndex).map(Number));
+        } else {
+            const overIndex = renderedColumns.some((column) => column.key === overId) ? colIds.length : colIds.indexOf(overId);
+            const newTarget = [...colIds];
+            newTarget.splice(overIndex < 0 ? newTarget.length : overIndex, 0, activeId);
+            moveTask(task, overCol, newTarget.map(Number));
+        }
+    };
+
+    const handleColumnCreated = (column: BoardColumn) => setBoardColumns((prev) => [...prev, column]);
+    const handleColumnUpdated = (column: BoardColumn) =>
+        setBoardColumns((prev) => prev.map((item) => (item.id === column.id ? column : item)));
+    const handleColumnReordered = (orderedIds: number[]) =>
+        setBoardColumns((prev) => orderedIds.map((id) => prev.find((item) => item.id === id)).filter((item): item is BoardColumn => Boolean(item)));
+    const handleColumnDeleted = (columnId: number, destinationKey: string | null) => {
+        const column = boardColumns.find((item) => item.id === columnId);
+        if (!column) return;
+
+        const destination = destinationKey ? boardColumns.find((item) => item.key === destinationKey) : null;
+
+        setBoardColumns((prev) => prev.filter((item) => item.id !== columnId));
+        setBoardTasks((prev) =>
+            prev.map((task) =>
+                task.status === column.key
+                    ? { ...task, status: destination?.key ?? task.status, is_done: destination?.is_done ?? task.is_done }
+                    : task,
+            ),
+        );
+    };
+
+    const totalOverdue = boardTasks.filter(isOverdue).length;
 
     return (
         <div className="flex flex-col gap-5">
@@ -175,23 +357,25 @@ export default function TaskBoard({ project, tasks }: TaskBoardProps) {
                         </Badge>
                     )}
                 </div>
-                <Button
-                    size="sm"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(239,68,68,0.3)] font-bold"
-                    onClick={() => setOpen(true)}
-                >
-                    <Plus className="h-4 w-4" /> Nueva Tarea
-                </Button>
+                <div className="flex items-center gap-2">
+                    <AddColumnButton projectId={project.id} onCreated={handleColumnCreated} />
+                    <Button
+                        size="sm"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_15px_rgba(239,68,68,0.3)] font-bold"
+                        onClick={() => setOpen(true)}
+                    >
+                        <Plus className="h-4 w-4" /> Nueva Tarea
+                    </Button>
+                </div>
             </div>
 
-            {/* Dialog creación — Wayfinder store */}
+            {/* Dialog creación */}
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="bg-[#1C0F0F] border-[#3E2121] text-white sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle className="text-white">Nueva Tarea</DialogTitle>
                         <DialogDescription className="text-[#E8B4B4]">
-                            Crea una tarea para <span className="text-white font-bold">{project?.name ?? 'este proyecto'}</span>. Se guardará en{' '}
-                            <span className="font-mono text-xs bg-[#2B1A1A] border border-[#3E2121] px-1.5 py-0.5 rounded">POST /freelance/projects/{'{project}'}/tasks</span>
+                            Crea una tarea para <span className="text-white font-bold">{project?.name ?? 'este proyecto'}</span>.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -234,9 +418,11 @@ export default function TaskBoard({ project, tasks }: TaskBoardProps) {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#2B1A1A] border-[#3E2121] text-white">
-                                        <SelectItem value="To Do">Pendiente</SelectItem>
-                                        <SelectItem value="In Progress">En Progreso</SelectItem>
-                                        <SelectItem value="Done">Completada</SelectItem>
+                                        {boardColumns.map((column) => (
+                                            <SelectItem key={column.key} value={column.key}>
+                                                {column.label}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                 {errors.status && <p className="text-xs text-[#EF4444]">{errors.status}</p>}
@@ -295,56 +481,30 @@ export default function TaskBoard({ project, tasks }: TaskBoardProps) {
                 </DialogContent>
             </Dialog>
 
-            {/* Kanban grid — 3 columnas rojizas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4">
-                {COLUMNS.map((col) => {
-                    const colTasks = getTasksByStatus(col.key);
-                    const overdueInCol = colTasks.filter(isOverdue).length;
-                    const isDoneCol = col.key === 'Done';
-                    return (
-                        <div
+            {/* Kanban grid */}
+            <DndContext sensors={sensors} collisionDetection={boardCollisionDetection(renderedColumns.map((column) => column.key))} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                <div className="flex gap-4 overflow-x-auto pb-4">
+                    {renderedColumns.map((col) => (
+                        <DroppableColumn
                             key={col.key}
-                            className="flex flex-col rounded-xl border border-[#3E2121] bg-[#1C0F0F] overflow-hidden min-w-0"
-                        >
-                            {/* Col header */}
-                            <div className={`flex items-center justify-between px-4 py-3 bg-[#2B1A1A] border-b border-[#3E2121] ${col.accent} border-l-2`}>
-                                <div className="flex items-center gap-2.5">
-                                    <span className={`h-2.5 w-2.5 rounded-full ${col.dot} shadow-[0_0_8px_currentColor]`} />
-                                    <h3 className="text-[11px] font-black uppercase tracking-widest text-white">{col.label}</h3>
-                                    {overdueInCol > 0 && !isDoneCol && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-destructive text-white px-1.5 py-0.5 rounded-full">
-                                            <Clock className="h-3 w-3" /> {overdueInCol}
-                                        </span>
-                                    )}
-                                </div>
-                                <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-full bg-[#3E2121] border border-[#3E2121] text-xs font-black text-[#E8B4B4]">
-                                    {colTasks.length}
-                                </span>
-                            </div>
+                            col={col}
+                            columns={boardColumns}
+                            tasks={grouped[col.key] ?? []}
+                            draggingRef={draggingRef}
+                            onStatusChange={handleStatusChange}
+                            onDelete={handleDelete}
+                            onOpen={setSelectedTask}
+                            onColumnUpdated={handleColumnUpdated}
+                            onColumnDeleted={handleColumnDeleted}
+                            onColumnReordered={handleColumnReordered}
+                        />
+                    ))}
+                </div>
 
-                            {/* Col body */}
-                            <div className="flex flex-col gap-3 p-3 min-h-[420px] bg-[#1C0F0F]">
-                                {colTasks.map((task) => (
-                                    <TaskCard
-                                        key={task.id}
-                                        task={task}
-                                        columns={COLUMNS}
-                                        onStatusChange={handleStatusChange}
-                                        onDelete={() => handleDelete(task.id)}
-                                        isOverdue={isOverdue(task)}
-                                    />
-                                ))}
-                                {colTasks.length === 0 && (
-                                    <div className="flex flex-col items-center justify-center py-10 px-4 rounded-lg border border-dashed border-[#3E2121] bg-[#2B1A1A]/40">
-                                        <p className="text-xs font-medium text-muted-foreground italic">Sin tareas</p>
-                                        <p className="text-[10px] text-muted-foreground/60 mt-1">Arrastra o mueve con el menú</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+                <DragOverlay>
+                    {activeTask ? <TaskOverlay task={activeTask} /> : null}
+                </DragOverlay>
+            </DndContext>
 
             {/* Leyenda overdue */}
             {totalOverdue > 0 && (
@@ -352,6 +512,114 @@ export default function TaskBoard({ project, tasks }: TaskBoardProps) {
                     <span className="h-2 w-2 rounded-full bg-destructive inline-block" /> Vencida = fecha límite superada y no completada.
                 </p>
             )}
+
+            <TaskDetailDialog
+                open={!!selectedTask}
+                onOpenChange={(isOpen) => !isOpen && setSelectedTask(null)}
+                task={selectedTask}
+                columns={boardColumns}
+                variant="freelance"
+                updateUrl={(taskId) => updateTaskRoute.url(taskId)}
+                deleteUrl={(taskId) => destroy.url(taskId)}
+                onSaved={(updated) => {
+                    setBoardTasks((prev) => prev.map((task) => (task.id === updated.id ? ({ ...task, ...updated } as unknown as Task) : task)));
+                    setSelectedTask((prev) => (prev && prev.id === updated.id ? ({ ...prev, ...updated } as unknown as Task) : prev));
+                }}
+                onDeleted={(taskId) => {
+                    setBoardTasks((prev) => prev.filter((task) => task.id !== taskId));
+                    setSelectedTask(null);
+                }}
+            />
+        </div>
+    );
+}
+
+function DroppableColumn({
+    col,
+    columns,
+    tasks,
+    draggingRef,
+    onStatusChange,
+    onDelete,
+    onOpen,
+    onColumnUpdated,
+    onColumnDeleted,
+    onColumnReordered,
+}: {
+    col: BoardColumn;
+    columns: BoardColumn[];
+    tasks: Task[];
+    draggingRef: { current: boolean };
+    onStatusChange: (task: Task, newStatus: string) => void;
+    onDelete: (id: number) => void;
+    onOpen: (task: Task) => void;
+    onColumnUpdated: (column: BoardColumn) => void;
+    onColumnDeleted: (columnId: number, destinationKey: string | null) => void;
+    onColumnReordered: (orderedIds: number[]) => void;
+}) {
+    const { setNodeRef, isOver } = useDroppable({ id: col.key });
+    const taskIds = tasks.map((task) => String(task.id));
+    const isUnknown = col.key === UNKNOWN_COLUMN.key;
+    const overdueInCol = tasks.filter(isOverdue).length;
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`flex w-[320px] shrink-0 flex-col rounded-xl border overflow-hidden transition-colors ${
+                isOver ? 'border-primary/50 bg-primary/5' : 'border-[#3E2121] bg-[#1C0F0F]'
+            }`}
+        >
+            {/* Col header */}
+            <div className={`flex items-center justify-between px-4 py-3 bg-[#2B1A1A] border-b border-[#3E2121] ${columnAccentClass(col.color)} border-l-2`}>
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${columnDotClass(col.color)} shadow-[0_0_8px_currentColor]`} />
+                    <h3 className="truncate text-[11px] font-black uppercase tracking-widest text-white">{col.label}</h3>
+                    {overdueInCol > 0 && !col.is_done && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-destructive text-white px-1.5 py-0.5 rounded-full">
+                            <Clock className="h-3 w-3" /> {overdueInCol}
+                        </span>
+                    )}
+                </div>
+                <div className="flex items-center gap-1">
+                    <span className="inline-flex items-center justify-center min-w-[28px] h-6 px-2 rounded-full bg-[#3E2121] border border-[#3E2121] text-xs font-black text-[#E8B4B4]">
+                        {tasks.length}
+                    </span>
+                    {!isUnknown && (
+                        <ColumnMenu
+                            column={col}
+                            columns={columns}
+                            taskCount={tasks.length}
+                            onUpdated={onColumnUpdated}
+                            onDeleted={onColumnDeleted}
+                            onReordered={onColumnReordered}
+                        />
+                    )}
+                </div>
+            </div>
+
+            {/* Col body */}
+            <div className="flex flex-col gap-3 p-3 min-h-[420px] bg-[#1C0F0F]">
+                <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+                    {tasks.map((task) => (
+                        <TaskCard
+                            key={task.id}
+                            task={task}
+                            columns={columns}
+                            draggingRef={draggingRef}
+                            onStatusChange={onStatusChange}
+                            onDelete={() => onDelete(task.id)}
+                            onOpen={() => onOpen(task)}
+                            isOverdue={isOverdue(task)}
+                        />
+                    ))}
+                </SortableContext>
+                {tasks.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-10 px-4 rounded-lg border border-dashed border-[#3E2121] bg-[#2B1A1A]/40">
+                        <p className="text-xs font-medium text-muted-foreground italic">Sin tareas</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Arrastra o mueve con el menú</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -359,16 +627,31 @@ export default function TaskBoard({ project, tasks }: TaskBoardProps) {
 function TaskCard({
     task,
     columns,
+    draggingRef,
     onStatusChange,
     onDelete,
+    onOpen,
     isOverdue,
 }: {
     task: Task;
-    columns: ColumnDef[];
+    columns: BoardColumn[];
+    draggingRef: { current: boolean };
     onStatusChange: (task: Task, newStatus: string) => void;
     onDelete: () => void;
+    onOpen: () => void;
     isOverdue: boolean;
 }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: String(task.id),
+        data: { type: 'task', task },
+    });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+    };
+
     const priorityMap: Record<string, string> = {
         High: 'text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20',
         Alta: 'text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20',
@@ -379,16 +662,32 @@ function TaskCard({
         Baja: 'text-muted-foreground bg-[#1C0F0F] border-[#3E2121]',
     };
 
-    const currentIdx = columns.findIndex((c) => c.key === normalizeStatus(task.status));
+    const currentIdx = columns.findIndex((column) => column.key === resolveColumnKey(task.status, columns));
     const prevCol = currentIdx > 0 ? columns[currentIdx - 1] : null;
     const nextCol = currentIdx >= 0 && currentIdx < columns.length - 1 ? columns[currentIdx + 1] : null;
 
     return (
-        <Card className="bg-[#2B1A1A] border-[#3E2121] shadow-sm hover:shadow-[0_4px_20px_rgba(239,68,68,0.08)] hover:border-primary/20 transition-all group">
+        <Card
+            ref={setNodeRef}
+            style={style}
+            className="bg-[#2B1A1A] border-[#3E2121] shadow-sm hover:shadow-[0_4px_20px_rgba(239,68,68,0.08)] hover:border-primary/20 transition-all group cursor-grab active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+            onClick={() => {
+                if (!draggingRef.current) {
+                    onOpen();
+                }
+            }}
+        >
             <CardContent className="p-3 space-y-3">
-                {/* Title row */}
+                {/* Title row with grip + dropdown */}
                 <div className="flex justify-between items-start gap-2">
-                    <h4 className="font-semibold text-sm leading-tight text-white line-clamp-2 flex-1">{task.title}</h4>
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                        <span aria-hidden="true" className="mt-0.5 shrink-0 text-muted-foreground/60">
+                            <GripVertical className="h-3.5 w-3.5" />
+                        </span>
+                        <h4 className="font-semibold text-sm leading-tight text-white line-clamp-2">{task.title}</h4>
+                    </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
@@ -396,21 +695,24 @@ function TaskCard({
                                 size="icon"
                                 className="h-7 w-7 shrink-0 text-muted-foreground hover:text-white hover:bg-white/5 opacity-60 group-hover:opacity-100 transition-opacity"
                                 aria-label="Mover tarea"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
                             >
                                 <MoreHorizontal className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-[#2B1A1A] border-[#3E2121] text-white min-w-[180px]">
                             {columns
-                                .filter((c) => c.key !== normalizeStatus(task.status))
-                                .map((col) => (
+                                .filter((column) => column.key !== resolveColumnKey(task.status, columns))
+                                .map((column) => (
                                     <DropdownMenuItem
-                                        key={col.key}
-                                        onClick={() => onStatusChange(task, col.key)}
+                                        key={column.key}
+                                        onClick={() => onStatusChange(task, column.key)}
                                         className="focus:bg-white/5 focus:text-white cursor-pointer"
                                     >
-                                        <span className={`h-2 w-2 rounded-full ${col.dot} mr-2`} />
-                                        Mover a {col.label}
+                                        <span className={`h-2 w-2 rounded-full ${columnDotClass(column.color)} mr-2`} />
+                                        Mover a {column.label}
                                     </DropdownMenuItem>
                                 ))}
                             <DropdownMenuSeparator className="bg-[#3E2121]" />
@@ -425,7 +727,7 @@ function TaskCard({
                 </div>
 
                 {/* Badges: priority + overdue + tags */}
-                <div className="flex flex-wrap gap-1.5 items-center">
+                <div className="flex flex-wrap gap-1.5 items-center pl-5">
                     {task.priority && (
                         <Badge
                             variant="outline"
@@ -450,7 +752,7 @@ function TaskCard({
                 </div>
 
                 {/* Meta row */}
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground pl-5">
                     <span className={`flex items-center gap-1 ${isOverdue ? 'text-[#EF4444] font-bold' : ''}`}>
                         <Calendar className="h-3 w-3" />
                         {formatDueDate(task.due_date)}
@@ -463,14 +765,16 @@ function TaskCard({
                     )}
                 </div>
 
-                {/* Quick move buttons — click para mover status vía router.patch */}
-                <div className="flex items-center gap-1.5 pt-1">
+                {/* Quick move buttons */}
+                <div className="flex items-center gap-1.5 pt-1 pl-5">
                     {prevCol ? (
                         <Button
                             variant="outline"
                             size="sm"
                             className="h-7 flex-1 bg-[#1C0F0F] border-[#3E2121] text-[#E8B4B4] hover:bg-white/5 hover:text-white hover:border-[#3E2121] text-[11px] font-bold"
-                            onClick={() => onStatusChange(task, prevCol.key)}
+                            onClick={(e) => { e.stopPropagation(); onStatusChange(task, prevCol.key); }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
                             aria-label={`Mover a ${prevCol.label}`}
                         >
                             <ChevronLeft className="h-3 w-3" /> {prevCol.label}
@@ -482,7 +786,9 @@ function TaskCard({
                         <Button
                             size="sm"
                             className="h-7 flex-1 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_10px_rgba(239,68,68,0.25)] text-[11px] font-black"
-                            onClick={() => onStatusChange(task, nextCol.key)}
+                            onClick={(e) => { e.stopPropagation(); onStatusChange(task, nextCol.key); }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
                             aria-label={`Mover a ${nextCol.label}`}
                         >
                             {nextCol.label} <ChevronRight className="h-3 w-3" />
@@ -492,6 +798,38 @@ function TaskCard({
                             ✓ Completada
                         </Badge>
                     )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+function TaskOverlay({ task }: { task: Task }) {
+    const priorityMap: Record<string, string> = {
+        High: 'text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20',
+        Alta: 'text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20',
+        Urgent: 'text-purple-300 bg-purple-500/10 border-purple-500/20',
+        Normal: 'text-[#E8B4B4] bg-[#3E2121] border-[#3E2121]',
+    };
+
+    return (
+        <Card className="bg-[#2B1A1A] border-primary/50 shadow-2xl rotate-2 opacity-90 w-[280px]">
+            <CardContent className="p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                    <GripVertical className="h-3.5 w-3.5 text-primary" />
+                    <p className="font-semibold text-sm leading-tight text-white">{task.title}</p>
+                </div>
+                <div className="flex gap-1.5 flex-wrap pl-5">
+                    {task.priority && (
+                        <Badge variant="outline" className={`text-[10px] font-black uppercase tracking-wider px-1.5 py-0 h-5 border ${priorityMap[task.priority] ?? 'text-[#E8B4B4] bg-[#3E2121] border-[#3E2121]'}`}>
+                            {task.priority}
+                        </Badge>
+                    )}
+                    {task.tags?.slice(0, 2).map((tag) => (
+                        <Badge key={tag} variant="secondary" className="bg-[#1C0F0F] border border-[#3E2121] text-[#E8B4B4] text-[10px] px-1.5 h-5 font-medium">
+                            {tag}
+                        </Badge>
+                    ))}
                 </div>
             </CardContent>
         </Card>

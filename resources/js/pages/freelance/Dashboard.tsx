@@ -1,10 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import MainLayout from '@/layouts/main-layout';
-import freelance from '@/routes/freelance';
 import { Head, Link } from '@inertiajs/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
     Users,
     Briefcase,
@@ -17,7 +11,13 @@ import {
     Sparkles,
     Settings
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import MainLayout from '@/layouts/main-layout';
 import { cn } from '@/lib/utils';
+import freelance from '@/routes/freelance';
 
 interface DashboardProps {
     stats: {
