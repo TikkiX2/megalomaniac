@@ -27,6 +27,11 @@ class ChatThread extends Conversation
         return $this->hasMany(ChatMessage::class, 'conversation_id');
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(ChatAttachment::class, 'thread_id');
+    }
+
     public function scopeForUser(Builder $query, User $user): void
     {
         $query->where('participant_type', $user->getMorphClass())
