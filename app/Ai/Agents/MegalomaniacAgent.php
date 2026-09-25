@@ -5,8 +5,11 @@ namespace App\Ai\Agents;
 use App\Ai\Tools\ActionTool;
 use App\Ai\Tools\FinanceQueryTool;
 use App\Ai\Tools\GroceryQueryTool;
+use App\Ai\Tools\IntegrationCallTool;
+use App\Ai\Tools\IntegrationCatalogTool;
 use App\Ai\Tools\NutritionQueryTool;
 use App\Ai\Tools\WorkoutQueryTool;
+use App\Integrations\IntegrationExecutor;
 use App\Models\User;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
@@ -48,6 +51,8 @@ EOF;
             new NutritionQueryTool($this->user),
             new GroceryQueryTool($this->user),
             new ActionTool($this->user),
+            new IntegrationCatalogTool($this->user),
+            new IntegrationCallTool($this->user, app(IntegrationExecutor::class)),
         ];
     }
 }

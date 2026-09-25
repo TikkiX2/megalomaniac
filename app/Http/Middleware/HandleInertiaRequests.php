@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ApprovalRequest;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -42,6 +43,14 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'test_result' => fn () => $request->session()->get('test_result'),
+            ],
+            'approvals_pending_count' => fn () => $request->user()
+                ? ApprovalRequest::query()->forUser($request->user())->pending()->count()
+                : 0,
         ];
     }
 }

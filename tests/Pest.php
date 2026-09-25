@@ -1,6 +1,8 @@
 <?php
 
+use App\Integrations\IntegrationExecutor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\FakeConnector;
 use Tests\TestCase;
 
 /*
@@ -47,4 +49,9 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function executor(): IntegrationExecutor
+{
+    return FakeConnector::executor();
 }

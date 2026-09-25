@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, LayoutGrid, Pill, Pin, PinOff, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, LayoutGrid, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import freelance from '@/routes/freelance';
-import type { NavItem } from '@/types';
+import type { NavItem, SharedData } from '@/types';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -104,6 +104,9 @@ function SidebarPinToggle() {
 export function AppSidebar() {
     const { state } = useSidebar();
     const isCollapsed = state === 'collapsed';
+    const { approvals_pending_count } = usePage<
+        SharedData & { approvals_pending_count: number }
+    >().props;
     return (
         <Sidebar collapsible="icon" variant="sidebar">
             <SidebarHeader>
@@ -206,6 +209,19 @@ export function AppSidebar() {
                                 <Link href="/ai/chat" prefetch>
                                     <Brain className="h-4 w-4" />
                                     <span>Chat IA</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild tooltip="Aprobaciones" isActive={window.location.pathname.startsWith('/integrations/approvals')}>
+                                <Link href="/integrations/approvals" prefetch>
+                                    <ShieldCheck className="h-4 w-4" />
+                                    <span>Aprobaciones</span>
+                                    {approvals_pending_count > 0 && (
+                                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-black text-primary-foreground">
+                                            {approvals_pending_count}
+                                        </span>
+                                    )}
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

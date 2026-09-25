@@ -40,4 +40,11 @@ return [
         'database_id' => env('NOTION_DATABASE_ID'),
     ],
 
+    'google' => [
+        'oauth' => [
+            'client_id' => env('GOOGLE_CLIENT_ID'),
+            'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        ],
+    ],
+
 ];

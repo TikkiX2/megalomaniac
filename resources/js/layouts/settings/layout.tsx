@@ -39,6 +39,11 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
+        title: 'Conexiones',
+        href: '/settings/connections',
+        icon: null,
+    },
+    {
         title: 'API Keys',
         href: '/settings/api-keys',
         icon: null,

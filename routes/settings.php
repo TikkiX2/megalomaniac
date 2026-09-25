@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Integrations\ConnectionController;
 use App\Http\Controllers\Settings\AiSettingsController;
 use App\Http\Controllers\Settings\ApiTokenController;
 use App\Http\Controllers\Settings\PasswordController;
@@ -20,6 +21,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/api-keys', [ApiTokenController::class, 'index'])->name('api-tokens.index');
     Route::post('settings/api-keys', [ApiTokenController::class, 'store'])->name('api-tokens.store');
     Route::delete('settings/api-keys/{tokenId}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
+
+    Route::get('settings/connections', [ConnectionController::class, 'index'])->name('connections.index');
+    Route::post('settings/connections', [ConnectionController::class, 'store'])->name('connections.store');
+    Route::post('settings/connections/test', [ConnectionController::class, 'test'])->name('connections.test');
+    Route::patch('settings/connections/{connection}', [ConnectionController::class, 'update'])->name('connections.update');
+    Route::delete('settings/connections/{connection}', [ConnectionController::class, 'destroy'])->name('connections.destroy');
+    Route::get('settings/connections/{connection}/actions', [ConnectionController::class, 'actions'])->name('connections.actions');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

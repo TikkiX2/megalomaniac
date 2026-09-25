@@ -106,3 +106,33 @@
 
 ### Estáticos
 `php artisan test --compact` 204 passed / 5 failed (pre-existentes) · `npm run types` 0 · eslint scoped 0 · `npm run build` OK · Pint scoped por tarea.
+
+---
+
+## Integraciones Ola 0 — 2026-09-25
+
+> **Alcance:** framework de conectores + conectores GitHub/Google/Docker + Settings → Conexiones + bandeja Aprobaciones + Actividad + tools IA. Spec `docs/superpowers/specs/2026-09-25-integraciones-core-design.md`, plan `docs/superpowers/plans/2026-09-25-integraciones-core-ola-0.md`.
+
+### Escenario ejecutado (Playwright MCP, `:8010`, `test@example.com/password`)
+1. **Settings → Conexiones** → navegación con item "Conexiones", catálogo de 3 kinds (GitHub/Google/Docker), estado vacío con CTA. **PASS**
+2. **Wizard** → grid de servicios por grupo, credenciales dinámicas (token), transporte dinámico, Probar/Guardar, validación. Creación GitHub con token ficticio → persiste cifrado. **PASS**
+3. **Probar (GitHub, token falso)** → llamada real a `api.github.com` → banner `Falló: HTTP 401 — Bad credentials`, `StatusBadge` Error con tooltip. **PASS**
+4. **Docker `local_socket` real** (`/var/run/docker.sock`) → Probar devuelve `Conexión OK: Docker OK`. **PASS**
+5. **Lectura real vía executor** (`containers.list`) → 60 contenedores, `integration_action_logs` status `success` con params. **PASS**
+6. **Aprobaciones end-to-end** → write `issues.create` desde el executor (agente simulado) → `ApprovalRequest` pending, badge sidebar `1`, card con resumen/params/rationale/expiración → Aprobar → `RunIntegrationActionJob` en queue → ejecución real → `failed` (401), historial `failed · hace 1 min`, badge 0. **PASS**
+7. **Actividad** → tabla densa con filtros (conexión/estado/acción), fila expandible con source/params/result/error, paginación. **PASS**
+8. **Eliminar conexión** con confirmación → 404-scoping para ajenas, cascade de logs/aprobaciones. **PASS**
+9. **Consola** → 0 errores en las 4 rutas nuevas. **PASS**
+
+### Bugs encontrados por QA y corregidos
+- **[P0] Wizard no enviaba `auth_type`** → validación fallaba y el error no se mostraba (diálogo quedaba abierto sin feedback). Fix: `auth_type` desde el catálogo + render de errores no mapeados.
+- **[P0] Sin Base URL, transport HTTP fallaba** con `URI must include a scheme and host`. Fix: `Connector::defaultBaseUrl()` + fallback en `AbstractConnector::request()` (GitHub `api.github.com`, Google `www.googleapis.com`, Docker `localhost`).
+- **[P2] `expira hace -4320 min`** en aprobaciones (fecha futura). Fix: `relative()` bidireccional ("en 72 h") + "justo ahora".
+- **[P2] Docker defaulteaba transporte `direct`**. Fix: el wizard selecciona el primer transporte declarado por el conector (`local_socket` para Docker).
+- **[P3] Warning DOM "Password field is not contained in a form"**. Fix: wizard envuelto en `<form>` (Enter también guarda) + keys de React en filas de actividad.
+
+### Estáticos
+`php artisan test --compact` **308 passed** / 5 failed (pre-existentes Grocery/Nutrition/Supplement) · `npm run types` 0 · eslint archivos nuevos 0 · `npm run build` OK · Pint `--dirty` OK.
+
+### Datos de QA
+Conexiones/aprobaciones/logs creados durante el crawl fueron eliminados al cierre (DB dev limpia). Los tests automatizados (96 nuevos) cubren los mismos caminos con `Http::fake`/`Process::fake`.
