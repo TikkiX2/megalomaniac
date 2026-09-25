@@ -114,42 +114,50 @@ export async function streamChatRequest(
 
     const decoder = new TextDecoder();
     let buffer = '';
-    let sawDone = false;
+    let finished = false;
 
-    while (true) {
-        const { done, value } = await reader.read();
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
 
-        if (done) break;
+            if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
+            buffer += decoder.decode(value, { stream: true });
 
-        const parts = buffer.split('\n\n');
-        buffer = parts.pop() ?? '';
+            const parts = buffer.split('\n\n');
+            buffer = parts.pop() ?? '';
 
-        for (const part of parts) {
-            const line = part.trim();
+            for (const part of parts) {
+                const line = part.trim();
 
-            if (!line.startsWith('data:')) continue;
+                if (!line.startsWith('data:')) continue;
 
-            const payload = line.slice(5).trim();
+                const payload = line.slice(5).trim();
 
-            if (payload === '') continue;
+                if (payload === '') continue;
 
-            if (payload === '[DONE]') {
-                sawDone = true;
+                if (payload === '[DONE]') {
+                    finished = true;
 
-                return;
-            }
+                    return;
+                }
 
-            try {
-                dispatch(JSON.parse(payload) as StreamEvent, handlers);
-            } catch {
-                // línea no JSON
+                try {
+                    dispatch(JSON.parse(payload) as StreamEvent, handlers);
+                } catch {
+                    // línea no JSON
+                }
             }
         }
+    } catch (caught) {
+        if (caught instanceof DOMException && caught.name === 'AbortError') {
+            throw caught;
+        }
+
+        throw new Error('La conexión con la IA se interrumpió antes de terminar. Reinténtalo.');
     }
 
-    if (!sawDone) {
-        throw new Error('La conexión con la IA se interrumpió. Inténtalo de nuevo.');
+    if (!finished) {
+        throw new Error('La conexión con la IA se interrumpió antes de terminar. Reinténtalo.');
     }
 }
