@@ -7,6 +7,7 @@ use App\Integrations\Transports\HttpCall;
 use App\Integrations\Transports\LocalSocketTransport;
 use App\Integrations\Transports\TransportFactory;
 use App\Models\Connection;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -83,6 +84,28 @@ it('exposes unix socket curl options for local socket transport', function () {
     $options = (new LocalSocketTransport)->curlOptions($connection);
 
     expect($options[CURLOPT_UNIX_SOCKET_PATH])->toBe('/var/run/docker.sock');
+});
+
+it('maps connection failures to a friendly message', function () {
+    Http::fake(fn () => throw new ConnectionException('cURL error 7: Failed to connect'));
+
+    $connection = Connection::factory()->make(['base_url' => 'http://127.0.0.1:9']);
+    $result = (new DirectTransport)->request($connection, new HttpCall('GET', 'x'));
+
+    expect($result->ok)->toBeFalse()
+        ->and($result->error)->toContain('No se pudo conectar');
+});
+
+it('honors a per-connection verify=false option', function () {
+    $connection = Connection::factory()->make(['options' => ['verify' => false]]);
+
+    expect((new DirectTransport)->clientOptions($connection))->toBe(['verify' => false]);
+});
+
+it('verifies tls by default', function () {
+    $connection = Connection::factory()->make(['options' => null]);
+
+    expect((new DirectTransport)->clientOptions($connection))->toBe([]);
 });
 
 it('resolves the transport from the connection', function () {

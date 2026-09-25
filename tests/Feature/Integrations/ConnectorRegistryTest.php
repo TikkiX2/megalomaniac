@@ -84,3 +84,13 @@ it('resolves the configured registry from the container', function () {
 
     expect($registry->has('fake'))->toBeTrue();
 });
+
+it('registers all bundled connectors', function () {
+    $registry = app(ConnectorRegistry::class);
+
+    expect(array_keys($registry->all()))->toEqualCanonicalizing([
+        'github', 'google', 'docker',
+        'sonarr', 'radarr', 'prowlarr', 'jellyseerr', 'qbittorrent', 'jellyfin',
+        'proxmox', 'home_assistant',
+    ]);
+});

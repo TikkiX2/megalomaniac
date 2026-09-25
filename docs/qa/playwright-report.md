@@ -136,3 +136,21 @@
 
 ### Datos de QA
 Conexiones/aprobaciones/logs creados durante el crawl fueron eliminados al cierre (DB dev limpia). Los tests automatizados (96 nuevos) cubren los mismos caminos con `Http::fake`/`Process::fake`.
+
+---
+
+## Integraciones Ola 1 — 2026-09-25
+
+> **Alcance:** 9 conectores nuevos (Sonarr, Radarr, Prowlarr, Jellyseerr, qBittorrent, Jellyfin, Proxmox VE, Home Assistant) + opción TLS `verify` por conexión + mensajes de error amigables. Plan `docs/superpowers/plans/2026-09-25-integraciones-ola-1.md`.
+
+### Escenario ejecutado (Playwright MCP, `:8010`)
+1. **Wizard de conexiones** → muestra los **11 servicios** agrupados (Dev, Google, Infra, Media, Hogar) con descripción: Sonarr, Radarr, Prowlarr, Jellyseerr, qBittorrent, Jellyfin, Proxmox VE, Home Assistant. **PASS**
+2. **Sonarr (draft, host inalcanzable)** → Probar muestra banner `Falló: No se pudo conectar con el servicio (host inalcanzable, TLS inválido o timeout).` (mensaje amigable, no cURL crudo). **PASS**
+3. **Registro** → `ConnectorRegistry` resuelve los 11 kinds (`github,google,docker,sonarr,radarr,prowlarr,jellyseerr,qbittorrent,jellyfin,proxmox,home_assistant`). **PASS**
+4. **Consola** → 0 errores. **PASS**
+
+### Estáticos
+`php artisan test --compact` **353 passed** / 0 failed (42 tests nuevos de conectores + transport) · `npm run types` N/A (sin cambios frontend) · Pint OK.
+
+### Datos de QA
+Sin conexiones persistidas (solo drafts); DB dev limpia.

@@ -6,6 +6,7 @@ use App\Exceptions\Integrations\UnsupportedTransportException;
 use App\Integrations\Actions\ConnectionTestResult;
 use App\Integrations\Enums\AuthType;
 use App\Models\Connection;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -38,6 +39,7 @@ class DirectTransport implements Transport
                 body: $response->body(),
                 error: $response->successful() ? null : $this->errorMessage($response->status(), $json),
                 durationMs: (int) ((microtime(true) - $started) * 1000),
+                headers: $this->flattenHeaders($response->headers()),
             );
         } catch (Throwable $e) {
             return new HttpResult(
@@ -45,7 +47,7 @@ class DirectTransport implements Transport
                 status: 0,
                 data: null,
                 body: '',
-                error: $e->getMessage(),
+                error: $this->connectionError($e),
                 durationMs: (int) ((microtime(true) - $started) * 1000),
             );
         }
@@ -61,10 +63,19 @@ class DirectTransport implements Transport
         return ConnectionTestResult::ok('direct transport ready');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function clientOptions(Connection $connection): array
+    {
+        return ($connection->options['verify'] ?? true) === false ? ['verify' => false] : [];
+    }
+
     protected function client(Connection $connection, HttpCall $call): PendingRequest
     {
         $request = Http::timeout($call->timeout ?? (int) config('integrations.http.timeout'))
-            ->acceptJson();
+            ->acceptJson()
+            ->withOptions($this->clientOptions($connection));
 
         if (filled($connection->base_url)) {
             $request = $request->baseUrl(rtrim((string) $connection->base_url, '/'));
@@ -87,6 +98,30 @@ class DirectTransport implements Transport
             AuthType::OAuth2 => $request->withToken((string) ($credentials['access_token'] ?? '')),
             default => $request->withToken((string) ($credentials['token'] ?? $credentials['access_token'] ?? '')),
         };
+    }
+
+    protected function connectionError(Throwable $e): string
+    {
+        if ($e instanceof ConnectionException || str_contains($e->getMessage(), 'cURL error')) {
+            return 'No se pudo conectar con el servicio (host inalcanzable, TLS inválido o timeout).';
+        }
+
+        return $e->getMessage();
+    }
+
+    /**
+     * @param  array<string, array<int, string|null>>  $headers
+     * @return array<string, string|null>
+     */
+    protected function flattenHeaders(array $headers): array
+    {
+        $flattened = [];
+
+        foreach ($headers as $name => $values) {
+            $flattened[$name] = $values[0] ?? null;
+        }
+
+        return $flattened;
     }
 
     /**

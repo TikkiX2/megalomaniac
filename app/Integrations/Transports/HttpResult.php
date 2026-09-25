@@ -6,6 +6,7 @@ final readonly class HttpResult
 {
     /**
      * @param  array<string, mixed>|null  $data
+     * @param  array<string, string|null>  $headers
      */
     public function __construct(
         public bool $ok,
@@ -14,5 +15,6 @@ final readonly class HttpResult
         public string $body,
         public ?string $error = null,
         public int $durationMs = 0,
+        public array $headers = [],
     ) {}
 }

@@ -1,8 +1,16 @@
 <?php
 
+use App\Integrations\Connectors\Arr\JellyseerrConnector;
+use App\Integrations\Connectors\Arr\ProwlarrConnector;
+use App\Integrations\Connectors\Arr\QbittorrentConnector;
+use App\Integrations\Connectors\Arr\RadarrConnector;
+use App\Integrations\Connectors\Arr\SonarrConnector;
 use App\Integrations\Connectors\Docker\DockerConnector;
 use App\Integrations\Connectors\Github\GithubConnector;
 use App\Integrations\Connectors\Google\GoogleConnector;
+use App\Integrations\Connectors\HomeAssistant\HomeAssistantConnector;
+use App\Integrations\Connectors\Jellyfin\JellyfinConnector;
+use App\Integrations\Connectors\Proxmox\ProxmoxConnector;
 
 return [
 
@@ -21,6 +29,14 @@ return [
         GithubConnector::class,
         GoogleConnector::class,
         DockerConnector::class,
+        SonarrConnector::class,
+        RadarrConnector::class,
+        ProwlarrConnector::class,
+        JellyseerrConnector::class,
+        QbittorrentConnector::class,
+        JellyfinConnector::class,
+        ProxmoxConnector::class,
+        HomeAssistantConnector::class,
     ],
 
     /*
