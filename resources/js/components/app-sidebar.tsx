@@ -1,5 +1,5 @@
-import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Brain, Briefcase, Calendar, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, GalleryVertical, Kanban, LayoutGrid, ListTodo, Pill, Pin, PinOff, ShoppingCart, Table, Users, Utensils, Wallet } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, LayoutGrid, Pill, Pin, PinOff, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -202,7 +202,7 @@ export function AppSidebar() {
                     <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Asistente IA</SidebarGroupLabel>
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton asChild tooltip="Asistente IA" isActive={window.location.pathname === '/ai/chat'}>
+                            <SidebarMenuButton asChild tooltip="Asistente IA" isActive={window.location.pathname.startsWith('/ai/chat')}>
                                 <Link href="/ai/chat" prefetch>
                                     <Brain className="h-4 w-4" />
                                     <span>Chat IA</span>
