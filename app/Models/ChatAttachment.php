@@ -14,6 +14,8 @@ class ChatAttachment extends Model
 
     public $incrementing = false;
 
+    protected $guarded = [];
+
     protected $keyType = 'string';
 
     protected function casts(): array
