@@ -23,4 +23,28 @@ class AiProviderResolver
 
         return ['user', $user->ai_model ?: 'gpt-4o-mini'];
     }
+
+    /**
+     * Resolve the embeddings provider for a user: their BYO embeddings model
+     * when configured, otherwise the server default when a key exists.
+     *
+     * @return array{0: ?string, 1: ?string}
+     */
+    public static function embeddingsFor(User $user): array
+    {
+        if (
+            $user->ai_enabled
+            && $user->ai_provider_url
+            && $user->ai_provider_key
+            && filled($user->ai_embeddings_model)
+        ) {
+            return ['user', $user->ai_embeddings_model];
+        }
+
+        if (filled(config('ai.providers.openai.key'))) {
+            return [config('ai.default_for_embeddings'), null];
+        }
+
+        return [null, null];
+    }
 }

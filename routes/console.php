@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('integrations:expire-approvals')->everyTenMinutes();
 Schedule::command('integrations:prune-activity')->daily();
 Schedule::command('agents:dispatch-due')->everyMinute();
+Schedule::command('feed:ingest')->everyThirtyMinutes();
+Schedule::command('feed:digest')->hourly();

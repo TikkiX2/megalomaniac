@@ -197,3 +197,27 @@ Sin conexiones persistidas (solo drafts); DB dev limpia.
 
 ### Datos de QA
 Agente y run de prueba eliminados (DB dev limpia).
+
+---
+
+## SP3 Feed Aprendido — 2026-09-25
+
+> **Alcance:** fuentes RSS/HN/Reddit/YouTube, ingesta con dedupe y purga, ranking con embeddings + fallback léxico + scoring LLM, señales (like/dislike/save/hide/open), digest diario IA con fallback determinístico y notificación Telegram, UI `/feed` + settings. Spec `docs/superpowers/specs/2026-09-25-feed-aprendido-design.md`, plan `docs/superpowers/plans/2026-09-25-feed-aprendido.md`.
+
+### Escenario ejecutado (Playwright MCP + comandos reales)
+1. **`/feed/settings`** → alta de fuente Hacker News (kind `hackernews`, URL por defecto). **PASS**
+2. **`feed:ingest` real** contra `news.ycombinator.com/rss` → **30 items** nuevos (títulos reales). **PASS**
+3. **`/feed`** → 30 cards con fuente/fecha/score; **like + save + hide** → la card oculta desaparece (29) y en DB: `hidden=1`, `saved=1`, `signals=3`, `preferences.topic_weights=16` (aprendizaje). **PASS**
+4. **Generar digest** sin proveedor IA → fallback determinístico visible (“## Digest del día” con items). **PASS**
+5. **Consola** → 0 errores. **PASS**
+
+### Bugs encontrados por QA/tests y corregidos
+- **[P1] Purga por `published_at`**: items viejos recién ingeridos se borraban y re-creaban en cada ciclo (falso “nuevo”). Fix: purga por `fetched_at` + `firstOrCreate` sin refrescar `fetched_at`.
+- **[P1] Cast `date` guardaba `Y-m-d 00:00:00`** y las queries por día no encontraban el digest (riesgo de duplicados). Fix: `whereDate` en generación y lectura.
+- **[P2] Señales idempotentes**: repetir like sumaba contadores. Fix: no-op si la señal ya existía.
+
+### Estáticos
+`php artisan test --compact` **443 passed** / 0 failed (26 tests de feed) · `npm run types` 0 · build OK · Pint OK.
+
+### Datos de QA
+Fuente, items, señales, digest y preferencias de prueba eliminados (DB dev limpia).
