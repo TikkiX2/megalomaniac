@@ -9,15 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MainLayout from '@/layouts/main-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { edit } from '@/routes/ai-settings';
-import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'AI settings',
-        href: edit().url,
-    },
-];
 
 export default function AiSettings({
     ai,
@@ -48,6 +39,10 @@ export default function AiSettings({
                         options={{
                             preserveScroll: true,
                         }}
+                        transform={(data) => ({
+                            ...data,
+                            ai_enabled: data.ai_enabled === 'on' || data.ai_enabled === true,
+                        })}
                         className="space-y-6"
                     >
                         {({ processing, recentlySuccessful, errors }) => (
