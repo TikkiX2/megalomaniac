@@ -1,7 +1,13 @@
+export interface ToolPolicy {
+    mode: 'auto' | 'manual';
+    groups: string[];
+}
+
 export interface ChatThread {
     id: string;
     title: string;
     model: string | null;
+    tools_policy: ToolPolicy | null;
     is_pinned: boolean;
     created_at: string | null;
     updated_at: string | null;

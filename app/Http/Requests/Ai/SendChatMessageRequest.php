@@ -21,6 +21,10 @@ class SendChatMessageRequest extends FormRequest
             'thread_id' => ['nullable', 'string', 'size:36'],
             'model' => ['nullable', 'string', 'max:100'],
             'agent' => ['nullable', 'string', 'max:50'],
+            'tools_policy' => ['nullable', 'array'],
+            'tools_policy.mode' => ['required_with:tools_policy', 'string', 'in:auto,manual'],
+            'tools_policy.groups' => ['nullable', 'array'],
+            'tools_policy.groups.*' => ['string', 'max:30'],
         ];
     }
 }

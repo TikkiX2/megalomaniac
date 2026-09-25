@@ -18,6 +18,7 @@ class ChatThread extends Conversation
         return [
             'pinned_at' => 'datetime',
             'archived_at' => 'datetime',
+            'tools_policy' => 'array',
         ];
     }
 

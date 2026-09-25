@@ -5,6 +5,8 @@ namespace App\Ai\Services;
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Agents\RuntimeAgent;
 use App\Ai\Support\AiProviderResolver;
+use App\Ai\Tools\ToolCatalog;
+use App\Ai\Tools\ToolRouter;
 use App\Models\AgentDefinition;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
@@ -19,6 +21,13 @@ use Throwable;
 
 class ChatService
 {
+    /**
+     * Policy resolved for the last streamed turn (for SSE/UI).
+     *
+     * @var array{mode: string, groups: string[]}
+     */
+    public array $lastToolPolicy = [];
+
     public function isConfigured(User $user): bool
     {
         return (bool) ($user->ai_enabled && $user->ai_provider_url && $user->ai_provider_key);
@@ -72,7 +81,7 @@ class ChatService
         return is_string($host) && ($host === 'opencode.ai' || str_ends_with($host, '.opencode.ai'));
     }
 
-    public function streamTurn(User $user, ChatThread $thread, string $message, ?string $model = null): StreamableAgentResponse
+    public function streamTurn(User $user, ChatThread $thread, string $message, ?string $model = null, ?array $toolsPolicy = null): StreamableAgentResponse
     {
         if (! $this->isConfigured($user)) {
             throw new RuntimeException('El proveedor de IA no está configurado.');
@@ -82,16 +91,58 @@ class ChatService
 
         [$provider, $defaultModel] = AiProviderResolver::for($user);
 
-        return $this->agentFor($user, $thread)
+        $policy = $this->prepareToolPolicy($thread, $message, $toolsPolicy);
+        $this->lastToolPolicy = $policy;
+
+        return $this->agentFor($user, $thread, $policy['groups'])
             ->continue($thread->id, as: $user)
             ->stream($message, provider: $provider, model: $model ?: $defaultModel);
+    }
+
+    /**
+     * Resolve the tool groups for a turn. A manual override is persisted on
+     * the thread; without one, the thread policy (manual) or the router wins.
+     *
+     * @param  array<string, mixed>|null  $override
+     * @return array{mode: string, groups: string[]}
+     */
+    public function prepareToolPolicy(ChatThread $thread, string $message, ?array $override = null): array
+    {
+        if (is_array($override)) {
+            $policy = $this->normalizeToolPolicy($override, $message);
+            $thread->forceFill(['tools_policy' => $policy])->save();
+
+            return $policy;
+        }
+
+        return $this->normalizeToolPolicy($thread->tools_policy, $message);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $policy
+     * @return array{mode: string, groups: string[]}
+     */
+    protected function normalizeToolPolicy(?array $policy, string $message): array
+    {
+        if (is_array($policy) && ($policy['mode'] ?? null) === 'manual') {
+            $groups = array_values(array_filter(
+                (array) ($policy['groups'] ?? []),
+                fn (mixed $group): bool => is_string($group) && ToolCatalog::isValidGroup($group),
+            ));
+
+            if ($groups !== []) {
+                return ['mode' => 'manual', 'groups' => $groups];
+            }
+        }
+
+        return ['mode' => 'auto', 'groups' => ToolRouter::route($message)];
     }
 
     /**
      * Resolve the thread's agent: a durable AgentDefinition when the thread
      * references one, otherwise the default Megalomaniac agent.
      */
-    protected function agentFor(User $user, ChatThread $thread): MegalomaniacAgent|RuntimeAgent
+    public function agentFor(User $user, ChatThread $thread, array $toolGroups = ['*']): MegalomaniacAgent|RuntimeAgent
     {
         if (filled($thread->agent) && $thread->agent !== 'megalomaniac') {
             $definition = AgentDefinition::query()
@@ -104,7 +155,7 @@ class ChatService
             }
         }
 
-        return new MegalomaniacAgent($user);
+        return new MegalomaniacAgent($user, $toolGroups);
     }
 
     public function regenerate(User $user, ChatThread $thread): ?StreamableAgentResponse

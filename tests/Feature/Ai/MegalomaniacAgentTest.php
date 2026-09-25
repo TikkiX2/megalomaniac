@@ -8,6 +8,7 @@ use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
 use App\Ai\Tools\ManageAgentsTool;
 use App\Ai\Tools\NutritionQueryTool;
+use App\Ai\Tools\TaskQueryTool;
 use App\Ai\Tools\WorkoutQueryTool;
 use App\Models\Currency;
 use App\Models\GroceryItem;
@@ -34,15 +35,16 @@ test('megalomaniac agent has correct tools', function () {
 
     $tools = iterator_to_array($agent->tools());
 
-    expect($tools)->toHaveCount(8);
-    expect($tools[0])->toBeInstanceOf(WorkoutQueryTool::class);
-    expect($tools[1])->toBeInstanceOf(FinanceQueryTool::class);
-    expect($tools[2])->toBeInstanceOf(NutritionQueryTool::class);
-    expect($tools[3])->toBeInstanceOf(GroceryQueryTool::class);
-    expect($tools[4])->toBeInstanceOf(ActionTool::class);
-    expect($tools[5])->toBeInstanceOf(IntegrationCatalogTool::class);
-    expect($tools[6])->toBeInstanceOf(IntegrationCallTool::class);
-    expect($tools[7])->toBeInstanceOf(ManageAgentsTool::class);
+    expect($tools)->toHaveCount(9);
+    expect($tools[0])->toBeInstanceOf(TaskQueryTool::class);
+    expect($tools[1])->toBeInstanceOf(WorkoutQueryTool::class);
+    expect($tools[2])->toBeInstanceOf(FinanceQueryTool::class);
+    expect($tools[3])->toBeInstanceOf(NutritionQueryTool::class);
+    expect($tools[4])->toBeInstanceOf(GroceryQueryTool::class);
+    expect($tools[5])->toBeInstanceOf(ActionTool::class);
+    expect($tools[6])->toBeInstanceOf(IntegrationCatalogTool::class);
+    expect($tools[7])->toBeInstanceOf(IntegrationCallTool::class);
+    expect($tools[8])->toBeInstanceOf(ManageAgentsTool::class);
 });
 
 test('workout query tool returns workouts', function () {

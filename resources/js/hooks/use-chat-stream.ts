@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { streamChatRequest } from '@/lib/chat-sse';
-import type { Citation, ToolActivity } from '@/types/chat';
+import type { Citation, ToolActivity, ToolPolicy } from '@/types/chat';
 
 export type ChatStreamStatus = 'idle' | 'streaming' | 'error';
 
@@ -15,6 +15,7 @@ export interface UseChatStreamResult {
     text: string;
     citations: Citation[];
     tools: ToolActivity[];
+    toolPolicy: ToolPolicy | null;
     error: string | null;
     start: (url: string, body: Record<string, unknown>) => Promise<void>;
     stop: () => void;
@@ -27,6 +28,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
     const [text, setText] = useState('');
     const [citations, setCitations] = useState<Citation[]>([]);
     const [tools, setTools] = useState<ToolActivity[]>([]);
+    const [toolPolicy, setToolPolicy] = useState<ToolPolicy | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const abortRef = useRef<AbortController | null>(null);
@@ -54,6 +56,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         setText('');
         setCitations([]);
         setTools([]);
+        setToolPolicy(null);
         setError(null);
         setStatus('idle');
     }, []);
@@ -73,6 +76,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         setText('');
         setCitations([]);
         setTools([]);
+        setToolPolicy(null);
         setError(null);
         setStatus('streaming');
 
@@ -94,6 +98,9 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
                     },
                     onToolCall: (tool) => {
                         setTools((previous) => [...previous, { ...tool, status: 'running' }]);
+                    },
+                    onTools: (groups, mode) => {
+                        setToolPolicy({ mode: mode === 'manual' ? 'manual' : 'auto', groups });
                     },
                     onToolResult: (result) => {
                         setTools((previous) =>
@@ -146,5 +153,5 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         }
     }, []);
 
-    return { status, text, citations, tools, error, start, stop, reset, clearError };
+    return { status, text, citations, tools, toolPolicy, error, start, stop, reset, clearError };
 }

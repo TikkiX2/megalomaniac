@@ -243,3 +243,23 @@ Fuente, items, señales, digest y preferencias de prueba eliminados (DB dev limp
 
 ### Datos de QA
 Disco, archivos y logs de prueba eliminados (DB dev y carpeta QA limpias).
+
+---
+
+## Chat: Tareas + Tools por Request — 2026-09-25
+
+> **Alcance:** fix del gap “el agente no ve tareas” (`TaskQueryTool` + `complete_task`/`update_task`) y selección de tools por request (`ToolCatalog`, `ToolRouter` heurístico, override manual por hilo, evento SSE `tools`, picker en el composer). Plan `docs/superpowers/plans/2026-09-25-chat-tools-por-request.md`.
+
+### Escenario ejecutado
+1. **Tool de tareas con datos reales** (tinker, usuario dev): devuelve backlog real (`tasks=20, pending=25, overdue=19, due_today=1`), con `scope` personal/freelance y resumen; router decide `tasks` para “¿Qué tareas tengo pendientes?”. **PASS**
+2. **UI chat** → picker “Herramientas: Auto” renderizado en el composer (deshabilitado porque la IA del entorno dev está sin configurar). **PASS**
+3. **Consola** → 0 errores. **PASS**
+
+### Limitación del crawl
+El envío end-to-end con IA real no se ejecutó (proveedor deshabilitado en dev); el flujo completo está cubierto por tests con agente fake: `ChatToolsPolicyTest` (evento `tools`, persistencia manual/auto, grupos inválidos → router, PATCH del hilo, agente construido con el subconjunto), `TaskToolsTest`, `ToolRouterTest`, `ToolCatalogTest`.
+
+### Estáticos
+`php artisan test --compact` **470 passed** / 0 failed (18 tests nuevos) · `npm run types` 0 · build OK · Pint OK.
+
+### Datos de QA
+Tareas de prueba creadas y eliminadas; no quedaron datos nuevos.

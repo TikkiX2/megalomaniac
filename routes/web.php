@@ -203,6 +203,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // AI Freelance Routes
     Route::post('ai/generate-quote', [AiInsightController::class, 'generateQuote'])->name('ai.generate-quote');
+    Route::post('ai/generate-task-description', [AiInsightController::class, 'generateTaskDescription'])->name('ai.generate-task-description');
+
+    // Task board columns
+    Route::post('task-board-columns', [TaskBoardColumnController::class, 'store'])->name('task-board-columns.store');
+    Route::patch('task-board-columns/reorder', [TaskBoardColumnController::class, 'reorder'])->name('task-board-columns.reorder');
+    Route::patch('task-board-columns/{column}', [TaskBoardColumnController::class, 'update'])->name('task-board-columns.update');
+    Route::delete('task-board-columns/{column}', [TaskBoardColumnController::class, 'destroy'])->name('task-board-columns.destroy');
 
     // Gym Routes
     Route::prefix('gym')->group(function () {

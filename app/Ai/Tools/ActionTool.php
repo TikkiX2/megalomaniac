@@ -26,7 +26,7 @@ class ActionTool implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Perform actions on behalf of the user: create workouts, log sets, log meals, add purchases, add income, add debts, create tasks, log supplements, add grocery items. Use this when the user asks to record or create something.';
+        return 'Perform actions on behalf of the user: create workouts, log sets, log meals, add purchases, add income, add debts, create/complete/update tasks, log supplements, add grocery items. Use this when the user asks to record, create or update something.';
     }
 
     public function handle(Request $request): Stringable|string
@@ -41,9 +41,11 @@ class ActionTool implements Tool
             'add_income' => $this->addIncome($request),
             'add_debt' => $this->addDebt($request),
             'create_task' => $this->createTask($request),
+            'complete_task' => $this->completeTask($request),
+            'update_task' => $this->updateTask($request),
             'log_supplement' => $this->logSupplement($request),
             'add_grocery_item' => $this->addGroceryItem($request),
-            default => json_encode(['error' => 'Invalid action. Use: create_workout, log_set, log_meal, add_purchase, add_income, add_debt, create_task, log_supplement, add_grocery_item']),
+            default => json_encode(['error' => 'Invalid action. Use: create_workout, log_set, log_meal, add_purchase, add_income, add_debt, create_task, complete_task, update_task, log_supplement, add_grocery_item']),
         };
     }
 
@@ -169,6 +171,7 @@ class ActionTool implements Tool
             'title' => $request['title'] ?? 'Task',
             'description' => $request['description'] ?? null,
             'priority' => $request['priority'] ?? null,
+            'due_date' => $request['due_date'] ?? null,
             'status' => $statusKey,
             'is_done' => (bool) $column?->is_done,
         ]);
@@ -213,13 +216,73 @@ class ActionTool implements Tool
         ], JSON_PRETTY_PRINT);
     }
 
+    private function completeTask(Request $request): string
+    {
+        $task = $this->findTask($request['task_id'] ?? null);
+
+        if (! $task) {
+            return json_encode(['success' => false, 'error' => 'Task not found']);
+        }
+
+        $doneKey = TaskBoardColumnService::columnsFor($task->project, $this->user)
+            ->firstWhere('is_done', true)?->key ?? 'Done';
+
+        $task->update(['status' => $doneKey, 'is_done' => true]);
+
+        return json_encode([
+            'success' => true,
+            'message' => 'Task completed',
+            'task' => ['id' => $task->id, 'title' => $task->title, 'status' => $task->status],
+        ], JSON_PRETTY_PRINT);
+    }
+
+    private function updateTask(Request $request): string
+    {
+        $task = $this->findTask($request['task_id'] ?? null);
+
+        if (! $task) {
+            return json_encode(['success' => false, 'error' => 'Task not found']);
+        }
+
+        $data = array_filter([
+            'title' => $request['title'] ?? null,
+            'description' => $request['description'] ?? null,
+            'priority' => $request['priority'] ?? null,
+            'due_date' => $request['due_date'] ?? null,
+        ], fn (mixed $value): bool => $value !== null);
+
+        if ($status = $request['status'] ?? null) {
+            $data['status'] = $status;
+            $data['is_done'] = (bool) TaskBoardColumnService::columnsFor($task->project, $this->user)
+                ->firstWhere('key', $status)?->is_done;
+        }
+
+        $task->update($data);
+
+        return json_encode([
+            'success' => true,
+            'message' => 'Task updated',
+            'task' => $task->only(['id', 'title', 'status', 'priority', 'due_date', 'is_done']),
+        ], JSON_PRETTY_PRINT);
+    }
+
+    private function findTask(mixed $taskId): ?ProjectTask
+    {
+        if (! $taskId) {
+            return null;
+        }
+
+        return ProjectTask::where('user_id', $this->user->id)->find((int) $taskId);
+    }
+
     public function schema(JsonSchema $schema): array
     {
         return [
             'action' => $schema->string()
                 ->enum([
                     'create_workout', 'log_set', 'log_meal', 'add_purchase',
-                    'add_income', 'add_debt', 'create_task', 'log_supplement', 'add_grocery_item',
+                    'add_income', 'add_debt', 'create_task', 'complete_task', 'update_task',
+                    'log_supplement', 'add_grocery_item',
                 ])
                 ->description('Action to perform')
                 ->required(),
@@ -255,7 +318,10 @@ class ActionTool implements Tool
             // Task params
             'project_id' => $schema->integer()->description('Project ID (for create_task)'),
             'title' => $schema->string()->description('Title (for create_task)'),
-            'priority' => $schema->string()->description('Priority (for create_task)'),
+            'priority' => $schema->string()->description('Priority (for create_task, update_task)'),
+            'task_id' => $schema->integer()->description('Task ID (for complete_task, update_task)'),
+            'status' => $schema->string()->description('Status (for update_task)'),
+            'due_date' => $schema->string()->description('Due date YYYY-MM-DD (for create_task, update_task)'),
             // Supplement params
             'supplement_id' => $schema->integer()->description('Supplement ID (for log_supplement)'),
             'taken_at' => $schema->string()->description('ISO 8601 datetime (for log_supplement)'),

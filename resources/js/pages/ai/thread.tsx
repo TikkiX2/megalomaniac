@@ -23,18 +23,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
-import type { AiChatState, ChatMessage, ChatThread } from '@/types/chat';
+import type { AiChatState, ChatMessage, ChatThread, ToolPolicy } from '@/types/chat';
 
 interface ChatThreadProps {
     thread: ChatThread;
     messages: ChatMessage[];
     threads: ChatThread[];
     models: string[];
+    toolGroups: { key: string; label: string }[];
     ai: AiChatState;
 }
 
-export default function ChatThread({ thread, messages, threads, models, ai }: ChatThreadProps) {
+export default function ChatThread({ thread, messages, threads, models, toolGroups, ai }: ChatThreadProps) {
     const [model, setModel] = useState<string | null>(thread.model ?? ai.defaultModel ?? models[0] ?? null);
+    const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>(thread.tools_policy ?? { mode: 'auto', groups: [] });
     const [renaming, setRenaming] = useState(false);
     const [title, setTitle] = useState(thread.title);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -77,6 +79,10 @@ export default function ChatThread({ thread, messages, threads, models, ai }: Ch
             message,
             thread_id: thread.id,
             model: model ?? undefined,
+            tools_policy:
+                toolsPolicy.mode === 'manual' && toolsPolicy.groups.length > 0
+                    ? toolsPolicy
+                    : undefined,
         });
     };
 
@@ -235,6 +241,9 @@ export default function ChatThread({ thread, messages, threads, models, ai }: Ch
                         key={draftToken}
                         initialValue={composerSeed}
                         models={models}
+                        toolGroups={toolGroups}
+                        toolsPolicy={toolsPolicy}
+                        onToolsPolicyChange={setToolsPolicy}
                         model={model}
                         onModelChange={setModel}
                         onSubmit={submit}

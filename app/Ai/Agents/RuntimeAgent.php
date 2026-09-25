@@ -2,13 +2,9 @@
 
 namespace App\Ai\Agents;
 
-use App\Ai\Tools\ActionTool;
-use App\Ai\Tools\FinanceQueryTool;
-use App\Ai\Tools\GroceryQueryTool;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
-use App\Ai\Tools\NutritionQueryTool;
-use App\Ai\Tools\WorkoutQueryTool;
+use App\Ai\Tools\ToolCatalog;
 use App\Integrations\IntegrationExecutor;
 use App\Models\AgentDefinition;
 use Laravel\Ai\Concerns\RemembersConversations;
@@ -56,20 +52,27 @@ class RuntimeAgent implements Agent, Conversational, HasTools
         $internal = (array) ($policy['internal'] ?? []);
         $integrations = (array) ($policy['integrations'] ?? []);
 
-        $tools = [];
         $map = [
-            'workout_query' => WorkoutQueryTool::class,
-            'finance_query' => FinanceQueryTool::class,
-            'nutrition_query' => NutritionQueryTool::class,
-            'grocery_query' => GroceryQueryTool::class,
-            'actions' => ActionTool::class,
+            'workout_query' => 'workout',
+            'finance_query' => 'finance',
+            'nutrition_query' => 'nutrition',
+            'grocery_query' => 'grocery',
+            'actions' => 'actions',
         ];
 
-        foreach ($map as $name => $class) {
-            if (in_array($name, $internal, true) || in_array('*', $internal, true)) {
-                $tools[] = new $class($this->definition->user);
+        $groups = [];
+
+        foreach ($map as $name => $group) {
+            if (in_array($name, $internal, true)) {
+                $groups[] = $group;
             }
         }
+
+        if (in_array('*', $internal, true)) {
+            $groups = array_values($map);
+        }
+
+        $tools = ToolCatalog::toolsFor($this->definition->user, $groups);
 
         if ($integrations !== []) {
             $tools[] = new IntegrationCatalogTool($this->definition->user, $integrations);

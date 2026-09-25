@@ -7,12 +7,13 @@ import { ProviderNotice } from '@/components/ai/chat/ProviderNotice';
 import { Button } from '@/components/ui/button';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
-import type { AiChatState, ChatThread } from '@/types/chat';
+import type { AiChatState, ChatThread, ToolPolicy } from '@/types/chat';
 
 interface ChatIndexProps {
     threads: ChatThread[];
     models: string[];
     agents: { key: string; name: string }[];
+    toolGroups: { key: string; label: string }[];
     ai: AiChatState;
 }
 
@@ -23,9 +24,10 @@ const SUGGESTIONS = [
     '¿Qué tareas tengo pendientes con fecha límite próxima?',
 ];
 
-export default function ChatIndex({ threads, models, agents, ai }: ChatIndexProps) {
+export default function ChatIndex({ threads, models, agents, toolGroups, ai }: ChatIndexProps) {
     const [model, setModel] = useState<string | null>(ai.defaultModel ?? models[0] ?? null);
     const [agent, setAgent] = useState('megalomaniac');
+    const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>({ mode: 'auto', groups: [] });
     const [pendingMessage, setPendingMessage] = useState<string | null>(null);
     const [composerSeed, setComposerSeed] = useState('');
     const [draftToken, setDraftToken] = useState(0);
@@ -66,6 +68,10 @@ export default function ChatIndex({ threads, models, agents, ai }: ChatIndexProp
             message,
             model: model ?? undefined,
             agent: agent !== 'megalomaniac' ? agent : undefined,
+            tools_policy:
+                toolsPolicy.mode === 'manual' && toolsPolicy.groups.length > 0
+                    ? toolsPolicy
+                    : undefined,
         });
     };
 
@@ -116,6 +122,9 @@ export default function ChatIndex({ threads, models, agents, ai }: ChatIndexProp
                         agents={agents}
                         agent={agent}
                         onAgentChange={setAgent}
+                        toolGroups={toolGroups}
+                        toolsPolicy={toolsPolicy}
+                        onToolsPolicyChange={setToolsPolicy}
                         onSubmit={submit}
                         onStop={stream.stop}
                         streaming={stream.status === 'streaming'}

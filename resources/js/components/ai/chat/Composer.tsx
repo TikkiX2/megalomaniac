@@ -1,9 +1,11 @@
 import { ArrowUp, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { AgentPicker } from '@/components/ai/chat/AgentPicker';
+import { ToolsPicker } from '@/components/ai/chat/ToolsPicker';
 import { ModelPicker } from '@/components/ai/chat/ModelPicker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { ToolPolicy } from '@/types/chat';
 
 interface ComposerProps {
     models: string[];
@@ -12,6 +14,9 @@ interface ComposerProps {
     agents?: { key: string; name: string }[];
     agent?: string;
     onAgentChange?: (key: string) => void;
+    toolGroups?: { key: string; label: string }[];
+    toolsPolicy?: ToolPolicy;
+    onToolsPolicyChange?: (policy: ToolPolicy) => void;
     onSubmit: (message: string) => void;
     onStop?: () => void;
     streaming: boolean;
@@ -31,6 +36,9 @@ export function Composer({
     agents = [],
     agent = 'megalomaniac',
     onAgentChange,
+    toolGroups = [],
+    toolsPolicy,
+    onToolsPolicyChange,
     onSubmit,
     onStop,
     streaming,
@@ -111,6 +119,14 @@ export function Composer({
                         />
                     )}
                     <ModelPicker models={models} value={model} onChange={onModelChange} disabled={disabled || streaming} />
+                    {onToolsPolicyChange && toolsPolicy && toolGroups.length > 0 && (
+                        <ToolsPicker
+                            groups={toolGroups}
+                            policy={toolsPolicy}
+                            onChange={onToolsPolicyChange}
+                            disabled={disabled || streaming}
+                        />
+                    )}
                 </div>
 
                 <div className="flex items-center gap-3">

@@ -6,6 +6,7 @@ export interface ChatStreamHandlers {
     onCitation?: (citation: Citation) => void;
     onToolCall?: (tool: { id: string; name: string }) => void;
     onToolResult?: (tool: { id: string; name: string; successful: boolean }) => void;
+    onTools?: (groups: string[], mode: string) => void;
     onError?: (message: string, recoverable: boolean) => void;
 }
 
@@ -17,6 +18,8 @@ interface StreamEvent {
     tool_id?: string;
     tool_name?: string;
     successful?: boolean;
+    groups?: string[];
+    mode?: string;
     message?: string;
     recoverable?: boolean;
 }
@@ -54,6 +57,9 @@ function dispatch(event: StreamEvent, handlers: ChatStreamHandlers): void {
             break;
         case 'tool_call':
             if (event.tool_id) handlers.onToolCall?.({ id: event.tool_id, name: event.tool_name ?? 'tool' });
+            break;
+        case 'tools':
+            handlers.onTools?.(event.groups ?? [], event.mode ?? 'auto');
             break;
         case 'tool_result':
             if (event.tool_id) {

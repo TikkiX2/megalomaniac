@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Ai\Services\ChatService;
+use App\Ai\Tools\ToolCatalog;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\EditChatMessageRequest;
 use App\Http\Requests\Ai\SendChatMessageRequest;
@@ -40,6 +41,7 @@ class ChatController extends Controller
             'threads' => ChatThreadResource::collection($this->threadsFor($user))->resolve($request),
             'models' => $this->service->availableModels($user),
             'agents' => $this->agentsFor($user),
+            'toolGroups' => $this->toolGroups(),
             'ai' => $this->aiState($user),
         ]);
     }
@@ -58,6 +60,7 @@ class ChatController extends Controller
             'threads' => ChatThreadResource::collection($this->threadsFor($user))->resolve($request),
             'models' => $this->service->availableModels($user),
             'agents' => $this->agentsFor($user),
+            'toolGroups' => $this->toolGroups(),
             'ai' => $this->aiState($user),
         ]);
     }
@@ -74,6 +77,10 @@ class ChatController extends Controller
 
         if (array_key_exists('pinned', $data)) {
             $thread->pinned_at = $data['pinned'] ? now() : null;
+        }
+
+        if (array_key_exists('tools_policy', $data)) {
+            $thread->tools_policy = $data['tools_policy'];
         }
 
         $thread->save();
@@ -130,10 +137,15 @@ class ChatController extends Controller
             $thread->update(['model' => $model]);
         }
 
-        return $this->streamResponse(
-            $this->service->streamTurn($user, $thread, $request->validated('message'), $model ?? $thread->model),
+        $stream = $this->service->streamTurn(
+            $user,
             $thread,
+            $request->validated('message'),
+            $model ?? $thread->model,
+            $request->validated('tools_policy'),
         );
+
+        return $this->streamResponse($stream, $thread, $this->service->lastToolPolicy);
     }
 
     public function regenerate(Request $request, ChatThread $thread): StreamedResponse
@@ -150,7 +162,7 @@ class ChatController extends Controller
 
         abort_if($stream === null, 422, 'No hay ningún intercambio que regenerar.');
 
-        return $this->streamResponse($stream, $thread);
+        return $this->streamResponse($stream, $thread, $this->service->lastToolPolicy);
     }
 
     public function edit(EditChatMessageRequest $request, ChatThread $thread): StreamedResponse
@@ -172,18 +184,30 @@ class ChatController extends Controller
 
         abort_if($stream === null, 422, 'El mensaje indicado no se puede editar.');
 
-        return $this->streamResponse($stream, $thread);
+        return $this->streamResponse($stream, $thread, $this->service->lastToolPolicy);
     }
 
-    protected function streamResponse(StreamableAgentResponse $stream, ChatThread $thread): StreamedResponse
+    /**
+     * @param  array{mode?: string, groups?: string[]}  $toolPolicy
+     */
+    protected function streamResponse(StreamableAgentResponse $stream, ChatThread $thread, array $toolPolicy = []): StreamedResponse
     {
-        return response()->stream(function () use ($stream, $thread): void {
+        return response()->stream(function () use ($stream, $thread, $toolPolicy): void {
             if (function_exists('set_time_limit')) {
                 set_time_limit(0);
             }
 
             echo 'data: '.json_encode(['type' => 'thread', 'threadId' => $thread->id])."\n\n";
             flush();
+
+            if ($toolPolicy !== []) {
+                echo 'data: '.json_encode([
+                    'type' => 'tools',
+                    'mode' => $toolPolicy['mode'] ?? 'auto',
+                    'groups' => $toolPolicy['groups'] ?? [],
+                ])."\n\n";
+                flush();
+            }
 
             try {
                 foreach ($stream as $event) {
@@ -252,6 +276,17 @@ class ChatController extends Controller
             'configured' => $this->service->isConfigured($user),
             'defaultModel' => $user->ai_model ?: null,
         ];
+    }
+
+    /**
+     * @return array<int, array{key: string, label: string}>
+     */
+    protected function toolGroups(): array
+    {
+        return collect(ToolCatalog::groups())
+            ->map(fn (array $group, string $key): array => ['key' => $key, 'label' => $group['label']])
+            ->values()
+            ->all();
     }
 
     /**

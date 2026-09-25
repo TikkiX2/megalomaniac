@@ -2,15 +2,7 @@
 
 namespace App\Ai\Agents;
 
-use App\Ai\Tools\ActionTool;
-use App\Ai\Tools\FinanceQueryTool;
-use App\Ai\Tools\GroceryQueryTool;
-use App\Ai\Tools\IntegrationCallTool;
-use App\Ai\Tools\IntegrationCatalogTool;
-use App\Ai\Tools\ManageAgentsTool;
-use App\Ai\Tools\NutritionQueryTool;
-use App\Ai\Tools\WorkoutQueryTool;
-use App\Integrations\IntegrationExecutor;
+use App\Ai\Tools\ToolCatalog;
 use App\Models\User;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
@@ -22,7 +14,13 @@ class MegalomaniacAgent implements Agent, Conversational, HasTools
 {
     use Promptable, RemembersConversations;
 
-    public function __construct(public User $user) {}
+    /**
+     * @param  string[]  $toolGroups  Grupos de ToolCatalog; ['*'] = todos
+     */
+    public function __construct(
+        public User $user,
+        protected array $toolGroups = ['*'],
+    ) {}
 
     public function instructions(): string
     {
@@ -46,15 +44,6 @@ EOF;
 
     public function tools(): iterable
     {
-        return [
-            new WorkoutQueryTool($this->user),
-            new FinanceQueryTool($this->user),
-            new NutritionQueryTool($this->user),
-            new GroceryQueryTool($this->user),
-            new ActionTool($this->user),
-            new IntegrationCatalogTool($this->user),
-            new IntegrationCallTool($this->user, app(IntegrationExecutor::class)),
-            new ManageAgentsTool($this->user, app(AgentDefinitionService::class)),
-        ];
+        return ToolCatalog::toolsFor($this->user, $this->toolGroups);
     }
 }
