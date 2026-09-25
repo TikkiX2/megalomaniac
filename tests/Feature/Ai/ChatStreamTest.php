@@ -86,8 +86,8 @@ test('sending without configured provider returns 422 json', function () {
     expect(ChatThread::query()->count())->toBe(0);
 });
 
-test('provider failure streams an error event and still closes the stream', function () {
-    Http::fake(['*' => Http::response(['error' => ['message' => 'upstream boom']], 500)]);
+test('insufficient credits failures surface an actionable message', function () {
+    Http::fake(['*' => Http::response(['error' => ['message' => 'Insufficient Balance']], 402)]);
 
     $user = User::factory()->withAiProvider()->create();
 
@@ -100,6 +100,58 @@ test('provider failure streams an error event and still closes the stream', func
         ->toContain('"type":"thread"')
         ->toContain('"type":"error"')
         ->toContain('"recoverable":false')
+        ->toContain('saldo o cuota')
+        ->toContain('[DONE]');
+});
+
+test('rate limited failures surface a wait message', function () {
+    Http::fake(['*' => Http::response(['error' => ['message' => 'Too many requests']], 429)]);
+
+    $user = User::factory()->withAiProvider()->create();
+
+    $content = $this->actingAs($user)
+        ->post(route('ai.chat.send'), ['message' => '¿Qué tal?'])
+        ->streamedContent();
+
+    expect($content)->toContain('limitando las peticiones')->toContain('[DONE]');
+});
+
+test('rejected api keys surface a settings hint', function () {
+    Http::fake(['*' => Http::response(['error' => ['message' => 'Unauthorized']], 401)]);
+
+    $user = User::factory()->withAiProvider()->create();
+
+    $content = $this->actingAs($user)
+        ->post(route('ai.chat.send'), ['message' => '¿Qué tal?'])
+        ->streamedContent();
+
+    expect($content)->toContain('API key')->toContain('[DONE]');
+});
+
+test('bad request failures point to the model setting', function () {
+    Http::fake(['*' => Http::response(['error' => ['message' => 'weird failure']], 400)]);
+
+    $user = User::factory()->withAiProvider()->create();
+
+    $content = $this->actingAs($user)
+        ->post(route('ai.chat.send'), ['message' => '¿Qué tal?'])
+        ->streamedContent();
+
+    expect($content)->toContain('rechaz')->toContain('[DONE]');
+});
+
+test('unknown provider failures keep the generic message', function () {
+    Http::fake(['*' => Http::response(['error' => ['message' => 'weird failure']], 418)]);
+
+    $user = User::factory()->withAiProvider()->create();
+
+    $content = $this->actingAs($user)
+        ->post(route('ai.chat.send'), ['message' => '¿Qué tal?'])
+        ->streamedContent();
+
+    expect($content)
+        ->toContain('"type":"error"')
+        ->toContain('La generaci')
         ->toContain('[DONE]');
 });
 

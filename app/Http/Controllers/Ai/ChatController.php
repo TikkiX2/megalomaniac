@@ -12,12 +12,17 @@ use App\Http\Resources\ChatThreadResource;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Ai\Exceptions\InsufficientCreditsException;
+use Laravel\Ai\Exceptions\ProviderConnectionException;
+use Laravel\Ai\Exceptions\ProviderOverloadedException;
+use Laravel\Ai\Exceptions\RateLimitedException;
 use Laravel\Ai\Responses\StreamableAgentResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -187,7 +192,7 @@ class ChatController extends Controller
 
                 echo 'data: '.json_encode([
                     'type' => 'error',
-                    'message' => 'La generación se interrumpió. Inténtalo de nuevo.',
+                    'message' => $this->errorMessageFor($exception),
                     'recoverable' => false,
                 ])."\n\n";
                 flush();
@@ -200,6 +205,24 @@ class ChatController extends Controller
             'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
         ]);
+    }
+
+    protected function errorMessageFor(Throwable $exception): string
+    {
+        $status = $exception instanceof RequestException
+            ? $exception->response?->status()
+            : null;
+
+        return match (true) {
+            $exception instanceof InsufficientCreditsException => 'Tu proveedor de IA no tiene saldo o cuota suficiente. Recarga tu cuenta o cambia la API key en Settings → IA.',
+            $exception instanceof RateLimitedException => 'Tu proveedor está limitando las peticiones. Espera unos segundos e inténtalo de nuevo.',
+            $exception instanceof ProviderOverloadedException => 'El proveedor de IA está sobrecargado. Inténtalo de nuevo en unos momentos.',
+            $exception instanceof ProviderConnectionException => 'No se pudo conectar con tu proveedor de IA. Revisa la URL en Settings → IA.',
+            in_array($status, [401, 403], true) => 'Tu API key fue rechazada. Revísala en Settings → IA.',
+            $status === 404 => 'El endpoint o el modelo no existen. Revisa la URL y el modelo en Settings → IA.',
+            $status === 400 => 'Tu proveedor rechazó la solicitud (400). Revisa el modelo configurado en Settings → IA.',
+            default => 'La generación se interrumpió. Inténtalo de nuevo.',
+        };
     }
 
     /**
