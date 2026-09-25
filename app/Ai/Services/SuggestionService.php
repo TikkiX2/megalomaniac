@@ -187,8 +187,7 @@ class SuggestionService
     private function checkOverdueTasks(User $user): array
     {
         $overdueTasks = ProjectTask::where('user_id', $user->id)
-            ->where('status', '!=', 'Done')
-            ->where('status', '!=', 'Completed')
+            ->where('is_done', false)
             ->where('due_date', '<', now()->toDateString())
             ->count();
 

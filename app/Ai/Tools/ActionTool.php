@@ -6,6 +6,7 @@ use App\Models\Debt;
 use App\Models\GroceryItem;
 use App\Models\Income;
 use App\Models\MealLog;
+use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\Purchase;
 use App\Models\SupplementLog;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
+use App\Services\TaskBoardColumnService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
@@ -153,13 +155,22 @@ class ActionTool implements Tool
 
     private function createTask(Request $request): string
     {
+        $projectId = $request['project_id'] ?? null;
+        $project = $projectId
+            ? Project::where('id', $projectId)->where('user_id', $this->user->id)->first()
+            : null;
+
+        $statusKey = TaskBoardColumnService::firstStatusKey($project, $this->user);
+        $column = TaskBoardColumnService::columnsFor($project, $this->user)->firstWhere('key', $statusKey);
+
         $task = ProjectTask::create([
             'user_id' => $this->user->id,
-            'project_id' => $request['project_id'] ?? null,
+            'project_id' => $project?->id,
             'title' => $request['title'] ?? 'Task',
             'description' => $request['description'] ?? null,
             'priority' => $request['priority'] ?? null,
-            'status' => 'To Do',
+            'status' => $statusKey,
+            'is_done' => (bool) $column?->is_done,
         ]);
 
         return json_encode([

@@ -7,6 +7,7 @@ use App\Ai\Tools\FinanceQueryTool;
 use App\Ai\Tools\GroceryQueryTool;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
+use App\Ai\Tools\ManageAgentsTool;
 use App\Ai\Tools\NutritionQueryTool;
 use App\Ai\Tools\WorkoutQueryTool;
 use App\Integrations\IntegrationExecutor;
@@ -53,6 +54,7 @@ EOF;
             new ActionTool($this->user),
             new IntegrationCatalogTool($this->user),
             new IntegrationCallTool($this->user, app(IntegrationExecutor::class)),
+            new ManageAgentsTool($this->user, app(AgentDefinitionService::class)),
         ];
     }
 }

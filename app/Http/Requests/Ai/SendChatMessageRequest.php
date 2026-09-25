@@ -20,6 +20,7 @@ class SendChatMessageRequest extends FormRequest
             'message' => ['required', 'string', 'max:4000'],
             'thread_id' => ['nullable', 'string', 'size:36'],
             'model' => ['nullable', 'string', 'max:100'],
+            'agent' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

@@ -77,6 +77,33 @@ it('reports unknown connections with available names', function () {
         ->and($payload['message'])->toContain('Mi fake');
 });
 
+it('filters the catalog and rejects calls outside the allowlist', function () {
+    $user = User::factory()->create();
+    Connection::factory()->for($user)->create(['kind' => 'fake', 'name' => 'Mi fake']);
+
+    $catalog = json_decode((string) (new IntegrationCatalogTool($user, ['github']))->handle(new Request([])), true);
+    expect($catalog['connections'])->toHaveCount(0);
+
+    $tool = new IntegrationCallTool($user, app(IntegrationExecutor::class), ['github']);
+    $payload = json_decode((string) $tool->handle(new Request([
+        'connection' => 'Mi fake',
+        'action' => 'ping',
+        'params' => [],
+    ])), true);
+
+    expect($payload['status'])->toBe('error')
+        ->and($payload['message'])->toContain('no está permitida');
+
+    $allowed = new IntegrationCallTool($user, app(IntegrationExecutor::class), ['fake']);
+    $ok = json_decode((string) $allowed->handle(new Request([
+        'connection' => 'Mi fake',
+        'action' => 'ping',
+        'params' => [],
+    ])), true);
+
+    expect($ok['status'])->toBe('success');
+});
+
 it('registers both tools on the agent', function () {
     $user = User::factory()->create();
 

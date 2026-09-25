@@ -1,5 +1,6 @@
 import { ArrowUp, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { AgentPicker } from '@/components/ai/chat/AgentPicker';
 import { ModelPicker } from '@/components/ai/chat/ModelPicker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -8,6 +9,9 @@ interface ComposerProps {
     models: string[];
     model: string | null;
     onModelChange: (model: string) => void;
+    agents?: { key: string; name: string }[];
+    agent?: string;
+    onAgentChange?: (key: string) => void;
     onSubmit: (message: string) => void;
     onStop?: () => void;
     streaming: boolean;
@@ -24,6 +28,9 @@ export function Composer({
     models,
     model,
     onModelChange,
+    agents = [],
+    agent = 'megalomaniac',
+    onAgentChange,
     onSubmit,
     onStop,
     streaming,
@@ -94,7 +101,17 @@ export function Composer({
             />
 
             <div className="flex items-center justify-between gap-2 px-1 pt-1">
-                <ModelPicker models={models} value={model} onChange={onModelChange} disabled={disabled || streaming} />
+                <div className="flex items-center gap-1">
+                    {onAgentChange && (
+                        <AgentPicker
+                            agents={agents}
+                            value={agent}
+                            onChange={onAgentChange}
+                            disabled={disabled || streaming}
+                        />
+                    )}
+                    <ModelPicker models={models} value={model} onChange={onModelChange} disabled={disabled || streaming} />
+                </div>
 
                 <div className="flex items-center gap-3">
                     {nearLimit && (

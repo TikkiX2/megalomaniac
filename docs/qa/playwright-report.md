@@ -173,3 +173,27 @@ Sin conexiones persistidas (solo drafts); DB dev limpia.
 
 ### Estáticos
 `php artisan test --compact` **384 passed** / 0 failed (167 tests de integraciones) · Pint OK.
+
+---
+
+## SP2 Agentes Background — 2026-09-25
+
+> **Alcance:** `AgentDefinition` unificado (chat + background), `AgentRun`, runner programado (`agents:dispatch-due` cada minuto + `RunAgentJob`), tool `manage_agents`, UI `/agents` (lista + wizard + detalle de runs), selector de agente en el chat. Spec `docs/superpowers/specs/2026-09-25-agentes-background-design.md`, plan `docs/superpowers/plans/2026-09-25-agentes-background.md`.
+
+### Escenario ejecutado (Playwright MCP)
+1. **`/agents`** → empty state con CTA y copy que menciona crearlos desde el Chat IA. **PASS**
+2. **Wizard** → nombre/descripción/instrucciones/schedule (intervalo o cron), herramientas internas y conexiones permitidas; crea “Monitor QA” → card con `cada 1h · activo`, próximo run, runs y fallos. **PASS**
+3. **Ejecutar manual** → job procesado por el queue worker → run `skipped` con motivo “IA no configurada en Settings → IA.” visible en el detalle (sin llamadas externas). **PASS**
+4. **Chat** → selector “Agente” en el composer (Megalomaniac + agentes del usuario), deshabilitado cuando la IA no está configurada. **PASS**
+5. **Sidebar** → item “Agentes” en Asistente IA. **PASS**
+6. **Consola** → 0 errores. **PASS**
+
+### Decisiones/desviaciones registradas
+- **Streaming vs structured output:** el SDK no soporta streaming con `HasStructuredOutput`; el `RuntimeAgent` usa **contrato JSON en texto** (más compatible con providers BYO) y el runner parsea tolerante (fences/JSON). Spec actualizado.
+- Migraciones de agentes aplicadas a dev DB durante QA.
+
+### Estáticos
+`php artisan test --compact` **417 passed** / 0 failed (31 tests de agentes + chat selection) · `npm run types` 0 · build OK · Pint OK.
+
+### Datos de QA
+Agente y run de prueba eliminados (DB dev limpia).

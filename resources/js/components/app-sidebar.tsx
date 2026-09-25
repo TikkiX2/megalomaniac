@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, LayoutGrid, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
+import { Bot, Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, LayoutGrid, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -222,6 +222,14 @@ export function AppSidebar() {
                                             {approvals_pending_count}
                                         </span>
                                     )}
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild tooltip="Agentes" isActive={window.location.pathname.startsWith('/agents')}>
+                                <Link href="/agents" prefetch>
+                                    <Bot className="h-4 w-4" />
+                                    <span>Agentes</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

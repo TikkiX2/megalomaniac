@@ -3,7 +3,9 @@
 namespace App\Ai\Services;
 
 use App\Ai\Agents\MegalomaniacAgent;
+use App\Ai\Agents\RuntimeAgent;
 use App\Ai\Support\AiProviderResolver;
+use App\Models\AgentDefinition;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -29,14 +31,14 @@ class ChatService
         }
     }
 
-    public function createThread(User $user, string $firstMessage, ?string $model = null): ChatThread
+    public function createThread(User $user, string $firstMessage, ?string $model = null, string $agent = 'megalomaniac'): ChatThread
     {
         return ChatThread::create([
             'id' => (string) Str::uuid7(),
             'participant_type' => $user->getMorphClass(),
             'participant_id' => $user->getKey(),
             'title' => Str::limit(trim(strip_tags($firstMessage)), 60, preserveWords: true),
-            'agent' => 'megalomaniac',
+            'agent' => $agent,
             'model' => $model,
         ]);
     }
@@ -80,9 +82,29 @@ class ChatService
 
         [$provider, $defaultModel] = AiProviderResolver::for($user);
 
-        return (new MegalomaniacAgent($user))
+        return $this->agentFor($user, $thread)
             ->continue($thread->id, as: $user)
             ->stream($message, provider: $provider, model: $model ?: $defaultModel);
+    }
+
+    /**
+     * Resolve the thread's agent: a durable AgentDefinition when the thread
+     * references one, otherwise the default Megalomaniac agent.
+     */
+    protected function agentFor(User $user, ChatThread $thread): MegalomaniacAgent|RuntimeAgent
+    {
+        if (filled($thread->agent) && $thread->agent !== 'megalomaniac') {
+            $definition = AgentDefinition::query()
+                ->forUser($user)
+                ->where('key', $thread->agent)
+                ->first();
+
+            if ($definition) {
+                return new RuntimeAgent($definition, []);
+            }
+        }
+
+        return new MegalomaniacAgent($user);
     }
 
     public function regenerate(User $user, ChatThread $thread): ?StreamableAgentResponse

@@ -32,7 +32,7 @@ Chat (tool manage_agents) ──► AgentDefinitionService (CRUD + validación)
 UI /agents ─────────────────► idem + run manual
 ```
 
-- **`RuntimeAgent`** (implementa `Agent`, `HasTools`, `HasStructuredOutput`): se construye con la `AgentDefinition` y el contexto; sus `instructions()` son las del definition + contexto acotado (últimos runs, aprobaciones pendientes, sugerencias abiertas).
+- **`RuntimeAgent`** (implementa `Agent`, `Conversational`, `HasTools`): se construye con la `AgentDefinition` y el contexto; sus `instructions()` son las del definition + contexto acotado (últimos runs, aprobaciones pendientes, sugerencias abiertas).
 - **`AgentRunner`**: guardas → prompt → persistencia → notificación.
 - **`AgentScheduler`**: calcula `next_run_at` (intervalo o cron con `Cron\CronExpression`, ya incluido en Laravel).
 - Proveedor IA vía `AiProviderResolver` (BYO del usuario). Sin proveedor configurado → run `skipped` con motivo, sin romper el scheduler.
@@ -108,12 +108,12 @@ final class AgentScheduler
 }
 ```
 
-**Salida estructurada del run** (`HasStructuredOutput`):
+**Salida del run (contrato JSON en texto):**
 
 ```json
 {
   "report": "markdown",
-  "suggestions": [{"title": "...", "content": "...", "data": {"action_url": "/..."}}],
+  "suggestions": "[{\"title\": \"...\", \"content\": \"...\"}]",
   "notify": "mensaje corto opcional"
 }
 ```

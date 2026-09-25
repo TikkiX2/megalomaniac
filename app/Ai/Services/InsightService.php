@@ -3,6 +3,7 @@
 namespace App\Ai\Services;
 
 use App\Ai\Agents\MegalomaniacAgent;
+use App\Ai\Support\AiProviderResolver;
 use App\Models\User;
 
 class InsightService
@@ -32,7 +33,9 @@ class InsightService
         $prompt .= "Workout data (JSON):\n";
         $prompt .= $recentWorkouts->toJson();
 
-        $response = $agent->forUser($user)->prompt($prompt);
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
 
         return $response->text;
     }
@@ -66,7 +69,9 @@ class InsightService
         $prompt .= "Incomes (JSON):\n".$recentIncomes->toJson()."\n";
         $prompt .= "Debts (JSON):\n".$debts->toJson();
 
-        $response = $agent->forUser($user)->prompt($prompt);
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
 
         return $response->text;
     }
@@ -98,7 +103,9 @@ class InsightService
             $prompt .= "Price history (JSON):\n".$recentHistory->toJson();
         }
 
-        $response = $agent->forUser($user)->prompt($prompt);
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
 
         return $response->text;
     }
@@ -111,7 +118,7 @@ class InsightService
 
         $agent = new MegalomaniacAgent($user);
         $tasks = $user->personalTasks()
-            ->where('status', '!=', 'Done')
+            ->where('is_done', false)
             ->orderBy('due_date', 'asc')
             ->get();
 
@@ -124,7 +131,9 @@ class InsightService
         $prompt .= "Provide a concise ranked list with brief reasoning for each task's priority.\n\n";
         $prompt .= "Pending tasks (JSON):\n".$tasks->toJson();
 
-        $response = $agent->forUser($user)->prompt($prompt);
+        [$provider, $model] = AiProviderResolver::for($user);
+
+        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
 
         return $response->text;
     }

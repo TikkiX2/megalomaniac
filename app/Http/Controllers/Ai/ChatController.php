@@ -9,6 +9,7 @@ use App\Http\Requests\Ai\SendChatMessageRequest;
 use App\Http\Requests\Ai\UpdateChatThreadRequest;
 use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatThreadResource;
+use App\Models\AgentDefinition;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,6 +39,7 @@ class ChatController extends Controller
         return Inertia::render('ai/chat', [
             'threads' => ChatThreadResource::collection($this->threadsFor($user))->resolve($request),
             'models' => $this->service->availableModels($user),
+            'agents' => $this->agentsFor($user),
             'ai' => $this->aiState($user),
         ]);
     }
@@ -55,6 +57,7 @@ class ChatController extends Controller
             )->resolve($request),
             'threads' => ChatThreadResource::collection($this->threadsFor($user))->resolve($request),
             'models' => $this->service->availableModels($user),
+            'agents' => $this->agentsFor($user),
             'ai' => $this->aiState($user),
         ]);
     }
@@ -120,7 +123,7 @@ class ChatController extends Controller
 
             $this->authorize('update', $thread);
         } else {
-            $thread = $this->service->createThread($user, $request->validated('message'), $model);
+            $thread = $this->service->createThread($user, $request->validated('message'), $model, (string) ($request->validated('agent') ?? 'megalomaniac'));
         }
 
         if ($model !== null) {
@@ -249,5 +252,22 @@ class ChatController extends Controller
             'configured' => $this->service->isConfigured($user),
             'defaultModel' => $user->ai_model ?: null,
         ];
+    }
+
+    /**
+     * @return array<int, array{key: string, name: string}>
+     */
+    protected function agentsFor(User $user): array
+    {
+        return AgentDefinition::query()
+            ->forUser($user)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (AgentDefinition $definition): array => [
+                'key' => $definition->key,
+                'name' => $definition->name,
+            ])
+            ->values()
+            ->all();
     }
 }

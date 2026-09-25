@@ -13,9 +13,13 @@ use Stringable;
 
 class IntegrationCallTool implements Tool
 {
+    /**
+     * @param  string[]|null  $allowedKinds  null = todas; ['*'] = todas
+     */
     public function __construct(
         protected User $user,
         protected IntegrationExecutor $executor,
+        protected ?array $allowedKinds = null,
     ) {}
 
     public function description(): Stringable|string
@@ -37,6 +41,10 @@ class IntegrationCallTool implements Tool
             $available = Connection::query()
                 ->forUser($this->user)
                 ->enabled()
+                ->when(
+                    $this->allowedKinds !== null && $this->allowedKinds !== ['*'],
+                    fn ($query) => $query->whereIn('kind', $this->allowedKinds),
+                )
                 ->pluck('name')
                 ->implode(', ');
 
@@ -45,6 +53,13 @@ class IntegrationCallTool implements Tool
                 'message' => $available
                     ? "Conexión no encontrada. Disponibles: {$available}."
                     : 'No hay conexiones habilitadas. Creá una en Settings → Conexiones.',
+            ]);
+        }
+
+        if ($this->allowedKinds !== null && $this->allowedKinds !== ['*'] && ! in_array($connection->kind, $this->allowedKinds, true)) {
+            return json_encode([
+                'status' => 'error',
+                'message' => "La conexión [{$connection->name}] no está permitida para este agente.",
             ]);
         }
 

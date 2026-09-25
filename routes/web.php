@@ -171,6 +171,7 @@ Route::get('dashboard', function () {
 
 require __DIR__.'/settings.php';
 require __DIR__.'/integrations.php';
+require __DIR__.'/agents.php';
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // AI Chat

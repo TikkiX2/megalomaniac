@@ -14,7 +14,13 @@ use Stringable;
 
 class IntegrationCatalogTool implements Tool
 {
-    public function __construct(protected User $user) {}
+    /**
+     * @param  string[]|null  $allowedKinds  null = todas; ['*'] = todas
+     */
+    public function __construct(
+        protected User $user,
+        protected ?array $allowedKinds = null,
+    ) {}
 
     public function description(): Stringable|string
     {
@@ -29,6 +35,10 @@ class IntegrationCatalogTool implements Tool
         $connections = Connection::query()
             ->forUser($this->user)
             ->enabled()
+            ->when(
+                $this->allowedKinds !== null && $this->allowedKinds !== ['*'],
+                fn ($query) => $query->whereIn('kind', $this->allowedKinds),
+            )
             ->when($request['connection'] ?? null, fn ($query, $name) => $query->where('name', 'like', "%{$name}%"))
             ->orderBy('name')
             ->get()
