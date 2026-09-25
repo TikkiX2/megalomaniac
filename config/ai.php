@@ -150,8 +150,8 @@ return [
 
         'user' => [
             'driver' => 'openai-compatible',
-            'url' => fn () => auth()->user()?->ai_provider_url,
-            'key' => fn () => auth()->user()?->ai_provider_key,
+            'url' => null,
+            'key' => null,
         ],
 
         'xai' => [

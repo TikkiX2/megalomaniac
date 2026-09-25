@@ -90,6 +90,15 @@ test('regenerate throws and keeps history when provider is not configured', func
     expect($thread->messages()->count())->toBe(2);
 });
 
+test('configure user provider writes concrete runtime config', function () {
+    $user = User::factory()->withAiProvider()->create();
+
+    (new ChatService)->configureUserProvider($user);
+
+    expect(config('ai.providers.user.url'))->toBe('https://api.example.com/v1');
+    expect(config('ai.providers.user.key'))->toBe('sk-test');
+});
+
 test('available models returns endpoint list and caches it', function () {
     Http::fake([
         'api.example.com/v1/models' => Http::response([

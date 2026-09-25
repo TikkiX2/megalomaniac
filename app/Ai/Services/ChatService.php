@@ -41,11 +41,27 @@ class ChatService
         ]);
     }
 
+    /**
+     * Resolve the user's BYO provider credentials into the runtime config.
+     *
+     * The config file cannot use closures: laravel/ai v0.11's openai-compatible
+     * gateway casts the configured URL to string at request time.
+     */
+    public function configureUserProvider(User $user): void
+    {
+        config([
+            'ai.providers.user.url' => $user->ai_provider_url,
+            'ai.providers.user.key' => $user->ai_provider_key,
+        ]);
+    }
+
     public function streamTurn(User $user, ChatThread $thread, string $message, ?string $model = null): StreamableAgentResponse
     {
         if (! $this->isConfigured($user)) {
             throw new RuntimeException('El proveedor de IA no está configurado.');
         }
+
+        $this->configureUserProvider($user);
 
         [$provider, $defaultModel] = AiProviderResolver::for($user);
 
