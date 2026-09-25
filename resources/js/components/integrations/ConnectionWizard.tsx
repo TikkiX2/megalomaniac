@@ -36,6 +36,7 @@ function blankForm(kind = ''): ConnectionFormState {
         kind,
         name: '',
         credentials: {},
+        options: {},
         base_url: '',
         transport: 'direct',
         transport_config: {},
@@ -67,6 +68,7 @@ export default function ConnectionWizard({
                       kind: connection.kind,
                       name: connection.name,
                       credentials: {},
+                      options: {},
                       base_url: connection.base_url ?? '',
                       transport: connection.transport,
                       transport_config: {},
@@ -84,13 +86,19 @@ export default function ConnectionWizard({
     );
 
     const submit = () => {
-        const payload = {
+        const payload: Record<string, unknown> = {
             ...form.data,
             auth_type: selected?.auth_type ?? 'api_token',
             base_url: form.data.base_url || null,
             transport_config: pruneEmpty(form.data.transport_config),
             credentials: pruneEmpty(form.data.credentials),
         };
+
+        if (Object.keys(form.data.options).length > 0) {
+            payload.options = pruneEmpty(form.data.options);
+        } else {
+            delete payload.options;
+        }
 
         if (connection) {
             form.transform(() => payload);
@@ -294,6 +302,38 @@ export default function ConnectionWizard({
                             })
                         }
                     />
+
+                    {selected && (selected.option_fields?.length ?? 0) > 0 && (
+                        <div className="space-y-3 rounded-lg border border-border bg-background/50 p-3">
+                            <Label className="text-xs uppercase tracking-widest text-muted-foreground">
+                                Opciones del servicio
+                            </Label>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {selected.option_fields?.map((field) => (
+                                    <div key={field.name} className="space-y-1">
+                                        <Label
+                                            htmlFor={`option-${field.name}`}
+                                            className="text-xs text-muted-foreground"
+                                        >
+                                            {field.label}
+                                        </Label>
+                                        <Input
+                                            id={`option-${field.name}`}
+                                            value={form.data.options[field.name] ?? ''}
+                                            placeholder={field.placeholder}
+                                            onChange={(e) =>
+                                                form.setData('options', {
+                                                    ...form.data.options,
+                                                    [field.name]: e.target.value,
+                                                })
+                                            }
+                                            className="bg-background border-border"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {form.errors.credentials && (
                         <p className="text-xs text-destructive">{form.errors.credentials}</p>

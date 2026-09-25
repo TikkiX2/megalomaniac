@@ -221,3 +221,25 @@ Agente y run de prueba eliminados (DB dev limpia).
 
 ### Datos de QA
 Fuente, items, señales, digest y preferencias de prueba eliminados (DB dev limpia).
+
+---
+
+## SP4 Storage Multiproveedor — 2026-09-25
+
+> **Alcance:** 7 conectores `storage_*` (local, S3, SFTP, FTP, Google Drive, Dropbox, WebDAV/Nextcloud) sobre Flysystem, discos = `connections`, browser `/storage`, acciones para el agente vía executor. Spec `docs/superpowers/specs/2026-09-25-storage-multiproveedor-design.md`, plan `docs/superpowers/plans/2026-09-25-storage-multiproveedor.md`.
+
+### Escenario ejecutado (Playwright MCP)
+1. **Wizard de conexiones** → nuevo tipo “Almacenamiento local” con campo de opciones (`root`) renderizado desde `option_fields`. **PASS**
+2. **`/storage`** → disco “Archivos QA” seleccionado, subida real de archivo (`qa-file.txt`, 14 B) y creación de carpeta (`docs-qa`); audit `storage_local.files.upload/mkdir: success`. **PASS**
+3. **Borrado por UI** (confirm) → archivo eliminado del disco, audit `files.delete: success`. **PASS**
+4. **Consola** → 0 errores. **PASS**
+
+### Correcciones registradas
+- **Premisa errónea del spec:** los adapters de S3/SFTP/FTP no estaban instalados; se instalaron `league/flysystem-aws-s3-v3`, `-sftp-v3` (phpseclib) y `-ftp` además de las 3 aprobadas. Spec actualizado.
+- **APIs reales:** Sabre DAV Client v5 usa array de settings; Flysystem 3 no expone `Filesystem::getAdapter()` → `StorageManager::adapterFor()` para `temporaryUrl`; `files.stat` implementado con `fileExists/directoryExists` (Flysystem 3 no tiene `stat()`).
+
+### Estáticos
+`php artisan test --compact` **452 passed** / 0 failed (13 tests de storage) · `npm run types` 0 · build OK · Pint OK.
+
+### Datos de QA
+Disco, archivos y logs de prueba eliminados (DB dev y carpeta QA limpias).

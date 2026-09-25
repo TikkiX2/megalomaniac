@@ -3,6 +3,8 @@
 namespace App\Integrations\OAuth;
 
 use App\Integrations\Enums\ConnectionStatus;
+use App\Integrations\OAuth\Presets\DropboxOAuthPreset;
+use App\Integrations\OAuth\Presets\GoogleDriveOAuthPreset;
 use App\Integrations\OAuth\Presets\GoogleOAuthPreset;
 use App\Integrations\OAuth\Presets\RedditOAuthPreset;
 use App\Models\Connection;
@@ -73,6 +75,8 @@ class OAuthBroker
         return match ($connection->kind) {
             'google' => app(GoogleOAuthPreset::class),
             'reddit' => app(RedditOAuthPreset::class),
+            'storage_google_drive' => app(GoogleDriveOAuthPreset::class),
+            'storage_dropbox' => app(DropboxOAuthPreset::class),
             default => throw new RuntimeException("No OAuth preset registered for [{$connection->kind}]."),
         };
     }

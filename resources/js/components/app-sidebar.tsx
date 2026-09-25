@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bot, Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, LayoutGrid, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
+import { Bot, Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, LayoutGrid, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -238,6 +238,14 @@ export function AppSidebar() {
                                 <Link href="/feed" prefetch>
                                     <Newspaper className="h-4 w-4" />
                                     <span>Feed</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild tooltip="Archivos" isActive={window.location.pathname.startsWith('/storage')}>
+                                <Link href="/storage" prefetch>
+                                    <HardDrive className="h-4 w-4" />
+                                    <span>Archivos</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

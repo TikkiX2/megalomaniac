@@ -15,7 +15,7 @@ Un servicio de storage con proveedores populares (local, S3, SFTP/FTP, Google Dr
 | # | Decisión |
 |---|---|
 | 1 | Proveedores v1: `local`, `s3`, `sftp`, `ftp`, `google_drive`, `dropbox`, `webdav` (Nextcloud). |
-| 2 | Dependencias nuevas aprobadas: `masbug/flysystem-google-drive-ext`, `spatie/flysystem-dropbox`, `league/flysystem-webdav` (arrastran `google/apiclient`, `spatie/dropbox-api`, `sabre/dav`). Local/S3/SFTP/FTP ya están instalados. |
+| 2 | Dependencias nuevas: `masbug/flysystem-google-drive-ext`, `spatie/flysystem-dropbox`, `league/flysystem-webdav` (arrastran `google/apiclient`, `spatie/dropbox-api`, `sabre/dav`) **+ corrección durante implementación**: `league/flysystem-aws-s3-v3`, `league/flysystem-sftp-v3` (phpseclib) y `league/flysystem-ftp` **no** estaban instalados (premisa errónea del spec); se instalaron por ser la implementación oficial de proveedores ya aprobados. |
 | 3 | **Discos = `connections`** con kinds `storage_*`; se registran en el `ConnectorRegistry` → executor/auditoría/aprobaciones/tools gratis. |
 | 4 | Browser live (se lista contra el proveedor en cada request); v1 sin tabla `stored_files` (tags, indexado y shares persistentes quedan para una fase posterior). |
 | 5 | OAuth (Drive/Dropbox) reutiliza `OAuthBroker` con presets nuevos; credenciales en `connections.credentials`. |

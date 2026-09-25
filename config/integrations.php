@@ -17,6 +17,13 @@ use App\Integrations\Connectors\Reddit\RedditConnector;
 use App\Integrations\Connectors\Rss\RssConnector;
 use App\Integrations\Connectors\Telegram\TelegramConnector;
 use App\Integrations\Connectors\Youtube\YoutubeConnector;
+use App\Storage\Connectors\DropboxStorageConnector;
+use App\Storage\Connectors\FtpStorageConnector;
+use App\Storage\Connectors\GoogleDriveStorageConnector;
+use App\Storage\Connectors\LocalStorageConnector;
+use App\Storage\Connectors\S3StorageConnector;
+use App\Storage\Connectors\SftpStorageConnector;
+use App\Storage\Connectors\WebdavStorageConnector;
 
 return [
 
@@ -49,6 +56,13 @@ return [
         RedditConnector::class,
         YoutubeConnector::class,
         ListenbrainzConnector::class,
+        LocalStorageConnector::class,
+        S3StorageConnector::class,
+        SftpStorageConnector::class,
+        FtpStorageConnector::class,
+        GoogleDriveStorageConnector::class,
+        DropboxStorageConnector::class,
+        WebdavStorageConnector::class,
     ],
 
     /*

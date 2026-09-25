@@ -9,6 +9,13 @@ export interface AuthField {
     options: Record<string, string>;
 }
 
+export interface OptionField {
+    name: string;
+    label: string;
+    placeholder: string;
+    required: boolean;
+}
+
 export interface ConnectionCatalogItem {
     kind: string;
     label: string;
@@ -17,6 +24,7 @@ export interface ConnectionCatalogItem {
     auth_type: 'api_token' | 'basic' | 'oauth2' | 'none' | 'qr';
     auth_fields: AuthField[];
     transports: string[];
+    option_fields?: OptionField[];
 }
 
 export type ConnectionStatusValue = 'unknown' | 'ok' | 'error' | 'expired';
@@ -39,6 +47,7 @@ export interface ConnectionFormState {
     kind: string;
     name: string;
     credentials: Record<string, string>;
+    options: Record<string, string>;
     base_url: string;
     transport: string;
     transport_config: Record<string, string>;

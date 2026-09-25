@@ -93,5 +93,7 @@ it('registers all bundled connectors', function () {
         'sonarr', 'radarr', 'prowlarr', 'jellyseerr', 'qbittorrent', 'jellyfin',
         'proxmox', 'home_assistant',
         'telegram', 'notion', 'rss', 'reddit', 'youtube', 'listenbrainz',
+        'storage_local', 'storage_s3', 'storage_sftp', 'storage_ftp',
+        'storage_google_drive', 'storage_dropbox', 'storage_webdav',
     ]);
 });
