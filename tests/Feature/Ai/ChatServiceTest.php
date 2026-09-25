@@ -90,13 +90,38 @@ test('regenerate throws and keeps history when provider is not configured', func
     expect($thread->messages()->count())->toBe(2);
 });
 
-test('configure user provider writes concrete runtime config', function () {
+test('configure user provider writes concrete runtime config with client headers', function () {
     $user = User::factory()->withAiProvider()->create();
 
     (new ChatService)->configureUserProvider($user);
 
     expect(config('ai.providers.user.url'))->toBe('https://api.example.com/v1');
     expect(config('ai.providers.user.key'))->toBe('sk-test');
+    expect(config('ai.providers.user.headers')['User-Agent'])->toBe('megalomaniac-pro/1.0');
+    expect(config('ai.providers.user.headers'))->not->toHaveKey('x-opencode-session');
+});
+
+test('configure user provider sends the opencode session header for opencode endpoints', function () {
+    $user = User::factory()->withAiProvider()->create([
+        'ai_provider_url' => 'https://opencode.ai/zen/go/v1',
+    ]);
+
+    (new ChatService)->configureUserProvider($user, 'session-123');
+
+    expect(config('ai.providers.user.headers')['x-opencode-session'])->toBe('session-123');
+});
+
+test('stream turn uses the thread id as the opencode session', function () {
+    Http::preventStrayRequests();
+
+    $user = User::factory()->withAiProvider()->create([
+        'ai_provider_url' => 'https://opencode.ai/zen/go/v1',
+    ]);
+    $thread = ChatThread::factory()->create();
+
+    (new ChatService)->streamTurn($user, $thread, 'hola');
+
+    expect(config('ai.providers.user.headers')['x-opencode-session'])->toBe($thread->id);
 });
 
 test('available models returns endpoint list and caches it', function () {

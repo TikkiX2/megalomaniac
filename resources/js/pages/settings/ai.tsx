@@ -65,7 +65,9 @@ export default function AiSettings({
                                         />
                                         <InputError className="mt-2" message={errors.ai_provider_url} />
                                         <p className="text-xs text-muted-foreground">
-                                            The base URL for your AI provider API (e.g., OpenAI, Anthropic, etc.)
+                                            OpenAI-compatible base URL, without <code>/chat/completions</code> (e.g.
+                                            https://api.openai.com/v1). For OpenCode Go use
+                                            https://opencode.ai/zen/go/v1 — the session header is sent automatically.
                                         </p>
                                     </div>
 
