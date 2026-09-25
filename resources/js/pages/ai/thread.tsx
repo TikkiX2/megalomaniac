@@ -210,6 +210,8 @@ export default function ChatThread({ thread, messages, threads, models, toolGrou
                 liveText={stream.text}
                 liveCitations={stream.citations}
                 liveTools={stream.tools}
+                liveReasoning={stream.reasoning}
+                reasoningMs={stream.reasoningMs}
                 streaming={stream.status === 'streaming'}
                 onRegenerate={regenerate}
                 onEdit={edit}

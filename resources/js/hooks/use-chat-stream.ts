@@ -13,6 +13,8 @@ interface UseChatStreamOptions {
 export interface UseChatStreamResult {
     status: ChatStreamStatus;
     text: string;
+    reasoning: string;
+    reasoningMs: number | null;
     citations: Citation[];
     tools: ToolActivity[];
     toolPolicy: ToolPolicy | null;
@@ -26,6 +28,8 @@ export interface UseChatStreamResult {
 export function useChatStream(options: UseChatStreamOptions = {}): UseChatStreamResult {
     const [status, setStatus] = useState<ChatStreamStatus>('idle');
     const [text, setText] = useState('');
+    const [reasoning, setReasoning] = useState('');
+    const [reasoningMs, setReasoningMs] = useState<number | null>(null);
     const [citations, setCitations] = useState<Citation[]>([]);
     const [tools, setTools] = useState<ToolActivity[]>([]);
     const [toolPolicy, setToolPolicy] = useState<ToolPolicy | null>(null);
@@ -35,11 +39,24 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
     const erroredRef = useRef(false);
     const optionsRef = useRef(options);
     const textRef = useRef('');
+    const reasoningRef = useRef('');
+    const reasoningStartedAtRef = useRef<number | null>(null);
     const citationsRef = useRef<Citation[]>([]);
 
     useEffect(() => {
         optionsRef.current = options;
     });
+
+    // The gateway may end the stream without emitting `reasoning_end` (for
+    // example, when the provider errors mid-stream), so the timer is settled
+    // whenever the request finishes and the accumulated reasoning stays
+    // visible with streaming=false instead of waiting for an end event.
+    const settleReasoning = useCallback(() => {
+        if (reasoningStartedAtRef.current === null) return;
+
+        setReasoningMs(Date.now() - reasoningStartedAtRef.current);
+        reasoningStartedAtRef.current = null;
+    }, []);
 
     const stop = useCallback(() => {
         abortRef.current?.abort();
@@ -52,8 +69,12 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         abortRef.current = null;
 
         textRef.current = '';
+        reasoningRef.current = '';
+        reasoningStartedAtRef.current = null;
         citationsRef.current = [];
         setText('');
+        setReasoning('');
+        setReasoningMs(null);
         setCitations([]);
         setTools([]);
         setToolPolicy(null);
@@ -71,9 +92,13 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         erroredRef.current = false;
 
         textRef.current = '';
+        reasoningRef.current = '';
+        reasoningStartedAtRef.current = null;
         citationsRef.current = [];
 
         setText('');
+        setReasoning('');
+        setReasoningMs(null);
         setCitations([]);
         setTools([]);
         setToolPolicy(null);
@@ -89,6 +114,11 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
                     onTextDelta: (delta) => {
                         textRef.current += delta;
                         setText(textRef.current);
+                    },
+                    onReasoningDelta: (delta) => {
+                        reasoningStartedAtRef.current ??= Date.now();
+                        reasoningRef.current += delta;
+                        setReasoning(reasoningRef.current);
                     },
                     onCitation: (citation) => {
                         if (citationsRef.current.some((existing) => existing.url === citation.url)) return;
@@ -128,6 +158,8 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
 
             abortRef.current = null;
 
+            settleReasoning();
+
             if (erroredRef.current) {
                 setStatus('error');
                 return;
@@ -140,6 +172,8 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
 
             abortRef.current = null;
 
+            settleReasoning();
+
             if (caught instanceof DOMException && caught.name === 'AbortError') {
                 setStatus('idle');
                 return;
@@ -151,7 +185,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
             setStatus('error');
             optionsRef.current.onError?.(message, false);
         }
-    }, []);
+    }, [settleReasoning]);
 
-    return { status, text, citations, tools, toolPolicy, error, start, stop, reset, clearError };
+    return { status, text, reasoning, reasoningMs, citations, tools, toolPolicy, error, start, stop, reset, clearError };
 }

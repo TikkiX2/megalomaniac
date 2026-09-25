@@ -17,6 +17,7 @@ class ChatMessageResource extends JsonResource
             'role' => $this->role,
             'content' => $this->content,
             'citations' => $this->citations(),
+            'reasoning' => $this->meta['reasoning'] ?? null,
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

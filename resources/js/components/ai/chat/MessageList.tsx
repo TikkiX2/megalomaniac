@@ -10,6 +10,8 @@ interface MessageListProps {
     liveText: string;
     liveCitations: Citation[];
     liveTools: ToolActivity[];
+    liveReasoning: string;
+    reasoningMs: number | null;
     streaming: boolean;
     onRegenerate: () => void;
     onEdit: (messageId: string, content: string) => void;
@@ -21,6 +23,8 @@ export function MessageList({
     liveText,
     liveCitations,
     liveTools,
+    liveReasoning,
+    reasoningMs,
     streaming,
     onRegenerate,
     onEdit,
@@ -65,6 +69,8 @@ export function MessageList({
                                 key={message.id}
                                 content={message.content}
                                 citations={message.citations}
+                                reasoning={message.reasoning?.text}
+                                reasoningMs={message.reasoning?.duration_ms}
                                 onRegenerate={message.id === lastAssistantId ? onRegenerate : undefined}
                                 disabled={streaming}
                             />
@@ -84,6 +90,8 @@ export function MessageList({
                             content={liveText}
                             citations={liveCitations}
                             tools={liveTools}
+                            reasoning={liveReasoning}
+                            reasoningMs={reasoningMs}
                             streaming={streaming}
                         />
                     )}

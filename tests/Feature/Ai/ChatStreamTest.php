@@ -155,6 +155,30 @@ test('unknown provider failures keep the generic message', function () {
         ->toContain('[DONE]');
 });
 
+test('reasoning deltas are persisted on the assistant message meta', function () {
+    $sse = implode("\n\n", [
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['reasoning_content' => 'Analizo'], 'finish_reason' => null]]]),
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['content' => 'Listo'], 'finish_reason' => null]]]),
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => [], 'finish_reason' => 'stop']]]),
+        'data: [DONE]',
+    ])."\n\n";
+
+    Http::fake(['*' => Http::response($sse, 200, ['Content-Type' => 'text/event-stream'])]);
+
+    $user = User::factory()->withAiProvider()->create();
+
+    $response = $this->actingAs($user)->post(route('ai.chat.send'), ['message' => '¿Qué tal?']);
+    $content = $response->streamedContent();
+
+    expect($content)->toContain('reasoning_delta');
+
+    $thread = ChatThread::query()->forUser($user)->first();
+    $assistant = $thread->messages()->orderByDesc('id')->first();
+
+    expect($assistant->meta['reasoning']['text'])->toBe('Analizo');
+    expect($assistant->meta['reasoning'])->toHaveKey('duration_ms');
+});
+
 test('message is required and limited', function () {
     $user = User::factory()->withAiProvider()->create();
 

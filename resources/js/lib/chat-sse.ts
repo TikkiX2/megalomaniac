@@ -3,6 +3,7 @@ import type { Citation } from '@/types/chat';
 export interface ChatStreamHandlers {
     onThread?: (threadId: string) => void;
     onTextDelta?: (delta: string) => void;
+    onReasoningDelta?: (delta: string) => void;
     onCitation?: (citation: Citation) => void;
     onToolCall?: (tool: { id: string; name: string }) => void;
     onToolResult?: (tool: { id: string; name: string; successful: boolean }) => void;
@@ -14,6 +15,7 @@ interface StreamEvent {
     type?: string;
     threadId?: string;
     delta?: string;
+    reasoning_id?: string;
     citation?: { url?: string; title?: string | null };
     tool_id?: string;
     tool_name?: string;
@@ -46,6 +48,9 @@ function dispatch(event: StreamEvent, handlers: ChatStreamHandlers): void {
             break;
         case 'text_delta':
             if (event.delta) handlers.onTextDelta?.(event.delta);
+            break;
+        case 'reasoning_delta':
+            if (event.delta) handlers.onReasoningDelta?.(event.delta);
             break;
         case 'citation':
             if (event.citation?.url) {

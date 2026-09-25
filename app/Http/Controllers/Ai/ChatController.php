@@ -11,6 +11,7 @@ use App\Http\Requests\Ai\UpdateChatThreadRequest;
 use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatThreadResource;
 use App\Models\AgentDefinition;
+use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
@@ -209,8 +210,19 @@ class ChatController extends Controller
                 flush();
             }
 
+            $reasoning = '';
+            $reasoningStartedAt = null;
+
             try {
                 foreach ($stream as $event) {
+                    $eventArray = $event->toArray();
+                    $eventType = $eventArray['type'] ?? null;
+
+                    if ($eventType === 'reasoning_delta') {
+                        $reasoningStartedAt ??= microtime(true);
+                        $reasoning .= (string) ($eventArray['delta'] ?? '');
+                    }
+
                     echo 'data: '.((string) $event)."\n\n";
                     flush();
                 }
@@ -225,6 +237,10 @@ class ChatController extends Controller
                 flush();
             }
 
+            if ($reasoning !== '') {
+                $this->storeReasoning($thread, $reasoning, $reasoningStartedAt);
+            }
+
             echo "data: [DONE]\n\n";
             flush();
         }, 200, [
@@ -232,6 +248,23 @@ class ChatController extends Controller
             'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
         ]);
+    }
+
+    protected function storeReasoning(ChatThread $thread, string $reasoning, ?float $startedAt): void
+    {
+        $message = $thread->messages()->orderByDesc('id')->first();
+
+        if (! $message instanceof ChatMessage || $message->role !== 'assistant') {
+            return;
+        }
+
+        $meta = $message->meta ?? [];
+        $meta['reasoning'] = [
+            'text' => trim($reasoning),
+            'duration_ms' => $startedAt === null ? null : (int) round((microtime(true) - $startedAt) * 1000),
+        ];
+
+        $message->update(['meta' => $meta]);
     }
 
     protected function errorMessageFor(Throwable $exception): string

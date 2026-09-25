@@ -20,11 +20,17 @@ export interface Citation {
     end_index?: number | null;
 }
 
+export interface ChatReasoning {
+    text: string;
+    duration_ms: number | null;
+}
+
 export interface ChatMessage {
     id: string;
     role: 'user' | 'assistant';
     content: string;
     citations: Citation[];
+    reasoning: ChatReasoning | null;
     created_at: string | null;
 }
 

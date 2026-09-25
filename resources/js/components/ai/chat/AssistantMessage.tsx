@@ -1,6 +1,7 @@
 import { Check, Copy, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { Markdown } from '@/components/ai/chat/Markdown';
+import { ReasoningPanel } from '@/components/ai/chat/ReasoningPanel';
 import { SourcesPanel } from '@/components/ai/chat/SourcesPanel';
 import { StreamStatus } from '@/components/ai/chat/StreamStatus';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,8 @@ interface AssistantMessageProps {
     content: string;
     citations: Citation[];
     tools?: ToolActivity[];
+    reasoning?: string;
+    reasoningMs?: number | null;
     streaming?: boolean;
     disabled?: boolean;
     onRegenerate?: () => void;
@@ -20,6 +23,8 @@ export function AssistantMessage({
     content,
     citations,
     tools = [],
+    reasoning,
+    reasoningMs,
     streaming = false,
     disabled = false,
     onRegenerate,
@@ -47,6 +52,13 @@ export function AssistantMessage({
 
             <div className="min-w-0 flex-1">
                 <StreamStatus thinking={thinking} tools={tools} />
+
+                <ReasoningPanel
+                    key={thinking ? 'reasoning-streaming' : 'reasoning-settled'}
+                    text={reasoning ?? ''}
+                    durationMs={reasoningMs}
+                    streaming={thinking}
+                />
 
                 <Markdown
                     content={content}
