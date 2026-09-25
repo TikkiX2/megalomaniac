@@ -73,3 +73,36 @@
 - Types: `tsc --noEmit` 18 errores preexistentes (`route` vs `router`, `implicit any` en CommentSection/TaskBoard) — no introducidos por rojizo.
 - Pint: pendiente `vendor/bin/pint --dirty`.
 - Tests: `php artisan test --compact` pendiente.
+
+---
+
+## AI Chat Core (Spec A) — 2026-09-25
+
+> **Rama:** `feat/ai-chat-core` (base docs cb69490, cierre de código ad358e8) · **Entorno:** `php artisan serve :8010` + build de Vite, Playwright MCP, usuario `test@example.com / password`, desktop 1280×800 + móvil 390×844. **Proveedor:** el usuario de test no tenía provider IA configurado en la DB; se levantó un proveedor OpenAI-compatible falso (`/tmp/opencode/qa/fake-openai.mjs` en Node, SSE con tool calls y `/v1/models`) y se restauró `ai_enabled=false` al terminar. Artefactos QA eliminados (2 hilos creados durante el crawl).
+
+### Escenarios verificados
+1. **Home `/ai/chat`** → hero "¿Qué quieres saber?", composer grande, 4 chips de sugerencia, rail con "Nuevo hilo", buscador y empty state; `ModelPicker` mostró `qa-model` (lista dinámica desde `GET {url}/models`). **PASS**
+2. **Envío + streaming** → "Pensando…" + botón "Detener generación" visibles; texto parcial en vivo; al terminar la URL cambia a `/ai/chat/{id}` y el mensaje queda persistido (2 filas user+assistant en `agent_conversation_messages`). **PASS**
+3. **Markdown** → h2, negrita, lista y bloque de código con botón "Copiar código" renderizados; acciones "Copiar respuesta"/"Regenerar respuesta" en el último assistant. **PASS**
+4. **Regenerar** → elimina y re-crea el último intercambio sin duplicar (4 mensajes, alternancia user/assistant). **PASS**
+5. **Editar mensaje de usuario** → textarea inline, Enter guarda; el servidor trunca desde ese mensaje y re-streama ("Tercer mensaje…" → "Cuarto mensaje editado" + nueva respuesta). **PASS**
+6. **Citas** → mensaje persistido con `meta.citations` (2 URLs) renderiza chips inline `[1]`/`[2]` y panel "Fuentes · 2" con título/dominio; click en chip añade `border-primary/40` y hace `scrollIntoView` a la fuente. **PASS**
+7. **Tool calls** → prompt "¿Cómo va mi entrenamiento?" emite `tool_call`/`tool_result` (`WorkoutQueryTool`, argumentos `{"days":7}`) en el SSE, ejecuta la tool local y persiste `tool_calls` en el mensaje assistant (2 requests al provider). Chip "Consultando entrenamientos": verificado a nivel de payload SSE + parser/hook; la captura visual en dev queda limitada por el batching del navegador (ver hallazgos). **PASS (payload/código)**
+8. **Rail** → agrupación "Hoy"/"Fijados", renombrar inline (título de página actualizado), fijar (sube a "Fijados"), búsqueda client-side ("Sin resultados" con `zzz`), menú ⋯ con Renombrar/Fijar/Eliminar. **PASS**
+9. **404 hilo ajeno** → `GET /ai/chat/{id}` de otro usuario responde HTTP 404 (`denyAsNotFound`). **PASS**
+10. **Responsive** → 390px: rail oculto, botón "Abrir historial de hilos" abre Sheet con "Historial de hilos", Nuevo hilo, buscador y grupos; composer visible; sin clipping. **PASS**
+11. **FAB** → en `/dashboard` el FAB es un link a `/ai/chat`; en rutas `/ai/chat*` está oculto (evita solape con el composer en móvil). **PASS**
+
+### Hallazgos
+- **[P0, FIXED] Provider BYO roto por closures en `config/ai.php`.** El provider `'user'` definía `url`/`key` como closures; el gateway `openai-compatible` de laravel/ai v0.11 las castea a string → `Object of class Closure could not be converted to string`. El hilo se creaba pero **no se persistía ningún mensaje** y el provider nunca era consultado (bug pre-existente, commiteado; no del módulo). Fix `ad358e8`: `config/ai.php` usa `null` y `ChatService::configureUserProvider()` escribe las credenciales concretas en runtime antes de promptear (+ test de regresión).
+- **[P2, entorno] Batching del navegador en respuestas SSE < 4KB.** Con `curl` directo el endpoint emite el primer byte en **77ms** y 25 frames a lo largo de 6.7s (streaming real); Chromium (Playwright) entregó la respuesta en 2 lecturas de ~4KB. Artefacto de la pila de red del navegador en dev (`php artisan serve`, sin chunked explícito), no del código; con proveedores reales y servidor con chunked el efecto es menor. Se acepta y se documenta; el minor del reviewer de T4 (`flush()` sin `ob_flush()`) queda como posible mejora si se observa en producción.
+- **[P1, deuda del repo] 5 fallos pre-existentes de suite** en Grocery/Nutrition/Supplement (`grocery_items` sin columna `is_purchased` en tests), ajenos a este diff (verificado: el diff no toca esos módulos). 204 pasan.
+- **[P2] `ChatPanel`/`MessageBubble` eliminados**: el link roto del sidebar a `/ai/chat` y las rutas viejas (`GET /ai/conversations`, `POST /ai/chat` con evento `text.delta` inexistente) quedaron resueltos por el módulo nuevo.
+
+### Limitaciones del crawl
+- Sin claves AI reales en el entorno: el proveedor falso no emite citas web (se sembró un mensaje con `meta.citations` en DB para validar la UI) ni razonamiento.
+- El chip de tool no se pudo capturar visualmente en dev por el batching a 4KB (el payload SSE, el parser, el hook y la persistencia sí se verificaron).
+- Sin framework de tests JS en el repo: la verificación frontend es `npm run types` + eslint + build + este crawl.
+
+### Estáticos
+`php artisan test --compact` 204 passed / 5 failed (pre-existentes) · `npm run types` 0 · eslint scoped 0 · `npm run build` OK · Pint scoped por tarea.
