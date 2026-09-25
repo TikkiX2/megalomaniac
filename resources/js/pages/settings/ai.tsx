@@ -24,7 +24,7 @@ export default function AiSettings({
 }: {
     ai: {
         ai_provider_url: string | null;
-        ai_provider_key: string | null;
+        has_provider_key: boolean;
         ai_model: string | null;
         ai_enabled: boolean;
     };
@@ -81,13 +81,13 @@ export default function AiSettings({
                                             name="ai_provider_key"
                                             type="password"
                                             className="mt-1 block w-full bg-background"
-                                            defaultValue={ai.ai_provider_key ?? ''}
-                                            placeholder="sk-..."
+                                            defaultValue=""
+                                            placeholder={ai.has_provider_key ? '•••••••• (guardada)' : 'sk-...'}
                                             autoComplete="off"
                                         />
                                         <InputError className="mt-2" message={errors.ai_provider_key} />
                                         <p className="text-xs text-muted-foreground">
-                                            Your API key will be stored encrypted
+                                            Leave empty to keep your current key
                                         </p>
                                     </div>
 
