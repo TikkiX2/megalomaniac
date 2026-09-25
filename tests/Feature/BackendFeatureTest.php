@@ -52,7 +52,7 @@ test('nutrition module: can search and log food', function () {
         'fats' => 3.6,
     ]);
 
-    $this->getJson('/nutrition/foods/search?q=Chicken')
+    $this->getJson('/nutrition/foods/search?query=Chicken')
         ->assertStatus(200)
         ->assertJsonFragment(['name' => 'Chicken Breast']);
 
@@ -77,7 +77,7 @@ test('supplement module: can manage supplements and log intake', function () {
     ]);
 
     $this->postJson("/supplements/{$supplement->id}/log")
-        ->assertStatus(200);
+        ->assertRedirect();
 
     $this->assertDatabaseHas('supplements', [
         'id' => $supplement->id,
@@ -91,17 +91,17 @@ test('supplement module: can manage supplements and log intake', function () {
 });
 
 test('grocery module: can manage grocery items', function () {
-    $this->postJson('/grocery', [
+    $this->postJson('/grocery/items', [
         'name' => 'Milk',
-        'quantity' => 1,
+        'current_stock' => 1,
+        'target_stock' => 3,
         'unit' => 'L',
-    ])->assertStatus(201);
+    ])->assertRedirect();
 
     $item = GroceryItem::first();
 
-    $this->patchJson("/grocery/{$item->id}/toggle")
-        ->assertStatus(200)
-        ->assertJson(['is_purchased' => true]);
+    $this->postJson("/grocery/{$item->id}/consume")
+        ->assertRedirect();
 
-    $this->assertNotNull($item->fresh()->purchased_at);
+    $this->assertEquals(0, $item->fresh()->current_stock);
 });

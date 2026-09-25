@@ -17,7 +17,8 @@ test('user can create grocery item', function () {
     $response = $this->actingAs($user)->post(route('grocery.items.store'), [
         'name' => 'Test Item',
         'category' => 'Test Category',
-        'quantity' => 2,
+        'current_stock' => 2,
+        'target_stock' => 5,
         'unit' => 'kg',
         'price' => 10.50,
     ]);
@@ -26,21 +27,22 @@ test('user can create grocery item', function () {
     $this->assertDatabaseHas('grocery_items', [
         'user_id' => $user->id,
         'name' => 'Test Item',
-        'quantity' => 2,
+        'current_stock' => 2,
+        'target_stock' => 5,
     ]);
 });
 
-test('user can toggle grocery item', function () {
+test('user can consume grocery item', function () {
     $user = User::factory()->create();
     $item = GroceryItem::factory()->create([
         'user_id' => $user->id,
-        'is_purchased' => false,
+        'current_stock' => 5,
     ]);
 
-    $response = $this->actingAs($user)->patch("/grocery/{$item->id}/toggle");
+    $response = $this->actingAs($user)->post(route('grocery.consume', $item));
 
     $response->assertRedirect();
-    $this->assertTrue($item->refresh()->is_purchased);
+    $this->assertEquals(4, $item->fresh()->current_stock);
 });
 
 test('user can delete grocery item', function () {
