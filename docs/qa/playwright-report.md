@@ -368,3 +368,20 @@ Tareas de prueba creadas y eliminadas; no quedaron datos nuevos.
 
 ### Verificado
 - Prod: `migrate:status` 0 pendientes, migración `[3] Ran`; query real de proyectos personales (13) y freelance (4) OK; sitio 200. Suite **611 passed**, Pint OK. Commit `163ff8b`.
+
+## Fix: 404 en assets .js (prod) — 2026-09-26
+
+> **Reporte del usuario:** error 404 en algunos `.js` en prod.
+
+### Causa raíz (evidencia)
+- El nginx de prod monta `./app/public` del host (sirve estáticos desde ahí), mientras que el manifest/HTML lo genera la app desde `public/build` **dentro de la imagen**.
+- Los rebuilds manuales de imagen regeneraron los hashed assets solo dentro de la imagen; el `public/build` del host quedó con archivos de una build anterior (mezcla) → el HTML referenciaba chunks nuevos que nginx no tenía: `GET /build/assets/app-D6po6Eyq.js → 404` (verificado con curl: `app-D6po6Eyq.js`, `auth-layout-*.js`, etc. 404; otros 200).
+
+### Fix
+- Sincronizado `docker cp megalomaniac-app:/var/www/megalomaniac/public/build` → `/root/docker/megalomaniac/app/public/build` (134 assets).
+
+### Verificado
+- Los 8 assets referenciados por el HTML de `/login` → 200; 40 assets del manifest → 0 fallos; nginx ya no registra 404 de build.
+
+### Regla operativa (deploy manual)
+Al reconstruir la imagen de prod sin el pipeline, **copiar siempre el build a host**: `docker cp megalomaniac-app:/var/www/megalomaniac/public/build /root/docker/megalomaniac/app/public/build` — si no, nginx sirve assets viejos y aparecen 404 de chunks.
