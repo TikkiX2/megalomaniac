@@ -137,6 +137,11 @@ export default function ChatThread({
             });
         });
 
+    const addComposerFiles = async (files: File[] | FileList): Promise<void> => {
+        await upload.addFiles(files);
+        await reloadSourceProps();
+    };
+
     const attachSource = async (attachmentId: string): Promise<void> => {
         let succeeded = false;
         let validationError: string | null = null;
@@ -402,7 +407,7 @@ export default function ChatThread({
                         model={model}
                         onModelChange={setModel}
                         attachments={composerAttachments}
-                        onAddFiles={upload.addFiles}
+                        onAddFiles={addComposerFiles}
                         onRemoveAttachment={upload.remove}
                         onRetryAttachment={upload.retry}
                         uploading={upload.uploading}

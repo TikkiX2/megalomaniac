@@ -387,7 +387,10 @@ class ChatService
 
             ChatAttachment::query()
                 ->where('kind', 'image')
-                ->whereIn('message_id', $messageIds)
+                ->where(function ($query) use ($messageIds, $thread): void {
+                    $query->whereIn('message_id', $messageIds)
+                        ->orWhere('thread_id', $thread->id);
+                })
                 ->get()
                 ->each(function (ChatAttachment $attachment): void {
                     Storage::disk($attachment->disk)->delete($attachment->path);

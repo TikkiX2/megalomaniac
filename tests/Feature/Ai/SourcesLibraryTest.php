@@ -61,6 +61,36 @@ test('thread deletion detaches library sources but deletes thread images', funct
     Storage::disk('local')->assertMissing($image->path);
 });
 
+test('thread deletion removes unsent images holding the legacy thread column', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $thread = ChatThread::factory()->create(['participant_type' => $user->getMorphClass(), 'participant_id' => $user->id]);
+
+    $imagePath = 'ai-attachments/'.$user->id.'/sin-enviar.png';
+    Storage::disk('local')->put($imagePath, 'img');
+    $image = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'path' => $imagePath,
+        'thread_id' => $thread->id,
+        'message_id' => null,
+    ]);
+
+    $documentPath = 'ai-attachments/'.$user->id.'/contexto.txt';
+    Storage::disk('local')->put($documentPath, 'doc');
+    $document = sourcesLibraryDocument($user, ['path' => $documentPath]);
+    $thread->sources()->attach($document->id);
+
+    (new ChatService)->deleteThread($thread);
+
+    expect(ChatAttachment::query()->whereKey($image->id)->exists())->toBeFalse()
+        ->and(ChatAttachment::query()->whereKey($document->id)->exists())->toBeTrue()
+        ->and(DB::table('chat_thread_sources')->where('thread_id', $thread->id)->count())->toBe(0);
+
+    Storage::disk('local')->assertMissing($imagePath);
+    Storage::disk('local')->assertExists($documentPath);
+});
+
 test('migration backfills existing thread documents into the pivot', function () {
     $thread = ChatThread::factory()->create();
     $legacyDocument = ChatAttachment::factory()->create(['kind' => 'document', 'thread_id' => $thread->id]);
@@ -109,6 +139,26 @@ test('sources index lists own documents with thread counts and titles', function
             ->where('ai.configured', true)
             ->where('ai.defaultModel', $user->ai_model)
         );
+});
+
+test('the shared ai state falls back to the server tavily key', function () {
+    $this->withoutVite();
+
+    config(['services.tavily.key' => null]);
+
+    $user = User::factory()->withAiProvider()->create(['tavily_api_key' => null]);
+
+    $this->actingAs($user)
+        ->get(route('ai.sources.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('ai.has_tavily_key', false));
+
+    config(['services.tavily.key' => 'tvly-env']);
+
+    $this->actingAs($user)
+        ->get(route('ai.sources.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('ai.has_tavily_key', true));
 });
 
 test('the thread page exposes pivot attached sources ordered by attach time', function () {

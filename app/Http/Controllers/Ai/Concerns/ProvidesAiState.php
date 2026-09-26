@@ -19,7 +19,7 @@ trait ProvidesAiState
             'enabled' => (bool) $user->ai_enabled,
             'configured' => $this->service->isConfigured($user),
             'defaultModel' => $user->ai_model ?: null,
-            'has_tavily_key' => filled($user->tavily_api_key),
+            'has_tavily_key' => filled($user->tavily_api_key) || filled(config('services.tavily.key')),
         ];
     }
 }
