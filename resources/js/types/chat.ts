@@ -37,12 +37,36 @@ export interface ChatAttachment {
     url: string;
 }
 
+export interface ApprovalPayload {
+    id: string;
+    tool: string;
+    arguments: Record<string, unknown>;
+    reason: string | null;
+}
+
+export interface PendingApproval extends ApprovalPayload {
+    kind: 'question' | 'approval';
+}
+
+export interface ApprovalDecision {
+    action: 'approve' | 'reject' | 'edit';
+    result?: string;
+    arguments?: Record<string, unknown>;
+}
+
+export type DecideApproval = (
+    id: string,
+    action: ApprovalDecision['action'],
+    payload?: { result?: string; arguments?: Record<string, unknown> },
+) => void;
+
 export interface ChatMessage {
     id: string;
     role: 'user' | 'assistant';
     content: string;
     citations: Citation[];
     reasoning: ChatReasoning | null;
+    pending_approvals: PendingApproval[];
     attachments: ChatAttachment[];
     created_at: string | null;
 }

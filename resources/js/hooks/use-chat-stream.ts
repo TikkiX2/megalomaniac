@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { streamChatRequest } from '@/lib/chat-sse';
-import type { Citation, ToolActivity, ToolPolicy } from '@/types/chat';
+import type { ApprovalPayload, Citation, PendingApproval, ToolActivity, ToolPolicy } from '@/types/chat';
 
-export type ChatStreamStatus = 'idle' | 'streaming' | 'error';
+export type ChatStreamStatus = 'idle' | 'streaming' | 'awaiting_approval' | 'error';
+
+function normalizeApproval(approval: ApprovalPayload): PendingApproval {
+    return {
+        ...approval,
+        reason: approval.reason ?? null,
+        kind: approval.tool === 'AskUserTool' ? 'question' : 'approval',
+    };
+}
 
 interface UseChatStreamOptions {
     onThread?: (threadId: string) => void;
@@ -18,6 +26,7 @@ export interface UseChatStreamResult {
     citations: Citation[];
     tools: ToolActivity[];
     toolPolicy: ToolPolicy | null;
+    pendingApprovals: PendingApproval[];
     error: string | null;
     start: (url: string, body: Record<string, unknown>) => Promise<void>;
     stop: () => void;
@@ -33,10 +42,12 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
     const [citations, setCitations] = useState<Citation[]>([]);
     const [tools, setTools] = useState<ToolActivity[]>([]);
     const [toolPolicy, setToolPolicy] = useState<ToolPolicy | null>(null);
+    const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     const abortRef = useRef<AbortController | null>(null);
     const erroredRef = useRef(false);
+    const awaitingApprovalRef = useRef(false);
     const optionsRef = useRef(options);
     const textRef = useRef('');
     const reasoningRef = useRef('');
@@ -61,12 +72,14 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
     const stop = useCallback(() => {
         abortRef.current?.abort();
         abortRef.current = null;
+        awaitingApprovalRef.current = false;
         setStatus('idle');
     }, []);
 
     const reset = useCallback(() => {
         abortRef.current?.abort();
         abortRef.current = null;
+        awaitingApprovalRef.current = false;
 
         textRef.current = '';
         reasoningRef.current = '';
@@ -78,6 +91,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         setCitations([]);
         setTools([]);
         setToolPolicy(null);
+        setPendingApprovals([]);
         setError(null);
         setStatus('idle');
     }, []);
@@ -90,6 +104,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         const controller = new AbortController();
         abortRef.current = controller;
         erroredRef.current = false;
+        awaitingApprovalRef.current = false;
 
         textRef.current = '';
         reasoningRef.current = '';
@@ -102,6 +117,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         setCitations([]);
         setTools([]);
         setToolPolicy(null);
+        setPendingApprovals([]);
         setError(null);
         setStatus('streaming');
 
@@ -141,6 +157,11 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
                             ),
                         );
                     },
+                    onApprovalRequest: (approvals) => {
+                        awaitingApprovalRef.current = true;
+                        setPendingApprovals(approvals.map(normalizeApproval));
+                        setStatus('awaiting_approval');
+                    },
                     onError: (message, recoverable) => {
                         setError(message);
 
@@ -162,6 +183,14 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
 
             if (erroredRef.current) {
                 setStatus('error');
+                return;
+            }
+
+            if (awaitingApprovalRef.current) {
+                // The turn paused waiting for a decision: keep the pending cards
+                // alive instead of completing (a reload would erase them).
+                awaitingApprovalRef.current = false;
+                setStatus('awaiting_approval');
                 return;
             }
 
@@ -187,5 +216,19 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         }
     }, [settleReasoning]);
 
-    return { status, text, reasoning, reasoningMs, citations, tools, toolPolicy, error, start, stop, reset, clearError };
+    return {
+        status,
+        text,
+        reasoning,
+        reasoningMs,
+        citations,
+        tools,
+        toolPolicy,
+        pendingApprovals,
+        error,
+        start,
+        stop,
+        reset,
+        clearError,
+    };
 }

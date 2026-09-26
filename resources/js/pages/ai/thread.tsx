@@ -26,7 +26,7 @@ import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
 import { cn } from '@/lib/utils';
-import type { AiChatState, ChatAttachment, ChatMessage, ChatThread, ToolPolicy } from '@/types/chat';
+import type { AiChatState, ChatAttachment, ChatMessage, ChatThread, DecideApproval, ToolPolicy } from '@/types/chat';
 
 interface ChatThreadProps {
     thread: ChatThread;
@@ -123,6 +123,22 @@ export default function ChatThread({ thread, messages, documents, threads, model
         stream.start(ChatController.edit.url(thread.id), { message_id: messageId, content });
     };
 
+    const decide: DecideApproval = (id, action, payload) => {
+        stream.start(ChatController.approve.url(thread.id), {
+            decisions: {
+                [id]: { action, ...payload },
+            },
+        });
+    };
+
+    const approveAll = (ids: string[]) => {
+        if (ids.length === 0) return;
+
+        stream.start(ChatController.approve.url(thread.id), {
+            decisions: Object.fromEntries(ids.map((id) => [id, { action: 'approve' }])),
+        });
+    };
+
     const commitRename = () => {
         const trimmed = title.trim();
 
@@ -147,6 +163,9 @@ export default function ChatThread({ thread, messages, documents, threads, model
 
     const composerAttachments = upload.attachments.filter((attachment) => attachment.kind !== 'document');
     const threadDocuments = upload.attachments.filter((attachment) => attachment.kind === 'document');
+    const hasPendingApprovals =
+        stream.pendingApprovals.length > 0 ||
+        messages.some((message) => message.role === 'assistant' && message.pending_approvals.length > 0);
 
     return (
         <ChatLayout
@@ -225,9 +244,12 @@ export default function ChatThread({ thread, messages, documents, threads, model
                 liveTools={stream.tools}
                 liveReasoning={stream.reasoning}
                 reasoningMs={stream.reasoningMs}
+                liveApprovals={stream.pendingApprovals}
                 streaming={stream.status === 'streaming'}
                 onRegenerate={regenerate}
                 onEdit={edit}
+                onDecide={decide}
+                onApproveAll={approveAll}
                 pendingUser={pendingMessage}
             />
 
@@ -272,7 +294,7 @@ export default function ChatThread({ thread, messages, documents, threads, model
                         onSubmit={submit}
                         onStop={stream.stop}
                         streaming={stream.status === 'streaming'}
-                        disabled={!ai.configured}
+                        disabled={!ai.configured || hasPendingApprovals}
                     />
                     <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
                         La IA puede cometer errores. Verifica la información importante.

@@ -1,4 +1,4 @@
-import type { Citation } from '@/types/chat';
+import type { ApprovalPayload, Citation } from '@/types/chat';
 
 export interface ChatStreamHandlers {
     onThread?: (threadId: string) => void;
@@ -8,6 +8,7 @@ export interface ChatStreamHandlers {
     onToolCall?: (tool: { id: string; name: string }) => void;
     onToolResult?: (tool: { id: string; name: string; successful: boolean }) => void;
     onTools?: (groups: string[], mode: string) => void;
+    onApprovalRequest?: (approvals: ApprovalPayload[]) => void;
     onError?: (message: string, recoverable: boolean) => void;
 }
 
@@ -22,6 +23,7 @@ interface StreamEvent {
     successful?: boolean;
     groups?: string[];
     mode?: string;
+    approvals?: ApprovalPayload[];
     message?: string;
     recoverable?: boolean;
 }
@@ -74,6 +76,9 @@ function dispatch(event: StreamEvent, handlers: ChatStreamHandlers): void {
                     successful: event.successful !== false,
                 });
             }
+            break;
+        case 'tool_approval_request':
+            if (Array.isArray(event.approvals)) handlers.onApprovalRequest?.(event.approvals);
             break;
         default:
             break;

@@ -1,12 +1,13 @@
 import { Check, Copy, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
+import { ApprovalCardList } from '@/components/ai/chat/ApprovalCard';
 import { Markdown } from '@/components/ai/chat/Markdown';
 import { ReasoningPanel } from '@/components/ai/chat/ReasoningPanel';
 import { SourcesPanel } from '@/components/ai/chat/SourcesPanel';
 import { StreamStatus } from '@/components/ai/chat/StreamStatus';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { Citation, ToolActivity } from '@/types/chat';
+import type { Citation, DecideApproval, PendingApproval, ToolActivity } from '@/types/chat';
 
 interface AssistantMessageProps {
     content: string;
@@ -16,6 +17,9 @@ interface AssistantMessageProps {
     reasoningMs?: number | null;
     streaming?: boolean;
     disabled?: boolean;
+    pendingApprovals?: PendingApproval[];
+    onDecide?: DecideApproval;
+    onApproveAll?: (ids: string[]) => void;
     onRegenerate?: () => void;
 }
 
@@ -27,6 +31,9 @@ export function AssistantMessage({
     reasoningMs,
     streaming = false,
     disabled = false,
+    pendingApprovals = [],
+    onDecide,
+    onApproveAll,
     onRegenerate,
 }: AssistantMessageProps) {
     const [copied, setCopied] = useState(false);
@@ -100,6 +107,15 @@ export function AssistantMessage({
                             </Button>
                         )}
                     </div>
+                )}
+
+                {onDecide !== undefined && pendingApprovals.length > 0 && (
+                    <ApprovalCardList
+                        approvals={pendingApprovals}
+                        disabled={disabled}
+                        onDecide={onDecide}
+                        onApproveAll={onApproveAll}
+                    />
                 )}
             </div>
         </article>

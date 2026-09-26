@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AssistantMessage } from '@/components/ai/chat/AssistantMessage';
 import { UserMessage } from '@/components/ai/chat/UserMessage';
 import { Button } from '@/components/ui/button';
-import type { ChatMessage, Citation, ToolActivity } from '@/types/chat';
+import type { ChatMessage, Citation, DecideApproval, PendingApproval, ToolActivity } from '@/types/chat';
 
 interface MessageListProps {
     messages: ChatMessage[];
@@ -12,9 +12,12 @@ interface MessageListProps {
     liveTools: ToolActivity[];
     liveReasoning: string;
     reasoningMs: number | null;
+    liveApprovals: PendingApproval[];
     streaming: boolean;
     onRegenerate: () => void;
     onEdit: (messageId: string, content: string) => void;
+    onDecide?: DecideApproval;
+    onApproveAll?: (ids: string[]) => void;
     pendingUser?: string | null;
 }
 
@@ -25,9 +28,12 @@ export function MessageList({
     liveTools,
     liveReasoning,
     reasoningMs,
+    liveApprovals,
     streaming,
     onRegenerate,
     onEdit,
+    onDecide,
+    onApproveAll,
     pendingUser = null,
 }: MessageListProps) {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -43,7 +49,7 @@ export function MessageList({
 
     useEffect(() => {
         if (pinned) scrollToBottom();
-    }, [messages, liveText, streaming, pinned, pendingUser]);
+    }, [messages, liveText, liveApprovals, streaming, pinned, pendingUser]);
 
     const handleScroll = () => {
         const container = containerRef.current;
@@ -55,7 +61,7 @@ export function MessageList({
     };
 
     const lastAssistantId = [...messages].reverse().find((message) => message.role === 'assistant')?.id ?? null;
-    const showLive = streaming || liveText !== '' || liveReasoning !== '';
+    const showLive = streaming || liveText !== '' || liveReasoning !== '' || liveApprovals.length > 0;
 
     return (
         <div className="relative min-h-0 flex-1">
@@ -71,6 +77,9 @@ export function MessageList({
                                 citations={message.citations}
                                 reasoning={message.reasoning?.text}
                                 reasoningMs={message.reasoning?.duration_ms}
+                                pendingApprovals={message.pending_approvals}
+                                onDecide={onDecide}
+                                onApproveAll={onApproveAll}
                                 onRegenerate={message.id === lastAssistantId ? onRegenerate : undefined}
                                 disabled={streaming}
                             />
@@ -93,6 +102,9 @@ export function MessageList({
                             reasoning={liveReasoning}
                             reasoningMs={reasoningMs}
                             streaming={streaming}
+                            pendingApprovals={liveApprovals}
+                            onDecide={onDecide}
+                            onApproveAll={onApproveAll}
                         />
                     )}
                 </div>
