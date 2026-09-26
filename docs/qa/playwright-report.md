@@ -263,3 +263,22 @@ El envío end-to-end con IA real no se ejecutó (proveedor deshabilitado en dev)
 
 ### Datos de QA
 Tareas de prueba creadas y eliminadas; no quedaron datos nuevos.
+
+## Chat enriquecido F0–F3 (razonamiento, adjuntos, confirmaciones) — 2026-09-26
+
+> **Rama:** `main` · **Entorno:** host `php artisan serve :8010` + build de Vite, Playwright MCP, usuario `test@example.com`, proveedor OpenAI-compatible falso en `:9998` (SSE con `reasoning_content`, tool calls de `ActionTool`/`AskUserTool` y eco de `Documentos del hilo`). Artefactos QA borrados y usuario restaurado (`ai_enabled=false`).
+
+### Verificado en vivo
+1. **F0 nginx**: vhost con `fastcgi_read_timeout 600s`/`fastcgi_send_timeout 600s`/`fastcgi_buffering off` cargado (`nginx -T`); mensaje humanizado de corte en el cliente cubierto por cambio + build (sin reproducción forzada del corte). **PASS (config)**
+2. **F1 razonamiento**: bloque "Pensando…" durante el stream; al persistir, "Pensó durante 1s" colapsado y expandible con el texto íntegro (`Analizo… con calma.`). **PASS**
+3. **F2 adjuntos**: subida de `plan-qa.txt` desde el hilo → chip "Indexando…" → `status=indexed` (1 chunk FTS5) y `thread_id` ligado; "Documentos del hilo" visible tras recargar (fix T9); la pregunta "¿qué dice el plan de hipertrofia?" recibió respuesta condicionada por el contexto inyectado (el fake detectó `Documentos del hilo` → "VI CONTEXTO de tus documentos"). **PASS**
+4. **F3 aprobaciones**: "loguea un workout" → tarjeta "Crear un entrenamiento" (frase humana + razón + Ver argumentos + Aprobar/Editar/Denegar + motivo); **Aprobar** ejecutó `ActionTool` (Workout id 8 creado) y el turno continuó ("Listo, registro creado con tu aprobación"), `approval_state` limpio. **PASS**
+5. **F3 preguntas**: "pregúntame el presupuesto" → tarjeta de pregunta con chips (500/1000/personalizado), textarea, Responder (deshabilitado en vacío) y Saltar ("cierra el turno sin respuesta"); elegir **1000** + **Responder** → el modelo recibió "1000" como tool result ("Tu respuesta fue: 1000"). **PASS**
+6. **F3 reconstrucción + Denegar**: con la aprobación pendiente, recargar la página reconstruye la tarjeta desde `pending_approvals`; **Denegar** (bare reject) cierra el turno sin follow-up, vacía `approval_state` y NO ejecuta la tool (workouts QA siguen en 1). Composer bloqueado mientras hay aprobaciones pendientes. **PASS**
+
+### Limitaciones del crawl
+- No verificado en vivo: corte real de >60s (requiere proveedor lento sostenido), warning de visión con imagen real, flujo **Editar** de argumentos y **Aprobar todo** (>1 aprobación); cubiertos por tests/razonamiento de código.
+- Durante el crawl, una recarga falló transitoriamente con `ERR_NETWORK_CHANGED` al cargar chunks: el contenedor corre `vite build --watch` y los hashes cambian; al reintentar cargó (artefacto conocido de dev, no del código).
+
+### Estáticos
+`php artisan test --compact` 513 passed · Pint clean · `npm run types` 0 · eslint scoped 0 · build OK. Detalle e historial por task en `.superpowers/sdd/2026-09-25-chat-enrichment/progress.md`.
