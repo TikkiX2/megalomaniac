@@ -123,6 +123,8 @@ class ChatService
             throw new RuntimeException('El proveedor de IA no está configurado.');
         }
 
+        $this->pruneMissingStoredImages($thread);
+
         [$provider, $defaultModel] = AiProviderResolver::for($user, $thread->id);
 
         $policy = $this->prepareToolPolicy($thread, $message, $toolsPolicy);
@@ -419,6 +421,40 @@ class ChatService
         ChatAttachment::query()
             ->whereIn('message_id', $messageIds)
             ->update(['message_id' => null]);
+    }
+
+    /**
+     * Prompt history can outlive the files it references (an image removed
+     * after being sent keeps its descriptor). Re-sending that history builds
+     * empty `data:image/...;base64,` parts, which the provider rejects with a
+     * 400, so dangling stored images are pruned before the next turn.
+     */
+    protected function pruneMissingStoredImages(ChatThread $thread): void
+    {
+        $messages = $thread->messages()->whereNotNull('attachments')->get();
+
+        foreach ($messages as $message) {
+            $attachments = $message->attachments;
+
+            if (! is_array($attachments) || $attachments === []) {
+                continue;
+            }
+
+            $kept = array_values(array_filter($attachments, function (mixed $attachment): bool {
+                if (! is_array($attachment) || ($attachment['type'] ?? null) !== 'stored-image') {
+                    return true;
+                }
+
+                $path = $attachment['path'] ?? null;
+                $disk = $attachment['disk'] ?? null;
+
+                return is_string($path) && is_string($disk) && Storage::disk($disk)->exists($path);
+            }));
+
+            if (count($kept) !== count($attachments)) {
+                $message->update(['attachments' => $kept]);
+            }
+        }
     }
 
     /**
