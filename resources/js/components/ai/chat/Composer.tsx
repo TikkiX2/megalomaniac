@@ -1,11 +1,13 @@
-import { ArrowUp, Square } from 'lucide-react';
+import { ArrowUp, Paperclip, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { AgentPicker } from '@/components/ai/chat/AgentPicker';
-import { ToolsPicker } from '@/components/ai/chat/ToolsPicker';
+import { AttachmentChips } from '@/components/ai/chat/AttachmentChips';
 import { ModelPicker } from '@/components/ai/chat/ModelPicker';
+import { ToolsPicker } from '@/components/ai/chat/ToolsPicker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { ToolPolicy } from '@/types/chat';
+import type { ChatAttachment, ToolPolicy } from '@/types/chat';
 
 interface ComposerProps {
     models: string[];
@@ -17,6 +19,14 @@ interface ComposerProps {
     toolGroups?: { key: string; label: string }[];
     toolsPolicy?: ToolPolicy;
     onToolsPolicyChange?: (policy: ToolPolicy) => void;
+    attachments?: ChatAttachment[];
+    onAddFiles?: (files: File[]) => void;
+    onRemoveAttachment?: (id: string) => void;
+    onRetryAttachment?: (id: string) => void;
+    uploading?: boolean;
+    attachmentFailed?: boolean;
+    attachmentError?: string | null;
+    onDismissAttachmentError?: () => void;
     onSubmit: (message: string) => void;
     onStop?: () => void;
     streaming: boolean;
@@ -28,6 +38,12 @@ interface ComposerProps {
 }
 
 const MAX_LENGTH = 4000;
+const FILE_ACCEPT = 'image/*,.txt,.md,.docx';
+const VISION_MODELS = ['deepseek-v4-flash-vision-exp', 'gpt-', 'gemini-', 'claude-', 'grok-'];
+
+function isVisionModel(model: string | null): boolean {
+    return model !== null && VISION_MODELS.some((prefix) => model.startsWith(prefix));
+}
 
 export function Composer({
     models,
@@ -39,6 +55,14 @@ export function Composer({
     toolGroups = [],
     toolsPolicy,
     onToolsPolicyChange,
+    attachments = [],
+    onAddFiles,
+    onRemoveAttachment,
+    onRetryAttachment,
+    uploading = false,
+    attachmentFailed = false,
+    attachmentError = null,
+    onDismissAttachmentError,
     onSubmit,
     onStop,
     streaming,
@@ -50,6 +74,15 @@ export function Composer({
 }: ComposerProps) {
     const [value, setValue] = useState(initialValue);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const attachmentsDisabled = disabled || streaming;
+
+    const { getRootProps, isDragActive } = useDropzone({
+        onDrop: (files) => onAddFiles?.(files),
+        noClick: true,
+        disabled: attachmentsDisabled || onAddFiles === undefined,
+    });
 
     useEffect(() => {
         if (autoFocus) textareaRef.current?.focus();
@@ -64,26 +97,57 @@ export function Composer({
         textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
     };
 
+    const hasFailed = attachmentFailed || attachments.some((attachment) => attachment.status === 'failed');
+    const hasReadyImage = attachments.some(
+        (attachment) => (attachment.is_image || attachment.kind === 'image') && attachment.status === 'ready',
+    );
+    const showVisionWarning = hasReadyImage && !isVisionModel(model);
+    const blocked = streaming || disabled || uploading || hasFailed;
+
     const submit = () => {
         const message = value.trim();
 
-        if (message === '' || streaming || disabled) return;
+        if (message === '' || blocked) return;
 
         onSubmit(message);
         setValue('');
         requestAnimationFrame(resize);
     };
 
-    const canSubmit = value.trim() !== '' && !streaming && !disabled;
+    const canSubmit = value.trim() !== '' && !blocked;
     const nearLimit = value.length > MAX_LENGTH - 500;
 
     return (
         <div
-            className={cn(
-                'rounded-2xl border border-border bg-card shadow-lg shadow-black/20 transition-colors focus-within:border-primary/50',
-                large ? 'p-3' : 'p-2',
-            )}
+            {...getRootProps({
+                className: cn(
+                    'rounded-2xl border bg-card shadow-lg shadow-black/20 transition-colors focus-within:border-primary/50',
+                    isDragActive ? 'border-primary/60 bg-primary/5' : 'border-border',
+                    large ? 'p-3' : 'p-2',
+                ),
+            })}
         >
+            <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                hidden
+                accept={FILE_ACCEPT}
+                onChange={(event) => {
+                    if (event.target.files !== null && event.target.files.length > 0) {
+                        onAddFiles?.(Array.from(event.target.files));
+                    }
+
+                    event.target.value = '';
+                }}
+            />
+
+            {attachments.length > 0 && (
+                <div className="px-1 pb-1">
+                    <AttachmentChips attachments={attachments} onRemove={onRemoveAttachment} onRetry={onRetryAttachment} />
+                </div>
+            )}
+
             <textarea
                 ref={textareaRef}
                 value={value}
@@ -108,8 +172,41 @@ export function Composer({
                 )}
             />
 
+            {attachmentError !== null && attachmentError !== '' && (
+                <div className="flex items-center justify-between gap-2 px-2 pt-1" role="alert">
+                    <p className="text-xs text-destructive">{attachmentError}</p>
+
+                    {onDismissAttachmentError !== undefined && (
+                        <button
+                            type="button"
+                            onClick={onDismissAttachmentError}
+                            className="shrink-0 text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                            Descartar
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {showVisionWarning && (
+                <p className="px-2 pt-1 text-xs text-muted-foreground">El modelo seleccionado podría no soportar imágenes.</p>
+            )}
+
             <div className="flex items-center justify-between gap-2 px-1 pt-1">
                 <div className="flex items-center gap-1">
+                    {onAddFiles !== undefined && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={attachmentsDisabled}
+                            aria-label="Adjuntar archivos"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        >
+                            <Paperclip className="h-4 w-4" />
+                        </Button>
+                    )}
                     {onAgentChange && (
                         <AgentPicker
                             agents={agents}

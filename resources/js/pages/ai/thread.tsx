@@ -1,7 +1,8 @@
 import { Head, router } from '@inertiajs/react';
-import { MoreHorizontal, Pin, PinOff, RotateCcw, Trash2 } from 'lucide-react';
+import { FileText, MoreHorizontal, Pin, PinOff, RotateCcw, Trash2, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
+import { attachmentStatusLabel, formatBytes } from '@/components/ai/chat/AttachmentChips';
 import { Composer } from '@/components/ai/chat/Composer';
 import { MessageList } from '@/components/ai/chat/MessageList';
 import { Button } from '@/components/ui/button';
@@ -21,8 +22,10 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
+import { cn } from '@/lib/utils';
 import type { AiChatState, ChatMessage, ChatThread, ToolPolicy } from '@/types/chat';
 
 interface ChatThreadProps {
@@ -47,6 +50,8 @@ export default function ChatThread({ thread, messages, threads, models, toolGrou
     const pendingMessageRef = useRef<string | null>(null);
     const lastErrorRef = useRef<string | null>(null);
 
+    const upload = useAttachmentUpload(thread.id);
+
     const stream = useChatStream({
         onError: (message, recoverable) => {
             if (recoverable || lastErrorRef.current === message) return;
@@ -65,12 +70,15 @@ export default function ChatThread({ thread, messages, threads, models, toolGrou
                     stream.reset();
                     pendingMessageRef.current = null;
                     setPendingMessage(null);
+                    upload.clearImages();
                 },
             });
         },
     });
 
     const startSend = (message: string) => {
+        const attachmentIds = upload.readyIds();
+
         pendingMessageRef.current = message;
         lastErrorRef.current = null;
         setPendingMessage(message);
@@ -83,6 +91,7 @@ export default function ChatThread({ thread, messages, threads, models, toolGrou
                 toolsPolicy.mode === 'manual' && toolsPolicy.groups.length > 0
                     ? toolsPolicy
                     : undefined,
+            attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
         });
     };
 
@@ -134,6 +143,9 @@ export default function ChatThread({ thread, messages, threads, models, toolGrou
             { preserveScroll: true, preserveState: true },
         );
     };
+
+    const composerAttachments = upload.attachments.filter((attachment) => attachment.kind !== 'document');
+    const threadDocuments = upload.attachments.filter((attachment) => attachment.kind === 'document');
 
     return (
         <ChatLayout
@@ -248,6 +260,14 @@ export default function ChatThread({ thread, messages, threads, models, toolGrou
                         onToolsPolicyChange={setToolsPolicy}
                         model={model}
                         onModelChange={setModel}
+                        attachments={composerAttachments}
+                        onAddFiles={upload.addFiles}
+                        onRemoveAttachment={upload.remove}
+                        onRetryAttachment={upload.retry}
+                        uploading={upload.uploading}
+                        attachmentFailed={upload.hasFailed}
+                        attachmentError={upload.error}
+                        onDismissAttachmentError={upload.dismissError}
                         onSubmit={submit}
                         onStop={stream.stop}
                         streaming={stream.status === 'streaming'}
@@ -256,6 +276,65 @@ export default function ChatThread({ thread, messages, threads, models, toolGrou
                     <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
                         La IA puede cometer errores. Verifica la información importante.
                     </p>
+
+                    {threadDocuments.length > 0 && (
+                        <div className="mt-2 rounded-xl border border-border bg-card/60 p-2">
+                            <p className="px-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                Documentos del hilo
+                            </p>
+                            <ul className="mt-1 space-y-0.5">
+                                {threadDocuments.map((document) => (
+                                    <li key={document.id} className="flex items-center gap-2 rounded-lg px-1 py-1">
+                                        <FileText
+                                            className={cn(
+                                                'h-3.5 w-3.5 shrink-0',
+                                                document.status === 'failed' ? 'text-destructive' : 'text-muted-foreground',
+                                            )}
+                                        />
+                                        <span className="min-w-0 flex-1 truncate text-xs text-foreground" title={document.name}>
+                                            {document.name}
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                'max-w-40 shrink-0 truncate text-[10px]',
+                                                document.status === 'failed' ? 'text-destructive' : 'text-muted-foreground',
+                                            )}
+                                            title={attachmentStatusLabel(document)}
+                                        >
+                                            {attachmentStatusLabel(document)}
+                                        </span>
+                                        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                                            {formatBytes(document.size)}
+                                        </span>
+
+                                        {document.status === 'failed' && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => void upload.retry(document.id)}
+                                                aria-label={`Reintentar ${document.name}`}
+                                                className="h-6 w-6 text-destructive hover:text-destructive"
+                                            >
+                                                <RotateCcw className="h-3 w-3" />
+                                            </Button>
+                                        )}
+
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => void upload.remove(document.id)}
+                                            aria-label={`Eliminar ${document.name}`}
+                                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -1,5 +1,6 @@
 import { Check, Copy, Pencil } from 'lucide-react';
 import { useState } from 'react';
+import { AttachmentChips } from '@/components/ai/chat/AttachmentChips';
 import { Button } from '@/components/ui/button';
 import type { ChatMessage } from '@/types/chat';
 
@@ -80,6 +81,8 @@ export function UserMessage({ message, onEdit, disabled = false }: UserMessagePr
                     </div>
                 ) : (
                     <>
+                        <AttachmentChips attachments={message.attachments ?? []} className="mb-1.5 justify-end" />
+
                         <div className="whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground">
                             {message.content}
                         </div>

@@ -5,6 +5,7 @@ import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
 import { Composer } from '@/components/ai/chat/Composer';
 import { ProviderNotice } from '@/components/ai/chat/ProviderNotice';
 import { Button } from '@/components/ui/button';
+import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
 import type { AiChatState, ChatThread, ToolPolicy } from '@/types/chat';
@@ -36,6 +37,8 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
     const pendingMessageRef = useRef<string | null>(null);
     const lastErrorRef = useRef<string | null>(null);
 
+    const upload = useAttachmentUpload(null);
+
     const stream = useChatStream({
         onThread: (threadId) => {
             createdThreadRef.current = threadId;
@@ -53,6 +56,8 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
         onComplete: () => {
             const threadId = createdThreadRef.current;
 
+            upload.clearImages();
+
             if (threadId) {
                 router.visit(ChatController.show.url(threadId), { replace: true });
             }
@@ -60,6 +65,8 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
     });
 
     const startSend = (message: string) => {
+        const attachmentIds = upload.readyIds();
+
         pendingMessageRef.current = message;
         lastErrorRef.current = null;
         setPendingMessage(message);
@@ -72,6 +79,7 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                 toolsPolicy.mode === 'manual' && toolsPolicy.groups.length > 0
                     ? toolsPolicy
                     : undefined,
+            attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
         });
     };
 
@@ -125,6 +133,14 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                         toolGroups={toolGroups}
                         toolsPolicy={toolsPolicy}
                         onToolsPolicyChange={setToolsPolicy}
+                        attachments={upload.attachments}
+                        onAddFiles={upload.addFiles}
+                        onRemoveAttachment={upload.remove}
+                        onRetryAttachment={upload.retry}
+                        uploading={upload.uploading}
+                        attachmentFailed={upload.hasFailed}
+                        attachmentError={upload.error}
+                        onDismissAttachmentError={upload.dismissError}
                         onSubmit={submit}
                         onStop={stream.stop}
                         streaming={stream.status === 'streaming'}

@@ -25,12 +25,25 @@ export interface ChatReasoning {
     duration_ms: number | null;
 }
 
+export interface ChatAttachment {
+    id: string;
+    kind: 'image' | 'document';
+    name: string;
+    mime: string;
+    size: number;
+    status: 'ready' | 'pending' | 'indexed' | 'failed';
+    error: string | null;
+    is_image: boolean;
+    url: string;
+}
+
 export interface ChatMessage {
     id: string;
     role: 'user' | 'assistant';
     content: string;
     citations: Citation[];
     reasoning: ChatReasoning | null;
+    attachments: ChatAttachment[];
     created_at: string | null;
 }
 
