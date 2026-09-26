@@ -1,14 +1,20 @@
 # syntax=docker/dockerfile:1
 
-FROM php:8.4-fpm AS builder
+FROM php:8.4-fpm AS php-base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        git curl unzip libpq-dev libzip-dev libpng-dev libonig-dev \
+        libpq-dev libzip-dev libpng-dev libonig-dev \
         libxml2-dev libicu-dev libsqlite3-dev libfreetype6-dev libjpeg62-turbo-dev \
-        nodejs npm \
+        libssl-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        pdo pdo_pgsql pdo_sqlite mbstring zip gd bcmath pcntl exif intl opcache \
+    && docker-php-ext-install -j"$(nproc)" \
+        pdo pdo_pgsql pdo_sqlite mbstring zip gd bcmath pcntl exif intl opcache ftp \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM php-base AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git curl unzip nodejs npm \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -27,16 +33,9 @@ RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoload
     && npm run build \
     && rm -rf node_modules
 
-FROM php:8.4-fpm AS runtime
+FROM php-base AS runtime
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        libpq-dev libzip-dev libpng-dev libonig-dev \
-        libxml2-dev libicu-dev libsqlite3-dev libfreetype6-dev libjpeg62-turbo-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        pdo pdo_pgsql pdo_sqlite mbstring zip gd bcmath pcntl exif intl opcache \
-    && rm -rf /var/lib/apt/lists/* \
-    && printf '[global]\ndaemonize = no\n[www]\nlisten = 0.0.0.0:8070\n' > /usr/local/etc/php-fpm.d/zz-docker.conf \
+RUN printf '[global]\ndaemonize = no\n[www]\nlisten = 0.0.0.0:8070\n' > /usr/local/etc/php-fpm.d/zz-docker.conf \
     && printf 'opcache.enable=1\nopcache.enable_cli=1\nopcache.validate_timestamps=0\nopcache.memory_consumption=192\nopcache.max_accelerated_files=20000\n' > /usr/local/etc/php/conf.d/zz-opcache.ini
 
 WORKDIR /var/www/megalomaniac
