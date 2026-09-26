@@ -3,6 +3,7 @@
 namespace App\Ai\Agents;
 
 use App\Ai\Middleware\InjectThreadDocumentContext;
+use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\ToolCatalog;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -73,6 +74,11 @@ EOF;
 
     public function tools(): iterable
     {
-        return ToolCatalog::toolsFor($this->user, $this->toolGroups);
+        // AskUserTool is always available: the model must be able to pause and
+        // ask a question even when the resolved policy filters out DB tools.
+        return [
+            ...ToolCatalog::toolsFor($this->user, $this->toolGroups),
+            new AskUserTool,
+        ];
     }
 }

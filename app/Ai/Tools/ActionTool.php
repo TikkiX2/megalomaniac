@@ -19,17 +19,50 @@ use App\Models\WorkoutSet;
 use App\Services\TaskBoardColumnService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Str;
+use Laravel\Ai\Approvals\Approval;
+use Laravel\Ai\Concerns\InteractsWithApprovals;
+use Laravel\Ai\Contracts\Approvable;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
 
-class ActionTool implements Tool
+class ActionTool implements Approvable, Tool
 {
+    use InteractsWithApprovals;
+
     public function __construct(protected User $user) {}
 
     public function description(): Stringable|string
     {
         return 'Perform actions on behalf of the user: create projects, create workouts, log sets, log meals, add purchases, add income, add debts, create/complete/update tasks (including moving them between projects), log supplements, add grocery items. Use this when the user asks to record, create or update something.';
+    }
+
+    public function needsApproval(Request $request): Approval|bool
+    {
+        return Approval::required('Va a '.($this->actionLabels()[$request['action'] ?? ''] ?? 'modificar tus datos').'.');
+    }
+
+    /**
+     * Human-readable label per write action, used in the approval request.
+     *
+     * @return array<string, string>
+     */
+    protected function actionLabels(): array
+    {
+        return [
+            'create_project' => 'crear un proyecto',
+            'create_workout' => 'crear un entrenamiento',
+            'log_set' => 'registrar una serie',
+            'log_meal' => 'registrar una comida',
+            'add_purchase' => 'añadir una compra',
+            'add_income' => 'añadir un ingreso',
+            'add_debt' => 'añadir una deuda',
+            'create_task' => 'crear una tarea',
+            'complete_task' => 'completar una tarea',
+            'update_task' => 'actualizar una tarea',
+            'log_supplement' => 'registrar un suplemento',
+            'add_grocery_item' => 'añadir un producto a la lista de compras',
+        ];
     }
 
     public function handle(Request $request): Stringable|string

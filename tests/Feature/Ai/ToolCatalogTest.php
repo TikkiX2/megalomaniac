@@ -2,6 +2,7 @@
 
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Tools\ActionTool;
+use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\TaskQueryTool;
 use App\Ai\Tools\ToolCatalog;
 use App\Ai\Tools\WorkoutQueryTool;
@@ -41,8 +42,8 @@ it('lets the main agent be built with a tool subset', function () {
         ->map(fn ($tool): string => $tool::class)
         ->all();
 
-    expect($subset)->toBe([TaskQueryTool::class]);
+    expect($subset)->toBe([TaskQueryTool::class, AskUserTool::class]);
 
     $all = collect(iterator_to_array((new MegalomaniacAgent($user))->tools()))->count();
-    expect($all)->toBe(9);
+    expect($all)->toBe(10);
 });

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Laravel\Ai\Approvals\Decisions;
 use Laravel\Ai\Files\StoredImage;
 use Laravel\Ai\Responses\StreamableAgentResponse;
 use RuntimeException;
@@ -101,6 +102,23 @@ class ChatService
         return $agent
             ->continue($thread->id, as: $user)
             ->stream($message, attachments: $attachments, provider: $provider, model: $model ?: $defaultModel);
+    }
+
+    /**
+     * Resume a turn paused on tool approvals with the user's decisions.
+     */
+    public function decide(User $user, ChatThread $thread, Decisions $decisions): StreamableAgentResponse
+    {
+        $this->ensureConfigured($user);
+        $this->configureUserProvider($user, $thread->id);
+
+        [$provider, $defaultModel] = AiProviderResolver::for($user, $thread->id);
+
+        // ['*'] on purpose: a resume must be able to resolve every tool the
+        // paused turn advertised, and AskUserTool is always appended by the agent.
+        return (new MegalomaniacAgent($user, ['*'], $thread))
+            ->continue($thread->id, as: $user)
+            ->stream($decisions, provider: $provider, model: $thread->model ?: $defaultModel);
     }
 
     /**

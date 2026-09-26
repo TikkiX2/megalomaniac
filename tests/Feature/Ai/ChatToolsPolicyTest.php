@@ -2,6 +2,7 @@
 
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Services\ChatService;
+use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\TaskQueryTool;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -83,5 +84,5 @@ it('builds the turn agent with only the resolved groups', function () {
     $agent = $service->agentFor($user, $thread, $policy['groups']);
     $classes = collect(iterator_to_array($agent->tools()))->map(fn ($tool): string => $tool::class)->all();
 
-    expect($classes)->toBe([TaskQueryTool::class]);
+    expect($classes)->toBe([TaskQueryTool::class, AskUserTool::class]);
 });

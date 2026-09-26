@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ai;
 use App\Ai\Services\ChatService;
 use App\Ai\Tools\ToolCatalog;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Ai\ApproveChatTurnRequest;
 use App\Http\Requests\Ai\EditChatMessageRequest;
 use App\Http\Requests\Ai\SendChatMessageRequest;
 use App\Http\Requests\Ai\UpdateChatThreadRequest;
@@ -24,6 +25,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Ai\Approvals\Decision;
+use Laravel\Ai\Approvals\Decisions;
+use Laravel\Ai\Exceptions\ApprovalMismatchException;
+use Laravel\Ai\Exceptions\ApprovalNotResumableException;
 use Laravel\Ai\Exceptions\InsufficientCreditsException;
 use Laravel\Ai\Exceptions\ProviderConnectionException;
 use Laravel\Ai\Exceptions\ProviderOverloadedException;
@@ -205,6 +210,39 @@ class ChatController extends Controller
         abort_if($stream === null, 422, 'El mensaje indicado no se puede editar.');
 
         return $this->streamResponse($stream, $thread, $this->service->lastToolPolicy);
+    }
+
+    public function approve(ApproveChatTurnRequest $request, ChatThread $thread): StreamedResponse
+    {
+        $this->authorize('update', $thread);
+
+        abort_unless(
+            $this->service->isConfigured($request->user()),
+            422,
+            'Configura tu proveedor de IA en Settings → IA.'
+        );
+
+        $decisions = Decisions::from(collect($request->validated('decisions'))
+            ->map(function (array|bool $decision): Decision|bool {
+                if (is_bool($decision)) {
+                    return $decision;
+                }
+
+                return match ($decision['action']) {
+                    'approve' => Decision::approve(),
+                    'edit' => Decision::edit($decision['arguments'] ?? []),
+                    default => Decision::reject($decision['result'] ?? null),
+                };
+            })
+            ->all());
+
+        try {
+            $stream = $this->service->decide($request->user(), $thread, $decisions);
+        } catch (ApprovalMismatchException|ApprovalNotResumableException $exception) {
+            abort(422, $exception->getMessage());
+        }
+
+        return $this->streamResponse($stream, $thread);
     }
 
     /**

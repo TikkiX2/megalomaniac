@@ -2,6 +2,7 @@
 
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Tools\ActionTool;
+use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\FinanceQueryTool;
 use App\Ai\Tools\GroceryQueryTool;
 use App\Ai\Tools\IntegrationCallTool;
@@ -35,7 +36,7 @@ test('megalomaniac agent has correct tools', function () {
 
     $tools = iterator_to_array($agent->tools());
 
-    expect($tools)->toHaveCount(9);
+    expect($tools)->toHaveCount(10);
     expect($tools[0])->toBeInstanceOf(TaskQueryTool::class);
     expect($tools[1])->toBeInstanceOf(WorkoutQueryTool::class);
     expect($tools[2])->toBeInstanceOf(FinanceQueryTool::class);
@@ -45,6 +46,7 @@ test('megalomaniac agent has correct tools', function () {
     expect($tools[6])->toBeInstanceOf(IntegrationCatalogTool::class);
     expect($tools[7])->toBeInstanceOf(IntegrationCallTool::class);
     expect($tools[8])->toBeInstanceOf(ManageAgentsTool::class);
+    expect($tools[9])->toBeInstanceOf(AskUserTool::class);
 });
 
 test('workout query tool returns workouts', function () {
