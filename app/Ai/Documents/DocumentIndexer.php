@@ -10,6 +10,10 @@ use Throwable;
 
 class DocumentIndexer
 {
+    protected const MAX_TEXT_LENGTH = 2_000_000;
+
+    protected const MAX_CHUNKS = 2000;
+
     public function index(ChatAttachment $attachment): void
     {
         try {
@@ -27,6 +31,8 @@ class DocumentIndexer
                 if ($text === '') {
                     throw new RuntimeException('El documento no contiene texto extraíble.');
                 }
+
+                $text = mb_substr($text, 0, self::MAX_TEXT_LENGTH);
 
                 foreach ($this->chunks($text) as $position => $content) {
                     ChatDocumentChunk::create([
@@ -54,7 +60,7 @@ class DocumentIndexer
         $offset = 0;
         $length = mb_strlen($normalized);
 
-        while ($offset < $length) {
+        while ($offset < $length && count($chunks) < self::MAX_CHUNKS) {
             $chunks[] = mb_substr($normalized, $offset, $size);
             $offset += max(1, $size - $overlap);
         }

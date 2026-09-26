@@ -15,6 +15,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Ai\Approvals\Decisions;
 use Laravel\Ai\Files\StoredImage;
@@ -114,11 +115,27 @@ class ChatService
 
         [$provider, $defaultModel] = AiProviderResolver::for($user, $thread->id);
 
+        $lastUserMessage = $thread->messages()
+            ->where('role', 'user')
+            ->orderByDesc('id')
+            ->first();
+
         // Resolve the agent exactly like streamTurn so a custom-agent thread
-        // resumes with its own persona and tools. ['*'] on purpose for the
-        // Megalomaniac fallback: a resume must be able to resolve every tool
-        // the paused turn advertised, and AskUserTool is always appended.
-        return $this->agentFor($user, $thread, ['*'])
+        // resumes with its own persona and tools. The resumed turn must
+        // advertise the same tools the paused turn did: manual overrides are
+        // persisted on the thread, and auto mode is reproduced by re-routing
+        // the user message that started the paused turn. Resuming with ['*']
+        // would expose tools the user had explicitly disabled.
+        $policy = $this->prepareToolPolicy($thread, $lastUserMessage?->content ?? '');
+        $this->lastToolPolicy = $policy;
+
+        $agent = $this->agentFor($user, $thread, $policy['groups']);
+
+        if ($agent instanceof MegalomaniacAgent && $lastUserMessage instanceof ChatMessage) {
+            $agent->withResumeDocumentContext($thread->documentContext($lastUserMessage->content));
+        }
+
+        return $agent
             ->continue($thread->id, as: $user)
             ->stream($decisions, provider: $provider, model: $thread->model ?: $defaultModel);
     }
@@ -195,20 +212,28 @@ class ChatService
 
     public function dropLastExchange(ChatThread $thread): ?string
     {
+        $deletedIds = [];
+
         $last = $thread->messages()->orderByDesc('id')->first();
 
         if ($last?->role === 'assistant') {
+            $deletedIds[] = $last->id;
             $last->delete();
         }
 
         $userMessage = $thread->messages()->orderByDesc('id')->first();
 
         if (! $userMessage instanceof ChatMessage || ! $userMessage->isUser()) {
+            $this->detachAttachments($deletedIds);
+
             return null;
         }
 
         $content = $userMessage->content;
+        $deletedIds[] = $userMessage->id;
         $userMessage->delete();
+
+        $this->detachAttachments($deletedIds);
 
         return $content;
     }
@@ -239,15 +264,40 @@ class ChatService
 
         $ids = $messages->slice($index)->pluck('id')->all();
 
+        $this->detachAttachments($ids);
+
         $thread->messages()->whereIn('id', $ids)->delete();
     }
 
     public function deleteThread(ChatThread $thread): void
     {
         DB::transaction(function () use ($thread): void {
+            foreach ($thread->attachments()->get() as $attachment) {
+                Storage::disk($attachment->disk)->delete($attachment->path);
+                $attachment->delete();
+            }
+
             $thread->messages()->delete();
             $thread->delete();
         });
+    }
+
+    /**
+     * Detach attachments from deleted messages without destroying the files:
+     * documents are thread-level context and images stay reusable until the
+     * user deletes them explicitly.
+     *
+     * @param  array<int, string>  $messageIds
+     */
+    protected function detachAttachments(array $messageIds): void
+    {
+        if ($messageIds === []) {
+            return;
+        }
+
+        ChatAttachment::query()
+            ->whereIn('message_id', $messageIds)
+            ->update(['message_id' => null]);
     }
 
     /**

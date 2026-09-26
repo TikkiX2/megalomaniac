@@ -1,13 +1,16 @@
 <?php
 
+use App\Ai\Services\ChatService;
 use App\Jobs\IndexChatDocument;
 use App\Models\ChatAttachment;
+use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 uses(RefreshDatabase::class);
 
@@ -85,4 +88,156 @@ test('owner can stream the file inline and delete it', function () {
     $this->actingAs($user)->delete(route('ai.chat.attachments.destroy', $attachment))->assertRedirect();
     expect(ChatAttachment::query()->whereKey($attachment->id)->exists())->toBeFalse();
     Storage::disk('local')->assertMissing($attachment->path);
+});
+
+test('an image already sent with a message cannot be deleted', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'path' => 'ai-attachments/qa/enviada.png',
+        'message_id' => (string) Str::uuid7(),
+    ]);
+    Storage::disk('local')->put($attachment->path, 'img');
+
+    $this->actingAs($user)
+        ->deleteJson(route('ai.chat.attachments.destroy', $attachment))
+        ->assertStatus(422)
+        ->assertJson(['message' => 'No se puede eliminar una imagen ya enviada.']);
+
+    expect(ChatAttachment::query()->whereKey($attachment->id)->exists())->toBeTrue();
+    Storage::disk('local')->assertExists($attachment->path);
+});
+
+test('unattached images and thread documents can still be deleted', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+
+    $image = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'path' => 'ai-attachments/qa/libre.png',
+    ]);
+    Storage::disk('local')->put($image->path, 'img');
+
+    $document = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'document',
+        'path' => 'ai-attachments/qa/plan.txt',
+        'original_name' => 'plan.txt',
+        'mime' => 'text/plain',
+        'message_id' => (string) Str::uuid7(),
+    ]);
+    Storage::disk('local')->put($document->path, 'doc');
+
+    $this->actingAs($user)->delete(route('ai.chat.attachments.destroy', $image))->assertRedirect();
+    $this->actingAs($user)->delete(route('ai.chat.attachments.destroy', $document))->assertRedirect();
+
+    expect(ChatAttachment::query()->whereIn('id', [$image->id, $document->id])->exists())->toBeFalse();
+    Storage::disk('local')->assertMissing($image->path);
+    Storage::disk('local')->assertMissing($document->path);
+});
+
+test('deleting a thread removes its attachments and their files', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    $path = 'ai-attachments/'.$user->id.'/plan.txt';
+    Storage::disk('local')->put($path, 'contenido');
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'thread_id' => $thread->id,
+        'kind' => 'document',
+        'path' => $path,
+        'original_name' => 'plan.txt',
+        'mime' => 'text/plain',
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('ai.chat.destroy', $thread))
+        ->assertRedirect(route('ai.chat.index'));
+
+    expect(ChatAttachment::query()->whereKey($attachment->id)->exists())->toBeFalse()
+        ->and(ChatThread::query()->whereKey($thread->id)->exists())->toBeFalse();
+    Storage::disk('local')->assertMissing($path);
+});
+
+test('truncating a thread detaches attachments from the deleted messages', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    $userMessage = ChatMessage::factory()->create([
+        'conversation_id' => $thread->id,
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    $path = 'ai-attachments/'.$user->id.'/foto.png';
+    Storage::disk('local')->put($path, 'img');
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'thread_id' => $thread->id,
+        'kind' => 'image',
+        'path' => $path,
+        'message_id' => $userMessage->id,
+    ]);
+
+    ChatMessage::factory()->assistant()->create([
+        'conversation_id' => $thread->id,
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    app(ChatService::class)->truncateFrom($thread, $userMessage);
+
+    expect($attachment->refresh()->message_id)->toBeNull()
+        ->and(ChatAttachment::query()->whereKey($attachment->id)->exists())->toBeTrue();
+    Storage::disk('local')->assertExists($path);
+});
+
+test('dropping the last exchange detaches attachments from it', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    $userMessage = ChatMessage::factory()->create([
+        'conversation_id' => $thread->id,
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    $path = 'ai-attachments/'.$user->id.'/foto.png';
+    Storage::disk('local')->put($path, 'img');
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'thread_id' => $thread->id,
+        'kind' => 'image',
+        'path' => $path,
+        'message_id' => $userMessage->id,
+    ]);
+
+    ChatMessage::factory()->assistant()->create([
+        'conversation_id' => $thread->id,
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    $content = app(ChatService::class)->dropLastExchange($thread);
+
+    expect($content)->toBe($userMessage->content)
+        ->and($attachment->refresh()->message_id)->toBeNull()
+        ->and(ChatAttachment::query()->whereKey($attachment->id)->exists())->toBeTrue();
+    Storage::disk('local')->assertExists($path);
 });

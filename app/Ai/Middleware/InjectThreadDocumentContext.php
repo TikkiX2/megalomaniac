@@ -8,6 +8,8 @@ use Laravel\Ai\Prompts\AgentPrompt;
 
 class InjectThreadDocumentContext
 {
+    public const HEADER = '--- Documentos del hilo (contexto) ---';
+
     public function __construct(protected ?ChatThread $thread, protected string $query) {}
 
     public function handle(AgentPrompt $prompt, Closure $next)
@@ -18,6 +20,6 @@ class InjectThreadDocumentContext
             return $next($prompt);
         }
 
-        return $next($prompt->append("--- Documentos del hilo (contexto) ---\n".$context));
+        return $next($prompt->append(self::HEADER."\n".$context));
     }
 }

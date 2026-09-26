@@ -20,6 +20,8 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
 
     protected ?string $documentQuery = null;
 
+    protected ?string $resumeDocumentContext = null;
+
     /**
      * @param  string[]  $toolGroups  Grupos de ToolCatalog; ['*'] = todos
      */
@@ -40,6 +42,19 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
     }
 
     /**
+     * Attach resolved thread documents to the system instructions. Approval
+     * resumes cannot use the middleware path because AgentPrompt::append()
+     * returns the prompt untouched when it carries approval decisions, so the
+     * block is delivered through instructions() instead.
+     */
+    public function withResumeDocumentContext(?string $context): static
+    {
+        $this->resumeDocumentContext = $context;
+
+        return $this;
+    }
+
+    /**
      * @return array<int, object>
      */
     public function middleware(): array
@@ -53,7 +68,7 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
 
     public function instructions(): string
     {
-        return <<<'EOF'
+        $instructions = <<<'EOF'
 You are Megalomaniac AI, a personal fitness, finance, and freelance assistant.
 
 You help the user with:
@@ -70,6 +85,12 @@ When the user asks to perform an action (log a workout, add a purchase, create
 a project or task, move a task to a project, etc.), use the ActionTool to
 create or update the record. Confirm what you did after.
 EOF;
+
+        if (filled($this->resumeDocumentContext)) {
+            $instructions .= "\n\n".InjectThreadDocumentContext::HEADER."\n".$this->resumeDocumentContext;
+        }
+
+        return $instructions;
     }
 
     public function tools(): iterable

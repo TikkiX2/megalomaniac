@@ -2,11 +2,14 @@
 
 use App\Http\Resources\ChatMessageResource;
 use App\Models\AgentDefinition;
+use App\Models\ChatAttachment;
+use App\Models\ChatDocumentChunk;
 use App\Models\ChatThread;
 use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -207,4 +210,90 @@ test('resuming uses the thread agent instead of the default', function () {
         ->toContain('Sos el agente de reportes unico.')
         ->toContain('ActionTool')
         ->not->toContain('TaskQueryTool');
+});
+
+function resumeIndexedDocument(ChatThread $thread, User $user, string $content, string $name = 'plan.txt'): ChatAttachment
+{
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'thread_id' => $thread->id,
+        'kind' => 'document',
+        'status' => 'indexed',
+        'original_name' => $name,
+    ]);
+
+    ChatDocumentChunk::create([
+        'attachment_id' => $attachment->id,
+        'position' => 0,
+        'content' => $content,
+    ]);
+
+    return $attachment;
+}
+
+test('a resumed turn keeps the manual tool policy pinned on the thread', function () {
+    Http::fakeSequence()
+        ->push(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Listo\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
+
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+        'tools_policy' => ['mode' => 'manual', 'groups' => ['tasks', 'actions']],
+    ]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), ['message' => 'loguea mi workout', 'thread_id' => $thread->id])->streamedContent();
+
+    $this->actingAs($user)
+        ->post(route('ai.chat.approve', $thread), ['decisions' => ['call_1' => ['action' => 'approve']]])
+        ->streamedContent();
+
+    expect($thread->refresh()->tools_policy)->toBe(['mode' => 'manual', 'groups' => ['tasks', 'actions']]);
+
+    $requests = Http::recorded();
+
+    expect($requests)->toHaveCount(2);
+
+    // The resume must advertise exactly the pinned manual groups (including
+    // groups the message itself would not route to), never the whole catalog.
+    expect(json_encode($requests[1][0]->data()))
+        ->toContain('ActionTool')
+        ->toContain('TaskQueryTool')
+        ->not->toContain('FinanceQueryTool')
+        ->not->toContain('WorkoutQueryTool');
+});
+
+test('a resumed turn keeps the thread document context', function () {
+    Storage::fake('local');
+
+    Http::fakeSequence()
+        ->push(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Listo\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
+
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+    resumeIndexedDocument($thread, $user, 'El plan de hipertrofia usa press banca 4x8 y sentadilla 5x5.');
+
+    $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => 'loguea mi workout de hipertrofia',
+        'thread_id' => $thread->id,
+    ])->streamedContent();
+
+    $this->actingAs($user)
+        ->post(route('ai.chat.approve', $thread), ['decisions' => ['call_1' => ['action' => 'approve']]])
+        ->streamedContent();
+
+    $requests = Http::recorded();
+
+    expect($requests)->toHaveCount(2);
+
+    // The resume re-queries thread documents with the paused turn's user
+    // message, so grounded answers keep their sources.
+    expect(json_encode($requests[1][0]->data()))
+        ->toContain('Documentos del hilo')
+        ->toContain('press banca 4x8');
 });

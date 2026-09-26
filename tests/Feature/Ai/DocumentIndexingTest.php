@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Documents\DocumentIndexer;
+use App\Ai\Documents\DocxExtractor;
 use App\Models\ChatAttachment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -71,4 +72,25 @@ test('reindexing is idempotent', function () {
     (new DocumentIndexer)->index($attachment->refresh());
 
     expect($attachment->chunks()->count())->toBe($first);
+});
+
+test('very large documents cannot exceed the maximum chunk count', function () {
+    $attachment = documentAttachment('enorme.txt', 'text/plain', str_repeat('a', 2_500_000));
+
+    (new DocumentIndexer)->index($attachment);
+
+    expect($attachment->refresh()->status)->toBe('indexed');
+    expect($attachment->chunks()->count())->toBe(2000);
+});
+
+test('docx xml over the size limit is rejected before extraction', function () {
+    $path = 'ai-attachments/qa/gigante.docx';
+    Storage::disk('local')->makeDirectory('ai-attachments/qa');
+    $zip = new ZipArchive;
+    $zip->open(Storage::disk('local')->path($path), ZipArchive::CREATE);
+    $zip->addFromString('word/document.xml', str_repeat('<w:p/>', 3_500_000));
+    $zip->close();
+
+    expect(fn () => (new DocxExtractor)->extract('local', $path))
+        ->toThrow(RuntimeException::class, '20 MB');
 });

@@ -85,6 +85,10 @@ class ChatAttachmentController extends Controller
     {
         $this->authorize('delete', $attachment);
 
+        if ($attachment->kind === 'image' && $attachment->message_id !== null) {
+            abort(422, 'No se puede eliminar una imagen ya enviada.');
+        }
+
         Storage::disk($attachment->disk)->delete($attachment->path);
         $attachment->delete();
 
