@@ -334,3 +334,21 @@ Tareas de prueba creadas y eliminadas; no quedaron datos nuevos.
 ### Notas
 - El contenedor dev usa `APP_KEY` de compose (`MEGALOMANIAC_APP_KEY`) distinto del `.env` del host: no escribir campos cifrados (`ai_provider_key`, `tavily_api_key`) desde tinker del host o el login del contenedor falla con "The MAC is invalid". Usar `docker exec dev-megalomaniac php artisan tinker`.
 - Tests: `ChatAttachmentUploadTest` +2 (mensaje ES de imagen >10 MB; claves de `messages()`), suite **607 passed**, Pint OK.
+
+## Fix: error 400 del proveedor AI en prod (OpenCode Go) — 2026-09-26
+
+> **Reporte del usuario:** al enviar un mensaje en prod el proveedor devolvía HTTP 400.
+
+### Causa raíz (evidencia)
+- Proxy de diagnóstico delante del proveedor capturó la petición real de la app: `POST /zen/go/v1/chat/completions` con `authorization` y `user-agent` pero **sin `x-opencode-session`** → `400 {"type":"MissingSessionID","message":"Request is missing x-opencode-session…"}` (https://opencode.ai/docs/go/#where-can-i-use-it).
+- `AiProviderResolver::configureUserProvider` solo añadía el header cuando se pasaba `$sessionId` (hilo del chat). Los flujos one-shot (`AiProviderResolver::for($user)` sin hilo: `InsightService`, `AiInsightController`, `AiFitnessController`, `AgentRunner`, `DigestAgent`, `FeedRanker`) iban sin header → 400.
+- Además, la imagen de prod en ejecución era anterior al código del deploy copy (el rebuild de hoy desplegó también el header de sesión del chat), por lo que el chat del usuario también daba 400 antes del rebuild.
+
+### Fix
+- `configureUserProvider`: para endpoints `opencode.ai` siempre se envía `x-opencode-session`, con fallback estable por usuario `user-{id}` cuando no hay conversación (p. ej. insights/generación puntual).
+- Test flaky preexistente corregido: `TaskToolsTest` "Comprar café" heredaba `due_date` aleatoria de la factory (0–30 días) y a veces entraba en la ventana de 2 días; ahora fija `due_date => null`.
+
+### Verificado
+- Proxy: chat y one-shot (`generateTaskInsights`) → 200 con header `x-opencode-session` (`thread-id` / `user-5`).
+- Prod con URL real: réplica exacta del mensaje del usuario y de su hilo (clon con `mode/agent/model` idénticos) → stream completo OK; insights OK.
+- Suite **609 passed**, Pint OK. Deploy: imagen `megalomaniac-prod` reconstruida + `app/worker/scheduler` recreados.

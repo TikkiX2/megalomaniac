@@ -47,7 +47,7 @@ it('filters by scope, overdue, due window and search', function () {
     $user = User::factory()->create();
     $project = Project::factory()->for($user)->create(['name' => 'App']);
 
-    personalTask($user, ['title' => 'Comprar café']);
+    personalTask($user, ['title' => 'Comprar café', 'due_date' => null]);
     ProjectTask::factory()->for($project)->create([
         'user_id' => $user->id, 'title' => 'Deploy', 'is_done' => false, 'due_date' => now()->addDay(),
     ]);

@@ -61,8 +61,11 @@ class AiProviderResolver
     {
         $headers = ['User-Agent' => 'megalomaniac-pro/1.0'];
 
-        if ($sessionId !== null && self::isOpenCodeEndpoint($user->ai_provider_url)) {
-            $headers['x-opencode-session'] = $sessionId;
+        if (self::isOpenCodeEndpoint($user->ai_provider_url)) {
+            // OpenCode Go rejects requests without the session header (400
+            // MissingSessionID), including one-shot features that have no
+            // conversation: fall back to a stable per-user identifier.
+            $headers['x-opencode-session'] = $sessionId ?? 'user-'.$user->getKey();
         }
 
         config([

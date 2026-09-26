@@ -67,6 +67,26 @@ it('adds the opencode session header when a session id is given', function () {
     expect(config('ai.providers.user.headers')['x-opencode-session'])->toBe('session-123');
 });
 
+it('adds a stable fallback opencode session header for one-shot requests', function () {
+    $user = User::factory()->withAiProvider()->create([
+        'ai_provider_url' => 'https://opencode.ai/zen/go/v1',
+    ]);
+
+    AiProviderResolver::for($user);
+
+    expect(config('ai.providers.user.headers')['x-opencode-session'])->toBe('user-'.$user->getKey());
+});
+
+it('keeps an explicit session id over the fallback', function () {
+    $user = User::factory()->withAiProvider()->create([
+        'ai_provider_url' => 'https://opencode.ai/zen/go/v1',
+    ]);
+
+    AiProviderResolver::for($user, 'thread-42');
+
+    expect(config('ai.providers.user.headers')['x-opencode-session'])->toBe('thread-42');
+});
+
 it('does not touch the runtime provider config when falling back to the default', function () {
     $user = User::factory()->create(['ai_enabled' => true]);
 
