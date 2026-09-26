@@ -1,9 +1,11 @@
 <?php
 
 use App\Ai\Services\ChatService;
+use App\Models\AgentDefinition;
 use App\Models\ChatThread;
 use App\Models\User;
 use GuzzleHttp\Promise\PromiseInterface;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -42,6 +44,18 @@ function forceWebTavily(): PromiseInterface
             ],
         ],
     ], 200);
+}
+
+function forceWebPausedSse(): string
+{
+    return implode("\n\n", [
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['tool_calls' => [[
+            'index' => 0, 'id' => 'call_1', 'type' => 'function',
+            'function' => ['name' => 'AskUserTool', 'arguments' => '{"question":"¿Seguimos?"}'],
+        ]]], 'finish_reason' => null]]]),
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => [], 'finish_reason' => 'tool_calls']]]),
+        'data: [DONE]',
+    ])."\n\n";
 }
 
 function forceWebProviderPayload(): array
@@ -196,5 +210,92 @@ test('the service exposes the injected sources after a successful forced search'
 
     expect($service->lastWebSources)->toHaveCount(1)
         ->and($service->lastWebSources[0]['url'])->toBe('https://laravel.test/13')
+        ->and($service->lastWebWarning)->toBeNull();
+});
+
+test('force web is skipped with a warning on custom-agent threads', function () {
+    $user = User::factory()->withAiProvider()->create(['tavily_api_key' => 'tvly-user']);
+    AgentDefinition::factory()->for($user)->create([
+        'key' => 'reporte',
+        'instructions' => 'Sos el agente de reportes.',
+    ]);
+
+    $thread = forceWebThread($user, 'both');
+    $thread->update(['agent' => 'reporte']);
+
+    Http::fake([
+        'api.example.com/*' => forceWebSse(),
+        'tavily.test/*' => forceWebTavily(),
+    ]);
+
+    $service = app(ChatService::class);
+    $this->app->instance(ChatService::class, $service);
+
+    $content = $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => 'busca algo',
+        'thread_id' => $thread->id,
+        'force_web' => true,
+    ])->streamedContent();
+
+    Http::assertNotSent(fn (Request $request) => str_contains($request->url(), 'tavily.test'));
+
+    expect($content)
+        ->toContain('"recoverable":true')
+        ->toContain('[DONE]')
+        ->and(forceWebErrorMessages($content))
+        ->toContain('La búsqueda web forzada aún no está disponible con agentes personalizados.')
+        ->and($service->lastWebSources)
+        ->toBe([]);
+});
+
+test('a tavily transport failure warns on the stream and the turn continues', function () {
+    $user = User::factory()->withAiProvider()->create(['tavily_api_key' => 'tvly-user']);
+    $thread = forceWebThread($user, 'both');
+
+    Http::fake([
+        'api.example.com/*' => forceWebSse(),
+        'tavily.test/*' => fn () => throw new ConnectionException('timed out'),
+    ]);
+
+    $content = $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => 'busca algo',
+        'thread_id' => $thread->id,
+        'force_web' => true,
+    ])->streamedContent();
+
+    expect($content)
+        ->toContain('"recoverable":true')
+        ->toContain('text_delta')
+        ->toContain('[DONE]')
+        ->and(forceWebErrorMessages($content))
+        ->toContain('No se pudo conectar con Tavily. Comprueba tu conexión e inténtalo de nuevo.');
+});
+
+test('decide clears the forced web search state', function () {
+    Http::fakeSequence()
+        ->push(forceWebPausedSse(), 200, ['Content-Type' => 'text/event-stream'])
+        ->push("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
+
+    $user = User::factory()->withAiProvider()->create();
+    $thread = forceWebThread($user, 'both');
+
+    $service = app(ChatService::class);
+    $this->app->instance(ChatService::class, $service);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => 'hola',
+        'thread_id' => $thread->id,
+    ])->streamedContent();
+
+    $service->lastWebSources = [['n' => 1, 'title' => 'Vieja', 'url' => 'https://vieja.test']];
+    $service->lastWebWarning = 'aviso viejo';
+
+    $this->actingAs($user)
+        ->post(route('ai.chat.approve', $thread), [
+            'decisions' => ['call_1' => ['action' => 'reject', 'result' => 'sí']],
+        ])
+        ->streamedContent();
+
+    expect($service->lastWebSources)->toBe([])
         ->and($service->lastWebWarning)->toBeNull();
 });

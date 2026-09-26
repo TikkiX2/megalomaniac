@@ -143,8 +143,12 @@ class ChatService
             $agent->withDocumentContext($message);
         }
 
-        if ($forceWeb && in_array($this->sourceMode($thread), self::WEB_SOURCE_MODES, true) && filled(trim($message))) {
-            $this->forceWebSearch($user, $message, $agent);
+        if ($forceWeb) {
+            if (! $agent instanceof MegalomaniacAgent) {
+                $this->lastWebWarning = 'La búsqueda web forzada aún no está disponible con agentes personalizados.';
+            } elseif (in_array($this->sourceMode($thread), self::WEB_SOURCE_MODES, true) && filled(trim($message))) {
+                $this->forceWebSearch($user, $message, $agent);
+            }
         }
 
         return $agent
@@ -158,7 +162,7 @@ class ChatService
      * error) leaves a readable warning for the controller and the turn
      * continues without web context.
      */
-    protected function forceWebSearch(User $user, string $message, MegalomaniacAgent|RuntimeAgent $agent): void
+    protected function forceWebSearch(User $user, string $message, MegalomaniacAgent $agent): void
     {
         $client = TavilyClient::for($user);
 
@@ -176,11 +180,8 @@ class ChatService
             return;
         }
 
-        $this->lastWebSources = $result['results'];
-
-        if ($agent instanceof MegalomaniacAgent) {
-            $agent->withWebSearchContext($result['results']);
-        }
+        $this->lastWebSources = $result['results'] ?? [];
+        $agent->withWebSearchContext($this->lastWebSources);
     }
 
     /**
