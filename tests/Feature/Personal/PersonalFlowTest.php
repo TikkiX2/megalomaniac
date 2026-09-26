@@ -7,6 +7,7 @@ use App\Models\TaskProperty;
 use App\Models\TaskSavedView;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
@@ -43,6 +44,38 @@ it('lists personal projects', function () {
     $response = $this->get('/personal/projects');
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page->component('personal/projects/Index'));
+});
+
+it('orders personal projects by sort_order', function () {
+    expect(Schema::hasColumn('projects', 'sort_order'))->toBeTrue();
+
+    $second = Project::factory()->create([
+        'type' => 'personal',
+        'user_id' => $this->user->id,
+        'sort_order' => 1,
+        'created_at' => now()->subMinutes(2),
+    ]);
+    $first = Project::factory()->create([
+        'type' => 'personal',
+        'user_id' => $this->user->id,
+        'sort_order' => 0,
+        'created_at' => now()->subMinute(),
+    ]);
+    $third = Project::factory()->create([
+        'type' => 'personal',
+        'user_id' => $this->user->id,
+        'sort_order' => 2,
+        'created_at' => now(),
+    ]);
+
+    $this->get('/personal/projects')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('personal/projects/Index')
+            ->where('projects.data.0.id', $first->id)
+            ->where('projects.data.1.id', $second->id)
+            ->where('projects.data.2.id', $third->id)
+        );
 });
 
 it('prevents accessing other user personal project', function () {
