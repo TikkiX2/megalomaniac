@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { FileText, Loader2, Paperclip, Search, Unlink, UploadCloud } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
@@ -217,7 +218,10 @@ export function ThreadSourcesPanel({ sources, library, onAttach, onDetach, onUpl
                         <DialogTitle>Adjuntar fuentes</DialogTitle>
                         <DialogDescription>
                             Elige documentos de tu biblioteca o sube uno nuevo. Las fuentes adjuntas se usan como
-                            contexto en este hilo.
+                            contexto en este hilo.{' '}
+                            <Link href="/ai/sources" className="text-primary hover:underline">
+                                Ver biblioteca
+                            </Link>
                         </DialogDescription>
                     </DialogHeader>
 

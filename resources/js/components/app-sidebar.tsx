@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bot, Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, LayoutGrid, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
+import { Bot, Brain, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, LayoutGrid, Library, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -209,6 +209,14 @@ export function AppSidebar() {
                                 <Link href="/ai/chat" prefetch>
                                     <Brain className="h-4 w-4" />
                                     <span>Chat IA</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton asChild tooltip="Fuentes" isActive={window.location.pathname.startsWith('/ai/sources')}>
+                                <Link href="/ai/sources" prefetch>
+                                    <Library className="h-4 w-4" />
+                                    <span>Fuentes</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

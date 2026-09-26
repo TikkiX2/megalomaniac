@@ -39,6 +39,8 @@ export interface ChatAttachment {
     error: string | null;
     is_image: boolean;
     url: string;
+    created_at?: string | null;
+    threads?: string[];
     threads_count?: number;
 }
 
