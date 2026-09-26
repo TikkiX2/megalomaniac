@@ -26,6 +26,7 @@ class SendChatMessageRequest extends FormRequest
             'tools_policy.mode' => ['required_with:tools_policy', 'string', 'in:auto,manual'],
             'tools_policy.groups' => ['nullable', 'array'],
             'tools_policy.groups.*' => ['string', 'max:30'],
+            'force_web' => ['sometimes', 'boolean'],
             'attachment_ids' => ['nullable', 'array', 'max:5'],
             'attachment_ids.*' => [
                 'string',

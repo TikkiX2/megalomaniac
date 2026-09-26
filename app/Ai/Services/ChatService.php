@@ -7,6 +7,7 @@ use App\Ai\Agents\RuntimeAgent;
 use App\Ai\Support\AiProviderResolver;
 use App\Ai\Tools\ToolCatalog;
 use App\Ai\Tools\ToolRouter;
+use App\Ai\Web\TavilyClient;
 use App\Models\AgentDefinition;
 use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
@@ -31,6 +32,18 @@ class ChatService
      * @var array{mode: string, groups: string[]}
      */
     public array $lastToolPolicy = [];
+
+    /**
+     * Results of the forced "search always" pre-search for the last turn.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $lastWebSources = [];
+
+    /**
+     * Warning produced by the forced "search always" pre-search, if any.
+     */
+    public ?string $lastWebWarning = null;
 
     /**
      * Source modes that include the web tool group.
@@ -101,7 +114,11 @@ class ChatService
         ?string $model = null,
         ?array $toolsPolicy = null,
         ?array $attachmentIds = null,
+        bool $forceWeb = false,
     ): StreamableAgentResponse {
+        $this->lastWebSources = [];
+        $this->lastWebWarning = null;
+
         if (! $this->isConfigured($user)) {
             throw new RuntimeException('El proveedor de IA no está configurado.');
         }
@@ -126,9 +143,44 @@ class ChatService
             $agent->withDocumentContext($message);
         }
 
+        if ($forceWeb && in_array($this->sourceMode($thread), self::WEB_SOURCE_MODES, true) && filled(trim($message))) {
+            $this->forceWebSearch($user, $message, $agent);
+        }
+
         return $agent
             ->continue($thread->id, as: $user)
             ->stream($message, attachments: $attachments, provider: $provider, model: $model ?: $defaultModel);
+    }
+
+    /**
+     * Run the "search always" pre-search for a turn. Success feeds the agent
+     * prompt through InjectWebSearchContext; any failure (missing key, HTTP
+     * error) leaves a readable warning for the controller and the turn
+     * continues without web context.
+     */
+    protected function forceWebSearch(User $user, string $message, MegalomaniacAgent|RuntimeAgent $agent): void
+    {
+        $client = TavilyClient::for($user);
+
+        if ($client === null) {
+            $this->lastWebWarning = 'Configura tu API key de Tavily en Settings → IA para buscar en la web.';
+
+            return;
+        }
+
+        $result = $client->search($message, ['max_results' => 6]);
+
+        if (isset($result['error'])) {
+            $this->lastWebWarning = $result['error'];
+
+            return;
+        }
+
+        $this->lastWebSources = $result['results'];
+
+        if ($agent instanceof MegalomaniacAgent) {
+            $agent->withWebSearchContext($result['results']);
+        }
     }
 
     /**
@@ -136,6 +188,9 @@ class ChatService
      */
     public function decide(User $user, ChatThread $thread, Decisions $decisions): StreamableAgentResponse
     {
+        $this->lastWebSources = [];
+        $this->lastWebWarning = null;
+
         $this->ensureConfigured($user);
         $this->configureUserProvider($user, $thread->id);
 

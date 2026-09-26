@@ -172,9 +172,16 @@ class ChatController extends Controller
             $model ?? $thread->model,
             $request->validated('tools_policy'),
             $attachmentIds,
+            (bool) $request->validated('force_web'),
         );
 
-        return $this->streamResponse($stream, $thread, $this->service->lastToolPolicy, $attachmentIds);
+        return $this->streamResponse(
+            $stream,
+            $thread,
+            $this->service->lastToolPolicy,
+            $attachmentIds,
+            $this->service->lastWebWarning,
+        );
     }
 
     public function regenerate(Request $request, ChatThread $thread): StreamedResponse
@@ -250,6 +257,11 @@ class ChatController extends Controller
     }
 
     /**
+     * The forced-web warning travels as an explicit parameter (instead of
+     * reading $this->service inside the stream closure) so streamResponse
+     * needs no knowledge of ChatService mutable state; only send() can
+     * produce one.
+     *
      * @param  array{mode?: string, groups?: string[]}  $toolPolicy
      * @param  array<int, string>|null  $attachmentIds
      */
@@ -258,14 +270,24 @@ class ChatController extends Controller
         ChatThread $thread,
         array $toolPolicy = [],
         ?array $attachmentIds = null,
+        ?string $webWarning = null,
     ): StreamedResponse {
-        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds): void {
+        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds, $webWarning): void {
             if (function_exists('set_time_limit')) {
                 set_time_limit(0);
             }
 
             echo 'data: '.json_encode(['type' => 'thread', 'threadId' => $thread->id])."\n\n";
             flush();
+
+            if ($webWarning !== null) {
+                echo 'data: '.json_encode([
+                    'type' => 'error',
+                    'message' => $webWarning,
+                    'recoverable' => true,
+                ])."\n\n";
+                flush();
+            }
 
             if ($toolPolicy !== []) {
                 echo 'data: '.json_encode([

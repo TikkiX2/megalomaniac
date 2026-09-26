@@ -3,6 +3,7 @@
 namespace App\Ai\Agents;
 
 use App\Ai\Middleware\InjectThreadDocumentContext;
+use App\Ai\Middleware\InjectWebSearchContext;
 use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\ToolCatalog;
 use App\Models\ChatThread;
@@ -21,6 +22,13 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
     protected ?string $documentQuery = null;
 
     protected ?string $resumeDocumentContext = null;
+
+    /**
+     * Results of the forced "search always" pre-search for this turn.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    protected array $webSearchResults = [];
 
     /**
      * @param  string[]  $toolGroups  Grupos de ToolCatalog; ['*'] = todos
@@ -55,15 +63,33 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
     }
 
     /**
+     * Attach forced web search results to the prompt as read-only context.
+     *
+     * @param  array<int, array<string, mixed>>  $results
+     */
+    public function withWebSearchContext(array $results): static
+    {
+        $this->webSearchResults = $results;
+
+        return $this;
+    }
+
+    /**
      * @return array<int, object>
      */
     public function middleware(): array
     {
-        if (! $this->thread instanceof ChatThread || blank($this->documentQuery)) {
-            return [];
+        $middleware = [];
+
+        if ($this->thread instanceof ChatThread && filled($this->documentQuery)) {
+            $middleware[] = new InjectThreadDocumentContext($this->thread, $this->documentQuery);
         }
 
-        return [new InjectThreadDocumentContext($this->thread, $this->documentQuery)];
+        if ($this->webSearchResults !== []) {
+            $middleware[] = new InjectWebSearchContext($this->webSearchResults);
+        }
+
+        return $middleware;
     }
 
     public function instructions(): string
