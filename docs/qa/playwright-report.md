@@ -352,3 +352,19 @@ Tareas de prueba creadas y eliminadas; no quedaron datos nuevos.
 - Proxy: chat y one-shot (`generateTaskInsights`) → 200 con header `x-opencode-session` (`thread-id` / `user-5`).
 - Prod con URL real: réplica exacta del mensaje del usuario y de su hilo (clon con `mode/agent/model` idénticos) → stream completo OK; insights OK.
 - Suite **609 passed**, Pint OK. Deploy: imagen `megalomaniac-prod` reconstruida + `app/worker/scheduler` recreados.
+
+## Fix: 500 en Proyectos personales y Tareas (prod) — 2026-09-26
+
+> **Reporte del usuario:** error 500 en proyectos personales y tareas (prod).
+
+### Causa raíz (evidencia)
+- Log prod: `SQLSTATE[42703]: column "sort_order" does not exist` al ordenar `projects` (`order by "is_archived" asc, "sort_order" asc`).
+- `PersonalProjectController@index` ordena por `projects.sort_order`, pero **ninguna migración agregaba esa columna** (drift código/schema desde el checkpoint de kanban). SQLite la tolera silenciosamente (por eso dev/tests pasaban), Postgres strict falla.
+- El error existía desde antes del rebuild de imagen de hoy (primer log 20:33); el rebuild solo puso el código nuevo en ejecución.
+
+### Fix
+- Migración `2026_09_26_231111_add_sort_order_to_projects_table` (integer default 0, con guard `Schema::hasColumn`), aplicada en dev y prod.
+- Test de regresión: `PersonalFlowTest` "orders personal projects by sort_order" (asserta columna + orden real, detectable incluso en SQLite donde el orden inválido es no-op).
+
+### Verificado
+- Prod: `migrate:status` 0 pendientes, migración `[3] Ran`; query real de proyectos personales (13) y freelance (4) OK; sitio 200. Suite **611 passed**, Pint OK. Commit `163ff8b`.
