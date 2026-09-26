@@ -3,10 +3,13 @@ export interface ToolPolicy {
     groups: string[];
 }
 
+export type SourceMode = 'web' | 'local' | 'both' | 'off';
+
 export interface ChatThread {
     id: string;
     title: string;
     model: string | null;
+    mode: SourceMode;
     tools_policy: ToolPolicy | null;
     is_pinned: boolean;
     created_at: string | null;
@@ -76,6 +79,7 @@ export interface AiChatState {
     enabled: boolean;
     configured: boolean;
     defaultModel: string | null;
+    has_tavily_key: boolean;
 }
 
 export interface ToolActivity {

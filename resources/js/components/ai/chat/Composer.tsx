@@ -4,10 +4,11 @@ import { useDropzone } from 'react-dropzone';
 import { AgentPicker } from '@/components/ai/chat/AgentPicker';
 import { AttachmentChips } from '@/components/ai/chat/AttachmentChips';
 import { ModelPicker } from '@/components/ai/chat/ModelPicker';
+import { SourceModeMenu } from '@/components/ai/chat/SourceModeMenu';
 import { ToolsPicker } from '@/components/ai/chat/ToolsPicker';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { ChatAttachment, ToolPolicy } from '@/types/chat';
+import type { ChatAttachment, SourceMode, ToolPolicy } from '@/types/chat';
 
 interface ComposerProps {
     models: string[];
@@ -19,6 +20,11 @@ interface ComposerProps {
     toolGroups?: { key: string; label: string }[];
     toolsPolicy?: ToolPolicy;
     onToolsPolicyChange?: (policy: ToolPolicy) => void;
+    sourceMode?: SourceMode;
+    forceWeb?: boolean;
+    onSourceModeChange?: (mode: SourceMode) => void;
+    onForceWebChange?: (forceWeb: boolean) => void;
+    hasTavilyKey?: boolean;
     attachments?: ChatAttachment[];
     onAddFiles?: (files: File[]) => void;
     onRemoveAttachment?: (id: string) => void;
@@ -55,6 +61,11 @@ export function Composer({
     toolGroups = [],
     toolsPolicy,
     onToolsPolicyChange,
+    sourceMode,
+    forceWeb = false,
+    onSourceModeChange,
+    onForceWebChange,
+    hasTavilyKey = false,
     attachments = [],
     onAddFiles,
     onRemoveAttachment,
@@ -221,6 +232,16 @@ export function Composer({
                             groups={toolGroups}
                             policy={toolsPolicy}
                             onChange={onToolsPolicyChange}
+                            disabled={disabled || streaming}
+                        />
+                    )}
+                    {sourceMode !== undefined && (onSourceModeChange !== undefined || onForceWebChange !== undefined) && (
+                        <SourceModeMenu
+                            mode={sourceMode}
+                            forceWeb={forceWeb}
+                            onChangeMode={onSourceModeChange}
+                            onChangeForceWeb={onForceWebChange}
+                            hasTavilyKey={hasTavilyKey}
                             disabled={disabled || streaming}
                         />
                     )}

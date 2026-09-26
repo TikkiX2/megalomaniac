@@ -26,7 +26,15 @@ import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
 import { cn } from '@/lib/utils';
-import type { AiChatState, ChatAttachment, ChatMessage, ChatThread, DecideApproval, ToolPolicy } from '@/types/chat';
+import type {
+    AiChatState,
+    ChatAttachment,
+    ChatMessage,
+    ChatThread,
+    DecideApproval,
+    SourceMode,
+    ToolPolicy,
+} from '@/types/chat';
 
 interface ChatThreadProps {
     thread: ChatThread;
@@ -41,6 +49,8 @@ interface ChatThreadProps {
 export default function ChatThread({ thread, messages, documents, threads, models, toolGroups, ai }: ChatThreadProps) {
     const [model, setModel] = useState<string | null>(thread.model ?? ai.defaultModel ?? models[0] ?? null);
     const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>(thread.tools_policy ?? { mode: 'auto', groups: [] });
+    const [forceWeb, setForceWeb] = useState(false);
+    const [sourceMode, setSourceMode] = useState<SourceMode>(thread.mode);
     const [renaming, setRenaming] = useState(false);
     const [title, setTitle] = useState(thread.title);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -92,8 +102,17 @@ export default function ChatThread({ thread, messages, documents, threads, model
                 toolsPolicy.mode === 'manual' && toolsPolicy.groups.length > 0
                     ? toolsPolicy
                     : undefined,
+            force_web: forceWeb ? true : undefined,
             attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
         });
+        setForceWeb(false);
+    };
+
+    const changeSourceMode = (mode: SourceMode) => {
+        if (mode === 'local' || mode === 'off') setForceWeb(false);
+
+        setSourceMode(mode);
+        router.patch(ChatController.update.url(thread.id), { mode }, { preserveScroll: true, preserveState: true });
     };
 
     const submit = (message: string) => startSend(message);
@@ -281,6 +300,11 @@ export default function ChatThread({ thread, messages, documents, threads, model
                         toolGroups={toolGroups}
                         toolsPolicy={toolsPolicy}
                         onToolsPolicyChange={setToolsPolicy}
+                        sourceMode={sourceMode}
+                        forceWeb={forceWeb}
+                        onSourceModeChange={changeSourceMode}
+                        onForceWebChange={setForceWeb}
+                        hasTavilyKey={ai.has_tavily_key}
                         model={model}
                         onModelChange={setModel}
                         attachments={composerAttachments}

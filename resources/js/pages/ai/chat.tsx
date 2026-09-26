@@ -29,6 +29,7 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
     const [model, setModel] = useState<string | null>(ai.defaultModel ?? models[0] ?? null);
     const [agent, setAgent] = useState('megalomaniac');
     const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>({ mode: 'auto', groups: [] });
+    const [forceWeb, setForceWeb] = useState(false);
     const [pendingMessage, setPendingMessage] = useState<string | null>(null);
     const [composerSeed, setComposerSeed] = useState('');
     const [draftToken, setDraftToken] = useState(0);
@@ -90,8 +91,10 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                 toolsPolicy.mode === 'manual' && toolsPolicy.groups.length > 0
                     ? toolsPolicy
                     : undefined,
+            force_web: forceWeb ? true : undefined,
             attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
         });
+        setForceWeb(false);
     };
 
     const submit = (message: string) => startSend(message);
@@ -144,6 +147,11 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                         toolGroups={toolGroups}
                         toolsPolicy={toolsPolicy}
                         onToolsPolicyChange={setToolsPolicy}
+                        // Hilo nuevo: el modo se fija al crearlo (default "both"), aquí solo se ofrece "Buscar siempre".
+                        sourceMode="both"
+                        forceWeb={forceWeb}
+                        onForceWebChange={setForceWeb}
+                        hasTavilyKey={ai.has_tavily_key}
                         attachments={upload.attachments}
                         onAddFiles={upload.addFiles}
                         onRemoveAttachment={upload.remove}
