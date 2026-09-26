@@ -273,8 +273,9 @@ test('an indexed document on a new thread is linked to the created thread withou
 
     $thread = ChatThread::query()->forUser($user)->sole();
 
-    expect($document->refresh()->thread_id)->toBe($thread->id);
-    expect($document->message_id)->toBeNull();
+    expect($document->refresh()->thread_id)->toBeNull()
+        ->and($document->message_id)->toBeNull()
+        ->and($thread->sources()->whereKey($document->id)->exists())->toBeTrue();
 });
 
 test('a pending document can be attached to a new thread', function () {
@@ -294,7 +295,8 @@ test('a pending document can be attached to a new thread', function () {
 
     $thread = ChatThread::query()->forUser($user)->sole();
 
-    expect($document->refresh()->thread_id)->toBe($thread->id);
+    expect($document->refresh()->thread_id)->toBeNull()
+        ->and($thread->sources()->whereKey($document->id)->exists())->toBeTrue();
 });
 
 test('a failed document cannot be attached', function () {

@@ -42,26 +42,27 @@ test('thread page renders own messages with citations', function () {
         );
 });
 
-test('thread page exposes the thread documents', function () {
+test('thread page exposes the thread sources', function () {
     $user = User::factory()->withAiProvider()->create();
     $thread = ownThread($user);
     $document = ChatAttachment::factory()->create([
         'user_id' => $user->id,
-        'thread_id' => $thread->id,
         'kind' => 'document',
         'status' => 'indexed',
         'original_name' => 'notas.txt',
         'mime' => 'text/plain',
     ]);
+    $thread->sources()->attach($document->id);
 
     $this->actingAs($user)
         ->get(route('ai.chat.show', $thread))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('ai/thread')
-            ->has('documents', 1)
-            ->where('documents.0.id', $document->id)
-            ->where('documents.0.name', 'notas.txt')
+            ->has('sources', 1)
+            ->where('sources.0.id', $document->id)
+            ->where('sources.0.name', 'notas.txt')
+            ->missing('documents')
         );
 });
 

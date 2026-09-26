@@ -15,7 +15,6 @@ function indexedDoc(ChatThread $thread, User $user, string $content, string $nam
 {
     $attachment = ChatAttachment::factory()->create([
         'user_id' => $user->id,
-        'thread_id' => $thread->id,
         'kind' => 'document',
         'status' => 'indexed',
         'original_name' => $name,
@@ -26,6 +25,8 @@ function indexedDoc(ChatThread $thread, User $user, string $content, string $nam
         'position' => 0,
         'content' => $content,
     ]);
+
+    $thread->sources()->attach($attachment->id);
 
     return $attachment;
 }
@@ -83,6 +84,39 @@ test('documents from other threads are not injected', function () {
     ])->streamedContent();
 
     Http::assertSent(fn ($request) => ! str_contains(json_encode($request->data()), 'OTRO-HILO-SECRETO'));
+    Http::assertSent(fn ($request) => ! str_contains(json_encode($request->data()), 'Documentos del hilo'));
+});
+
+test('a library document that is not attached to the thread is not injected', function () {
+    Storage::fake('local');
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    $document = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'thread_id' => $thread->id,
+        'kind' => 'document',
+        'status' => 'indexed',
+        'original_name' => 'legacy.txt',
+    ]);
+
+    ChatDocumentChunk::create([
+        'attachment_id' => $document->id,
+        'position' => 0,
+        'content' => 'Contenido heredado LEGACY-SECRETO sobre criptomonedas.',
+    ]);
+
+    Http::fake(['*' => sseResponse()]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => '¿Qué dice sobre criptomonedas?',
+        'thread_id' => $thread->id,
+    ])->streamedContent();
+
+    Http::assertSent(fn ($request) => ! str_contains(json_encode($request->data()), 'LEGACY-SECRETO'));
     Http::assertSent(fn ($request) => ! str_contains(json_encode($request->data()), 'Documentos del hilo'));
 });
 

@@ -22,6 +22,11 @@ class ChatAttachmentResource extends JsonResource
             'error' => $this->error,
             'is_image' => $this->kind === 'image',
             'url' => route('ai.chat.attachments.show', $this),
+            'threads_count' => $this->whenCounted('threads'),
+            'threads' => $this->whenLoaded(
+                'threads',
+                fn (): array => $this->threads->take(5)->pluck('title')->all(),
+            ),
         ];
     }
 }

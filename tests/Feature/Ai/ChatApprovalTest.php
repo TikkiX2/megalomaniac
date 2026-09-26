@@ -216,7 +216,6 @@ function resumeIndexedDocument(ChatThread $thread, User $user, string $content, 
 {
     $attachment = ChatAttachment::factory()->create([
         'user_id' => $user->id,
-        'thread_id' => $thread->id,
         'kind' => 'document',
         'status' => 'indexed',
         'original_name' => $name,
@@ -227,6 +226,8 @@ function resumeIndexedDocument(ChatThread $thread, User $user, string $content, 
         'position' => 0,
         'content' => $content,
     ]);
+
+    $thread->sources()->attach($attachment->id);
 
     return $attachment;
 }

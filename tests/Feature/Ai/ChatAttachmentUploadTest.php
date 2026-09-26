@@ -44,7 +44,11 @@ test('a document uploads, queues indexing and reports pending', function () {
     $attachment = ChatAttachment::query()->forUser($user)->documents()->sole();
 
     expect($attachment->path)->toEndWith('.txt')
-        ->and($attachment->thread_id)->toBe($thread->id);
+        ->and($attachment->thread_id)->toBeNull()
+        ->and(DB::table('chat_thread_sources')
+            ->where('thread_id', $thread->id)
+            ->where('attachment_id', $attachment->id)
+            ->exists())->toBeTrue();
 
     $this->actingAs($user)
         ->get(route('ai.chat.attachments.index', ['ids' => [$attachment->id]]))

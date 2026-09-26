@@ -109,8 +109,9 @@ class ChatThread extends Conversation
                  from chat_document_chunks_fts
                  join chat_document_chunks c on c.id = chat_document_chunks_fts.rowid
                  join chat_attachments a on a.id = c.attachment_id
+                 join chat_thread_sources s on s.attachment_id = a.id
                  where chat_document_chunks_fts match ?
-                   and a.thread_id = ?
+                   and s.thread_id = ?
                    and a.user_id = ?
                    and a.status = ?
                  order by bm25(chat_document_chunks_fts)

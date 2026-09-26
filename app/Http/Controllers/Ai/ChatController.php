@@ -66,10 +66,10 @@ class ChatController extends Controller
             'messages' => ChatMessageResource::collection(
                 $thread->messages()->with('attachments')->orderBy('id')->get()
             )->resolve($request),
-            'documents' => ChatAttachmentResource::collection(
-                $thread->attachments()
+            'sources' => ChatAttachmentResource::collection(
+                $thread->sources()
                     ->where('kind', 'document')
-                    ->orderByDesc('id')
+                    ->orderByDesc('chat_thread_sources.created_at')
                     ->limit(20)
                     ->get()
             )->resolve($request),
@@ -153,13 +153,26 @@ class ChatController extends Controller
         } else {
             $thread = $this->service->createThread($user, $request->validated('message'), $model, (string) ($request->validated('agent') ?? 'megalomaniac'));
 
-            // Documents uploaded from the chat home have no thread yet; scope
-            // them to the freshly created thread so their context is injected.
-            ChatAttachment::query()
+            // Documents uploaded from the chat home become sources of the
+            // freshly created thread (pivot) so their context is injected.
+            // Images keep the legacy thread column and are linked later to
+            // the stored message.
+            $sentAttachments = ChatAttachment::query()
                 ->whereIn('id', $attachmentIds ?? [])
                 ->where('user_id', $user->getKey())
-                ->whereNull('thread_id')
-                ->update(['thread_id' => $thread->id]);
+                ->get();
+
+            $thread->sources()->syncWithoutDetaching(
+                $sentAttachments->where('kind', 'document')->pluck('id')->all()
+            );
+
+            $imageIds = $sentAttachments->where('kind', 'image')->whereNull('thread_id')->pluck('id')->all();
+
+            if ($imageIds !== []) {
+                ChatAttachment::query()
+                    ->whereIn('id', $imageIds)
+                    ->update(['thread_id' => $thread->id]);
+            }
         }
 
         if ($model !== null) {

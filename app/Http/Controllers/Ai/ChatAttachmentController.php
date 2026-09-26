@@ -26,14 +26,16 @@ class ChatAttachmentController extends Controller
 
         $threadId = $request->validated('thread_id');
 
-        if ($threadId !== null) {
-            ChatThread::query()->forUser($user)->findOrFail($threadId);
-        }
+        $thread = $threadId === null
+            ? null
+            : ChatThread::query()->forUser($user)->findOrFail($threadId);
 
         $attachment = ChatAttachment::create([
             'id' => (string) Str::uuid7(),
             'user_id' => $user->getKey(),
-            'thread_id' => $threadId,
+            // Only images keep the legacy thread column (they are
+            // message-scoped); documents live in the library pivot instead.
+            'thread_id' => $isImage ? $threadId : null,
             'kind' => $isImage ? 'image' : 'document',
             'disk' => 'local',
             'path' => (string) $file->store('ai-attachments/'.$user->id, 'local'),
@@ -44,6 +46,8 @@ class ChatAttachmentController extends Controller
         ]);
 
         if (! $isImage) {
+            $thread?->sources()->syncWithoutDetaching([$attachment->id]);
+
             IndexChatDocument::dispatch($attachment->id);
         }
 

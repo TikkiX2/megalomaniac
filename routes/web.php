@@ -4,6 +4,7 @@ use App\Http\Controllers\AgentSuggestionController;
 use App\Http\Controllers\Ai\AiFitnessController;
 use App\Http\Controllers\Ai\ChatAttachmentController;
 use App\Http\Controllers\Ai\ChatController;
+use App\Http\Controllers\Ai\SourcesController;
 use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\Finance\CreditCardController;
 use App\Http\Controllers\Finance\CurrencyController;
@@ -184,6 +185,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('ai/chat/attachments', [ChatAttachmentController::class, 'store'])->name('ai.chat.attachments.store');
     Route::get('ai/chat/attachments/{attachment}', [ChatAttachmentController::class, 'show'])->name('ai.chat.attachments.show');
     Route::delete('ai/chat/attachments/{attachment}', [ChatAttachmentController::class, 'destroy'])->name('ai.chat.attachments.destroy');
+    Route::get('ai/sources', [SourcesController::class, 'index'])->name('ai.sources.index');
+    Route::post('ai/chat/{thread}/sources', [SourcesController::class, 'attach'])->name('ai.chat.sources.store');
+    Route::delete('ai/chat/{thread}/sources/{attachment}', [SourcesController::class, 'detach'])->name('ai.chat.sources.destroy');
     Route::get('ai/chat/{thread}', [ChatController::class, 'show'])->name('ai.chat.show');
     Route::patch('ai/chat/{thread}', [ChatController::class, 'update'])->name('ai.chat.update');
     Route::delete('ai/chat/{thread}', [ChatController::class, 'destroy'])->name('ai.chat.destroy');
