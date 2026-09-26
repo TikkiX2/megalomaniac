@@ -138,32 +138,53 @@ export default function ChatThread({
         });
 
     const attachSource = async (attachmentId: string): Promise<void> => {
-        await new Promise<void>((resolve, reject) => {
+        let succeeded = false;
+        let validationError: string | null = null;
+
+        await new Promise<void>((resolve) => {
             router.post(
                 SourcesController.attach.url(thread.id),
                 { attachment_id: attachmentId },
                 {
                     preserveScroll: true,
                     preserveState: true,
-                    onSuccess: () => resolve(),
-                    onError: (errors) => reject(new Error(errors.attachment_id ?? 'No se pudo adjuntar la fuente.')),
+                    onSuccess: () => {
+                        succeeded = true;
+                    },
+                    onError: (errors) => {
+                        validationError = errors.attachment_id ?? null;
+                    },
+                    onFinish: () => resolve(),
                 },
             );
         });
+
+        if (!succeeded) {
+            throw new Error(validationError ?? 'No se pudo adjuntar la fuente.');
+        }
 
         await reloadSourceProps();
     };
 
     const detachSource = async (attachmentId: string): Promise<void> => {
-        await new Promise<void>((resolve, reject) => {
+        let succeeded = false;
+
+        await new Promise<void>((resolve) => {
             router.delete(SourcesController.detach.url({ thread: thread.id, attachment: attachmentId }), {
                 preserveScroll: true,
                 preserveState: true,
-                onSuccess: () => resolve(),
-                onError: () => reject(new Error('No se pudo quitar la fuente del hilo.')),
+                onSuccess: () => {
+                    succeeded = true;
+                },
+                onFinish: () => resolve(),
             });
         });
 
+        if (!succeeded) {
+            throw new Error('No se pudo quitar la fuente del hilo.');
+        }
+
+        upload.removeSource(attachmentId);
         await reloadSourceProps();
     };
 

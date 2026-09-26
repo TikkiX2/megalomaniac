@@ -330,7 +330,11 @@ export function ThreadSourcesPanel({ sources, library, onAttach, onDetach, onUpl
                                                 className="h-7 shrink-0 border-border px-2 text-[10px]"
                                             >
                                                 {attachBusyId === document.id ? (
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                    <Loader2
+                                                        role="img"
+                                                        aria-label="Adjuntando…"
+                                                        className="h-3 w-3 animate-spin"
+                                                    />
                                                 ) : attached ? (
                                                     'Adjuntada'
                                                 ) : (

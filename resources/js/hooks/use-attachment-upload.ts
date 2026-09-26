@@ -14,6 +14,7 @@ export interface UseAttachmentUploadResult {
     attachments: ChatAttachment[];
     addFiles: (files: File[] | FileList) => Promise<void>;
     remove: (id: string) => Promise<void>;
+    removeSource: (id: string) => void;
     retry: (id: string) => Promise<void>;
     clearImages: () => void;
     readyIds: () => string[];
@@ -333,6 +334,18 @@ export function useAttachmentUpload(
         setAttachments((previous) => previous.filter((attachment) => attachment.id !== id));
     }, []);
 
+    /**
+     * A server-seeded document was detached from the thread: drop it from the
+     * tracked attachments (and the refs behind the cap/retry bookkeeping) so it
+     * no longer counts toward MAX_FILES nor keeps `uploading`/`hasFailed` set.
+     * Local ids stay untouched — they never reach the sources panel.
+     */
+    const removeSource = useCallback((id: string): void => {
+        filesRef.current.delete(id);
+        removedRef.current.delete(id);
+        setAttachments((previous) => previous.filter((attachment) => attachment.id !== id));
+    }, []);
+
     const retry = useCallback(
         async (id: string): Promise<void> => {
             const file = filesRef.current.get(id);
@@ -465,6 +478,7 @@ export function useAttachmentUpload(
         attachments,
         addFiles,
         remove,
+        removeSource,
         retry,
         clearImages,
         readyIds,
