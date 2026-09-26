@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Services\ChatService;
+use App\Http\Requests\Ai\StoreChatAttachmentRequest;
 use App\Jobs\IndexChatDocument;
 use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
@@ -261,4 +262,23 @@ test('dropping the last exchange detaches attachments from it', function () {
         ->and($attachment->refresh()->message_id)->toBeNull()
         ->and(ChatAttachment::query()->whereKey($attachment->id)->exists())->toBeTrue();
     Storage::disk('local')->assertExists($path);
+});
+
+test('an oversized image is rejected with a spanish message', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('ai.chat.attachments.store'), [
+        'file' => UploadedFile::fake()->image('enorme.jpg', 200, 200)->size(11264),
+    ], ['Accept' => 'application/json']);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['file']);
+    expect($response->json('errors.file.0'))->toBe('Las imágenes no pueden superar los 10 MB.');
+});
+
+test('attachment validation messages are translated when the server rejects the upload', function () {
+    $messages = (new StoreChatAttachmentRequest)->messages();
+
+    expect($messages['file.uploaded'])->toContain('límite de tamaño del servidor')
+        ->and($messages['file.max'])->toContain('25 MB');
 });

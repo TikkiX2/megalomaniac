@@ -309,3 +309,28 @@ Tareas de prueba creadas y eliminadas; no quedaron datos nuevos.
 
 ### Estáticos
 `php artisan test --compact` **601 passed** (2.254 assertions) · Pint clean · `npm run types` 0 · `npm run build` OK · Wayfinder regenerado. Detalle e historial por task en `.superpowers/sdd/2026-09-26-ai-web-sources/progress.md`.
+
+## Fix: subida de imágenes (móvil/prod) — 2026-09-26
+
+> **Reporte del usuario:** las imágenes fallan al subir desde el teléfono (Android/Firefox) vía Cloudflare prod (`megalomaniac.tikkix2.space`); también fallaba en dev.
+
+### Causa raíz (evidencia)
+1. **Límite PHP 2 MB**: contenedores `megalomaniac-app` (prod) y `dev-megalomaniac` (dev) tenían `upload_max_filesize=2M` / `post_max_size=8M`, mientras la app permite 10 MB (imágenes) y 25 MB (docs). Fotos de teléfono (2–12 MB) morían en PHP con `validation.uploaded` → *"The file failed to upload."*
+   - Log nginx prod: `POST /ai/chat/attachments → 422` desde el Android del usuario y desde desktop, con bodies grandes buffered; nginx prod ya permitía 64m.
+   - Repro dev: PNG de 3 MB → chip fallido con "The file failed to upload."; PNG de 73 B → OK.
+2. **nginx dev sin `client_max_body_size`** → default 1m (413 para >1 MB en `dev.local`).
+3. **Permisos de `storage/app/private/ai-attachments`** en dev: directorios `root:root 700` creados por servir/QA desde el host; `www-data` (php-fpm) no podía crear la carpeta de usuario → "Unable to create a directory…".
+
+### Fix aplicado
+- `docker/php/uploads.ini` (`upload_max_filesize=32M`, `post_max_size=40M`) copiado a `conf.d/zz-uploads.ini` en `Dockerfile.dev` y `Dockerfile.prod`; aplicado en vivo a `dev-megalomaniac` (ini + reload FPM) y a prod (rebuild `megalomaniac-prod` + recreación de `app/worker/scheduler`; verificado `upload=32M/post=40M` y `/login` 200).
+- `client_max_body_size 64m` en `docker/nginx/conf.d/megalomaniac.conf` y en el vhost vivo de `dev-nginx` (reload OK; POST de 3 MB llega a Laravel → 419 CSRF, ya no 413).
+- Mensajes ES para rechazos de servidor en `StoreChatAttachmentRequest::messages()` (`file.uploaded`, `file.max`).
+- Permisos de `storage`/`bootstrap/cache` devueltos a `www-data:www-data 775`.
+
+### Verificado en vivo
+- **dev.local (contenedor)**: imagen PNG de **3.0 MB** sube OK (chip con thumbnail); la de 13.7 MB se rechaza client-side con "supera los 10 MB permitidos"; con el límite PHP viejo, 3 MB devolvía el nuevo mensaje ES "supera el límite de tamaño del servidor". **PASS**
+- **Prod**: límites nuevos activos en `app` y `worker`, sitio 200; pendiente de confirmación del usuario desde el teléfono (las fotos >10 MB seguirán rechazándose por diseño con mensaje ES).
+
+### Notas
+- El contenedor dev usa `APP_KEY` de compose (`MEGALOMANIAC_APP_KEY`) distinto del `.env` del host: no escribir campos cifrados (`ai_provider_key`, `tavily_api_key`) desde tinker del host o el login del contenedor falla con "The MAC is invalid". Usar `docker exec dev-megalomaniac php artisan tinker`.
+- Tests: `ChatAttachmentUploadTest` +2 (mensaje ES de imagen >10 MB; claves de `messages()`), suite **607 passed**, Pint OK.

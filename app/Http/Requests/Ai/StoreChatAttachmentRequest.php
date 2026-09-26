@@ -24,6 +24,17 @@ class StoreChatAttachmentRequest extends FormRequest
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'file.uploaded' => 'El archivo no se pudo subir: supera el límite de tamaño del servidor.',
+            'file.max' => 'El archivo no puede superar los 25 MB.',
+        ];
+    }
+
+    /**
      * @return array<int, callable>
      */
     public function after(): array
