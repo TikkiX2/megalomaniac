@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Models\Conversation;
@@ -32,6 +33,17 @@ class ChatThread extends Conversation
     public function attachments(): HasMany
     {
         return $this->hasMany(ChatAttachment::class, 'thread_id');
+    }
+
+    /**
+     * Library documents explicitly attached to this thread (N:N).
+     *
+     * @return BelongsToMany<ChatAttachment, $this>
+     */
+    public function sources(): BelongsToMany
+    {
+        return $this->belongsToMany(ChatAttachment::class, 'chat_thread_sources', 'thread_id', 'attachment_id')
+            ->withTimestamps();
     }
 
     public function scopeForUser(Builder $query, User $user): void

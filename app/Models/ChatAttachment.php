@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChatAttachment extends Model
@@ -28,6 +29,17 @@ class ChatAttachment extends Model
     public function thread(): BelongsTo
     {
         return $this->belongsTo(ChatThread::class, 'thread_id');
+    }
+
+    /**
+     * Threads this document is attached to through the sources library (N:N).
+     *
+     * @return BelongsToMany<ChatThread, $this>
+     */
+    public function threads(): BelongsToMany
+    {
+        return $this->belongsToMany(ChatThread::class, 'chat_thread_sources', 'attachment_id', 'thread_id')
+            ->withTimestamps();
     }
 
     public function chunks(): HasMany

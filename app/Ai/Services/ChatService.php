@@ -272,11 +272,18 @@ class ChatService
     public function deleteThread(ChatThread $thread): void
     {
         DB::transaction(function () use ($thread): void {
-            foreach ($thread->attachments()->get() as $attachment) {
-                Storage::disk($attachment->disk)->delete($attachment->path);
-                $attachment->delete();
-            }
+            $messageIds = $thread->messages()->pluck('id')->all();
 
+            ChatAttachment::query()
+                ->where('kind', 'image')
+                ->whereIn('message_id', $messageIds)
+                ->get()
+                ->each(function (ChatAttachment $attachment): void {
+                    Storage::disk($attachment->disk)->delete($attachment->path);
+                    $attachment->delete();
+                });
+
+            $thread->sources()->detach();
             $thread->messages()->delete();
             $thread->delete();
         });

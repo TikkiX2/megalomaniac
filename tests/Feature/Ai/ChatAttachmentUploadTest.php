@@ -8,6 +8,7 @@ use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -139,7 +140,7 @@ test('unattached images and thread documents can still be deleted', function () 
     Storage::disk('local')->assertMissing($document->path);
 });
 
-test('deleting a thread removes its attachments and their files', function () {
+test('deleting a thread detaches library documents and deletes its message images', function () {
     Storage::fake('local');
     $user = User::factory()->create();
     $thread = ChatThread::factory()->create([
@@ -147,24 +148,40 @@ test('deleting a thread removes its attachments and their files', function () {
         'participant_id' => $user->id,
     ]);
 
-    $path = 'ai-attachments/'.$user->id.'/plan.txt';
-    Storage::disk('local')->put($path, 'contenido');
-    $attachment = ChatAttachment::factory()->create([
+    $documentPath = 'ai-attachments/'.$user->id.'/plan.txt';
+    Storage::disk('local')->put($documentPath, 'contenido');
+    $document = ChatAttachment::factory()->create([
         'user_id' => $user->id,
-        'thread_id' => $thread->id,
         'kind' => 'document',
-        'path' => $path,
+        'status' => 'indexed',
+        'path' => $documentPath,
         'original_name' => 'plan.txt',
         'mime' => 'text/plain',
+    ]);
+    $thread->sources()->attach($document->id);
+
+    $message = ChatMessage::factory()->create(['conversation_id' => $thread->id]);
+
+    $imagePath = 'ai-attachments/'.$user->id.'/foto.png';
+    Storage::disk('local')->put($imagePath, 'img');
+    $image = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'path' => $imagePath,
+        'message_id' => $message->id,
     ]);
 
     $this->actingAs($user)
         ->delete(route('ai.chat.destroy', $thread))
         ->assertRedirect(route('ai.chat.index'));
 
-    expect(ChatAttachment::query()->whereKey($attachment->id)->exists())->toBeFalse()
-        ->and(ChatThread::query()->whereKey($thread->id)->exists())->toBeFalse();
-    Storage::disk('local')->assertMissing($path);
+    expect(ChatThread::query()->whereKey($thread->id)->exists())->toBeFalse()
+        ->and(ChatAttachment::query()->whereKey($document->id)->exists())->toBeTrue()
+        ->and(ChatAttachment::query()->whereKey($image->id)->exists())->toBeFalse()
+        ->and(DB::table('chat_thread_sources')->where('thread_id', $thread->id)->count())->toBe(0);
+
+    Storage::disk('local')->assertExists($documentPath);
+    Storage::disk('local')->assertMissing($imagePath);
 });
 
 test('truncating a thread detaches attachments from the deleted messages', function () {
