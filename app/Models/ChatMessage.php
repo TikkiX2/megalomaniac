@@ -28,7 +28,7 @@ class ChatMessage extends ConversationMessage
     }
 
     /**
-     * @return array<int, array{url: string, title: ?string, start_index: ?int, end_index: ?int}>
+     * @return array<int, array{url: string, title: ?string, snippet?: ?string, start_index?: ?int, end_index?: ?int}>
      */
     public function citations(): array
     {

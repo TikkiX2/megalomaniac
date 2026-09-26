@@ -1,6 +1,7 @@
 <?php
 
 use App\Ai\Support\WebCitations;
+use App\Http\Controllers\Ai\ChatController;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -203,6 +204,40 @@ test('malformed and non-web tool results are ignored', function () {
         ]))->toBe([]);
 });
 
+test('has new citations only when a candidate url is missing from the native set', function () {
+    $native = [
+        ['url' => 'https://nativa.test'],
+        ['url' => null],
+    ];
+
+    expect(WebCitations::hasNew($native, [['url' => 'https://nativa.test']]))->toBeFalse()
+        ->and(WebCitations::hasNew($native, [['url' => 'https://nueva.test']]))->toBeTrue()
+        ->and(WebCitations::hasNew($native, [['url' => ''], ['url' => null], ['title' => 'sin url']]))->toBeFalse()
+        ->and(WebCitations::hasNew($native, [['url' => 'https://nativa.test'], ['url' => 'https://otra.test']]))->toBeTrue()
+        ->and(WebCitations::hasNew([], [['url' => 'https://nueva.test']]))->toBeTrue();
+});
+
+test('invalid urls are dropped from mapped sources', function () {
+    $rows = WebCitations::fromRows([
+        ['title' => 'Ftp', 'url' => 'ftp://ficheros.test/x', 'content' => 'x'],
+        ['title' => 'Script', 'url' => 'javascript:alert(1)', 'content' => 'x'],
+        ['title' => 'Relativa', 'url' => '/ruta/interna', 'content' => 'x'],
+        ['title' => 'Válida', 'url' => 'https://ok.test/x', 'content' => 'x'],
+    ]);
+
+    expect($rows)->toBe([
+        ['url' => 'https://ok.test/x', 'title' => 'Válida', 'snippet' => 'x'],
+    ]);
+});
+
+test('non-string titles and contents fall back safely', function () {
+    expect(WebCitations::fromRows([
+        ['url' => 'https://ok.test', 'title' => ['array'], 'content' => ['array']],
+    ]))->toBe([
+        ['url' => 'https://ok.test', 'title' => 'ok.test', 'snippet' => null],
+    ]);
+});
+
 test('fetch tool pages produce citations with a hostname title fallback', function () {
     $user = User::factory()->withAiProvider()->create(['tavily_api_key' => 'tvly-user']);
     $thread = citationsThread($user);
@@ -301,4 +336,58 @@ test('pre-search sources from a forced web search are persisted as citations', f
         ->and($citations[0]['title'])->toBe('Laravel 13')
         ->and($citations[0]['snippet'])->toBe(mb_substr($source, 0, 160))
         ->and(mb_strlen($citations[0]['snippet']))->toBeLessThanOrEqual(160);
+});
+
+/**
+ * The compatible gateway cannot emit native provider citations, so the write
+ * gate is pinned against storeCitations() directly (focused unit on the
+ * controller helper, same precedent as the merge unit above).
+ *
+ * @param  array<int, array<string, mixed>>  $webCitations
+ * @param  array<int, array<string, mixed>>  $preSearchSources
+ */
+function citationsStore(ChatController $controller, ChatThread $thread, array $webCitations, array $preSearchSources = [], ?string $assistantIdBefore = null): void
+{
+    (new ReflectionMethod($controller, 'storeCitations'))
+        ->invoke($controller, $thread, $webCitations, $preSearchSources, $assistantIdBefore);
+}
+
+test('the controller keeps native citations untouched when every candidate url is already native', function () {
+    $user = User::factory()->create();
+    $thread = citationsThread($user);
+
+    $native = [['url' => 'https://nativa.test', 'title' => 'Nativa', 'start_index' => 0, 'end_index' => 4]];
+
+    $assistant = ChatMessage::factory()->assistant()->create([
+        'conversation_id' => $thread->id,
+        'meta' => ['citations' => $native],
+    ]);
+
+    citationsStore(app(ChatController::class), $thread, [
+        ['url' => 'https://nativa.test', 'title' => 'Repetida', 'snippet' => 'duplicada'],
+    ], [['url' => 'https://nativa.test', 'title' => 'Prebusqueda', 'content' => 'duplicada']]);
+
+    expect($assistant->refresh()->meta['citations'])->toBe($native);
+});
+
+test('the controller persists web citations when at least one candidate url is new', function () {
+    $user = User::factory()->create();
+    $thread = citationsThread($user);
+
+    $assistant = ChatMessage::factory()->assistant()->create([
+        'conversation_id' => $thread->id,
+        'meta' => ['citations' => [
+            ['url' => 'https://nativa.test', 'title' => 'Nativa', 'start_index' => 0, 'end_index' => 4],
+        ]],
+    ]);
+
+    citationsStore(app(ChatController::class), $thread, [
+        ['url' => 'https://nativa.test', 'title' => 'Repetida', 'snippet' => 'duplicada'],
+        ['url' => 'https://nueva.test', 'title' => 'Nueva', 'snippet' => 'nueva'],
+    ]);
+
+    expect($assistant->refresh()->meta['citations'])->toBe([
+        ['url' => 'https://nativa.test', 'title' => 'Nativa', 'snippet' => null],
+        ['url' => 'https://nueva.test', 'title' => 'Nueva', 'snippet' => 'nueva'],
+    ]);
 });

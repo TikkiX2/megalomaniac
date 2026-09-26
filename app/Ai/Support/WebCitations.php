@@ -53,8 +53,8 @@ class WebCitations
 
     /**
      * Map raw source rows (Tavily search results, extracted pages or forced
-     * pre-search sources) into citation entries. Rows without a URL are
-     * dropped; missing titles fall back to the hostname.
+     * pre-search sources) into citation entries. Rows without a valid http(s)
+     * URL are dropped; missing titles fall back to the hostname.
      *
      * @param  iterable<mixed>  $rows
      * @return array<int, array{url: string, title: ?string, snippet: ?string}>
@@ -70,12 +70,14 @@ class WebCitations
 
             $url = $row['url'] ?? null;
 
-            if (! is_string($url) || trim($url) === '') {
+            if (! is_string($url) || ! self::isSafeUrl($url)) {
                 continue;
             }
 
-            $title = trim((string) ($row['title'] ?? ''));
-            $content = trim((string) ($row['content'] ?? ''));
+            $title = $row['title'] ?? '';
+            $content = $row['content'] ?? '';
+            $title = is_string($title) ? trim($title) : '';
+            $content = is_string($content) ? trim($content) : '';
 
             $citations[] = [
                 'url' => $url,
@@ -85,6 +87,37 @@ class WebCitations
         }
 
         return $citations;
+    }
+
+    /**
+     * Whether at least one candidate URL is non-empty and absent from the
+     * native citation set. Used to skip rewrites that would only normalize
+     * citations the provider already stored.
+     *
+     * @param  array<int, mixed>  $nativeCitations
+     * @param  array<int, mixed>  $candidates
+     */
+    public static function hasNew(array $nativeCitations, array $candidates): bool
+    {
+        $known = [];
+
+        foreach ($nativeCitations as $citation) {
+            $url = is_array($citation) ? ($citation['url'] ?? null) : null;
+
+            if (is_string($url) && $url !== '') {
+                $known[$url] = true;
+            }
+        }
+
+        foreach ($candidates as $citation) {
+            $url = is_array($citation) ? ($citation['url'] ?? null) : null;
+
+            if (is_string($url) && $url !== '' && ! isset($known[$url])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -125,6 +158,12 @@ class WebCitations
         }
 
         return $merged;
+    }
+
+    protected static function isSafeUrl(string $url): bool
+    {
+        return filter_var($url, FILTER_VALIDATE_URL) !== false
+            && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true);
     }
 
     protected static function hostname(string $url): ?string

@@ -426,18 +426,13 @@ class ChatController extends Controller
 
         $meta = $message->meta ?? [];
         $native = is_array($meta['citations'] ?? null) ? $meta['citations'] : [];
+        $candidates = array_merge($webCitations, WebCitations::fromRows($preSearchSources));
 
-        $citations = WebCitations::merge(
-            $native,
-            $webCitations,
-            WebCitations::fromRows($preSearchSources),
-        );
-
-        if ($citations === []) {
+        if (! WebCitations::hasNew($native, $candidates)) {
             return;
         }
 
-        $meta['citations'] = $citations;
+        $meta['citations'] = WebCitations::merge($native, $candidates);
 
         $message->update(['meta' => $meta]);
     }
