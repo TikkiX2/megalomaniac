@@ -282,3 +282,30 @@ Tareas de prueba creadas y eliminadas; no quedaron datos nuevos.
 
 ### Estáticos
 `php artisan test --compact` 513 passed · Pint clean · `npm run types` 0 · eslint scoped 0 · build OK. Detalle e historial por task en `.superpowers/sdd/2026-09-25-chat-enrichment/progress.md`.
+
+## Fuentes web + biblioteca (Spec B) — 2026-09-26
+
+> **Rama:** `main` · **Entorno:** host `php artisan serve :8010` (con `TAVILY_URL=http://127.0.0.1:9997`) + build de Vite, Playwright MCP, usuario `test@example.com`, proveedor OpenAI-compatible falso en `:9998` (SSE con tool call `WebSearchTool`/`WebFetchTool` y eco de `Resultados web (contexto)`), Tavily falso en `:9997` (`/search` y `/extract` con favicons y snippets). Artefactos QA borrados y usuario restaurado (`ai_enabled=false`, sin URL/key, sin `tavily_api_key`).
+
+### Verificado en vivo
+1. **Menú Fuentes (home, sin key)**: menú con nota "El modo se define al crear el hilo (Ambos)", checkbox "Buscar siempre (esta pregunta)" y aviso "Sin API key de Tavily — configúrala en Ajustes → IA" enlazando a `/settings/ai`. **PASS**
+2. **Settings → IA (T7)**: card "Búsqueda web (Tavily)" con placeholder `tvly-...`; al guardar `tvly-qa-key-123`, el placeholder pasa a `•••••••• (guardada)` y la key queda cifrada en DB (`raw=eyJpdiI6…`, decrypt correcto). **PASS**
+3. **Citas en vivo + persistidas (T5)**: "busca noticias de QA en la web" → tool call al fake Tavily (`POST /search` con `query`), stream con botones `[1]`/`[2]`, panel "Fuentes · 2" con **snippet** y favicon (el favicon de `qa.example.com` da 404 → `onError` lo oculta sin romper). Tras recargar, las 2 citas y snippets persisten (`meta.citations`). **PASS**
+4. **Modo por hilo (T3)**: PATCH a `Mis fuentes` → label "Fuentes: Mis fuentes" optimista y `mode=local` en DB; mismo prompt "busca…" → sin llamadas a Tavily (contador del fake sin cambios) y respuesta sin citas. Checkbox "Buscar siempre" deshabilitado en local/off. Volver a `Ambos` persiste (`mode=both`). **PASS**
+5. **Buscar siempre (T4)**: con `Ambos` + checkbox activo, "resumen del dia por favor" (sin keyword de tool) → pre-búsqueda forzada (`POST /search`, `max_results=6`), inyección "Resultados web (contexto)" detectada por el proveedor fake ("BUSQUEDA FORZADA…") y "Fuentes · 2" con snippets; el checkbox se resetea tras el envío. **PASS**
+6. **Biblioteca `/ai/sources` (T6/T10)**: empty state → subir `nota-qa.md` (138 B) → "Indexando…" → "Indexado", "Sin adjuntar", acciones abrir/eliminar; item **Fuentes** en el sidebar activo. **PASS**
+7. **Adjuntar/detach en el hilo (T9)**: dialog "Adjuntar fuentes" con búsqueda, "Ver biblioteca" y dropzone; adjuntar `nota-qa.md` → strip "Fuentes adjuntas · 1" (Indexado · 138 B · botón "Quitar … del hilo"), fila del dialog "En 1 hilo"/"Adjuntada" deshabilitada; detach → strip vacío y fila habilitada de nuevo. **PASS**
+8. **Borrar hilo → la fuente sobrevive**: con la fuente adjunta, eliminar el hilo → redirect a `/ai/chat`; `/ai/sources` sigue mostrando `nota-qa.md` "Sin adjuntar" (pivote detachado, archivo intacto). **PASS**
+9. **Borrar fuente**: confirm "Eliminar fuente" → lista vacía (empty state). **PASS**
+10. **Consola**: sin errores salvo el 404 esperado del favicon de `qa.example.com` (dominio inexistente del fake; cubierto por `onError`). **PASS**
+
+### Hallazgos
+- **Menor (UX)**: tras guardar la key de Tavily, el input conserva el valor tipeado aunque el placeholder ya indica "(guardada)"; conviene resetear el campo tras el submit.
+- **Deuda previa**: Chrome reporta `[VERBOSE] Multiple forms…` en `/settings/ai` (estructura de forms existente, no introducida por la card de Tavily).
+
+### Limitaciones del crawl
+- El proveedor real (OpenCode Go) no se usó; la verificación funcional se hizo con fakes deterministas (SSE + Tavily), por lo que el QA no cubre calidad de respuestas reales ni variabilidad de Tavily en producción.
+- No verificado en vivo: `WebFetchTool`/`/extract` (fake lo soporta pero el guion de QA no lo disparó), warning recoverable de "sin key" durante un turno con key borrada, fallos 401/429/432 de Tavily (cubiertos por `TavilyClientTest`), y >5 adjuntos simultáneos en el dialog.
+
+### Estáticos
+`php artisan test --compact` **601 passed** (2.254 assertions) · Pint clean · `npm run types` 0 · `npm run build` OK · Wayfinder regenerado. Detalle e historial por task en `.superpowers/sdd/2026-09-26-ai-web-sources/progress.md`.
