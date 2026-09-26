@@ -94,6 +94,10 @@ class ChatController extends Controller
             $thread->pinned_at = $data['pinned'] ? now() : null;
         }
 
+        if (array_key_exists('mode', $data)) {
+            $thread->mode = $data['mode'];
+        }
+
         if (array_key_exists('tools_policy', $data)) {
             $thread->tools_policy = $data['tools_policy'];
         }

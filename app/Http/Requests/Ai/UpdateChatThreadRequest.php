@@ -19,6 +19,7 @@ class UpdateChatThreadRequest extends FormRequest
         return [
             'title' => ['sometimes', 'string', 'max:120'],
             'pinned' => ['sometimes', 'boolean'],
+            'mode' => ['sometimes', 'nullable', 'string', 'in:web,local,both,off'],
             'tools_policy' => ['sometimes', 'nullable', 'array'],
             'tools_policy.mode' => ['required_with:tools_policy', 'string', 'in:auto,manual'],
             'tools_policy.groups' => ['nullable', 'array'],

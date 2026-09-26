@@ -32,9 +32,35 @@ class ChatService
      */
     public array $lastToolPolicy = [];
 
+    /**
+     * Source modes that include the web tool group.
+     *
+     * @var array<int, string>
+     */
+    public const WEB_SOURCE_MODES = ['web', 'both'];
+
+    /**
+     * Source modes that inject thread document context.
+     *
+     * @var array<int, string>
+     */
+    public const LOCAL_SOURCE_MODES = ['local', 'both'];
+
     public function isConfigured(User $user): bool
     {
         return (bool) ($user->ai_enabled && $user->ai_provider_url && $user->ai_provider_key);
+    }
+
+    /**
+     * Resolve the thread's source mode, defaulting to "both" when unset or
+     * invalid. The mode governs only the web tool group and the document
+     * context middleware; data groups are untouched.
+     */
+    public function sourceMode(?ChatThread $thread): string
+    {
+        $mode = $thread?->mode;
+
+        return in_array($mode, ['web', 'local', 'both', 'off'], true) ? $mode : 'both';
     }
 
     protected function ensureConfigured(User $user): void
@@ -96,7 +122,7 @@ class ChatService
 
         $agent = $this->agentFor($user, $thread, $policy['groups']);
 
-        if ($agent instanceof MegalomaniacAgent) {
+        if ($agent instanceof MegalomaniacAgent && in_array($this->sourceMode($thread), self::LOCAL_SOURCE_MODES, true)) {
             $agent->withDocumentContext($message);
         }
 
@@ -131,7 +157,11 @@ class ChatService
 
         $agent = $this->agentFor($user, $thread, $policy['groups']);
 
-        if ($agent instanceof MegalomaniacAgent && $lastUserMessage instanceof ChatMessage) {
+        if (
+            $agent instanceof MegalomaniacAgent
+            && $lastUserMessage instanceof ChatMessage
+            && in_array($this->sourceMode($thread), self::LOCAL_SOURCE_MODES, true)
+        ) {
             $agent->withResumeDocumentContext($thread->documentContext($lastUserMessage->content));
         }
 
@@ -149,14 +179,39 @@ class ChatService
      */
     public function prepareToolPolicy(ChatThread $thread, string $message, ?array $override = null): array
     {
-        if (is_array($override)) {
-            $policy = $this->normalizeToolPolicy($override, $message);
-            $thread->forceFill(['tools_policy' => $policy])->save();
+        $policy = $this->normalizeToolPolicy(
+            is_array($override) ? $override : $thread->tools_policy,
+            $message,
+        );
 
+        if (is_array($override)) {
+            // Persist the raw manual choice: the thread source mode filters the
+            // effective turn, so switching modes back restores the web group.
+            $thread->forceFill(['tools_policy' => $policy])->save();
+        }
+
+        return $this->applySourceMode($thread, $policy);
+    }
+
+    /**
+     * Drop the web group when the thread source mode excludes it. Both
+     * streamTurn and decide() resolve their policy through this path.
+     *
+     * @param  array{mode: string, groups: string[]}  $policy
+     * @return array{mode: string, groups: string[]}
+     */
+    protected function applySourceMode(ChatThread $thread, array $policy): array
+    {
+        if (in_array($this->sourceMode($thread), self::WEB_SOURCE_MODES, true)) {
             return $policy;
         }
 
-        return $this->normalizeToolPolicy($thread->tools_policy, $message);
+        $policy['groups'] = array_values(array_filter(
+            $policy['groups'],
+            fn (string $group): bool => $group !== 'web',
+        ));
+
+        return $policy;
     }
 
     /**

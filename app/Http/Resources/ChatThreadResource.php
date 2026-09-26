@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Ai\Services\ChatService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,6 +17,7 @@ class ChatThreadResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'model' => $this->model,
+            'mode' => app(ChatService::class)->sourceMode($this->resource),
             'tools_policy' => $this->tools_policy,
             'is_pinned' => $this->pinned_at !== null,
             'created_at' => $this->created_at?->toIso8601String(),
