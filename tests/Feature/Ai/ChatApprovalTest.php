@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Resources\ChatMessageResource;
+use App\Models\AgentDefinition;
 use App\Models\ChatThread;
 use App\Models\User;
 use App\Models\Workout;
@@ -140,4 +141,70 @@ test('another user cannot approve a thread', function () {
     $this->actingAs($user)
         ->postJson(route('ai.chat.approve', $thread), ['decisions' => ['call_1' => ['action' => 'approve']]])
         ->assertForbidden();
+});
+
+test('a rejection with an answer resumes the turn and feeds the answer to the model', function () {
+    Http::fakeSequence()
+        ->push(pausedToolSse('AskUserTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Gracias por responder\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
+
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create(['participant_type' => $user->getMorphClass(), 'participant_id' => $user->id]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), ['message' => 'hola', 'thread_id' => $thread->id])->streamedContent();
+
+    $content = $this->actingAs($user)
+        ->post(route('ai.chat.approve', $thread), ['decisions' => ['call_1' => ['action' => 'reject', 'result' => 'mi respuesta']]])
+        ->streamedContent();
+
+    expect($content)->toContain('Gracias por responder');
+
+    // A non-blank rejection result means "the user answered": the SDK resumes
+    // the loop and sends the answer back as the tool result.
+    $requests = Http::recorded();
+
+    expect($requests)->toHaveCount(2);
+    expect(json_encode($requests[1][0]->data()))->toContain('mi respuesta');
+
+    $assistant = $thread->messages()->where('role', 'assistant')->orderByDesc('id')->first();
+    expect($assistant->content)->toBe('Gracias por responder');
+});
+
+test('resuming uses the thread agent instead of the default', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $definition = AgentDefinition::factory()->for($user)->create([
+        'key' => 'reporte',
+        'instructions' => 'Sos el agente de reportes unico.',
+        'tools_policy' => ['internal' => ['actions'], 'integrations' => []],
+    ]);
+
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+        'agent' => 'reporte',
+    ]);
+
+    Http::fakeSequence()
+        ->push(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Reporte listo\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), ['message' => 'loguea mi workout', 'thread_id' => $thread->id])->streamedContent();
+
+    $this->actingAs($user)
+        ->post(route('ai.chat.approve', $thread), ['decisions' => ['call_1' => ['action' => 'approve']]])
+        ->streamedContent();
+
+    // The resume must keep the thread's runtime agent instructions, not fall
+    // back to Megalomaniac's. Both requests carry the agent's instructions, so
+    // only the SECOND provider call proves which agent resumed the turn.
+    $requests = Http::recorded();
+
+    expect($requests)->toHaveCount(2);
+
+    $secondRequest = json_encode($requests[1][0]->data());
+
+    expect($secondRequest)
+        ->toContain('Sos el agente de reportes unico.')
+        ->toContain('ActionTool')
+        ->not->toContain('TaskQueryTool');
 });

@@ -114,9 +114,11 @@ class ChatService
 
         [$provider, $defaultModel] = AiProviderResolver::for($user, $thread->id);
 
-        // ['*'] on purpose: a resume must be able to resolve every tool the
-        // paused turn advertised, and AskUserTool is always appended by the agent.
-        return (new MegalomaniacAgent($user, ['*'], $thread))
+        // Resolve the agent exactly like streamTurn so a custom-agent thread
+        // resumes with its own persona and tools. ['*'] on purpose for the
+        // Megalomaniac fallback: a resume must be able to resolve every tool
+        // the paused turn advertised, and AskUserTool is always appended.
+        return $this->agentFor($user, $thread, ['*'])
             ->continue($thread->id, as: $user)
             ->stream($decisions, provider: $provider, model: $thread->model ?: $defaultModel);
     }
