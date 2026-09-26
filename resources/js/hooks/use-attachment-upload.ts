@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ChatAttachmentController from '@/actions/App/Http/Controllers/Ai/ChatAttachmentController';
 import type { ChatAttachment } from '@/types/chat';
 
@@ -17,6 +17,7 @@ export interface UseAttachmentUploadResult {
     retry: (id: string) => Promise<void>;
     clearImages: () => void;
     readyIds: () => string[];
+    readyImageIds: () => string[];
     uploading: boolean;
     hasFailed: boolean;
     error: string | null;
@@ -175,6 +176,10 @@ export function useAttachmentUpload(
     const [error, setError] = useState<string | null>(null);
     const [seededDocuments, setSeededDocuments] = useState<ChatAttachment[]>(documents);
 
+    // Seeded (prop-originated) ids never count toward the client upload cap:
+    // they already live in the thread and are not uploads from this session.
+    const seededIds = useMemo(() => new Set(documents.map((document) => document.id)), [documents]);
+
     const attachmentsRef = useRef<ChatAttachment[]>([]);
     const filesRef = useRef(new Map<string, File>());
     const removedRef = useRef(new Set<string>());
@@ -280,7 +285,11 @@ export function useAttachmentUpload(
 
             setError(null);
 
-            if (attachmentsRef.current.length + files.length > MAX_FILES) {
+            const uploadableCount = attachmentsRef.current.filter(
+                (attachment) => attachment.kind === 'image' || !seededIds.has(attachment.id),
+            ).length;
+
+            if (uploadableCount + files.length > MAX_FILES) {
                 setError(`Puedes adjuntar hasta ${MAX_FILES} archivos por mensaje.`);
 
                 return;
@@ -298,7 +307,7 @@ export function useAttachmentUpload(
 
             await Promise.all(files.map((file) => uploadOne(file)));
         },
-        [uploadOne],
+        [uploadOne, seededIds],
     );
 
     const remove = useCallback(async (id: string): Promise<void> => {
@@ -363,6 +372,19 @@ export function useAttachmentUpload(
         setAttachments((previous) => previous.filter((attachment) => attachment.kind !== 'image'));
     }, []);
 
+    const readyImageIds = useCallback(
+        (): string[] =>
+            attachmentsRef.current
+                .filter(
+                    (attachment) =>
+                        isPersisted(attachment.id) &&
+                        attachment.kind === 'image' &&
+                        attachment.status === 'ready',
+                )
+                .map((attachment) => attachment.id),
+        [],
+    );
+
     const readyIds = useCallback(
         (): string[] =>
             attachmentsRef.current
@@ -372,7 +394,8 @@ export function useAttachmentUpload(
                         ((attachment.kind === 'image' && attachment.status === 'ready') ||
                             (attachment.kind === 'document' && attachment.status === 'indexed')),
                 )
-                .map((attachment) => attachment.id),
+                .map((attachment) => attachment.id)
+                .slice(0, MAX_FILES),
         [],
     );
 
@@ -445,6 +468,7 @@ export function useAttachmentUpload(
         retry,
         clearImages,
         readyIds,
+        readyImageIds,
         uploading,
         hasFailed,
         error,

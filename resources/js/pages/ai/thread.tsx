@@ -78,7 +78,7 @@ export default function ChatThread({ thread, messages, documents, threads, model
     });
 
     const startSend = (message: string) => {
-        const attachmentIds = upload.readyIds();
+        const attachmentIds = upload.readyImageIds();
 
         pendingMessageRef.current = message;
         lastErrorRef.current = null;
