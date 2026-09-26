@@ -39,6 +39,7 @@ export interface ChatAttachment {
     error: string | null;
     is_image: boolean;
     url: string;
+    threads_count?: number;
 }
 
 export interface ApprovalPayload {

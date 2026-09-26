@@ -135,6 +135,28 @@ test('the thread page exposes pivot attached sources ordered by attach time', fu
         );
 });
 
+test('the thread page exposes the document library scoped to the user', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $thread = sourcesLibraryThread($user);
+
+    $older = sourcesLibraryDocument($user, ['original_name' => 'antiguo.txt', 'created_at' => now()->subMinute()]);
+    $newer = sourcesLibraryDocument($user, ['original_name' => 'nuevo.txt']);
+
+    sourcesLibraryDocument(User::factory()->create(), ['original_name' => 'ajeno.txt']);
+    ChatAttachment::factory()->create(['user_id' => $user->id, 'kind' => 'image']);
+
+    $this->actingAs($user)
+        ->get(route('ai.chat.show', $thread))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('ai/thread')
+            ->has('library', 2)
+            ->where('library.0.id', $newer->id)
+            ->where('library.0.threads_count', 0)
+            ->where('library.1.id', $older->id)
+        );
+});
+
 test('a document can be attached to a thread through the library', function () {
     $user = User::factory()->create();
     $thread = sourcesLibraryThread($user);

@@ -1,10 +1,12 @@
 import { Head, router } from '@inertiajs/react';
-import { FileText, MoreHorizontal, Pin, PinOff, RotateCcw, Trash2, X } from 'lucide-react';
+import { MoreHorizontal, Pin, PinOff, RotateCcw, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import ChatAttachmentController from '@/actions/App/Http/Controllers/Ai/ChatAttachmentController';
 import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
-import { attachmentStatusLabel, formatBytes } from '@/components/ai/chat/AttachmentChips';
+import SourcesController from '@/actions/App/Http/Controllers/Ai/SourcesController';
 import { Composer } from '@/components/ai/chat/Composer';
 import { MessageList } from '@/components/ai/chat/MessageList';
+import { ThreadSourcesPanel } from '@/components/ai/chat/ThreadSourcesPanel';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -22,10 +24,10 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
+import { errorMessageFromPayload, useAttachmentUpload } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
-import { cn } from '@/lib/utils';
+import { csrfHeaders } from '@/lib/csrf';
 import type {
     AiChatState,
     ChatAttachment,
@@ -39,14 +41,24 @@ import type {
 interface ChatThreadProps {
     thread: ChatThread;
     messages: ChatMessage[];
-    documents: ChatAttachment[];
+    sources: ChatAttachment[];
+    library: ChatAttachment[];
     threads: ChatThread[];
     models: string[];
     toolGroups: { key: string; label: string }[];
     ai: AiChatState;
 }
 
-export default function ChatThread({ thread, messages, documents, threads, models, toolGroups, ai }: ChatThreadProps) {
+export default function ChatThread({
+    thread,
+    messages,
+    sources,
+    library,
+    threads,
+    models,
+    toolGroups,
+    ai,
+}: ChatThreadProps) {
     const [model, setModel] = useState<string | null>(thread.model ?? ai.defaultModel ?? models[0] ?? null);
     const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>(thread.tools_policy ?? { mode: 'auto', groups: [] });
     const [forceWeb, setForceWeb] = useState(false);
@@ -61,7 +73,7 @@ export default function ChatThread({ thread, messages, documents, threads, model
     const pendingMessageRef = useRef<string | null>(null);
     const lastErrorRef = useRef<string | null>(null);
 
-    const upload = useAttachmentUpload(thread.id, documents);
+    const upload = useAttachmentUpload(thread.id, sources);
 
     const stream = useChatStream({
         onError: (message, recoverable) => {
@@ -116,6 +128,68 @@ export default function ChatThread({ thread, messages, documents, threads, model
     };
 
     const submit = (message: string) => startSend(message);
+
+    const reloadSourceProps = (): Promise<void> =>
+        new Promise((resolve) => {
+            router.reload({
+                only: ['sources', 'library'],
+                onFinish: () => resolve(),
+            });
+        });
+
+    const attachSource = async (attachmentId: string): Promise<void> => {
+        await new Promise<void>((resolve, reject) => {
+            router.post(
+                SourcesController.attach.url(thread.id),
+                { attachment_id: attachmentId },
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    onSuccess: () => resolve(),
+                    onError: (errors) => reject(new Error(errors.attachment_id ?? 'No se pudo adjuntar la fuente.')),
+                },
+            );
+        });
+
+        await reloadSourceProps();
+    };
+
+    const detachSource = async (attachmentId: string): Promise<void> => {
+        await new Promise<void>((resolve, reject) => {
+            router.delete(SourcesController.detach.url({ thread: thread.id, attachment: attachmentId }), {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => resolve(),
+                onError: () => reject(new Error('No se pudo quitar la fuente del hilo.')),
+            });
+        });
+
+        await reloadSourceProps();
+    };
+
+    const uploadSource = async (file: File): Promise<void> => {
+        const form = new FormData();
+        form.append('file', file);
+        form.append('thread_id', thread.id);
+
+        const response = await fetch(ChatAttachmentController.store.url(), {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                ...csrfHeaders(),
+            },
+            body: form,
+        });
+
+        if (!response.ok) {
+            const payload: unknown = await response.json().catch(() => null);
+
+            throw new Error(errorMessageFromPayload(payload) ?? 'No se pudo subir el documento.');
+        }
+
+        await reloadSourceProps();
+    };
 
     const retry = () => {
         const message = pendingMessageRef.current;
@@ -181,7 +255,6 @@ export default function ChatThread({ thread, messages, documents, threads, model
     };
 
     const composerAttachments = upload.attachments.filter((attachment) => attachment.kind !== 'document');
-    const threadDocuments = upload.attachments.filter((attachment) => attachment.kind === 'document');
     const hasPendingApprovals =
         stream.pendingApprovals.length > 0 ||
         messages.some((message) => message.role === 'assistant' && message.pending_approvals.length > 0);
@@ -324,64 +397,14 @@ export default function ChatThread({ thread, messages, documents, threads, model
                         La IA puede cometer errores. Verifica la información importante.
                     </p>
 
-                    {threadDocuments.length > 0 && (
-                        <div className="mt-2 rounded-xl border border-border bg-card/60 p-2">
-                            <p className="px-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                                Documentos del hilo
-                            </p>
-                            <ul className="mt-1 space-y-0.5">
-                                {threadDocuments.map((document) => (
-                                    <li key={document.id} className="flex items-center gap-2 rounded-lg px-1 py-1">
-                                        <FileText
-                                            className={cn(
-                                                'h-3.5 w-3.5 shrink-0',
-                                                document.status === 'failed' ? 'text-destructive' : 'text-muted-foreground',
-                                            )}
-                                        />
-                                        <span className="min-w-0 flex-1 truncate text-xs text-foreground" title={document.name}>
-                                            {document.name}
-                                        </span>
-                                        <span
-                                            className={cn(
-                                                'max-w-40 shrink-0 truncate text-[10px]',
-                                                document.status === 'failed' ? 'text-destructive' : 'text-muted-foreground',
-                                            )}
-                                            title={attachmentStatusLabel(document)}
-                                        >
-                                            {attachmentStatusLabel(document)}
-                                        </span>
-                                        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                                            {formatBytes(document.size)}
-                                        </span>
-
-                                        {document.status === 'failed' && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => void upload.retry(document.id)}
-                                                aria-label={`Reintentar ${document.name}`}
-                                                className="h-6 w-6 text-destructive hover:text-destructive"
-                                            >
-                                                <RotateCcw className="h-3 w-3" />
-                                            </Button>
-                                        )}
-
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => void upload.remove(document.id)}
-                                            aria-label={`Eliminar ${document.name}`}
-                                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                                        >
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
+                    <ThreadSourcesPanel
+                        sources={sources}
+                        library={library}
+                        onAttach={attachSource}
+                        onDetach={detachSource}
+                        onUpload={uploadSource}
+                        disabled={stream.status === 'streaming'}
+                    />
                 </div>
             </div>
 

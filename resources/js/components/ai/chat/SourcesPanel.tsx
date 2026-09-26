@@ -1,4 +1,4 @@
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Globe } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { Citation } from '@/types/chat';
@@ -15,6 +15,26 @@ function domain(url: string): string {
     } catch {
         return url;
     }
+}
+
+function Favicon({ url }: { url: string }) {
+    const [failed, setFailed] = useState(false);
+
+    if (failed) {
+        return <Globe className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden="true" />;
+    }
+
+    return (
+        <img
+            src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain(url))}&sz=32`}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={() => setFailed(true)}
+            className="h-3 w-3 shrink-0 rounded-sm"
+        />
+    );
 }
 
 export function SourcesPanel({ citations, activeIndex = null, className }: SourcesPanelProps) {
@@ -75,9 +95,15 @@ export function SourcesPanel({ citations, activeIndex = null, className }: Sourc
                                         <span className="block truncate text-xs font-medium text-foreground">
                                             {citation.title ?? domain(citation.url)}
                                         </span>
-                                        <span className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                                        {citation.snippet !== null && citation.snippet !== undefined && citation.snippet !== '' && (
+                                            <span className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                                                {citation.snippet}
+                                            </span>
+                                        )}
+                                        <span className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                                            <Favicon url={citation.url} />
                                             {domain(citation.url)}
-                                            <ExternalLink className="h-2.5 w-2.5" />
+                                            <ExternalLink className="h-2.5 w-2.5 shrink-0" />
                                         </span>
                                     </span>
                                 </a>

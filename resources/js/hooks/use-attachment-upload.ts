@@ -116,7 +116,7 @@ function validationErrorFor(file: File): string | null {
     return null;
 }
 
-function errorMessageFromPayload(payload: unknown): string | null {
+export function errorMessageFromPayload(payload: unknown): string | null {
     if (payload === null || typeof payload !== 'object') {
         return null;
     }

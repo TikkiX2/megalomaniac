@@ -76,6 +76,15 @@ class ChatController extends Controller
                     ->limit(20)
                     ->get()
             )->resolve($request),
+            'library' => ChatAttachmentResource::collection(
+                ChatAttachment::query()
+                    ->forUser($user)
+                    ->documents()
+                    ->withCount('threads')
+                    ->orderByDesc('created_at')
+                    ->limit(50)
+                    ->get()
+            )->resolve($request),
             'threads' => ChatThreadResource::collection($this->threadsFor($user))->resolve($request),
             'models' => $this->service->availableModels($user),
             'agents' => $this->agentsFor($user),
