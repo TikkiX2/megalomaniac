@@ -23,6 +23,7 @@ final class ToolCatalog
             'actions' => ['label' => 'Acciones (crear/actualizar)', 'tools' => [ActionTool::class]],
             'integrations' => ['label' => 'Integraciones', 'tools' => [IntegrationCatalogTool::class, IntegrationCallTool::class]],
             'agents' => ['label' => 'Agentes', 'tools' => [ManageAgentsTool::class]],
+            'web' => ['label' => 'Web', 'tools' => [WebSearchTool::class, WebFetchTool::class]],
         ];
     }
 

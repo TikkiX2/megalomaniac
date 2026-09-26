@@ -54,4 +54,9 @@ return [
         ],
     ],
 
+    'tavily' => [
+        'url' => env('TAVILY_URL', 'https://api.tavily.com'),
+        'key' => env('TAVILY_API_KEY'),
+    ],
+
 ];

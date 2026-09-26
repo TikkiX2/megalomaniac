@@ -33,6 +33,7 @@ class User extends Authenticatable
         'ai_model',
         'ai_embeddings_model',
         'ai_enabled',
+        'tavily_api_key',
     ];
 
     /**
@@ -45,6 +46,7 @@ class User extends Authenticatable
         'two_factor_secret',
         'two_factor_recovery_codes',
         'remember_token',
+        'tavily_api_key',
     ];
 
     /**
@@ -63,6 +65,7 @@ class User extends Authenticatable
             'target_weight' => 'decimal:2',
             'ai_provider_key' => 'encrypted',
             'ai_enabled' => 'boolean',
+            'tavily_api_key' => 'encrypted',
         ];
     }
 

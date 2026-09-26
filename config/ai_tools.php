@@ -43,6 +43,10 @@ return [
             'agente', 'schedule', 'programa', 'automatiza', 'cada dia',
             'background', 'cada hora', 'cada semana',
         ],
+        'web' => [
+            'busca', 'buscar', 'busqueda', 'internet', 'web', 'noticia', 'google',
+            'ultima hora', 'actualidad', 'en linea', 'online', 'en la red',
+        ],
     ],
 
     /*
