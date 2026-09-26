@@ -21,6 +21,7 @@ class AiSettingsController extends Controller
             'ai' => [
                 'ai_provider_url' => $request->user()->ai_provider_url,
                 'has_provider_key' => filled($request->user()->ai_provider_key),
+                'has_tavily_key' => filled($request->user()->tavily_api_key),
                 'ai_model' => $request->user()->ai_model,
                 'ai_embeddings_model' => $request->user()->ai_embeddings_model,
                 'ai_enabled' => $request->user()->ai_enabled,
@@ -36,6 +37,7 @@ class AiSettingsController extends Controller
         $validated = Validator::make($request->all(), [
             'ai_provider_url' => ['nullable', 'string', 'max:500'],
             'ai_provider_key' => ['nullable', 'string', 'max:500'],
+            'tavily_api_key' => ['nullable', 'string', 'max:500'],
             'ai_model' => ['nullable', 'string', 'max:100'],
             'ai_embeddings_model' => ['nullable', 'string', 'max:100'],
             'ai_enabled' => ['required', 'boolean'],
@@ -43,6 +45,10 @@ class AiSettingsController extends Controller
 
         if (blank($validated['ai_provider_key'] ?? null)) {
             unset($validated['ai_provider_key']);
+        }
+
+        if (blank($validated['tavily_api_key'] ?? null)) {
+            unset($validated['tavily_api_key']);
         }
 
         $request->user()->update($validated);

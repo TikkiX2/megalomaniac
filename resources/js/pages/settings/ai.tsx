@@ -16,6 +16,7 @@ export default function AiSettings({
     ai: {
         ai_provider_url: string | null;
         has_provider_key: boolean;
+        has_tavily_key: boolean;
         ai_model: string | null;
         ai_embeddings_model: string | null;
         ai_enabled: boolean;
@@ -118,6 +119,41 @@ export default function AiSettings({
                                         <InputError className="mt-2" message={errors.ai_embeddings_model} />
                                         <p className="text-xs text-muted-foreground">
                                             Used for semantic ranking in the news feed. Leave empty to skip embeddings.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl bg-card border border-border p-4 space-y-4">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-primary text-[18px]">travel_explore</span>
+                                        Búsqueda web (Tavily)
+                                    </h3>
+
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="tavily_api_key">Tavily API Key</Label>
+                                        <Input
+                                            id="tavily_api_key"
+                                            name="tavily_api_key"
+                                            type="password"
+                                            className="mt-1 block w-full bg-background"
+                                            defaultValue=""
+                                            placeholder={ai.has_tavily_key ? '•••••••• (guardada)' : 'tvly-...'}
+                                            autoComplete="off"
+                                        />
+                                        <InputError className="mt-2" message={errors.tavily_api_key} />
+                                        <p className="text-xs text-muted-foreground">
+                                            Habilita la búsqueda web y la lectura de páginas en el chat. Déjalo vacío
+                                            para conservar la key actual. Consigue una en{' '}
+                                            <a
+                                                href="https://tavily.com"
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-primary hover:underline"
+                                            >
+                                                tavily.com
+                                            </a>
+                                            : el free tier incluye ~1.000 créditos/mes (1 crédito por búsqueda
+                                            básica).
                                         </p>
                                     </div>
                                 </div>

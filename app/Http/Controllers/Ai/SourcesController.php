@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Ai\Services\ChatService;
+use App\Http\Controllers\Ai\Concerns\ProvidesAiState;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChatAttachmentResource;
 use App\Models\ChatAttachment;
 use App\Models\ChatThread;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +17,8 @@ use Inertia\Response;
 
 class SourcesController extends Controller
 {
+    use ProvidesAiState;
+
     public function __construct(protected ChatService $service) {}
 
     public function index(Request $request): Response
@@ -80,17 +82,5 @@ class SourcesController extends Controller
         $thread->sources()->detach($attachment->id);
 
         return $request->expectsJson() ? response()->noContent() : back();
-    }
-
-    /**
-     * @return array{enabled: bool, configured: bool, defaultModel: ?string}
-     */
-    protected function aiState(User $user): array
-    {
-        return [
-            'enabled' => (bool) $user->ai_enabled,
-            'configured' => $this->service->isConfigured($user),
-            'defaultModel' => $user->ai_model ?: null,
-        ];
     }
 }

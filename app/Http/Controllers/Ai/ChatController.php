@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ai;
 use App\Ai\Services\ChatService;
 use App\Ai\Support\WebCitations;
 use App\Ai\Tools\ToolCatalog;
+use App\Http\Controllers\Ai\Concerns\ProvidesAiState;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\ApproveChatTurnRequest;
 use App\Http\Requests\Ai\EditChatMessageRequest;
@@ -40,6 +41,8 @@ use Throwable;
 
 class ChatController extends Controller
 {
+    use ProvidesAiState;
+
     public function __construct(protected ChatService $service) {}
 
     public function index(Request $request): Response
@@ -480,18 +483,6 @@ class ChatController extends Controller
             ->ordered()
             ->limit(100)
             ->get();
-    }
-
-    /**
-     * @return array{enabled: bool, configured: bool, defaultModel: ?string}
-     */
-    protected function aiState(User $user): array
-    {
-        return [
-            'enabled' => (bool) $user->ai_enabled,
-            'configured' => $this->service->isConfigured($user),
-            'defaultModel' => $user->ai_model ?: null,
-        ];
     }
 
     /**
