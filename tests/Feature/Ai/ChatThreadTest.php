@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -38,6 +39,29 @@ test('thread page renders own messages with citations', function () {
             ->has('messages', 2)
             ->where('messages.0.content', 'Hola')
             ->where('messages.1.citations.0.url', 'https://laravel.com')
+        );
+});
+
+test('thread page exposes the thread documents', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ownThread($user);
+    $document = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'thread_id' => $thread->id,
+        'kind' => 'document',
+        'status' => 'indexed',
+        'original_name' => 'notas.txt',
+        'mime' => 'text/plain',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('ai.chat.show', $thread))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('ai/thread')
+            ->has('documents', 1)
+            ->where('documents.0.id', $document->id)
+            ->where('documents.0.name', 'notas.txt')
         );
 });
 

@@ -254,6 +254,64 @@ test('an image attachment is sent to the provider and linked to the user message
     expect($attachment->refresh()->message_id)->not->toBeNull();
 });
 
+test('an indexed document on a new thread is linked to the created thread without a message', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $document = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'document',
+        'status' => 'indexed',
+        'original_name' => 'notas.txt',
+        'mime' => 'text/plain',
+    ]);
+
+    Http::fake(['*' => Http::response("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream'])]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => 'resume el documento',
+        'attachment_ids' => [$document->id],
+    ])->streamedContent();
+
+    $thread = ChatThread::query()->forUser($user)->sole();
+
+    expect($document->refresh()->thread_id)->toBe($thread->id);
+    expect($document->message_id)->toBeNull();
+});
+
+test('a pending document can be attached to a new thread', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $document = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'document',
+        'status' => 'pending',
+    ]);
+
+    Http::fake(['*' => Http::response("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream'])]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), [
+        'message' => 'x',
+        'attachment_ids' => [$document->id],
+    ])->assertOk();
+
+    $thread = ChatThread::query()->forUser($user)->sole();
+
+    expect($document->refresh()->thread_id)->toBe($thread->id);
+});
+
+test('a failed document cannot be attached', function () {
+    Http::fake();
+    $user = User::factory()->withAiProvider()->create();
+    $failed = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'document',
+        'status' => 'failed',
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('ai.chat.send'), ['message' => 'x', 'attachment_ids' => [$failed->id]])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('attachment_ids.0');
+});
+
 test('only own images can be attached', function () {
     Http::fake();
     $user = User::factory()->withAiProvider()->create();

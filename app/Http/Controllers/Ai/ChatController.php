@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\EditChatMessageRequest;
 use App\Http\Requests\Ai\SendChatMessageRequest;
 use App\Http\Requests\Ai\UpdateChatThreadRequest;
+use App\Http\Resources\ChatAttachmentResource;
 use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatThreadResource;
 use App\Models\AgentDefinition;
@@ -58,6 +59,13 @@ class ChatController extends Controller
             'thread' => (new ChatThreadResource($thread))->resolve($request),
             'messages' => ChatMessageResource::collection(
                 $thread->messages()->with('attachments')->orderBy('id')->get()
+            )->resolve($request),
+            'documents' => ChatAttachmentResource::collection(
+                $thread->attachments()
+                    ->where('kind', 'document')
+                    ->orderByDesc('id')
+                    ->limit(20)
+                    ->get()
             )->resolve($request),
             'threads' => ChatThreadResource::collection($this->threadsFor($user))->resolve($request),
             'models' => $this->service->availableModels($user),
@@ -134,6 +142,14 @@ class ChatController extends Controller
             $this->authorize('update', $thread);
         } else {
             $thread = $this->service->createThread($user, $request->validated('message'), $model, (string) ($request->validated('agent') ?? 'megalomaniac'));
+
+            // Documents uploaded from the chat home have no thread yet; scope
+            // them to the freshly created thread so their context is injected.
+            ChatAttachment::query()
+                ->whereIn('id', $attachmentIds ?? [])
+                ->where('user_id', $user->getKey())
+                ->whereNull('thread_id')
+                ->update(['thread_id' => $thread->id]);
         }
 
         if ($model !== null) {
@@ -252,9 +268,13 @@ class ChatController extends Controller
 
                 // Only a new user message stored by this turn may receive the
                 // attachments; otherwise (failed turn) they would be linked to
-                // the previous turn's user message.
+                // the previous turn's user message. Documents are thread
+                // context, not message content, so only images are linked.
                 if ($userMessageId !== null && $userMessageId !== $userMessageIdBefore) {
-                    ChatAttachment::query()->whereIn('id', $attachmentIds)->update(['message_id' => $userMessageId]);
+                    ChatAttachment::query()
+                        ->whereIn('id', $attachmentIds)
+                        ->images()
+                        ->update(['message_id' => $userMessageId]);
                 }
             }
 

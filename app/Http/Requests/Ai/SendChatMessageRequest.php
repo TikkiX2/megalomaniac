@@ -32,8 +32,11 @@ class SendChatMessageRequest extends FormRequest
                 'size:36',
                 Rule::exists('chat_attachments', 'id')
                     ->where('user_id', $this->user()?->getKey())
-                    ->where('kind', 'image')
-                    ->where('status', 'ready'),
+                    ->where(function ($query): void {
+                        $query
+                            ->where(fn ($query) => $query->where('kind', 'image')->where('status', 'ready'))
+                            ->orWhere(fn ($query) => $query->where('kind', 'document')->whereIn('status', ['pending', 'indexed']));
+                    }),
             ],
         ];
     }

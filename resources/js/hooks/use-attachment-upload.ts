@@ -8,6 +8,7 @@ const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 const POLL_INTERVAL_MS = 3000;
 const LOCAL_ID_PREFIX = 'local-';
 const DOCUMENT_EXTENSIONS = ['.txt', '.md', '.docx'];
+const NO_DOCUMENTS: ChatAttachment[] = [];
 
 export interface UseAttachmentUploadResult {
     attachments: ChatAttachment[];
@@ -59,6 +60,33 @@ function newLocalId(): string {
     }
 
     return `${LOCAL_ID_PREFIX}${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+}
+
+function isPersisted(id: string): boolean {
+    return !id.startsWith(LOCAL_ID_PREFIX);
+}
+
+function mergeDocuments(previous: ChatAttachment[], documents: ChatAttachment[]): ChatAttachment[] {
+    const byId = new Map(previous.map((attachment) => [attachment.id, attachment]));
+    let changed = false;
+
+    for (const document of documents) {
+        const existing = byId.get(document.id);
+
+        if (existing === undefined) {
+            byId.set(document.id, document);
+            changed = true;
+
+            continue;
+        }
+
+        if (existing.status !== document.status || existing.error !== document.error) {
+            byId.set(document.id, { ...existing, ...document });
+            changed = true;
+        }
+    }
+
+    return changed ? [...byId.values()] : previous;
 }
 
 function isImageFile(file: File): boolean {
@@ -139,18 +167,31 @@ function normalizeAttachmentList(payload: unknown): ChatAttachment[] {
         .filter((attachment): attachment is ChatAttachment => attachment !== null);
 }
 
-export function useAttachmentUpload(threadId?: string | null): UseAttachmentUploadResult {
-    const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+export function useAttachmentUpload(
+    threadId?: string | null,
+    documents: ChatAttachment[] = NO_DOCUMENTS,
+): UseAttachmentUploadResult {
+    const [attachments, setAttachments] = useState<ChatAttachment[]>(() => documents);
     const [error, setError] = useState<string | null>(null);
+    const [seededDocuments, setSeededDocuments] = useState<ChatAttachment[]>(documents);
 
     const attachmentsRef = useRef<ChatAttachment[]>([]);
     const filesRef = useRef(new Map<string, File>());
-    const serverIdsRef = useRef(new Set<string>());
     const removedRef = useRef(new Set<string>());
 
     useEffect(() => {
         attachmentsRef.current = attachments;
     }, [attachments]);
+
+    // Server documents survive reloads; merge them without duplicating ids
+    // already tracked from this session (React's adjust-state-on-prop-change).
+    if (seededDocuments !== documents) {
+        setSeededDocuments(documents);
+
+        if (documents.length > 0) {
+            setAttachments((previous) => mergeDocuments(previous, documents));
+        }
+    }
 
     const uploadOne = useCallback(
         async (file: File, replaceId?: string): Promise<void> => {
@@ -209,7 +250,6 @@ export function useAttachmentUpload(threadId?: string | null): UseAttachmentUplo
                     return;
                 }
 
-                serverIdsRef.current.add(attachment.id);
                 filesRef.current.delete(localId);
                 filesRef.current.set(attachment.id, file);
 
@@ -264,7 +304,7 @@ export function useAttachmentUpload(threadId?: string | null): UseAttachmentUplo
     const remove = useCallback(async (id: string): Promise<void> => {
         setError(null);
 
-        if (id.startsWith(LOCAL_ID_PREFIX)) {
+        if (!isPersisted(id)) {
             removedRef.current.add(id);
             filesRef.current.delete(id);
             setAttachments((previous) => previous.filter((attachment) => attachment.id !== id));
@@ -272,16 +312,12 @@ export function useAttachmentUpload(threadId?: string | null): UseAttachmentUplo
             return;
         }
 
-        if (serverIdsRef.current.has(id)) {
-            try {
-                await deleteAttachment(id);
-            } catch (caught) {
-                setError(caught instanceof Error ? caught.message : 'No se pudo eliminar el archivo.');
+        try {
+            await deleteAttachment(id);
+        } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'No se pudo eliminar el archivo.');
 
-                return;
-            }
-
-            serverIdsRef.current.delete(id);
+            return;
         }
 
         filesRef.current.delete(id);
@@ -301,9 +337,7 @@ export function useAttachmentUpload(threadId?: string | null): UseAttachmentUplo
             setError(null);
             filesRef.current.delete(id);
 
-            if (serverIdsRef.current.has(id)) {
-                serverIdsRef.current.delete(id);
-
+            if (isPersisted(id)) {
                 // The failed record is replaced by a fresh upload.
                 void deleteAttachment(id).catch(() => undefined);
             }
@@ -319,11 +353,10 @@ export function useAttachmentUpload(threadId?: string | null): UseAttachmentUplo
                 continue;
             }
 
-            if (attachment.id.startsWith(LOCAL_ID_PREFIX)) {
+            if (!isPersisted(attachment.id)) {
                 removedRef.current.add(attachment.id);
             }
 
-            serverIdsRef.current.delete(attachment.id);
             filesRef.current.delete(attachment.id);
         }
 
@@ -335,16 +368,16 @@ export function useAttachmentUpload(threadId?: string | null): UseAttachmentUplo
             attachmentsRef.current
                 .filter(
                     (attachment) =>
-                        attachment.kind === 'image' &&
-                        attachment.status === 'ready' &&
-                        serverIdsRef.current.has(attachment.id),
+                        isPersisted(attachment.id) &&
+                        ((attachment.kind === 'image' && attachment.status === 'ready') ||
+                            (attachment.kind === 'document' && attachment.status === 'indexed')),
                 )
                 .map((attachment) => attachment.id),
         [],
     );
 
     const pendingKey = attachments
-        .filter((attachment) => attachment.status === 'pending' && !attachment.id.startsWith(LOCAL_ID_PREFIX))
+        .filter((attachment) => attachment.status === 'pending' && isPersisted(attachment.id))
         .map((attachment) => attachment.id)
         .join(',');
 
