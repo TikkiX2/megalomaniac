@@ -62,7 +62,18 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                 router.visit(ChatController.show.url(threadId), { replace: true });
             }
         },
+        onPaused: () => {
+            // The paused turn is persisted by the time the stream settles, so
+            // the thread page can render its pending_approvals cards.
+            const threadId = createdThreadRef.current;
+
+            if (threadId) {
+                router.visit(ChatController.show.url(threadId), { replace: true });
+            }
+        },
     });
+
+    const paused = stream.status === 'awaiting_approval';
 
     const startSend = (message: string) => {
         const attachmentIds = upload.readyIds();
@@ -144,7 +155,7 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                         onSubmit={submit}
                         onStop={stream.stop}
                         streaming={stream.status === 'streaming'}
-                        disabled={!ai.configured}
+                        disabled={!ai.configured || paused}
                     />
 
                     {stream.error && (
@@ -171,7 +182,7 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                             <button
                                 key={suggestion}
                                 type="button"
-                                disabled={!ai.configured || stream.status === 'streaming'}
+                                disabled={!ai.configured || stream.status === 'streaming' || paused}
                                 onClick={() => submit(suggestion)}
                                 className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-40"
                             >

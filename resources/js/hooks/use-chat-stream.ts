@@ -16,6 +16,7 @@ interface UseChatStreamOptions {
     onThread?: (threadId: string) => void;
     onError?: (message: string, recoverable: boolean) => void;
     onComplete?: (result: { text: string; citations: Citation[] }) => void;
+    onPaused?: () => void;
 }
 
 export interface UseChatStreamResult {
@@ -188,9 +189,11 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
 
             if (awaitingApprovalRef.current) {
                 // The turn paused waiting for a decision: keep the pending cards
-                // alive instead of completing (a reload would erase them).
+                // alive instead of completing (a reload would erase them). The
+                // pause has settled (the paused message is persisted by now).
                 awaitingApprovalRef.current = false;
                 setStatus('awaiting_approval');
+                optionsRef.current.onPaused?.();
                 return;
             }
 

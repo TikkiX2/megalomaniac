@@ -297,19 +297,23 @@ interface ApprovalCardListProps {
 export function ApprovalCardList({ approvals, disabled = false, onDecide, onApproveAll }: ApprovalCardListProps) {
     if (approvals.length === 0) return null;
 
+    // Questions must never be batch-approved: approving them would execute the
+    // tool instead of asking the user.
+    const approvable = approvals.filter((approval) => approval.kind === 'approval');
+
     return (
         <section aria-live="polite" aria-label="Aprobaciones pendientes" className="mt-3 space-y-2">
-            {approvals.length > 1 && onApproveAll !== undefined && (
+            {approvable.length > 1 && onApproveAll !== undefined && (
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
-                        {approvals.length} acciones pendientes
+                        {approvable.length} acciones pendientes
                     </p>
 
                     <Button
                         type="button"
                         size="sm"
                         disabled={disabled}
-                        onClick={() => onApproveAll(approvals.map((approval) => approval.id))}
+                        onClick={() => onApproveAll(approvable.map((approval) => approval.id))}
                         className="h-7 px-2.5 text-xs"
                     >
                         Aprobar todo
