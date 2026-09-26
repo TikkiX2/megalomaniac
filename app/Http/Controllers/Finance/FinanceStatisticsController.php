@@ -27,9 +27,9 @@ class FinanceStatisticsController extends Controller
         }
 
         // 1. Expenses by Category
-        $expensesByCategory = Purchase::where('user_id', $userId)
-            ->where('currency_id', $currencyId)
-            ->whereBetween('purchase_date', [$dateFrom, $dateTo])
+        $expensesByCategory = Purchase::where('purchases.user_id', $userId)
+            ->where('purchases.currency_id', $currencyId)
+            ->whereBetween('purchases.purchase_date', [$dateFrom, $dateTo])
             ->join('purchase_categories', 'purchases.category_id', '=', 'purchase_categories.id')
             ->select('purchase_categories.name', 'purchase_categories.color', DB::raw('SUM(purchases.amount) as total'))
             ->groupBy('purchase_categories.name', 'purchase_categories.color')
@@ -46,10 +46,16 @@ class FinanceStatisticsController extends Controller
             $start->addMonth();
         }
 
+        $monthExpression = match (DB::connection()->getDriverName()) {
+            'pgsql' => fn (string $column): string => "to_char($column, 'YYYY-MM')",
+            'sqlite' => fn (string $column): string => "strftime('%Y-%m', $column)",
+            default => fn (string $column): string => "DATE_FORMAT($column, '%Y-%m')",
+        };
+
         $incomeByMonth = Income::where('user_id', $userId)
             ->where('currency_id', $currencyId)
             ->whereBetween('received_date', [$dateFrom, $dateTo])
-            ->select(DB::raw("DATE_FORMAT(received_date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw($monthExpression('received_date').' as month'), DB::raw('SUM(amount) as total'))
             ->groupBy('month')
             ->pluck('total', 'month')
             ->toArray();
@@ -57,7 +63,7 @@ class FinanceStatisticsController extends Controller
         $expensesByMonth = Purchase::where('user_id', $userId)
             ->where('currency_id', $currencyId)
             ->whereBetween('purchase_date', [$dateFrom, $dateTo])
-            ->select(DB::raw("DATE_FORMAT(purchase_date, '%Y-%m') as month"), DB::raw('SUM(amount) as total'))
+            ->select(DB::raw($monthExpression('purchase_date').' as month'), DB::raw('SUM(amount) as total'))
             ->groupBy('month')
             ->pluck('total', 'month')
             ->toArray();

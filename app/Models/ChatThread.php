@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Models\Conversation;
 use Throwable;
@@ -99,25 +100,10 @@ class ChatThread extends Conversation
             return null;
         }
 
-        $match = $terms
-            ->map(fn (string $term): string => $term.'*')
-            ->implode(' OR ');
-
         try {
-            $rows = DB::select(
-                'select c.content, a.original_name
-                 from chat_document_chunks_fts
-                 join chat_document_chunks c on c.id = chat_document_chunks_fts.rowid
-                 join chat_attachments a on a.id = c.attachment_id
-                 join chat_thread_sources s on s.attachment_id = a.id
-                 where chat_document_chunks_fts match ?
-                   and s.thread_id = ?
-                   and a.user_id = ?
-                   and a.status = ?
-                 order by bm25(chat_document_chunks_fts)
-                 limit ?',
-                [$match, $this->id, $this->participant_id, 'indexed', $limit],
-            );
+            $rows = DB::connection()->getDriverName() === 'pgsql'
+                ? $this->searchDocumentsOnPostgres($terms, $limit)
+                : $this->searchDocumentsOnSqlite($terms, $limit);
         } catch (Throwable) {
             return null;
         }
@@ -129,5 +115,56 @@ class ChatThread extends Conversation
         return collect($rows)
             ->map(fn (object $row): string => '### '.$row->original_name."\n".$row->content)
             ->implode("\n\n");
+    }
+
+    /**
+     * @param  Collection<int, string>  $terms
+     * @return array<int, object>
+     */
+    private function searchDocumentsOnSqlite(Collection $terms, int $limit): array
+    {
+        $match = $terms
+            ->map(fn (string $term): string => $term.'*')
+            ->implode(' OR ');
+
+        return DB::select(
+            'select c.content, a.original_name
+             from chat_document_chunks_fts
+             join chat_document_chunks c on c.id = chat_document_chunks_fts.rowid
+             join chat_attachments a on a.id = c.attachment_id
+             join chat_thread_sources s on s.attachment_id = a.id
+             where chat_document_chunks_fts match ?
+               and s.thread_id = ?
+               and a.user_id = ?
+               and a.status = ?
+             order by bm25(chat_document_chunks_fts)
+             limit ?',
+            [$match, $this->id, $this->participant_id, 'indexed', $limit],
+        );
+    }
+
+    /**
+     * @param  Collection<int, string>  $terms
+     * @return array<int, object>
+     */
+    private function searchDocumentsOnPostgres(Collection $terms, int $limit): array
+    {
+        $match = $terms
+            ->map(fn (string $term): string => $term.':*')
+            ->implode(' | ');
+
+        return DB::select(
+            "select c.content, a.original_name
+             from chat_document_chunks c
+             join chat_attachments a on a.id = c.attachment_id
+             join chat_thread_sources s on s.attachment_id = a.id
+             where to_tsvector('simple', c.content) @@ to_tsquery('simple', ?)
+               and s.thread_id = ?
+               and a.user_id = ?
+               and a.status = ?
+             order by ts_rank(to_tsvector('simple', c.content), to_tsquery('simple', ?)) desc
+             limit ?",
+            [$match, $this->id, $this->participant_id, 'indexed', $match, $limit],
+        );
     }
 }

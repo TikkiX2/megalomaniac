@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1
+
+FROM php:8.4-fpm AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git curl unzip libpq-dev libzip-dev libpng-dev libonig-dev \
+        libxml2-dev libicu-dev libsqlite3-dev libfreetype6-dev libjpeg62-turbo-dev \
+        nodejs npm \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+        pdo pdo_pgsql pdo_sqlite mbstring zip gd bcmath pcntl exif intl opcache \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/megalomaniac
+
+COPY . .
+
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    APP_KEY=base64:ZHVtbXlkdW1teWR1bW15ZHVtbXlkdW1teWR1bW15ZHVtbXk=
+
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
+    && php artisan wayfinder:generate --no-interaction \
+    && npm ci --no-audit --no-fund \
+    && npm run build \
+    && rm -rf node_modules
+
+FROM php:8.4-fpm AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpq-dev libzip-dev libpng-dev libonig-dev \
+        libxml2-dev libicu-dev libsqlite3-dev libfreetype6-dev libjpeg62-turbo-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+        pdo pdo_pgsql pdo_sqlite mbstring zip gd bcmath pcntl exif intl opcache \
+    && rm -rf /var/lib/apt/lists/* \
+    && printf '[global]\ndaemonize = no\n[www]\nlisten = 0.0.0.0:8070\n' > /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && printf 'opcache.enable=1\nopcache.enable_cli=1\nopcache.validate_timestamps=0\nopcache.memory_consumption=192\nopcache.max_accelerated_files=20000\n' > /usr/local/etc/php/conf.d/zz-opcache.ini
+
+WORKDIR /var/www/megalomaniac
+
+COPY --from=builder --chown=www-data:www-data /var/www/megalomaniac /var/www/megalomaniac
+
+RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+USER www-data
+
+EXPOSE 8070
+
+CMD ["php-fpm"]

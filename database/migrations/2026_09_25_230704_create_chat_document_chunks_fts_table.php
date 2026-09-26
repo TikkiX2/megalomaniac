@@ -7,6 +7,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("CREATE INDEX chat_document_chunks_search_idx ON chat_document_chunks USING gin (to_tsvector('simple', content))");
+
+            return;
+        }
+
         DB::statement("
             CREATE VIRTUAL TABLE chat_document_chunks_fts USING fts5(
                 content,
@@ -32,6 +38,12 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement('DROP INDEX IF EXISTS chat_document_chunks_search_idx');
+
+            return;
+        }
+
         DB::unprepared('
             DROP TRIGGER IF EXISTS chat_document_chunks_ai;
             DROP TRIGGER IF EXISTS chat_document_chunks_ad;
