@@ -387,17 +387,15 @@ class ChatService
         DB::transaction(function () use ($thread): void {
             $messageIds = $thread->messages()->pluck('id')->all();
 
+            // Images survive in the sources library: unlink them from the
+            // thread instead of destroying files the user may want to reuse.
             ChatAttachment::query()
                 ->where('kind', 'image')
                 ->where(function ($query) use ($messageIds, $thread): void {
                     $query->whereIn('message_id', $messageIds)
                         ->orWhere('thread_id', $thread->id);
                 })
-                ->get()
-                ->each(function (ChatAttachment $attachment): void {
-                    Storage::disk($attachment->disk)->delete($attachment->path);
-                    $attachment->delete();
-                });
+                ->update(['message_id' => null, 'thread_id' => null]);
 
             $thread->sources()->detach();
             $thread->messages()->delete();

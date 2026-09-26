@@ -26,10 +26,9 @@ class SourcesController extends Controller
         $user = $request->user();
 
         return Inertia::render('ai/sources', [
-            'documents' => ChatAttachmentResource::collection(
+            'items' => ChatAttachmentResource::collection(
                 ChatAttachment::query()
                     ->forUser($user)
-                    ->documents()
                     ->with(['threads' => fn ($query) => $query->orderByDesc('chat_thread_sources.created_at')])
                     ->withCount('threads')
                     ->orderByDesc('created_at')

@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { AlertCircle, Download, FileText, Loader2, Trash2, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, Download, FileText, Image as ImageIcon, Loader2, Trash2, UploadCloud, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { attachmentStatusLabel, formatBytes } from '@/components/ai/chat/AttachmentChips';
@@ -27,15 +27,20 @@ import { cn } from '@/lib/utils';
 import type { AiChatState, ChatAttachment } from '@/types/chat';
 
 interface SourcesPageProps {
-    documents: ChatAttachment[];
+    items: ChatAttachment[];
     ai: AiChatState;
 }
 
-const DOCUMENT_ACCEPT = {
+const ACCEPT = {
+    'image/jpeg': ['.jpg', '.jpeg'],
+    'image/png': ['.png'],
+    'image/webp': ['.webp'],
     'text/plain': ['.txt'],
     'text/markdown': ['.md'],
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
 };
+
+const INPUT_ACCEPT = '.jpg,.jpeg,.png,.webp,.txt,.md,.docx';
 
 const STATUS_TONES: Record<ChatAttachment['status'], string> = {
     ready: 'border-primary/30 bg-primary/10 text-primary',
@@ -44,16 +49,16 @@ const STATUS_TONES: Record<ChatAttachment['status'], string> = {
     failed: 'border-destructive/40 bg-destructive/10 text-destructive',
 };
 
-function statusBadgeLabel(document: ChatAttachment): string {
-    return document.status === 'failed' ? 'Error' : attachmentStatusLabel(document);
+function statusBadgeLabel(item: ChatAttachment): string {
+    return item.status === 'failed' ? 'Error' : attachmentStatusLabel(item);
 }
 
-function sortTimestamp(document: ChatAttachment): number {
-    if (document.created_at === null || document.created_at === undefined) {
+function sortTimestamp(item: ChatAttachment): number {
+    if (item.created_at === null || item.created_at === undefined) {
         return Date.now();
     }
 
-    const parsed = Date.parse(document.created_at);
+    const parsed = Date.parse(item.created_at);
 
     return Number.isNaN(parsed) ? Date.now() : parsed;
 }
@@ -70,15 +75,15 @@ function formatDate(value: string | null | undefined): string {
         : date.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-export default function Sources({ documents }: SourcesPageProps) {
-    const upload = useAttachmentUpload(null, documents);
+export default function Sources({ items }: SourcesPageProps) {
+    const upload = useAttachmentUpload(null, items);
     const [dropError, setDropError] = useState<string | null>(null);
     const [pendingDelete, setPendingDelete] = useState<ChatAttachment | null>(null);
     const [deleting, setDeleting] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { getRootProps, isDragActive } = useDropzone({
-        accept: DOCUMENT_ACCEPT,
+        accept: ACCEPT,
         multiple: true,
         noClick: true,
         disabled: upload.uploading,
@@ -89,7 +94,7 @@ export default function Sources({ documents }: SourcesPageProps) {
         onDropRejected: (rejections) => {
             const names = rejections.map((rejection) => rejection.file.name).join(', ');
 
-            setDropError(`No se admiten: ${names}. Usa archivos .txt, .md o .docx.`);
+            setDropError(`No se admiten: ${names}. Usa imágenes JPG, PNG o WebP, .txt, .md o .docx.`);
         },
     });
 
@@ -114,7 +119,7 @@ export default function Sources({ documents }: SourcesPageProps) {
             <div className="mx-auto max-w-5xl space-y-6 px-4 py-6">
                 <Heading
                     title="Fuentes"
-                    description="Tu biblioteca de documentos para el chat: subí archivos y adjuntalos a los hilos para usarlos como contexto."
+                    description="Tu biblioteca de documentos e imágenes para el chat: subí archivos, adjuntá documentos a los hilos y reutilizá todo cuando quieras."
                 />
 
                 <div
@@ -132,7 +137,7 @@ export default function Sources({ documents }: SourcesPageProps) {
                         type="file"
                         multiple
                         hidden
-                        accept=".txt,.md,.docx"
+                        accept={INPUT_ACCEPT}
                         onChange={(event) => {
                             if (event.target.files !== null && event.target.files.length > 0) {
                                 setDropError(null);
@@ -151,9 +156,11 @@ export default function Sources({ documents }: SourcesPageProps) {
                         )}
 
                         <p className="text-sm text-foreground">
-                            {upload.uploading ? 'Subiendo documentos…' : 'Arrastrá tus documentos acá'}
+                            {upload.uploading ? 'Subiendo archivos…' : 'Arrastrá tus archivos acá'}
                         </p>
-                        <p className="text-xs text-muted-foreground">.txt, .md o .docx · hasta 25 MB por archivo</p>
+                        <p className="text-xs text-muted-foreground">
+                            Imágenes JPG, PNG o WebP hasta 10 MB · .txt, .md o .docx hasta 25 MB
+                        </p>
 
                         <Button
                             type="button"
@@ -196,8 +203,8 @@ export default function Sources({ documents }: SourcesPageProps) {
                         <FileText className="h-8 w-8 text-muted-foreground" />
                         <p className="text-sm font-medium text-foreground">Todavía no tenés fuentes</p>
                         <p className="max-w-md text-xs text-muted-foreground">
-                            Subí un documento .txt, .md o .docx para guardarlo en tu biblioteca y adjuntarlo a cualquier
-                            hilo del chat.
+                            Subí una imagen o un documento (.txt, .md, .docx) para guardarlo en tu biblioteca y reutilizarlo
+                            en el chat.
                         </p>
                     </div>
                 ) : (
@@ -214,19 +221,34 @@ export default function Sources({ documents }: SourcesPageProps) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {rows.map((document) => {
-                                    const failed = document.status === 'failed';
-                                    const pending = document.status === 'pending';
-                                    const openable = !failed && document.url !== '';
-                                    const threads = document.threads ?? [];
-                                    const threadsCount = document.threads_count ?? 0;
+                                {rows.map((item) => {
+                                    const failed = item.status === 'failed';
+                                    const pending = item.status === 'pending';
+                                    const openable = !failed && item.url !== '';
+                                    const isImage = item.is_image || item.kind === 'image';
+                                    const threads = item.threads ?? [];
+                                    const threadsCount = item.threads_count ?? 0;
 
                                     return (
-                                        <TableRow key={document.id} className="border-border">
+                                        <TableRow key={item.id} className="border-border">
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     {pending ? (
                                                         <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+                                                    ) : isImage && openable ? (
+                                                        <img
+                                                            src={item.url}
+                                                            alt=""
+                                                            loading="lazy"
+                                                            className="h-8 w-8 shrink-0 rounded border border-border object-cover"
+                                                        />
+                                                    ) : isImage ? (
+                                                        <ImageIcon
+                                                            className={cn(
+                                                                'h-4 w-4 shrink-0',
+                                                                failed ? 'text-destructive' : 'text-muted-foreground',
+                                                            )}
+                                                        />
                                                     ) : (
                                                         <FileText
                                                             className={cn(
@@ -235,41 +257,40 @@ export default function Sources({ documents }: SourcesPageProps) {
                                                             )}
                                                         />
                                                     )}
-                                                    <span
-                                                        className="max-w-64 truncate text-xs text-foreground"
-                                                        title={document.name}
-                                                    >
-                                                        {document.name}
+                                                    <span className="max-w-64 truncate text-xs text-foreground" title={item.name}>
+                                                        {item.name}
                                                     </span>
                                                 </div>
                                             </TableCell>
 
                                             <TableCell className="text-xs text-muted-foreground tabular-nums">
-                                                {formatBytes(document.size)}
+                                                {formatBytes(item.size)}
                                             </TableCell>
 
                                             <TableCell>
                                                 <span
-                                                    title={attachmentStatusLabel(document)}
+                                                    title={attachmentStatusLabel(item)}
                                                     className={cn(
                                                         'inline-flex rounded-full border px-1.5 py-px text-[9px] font-medium tracking-wide uppercase',
-                                                        STATUS_TONES[document.status],
+                                                        STATUS_TONES[item.status],
                                                     )}
                                                 >
-                                                    {statusBadgeLabel(document)}
+                                                    {statusBadgeLabel(item)}
                                                 </span>
-                                                {failed && document.error !== null && document.error !== '' && (
+                                                {failed && item.error !== null && item.error !== '' && (
                                                     <span
                                                         className="mt-0.5 block max-w-40 truncate text-[10px] text-destructive"
-                                                        title={document.error}
+                                                        title={item.error}
                                                     >
-                                                        {document.error}
+                                                        {item.error}
                                                     </span>
                                                 )}
                                             </TableCell>
 
                                             <TableCell className="text-xs">
-                                                {threadsCount > 0 ? (
+                                                {isImage ? (
+                                                    <span className="text-muted-foreground">—</span>
+                                                ) : threadsCount > 0 ? (
                                                     <div title={threads.join('\n')}>
                                                         <span className="text-foreground">
                                                             {threadsCount} {threadsCount === 1 ? 'hilo' : 'hilos'}
@@ -287,7 +308,7 @@ export default function Sources({ documents }: SourcesPageProps) {
                                             </TableCell>
 
                                             <TableCell className="text-xs text-muted-foreground">
-                                                {formatDate(document.created_at)}
+                                                {formatDate(item.created_at)}
                                             </TableCell>
 
                                             <TableCell className="text-right">
@@ -300,10 +321,10 @@ export default function Sources({ documents }: SourcesPageProps) {
                                                             className="h-7 w-7 text-muted-foreground hover:text-foreground"
                                                         >
                                                             <a
-                                                                href={document.url}
+                                                                href={item.url}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                aria-label={`Abrir ${document.name}`}
+                                                                aria-label={`Abrir ${item.name}`}
                                                                 title="Abrir"
                                                             >
                                                                 <Download className="h-3.5 w-3.5" />
@@ -315,7 +336,7 @@ export default function Sources({ documents }: SourcesPageProps) {
                                                             variant="ghost"
                                                             size="icon"
                                                             disabled
-                                                            aria-label={`Abrir ${document.name}`}
+                                                            aria-label={`Abrir ${item.name}`}
                                                             className="h-7 w-7 text-muted-foreground"
                                                         >
                                                             <Download className="h-3.5 w-3.5" />
@@ -326,8 +347,8 @@ export default function Sources({ documents }: SourcesPageProps) {
                                                         type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        onClick={() => setPendingDelete(document)}
-                                                        aria-label={`Eliminar ${document.name}`}
+                                                        onClick={() => setPendingDelete(item)}
+                                                        aria-label={`Eliminar ${item.name}`}
                                                         title="Eliminar"
                                                         className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                                     >
@@ -356,11 +377,17 @@ export default function Sources({ documents }: SourcesPageProps) {
                     <DialogHeader>
                         <DialogTitle>Eliminar fuente</DialogTitle>
                         <DialogDescription>
-                            Se eliminará “{pendingDelete?.name}” de tu biblioteca
-                            {(pendingDelete?.threads_count ?? 0) > 0
-                                ? ` y de los ${pendingDelete?.threads_count} hilos donde está adjunta`
-                                : ''}
-                            . Los hilos dejarán de usar este documento como contexto. No se puede deshacer.
+                            {pendingDelete?.is_image || pendingDelete?.kind === 'image' ? (
+                                <>Se eliminará “{pendingDelete?.name}” de tu biblioteca. No se puede deshacer.</>
+                            ) : (
+                                <>
+                                    Se eliminará “{pendingDelete?.name}” de tu biblioteca
+                                    {(pendingDelete?.threads_count ?? 0) > 0
+                                        ? ` y de los ${pendingDelete?.threads_count} hilos donde está adjunta`
+                                        : ''}
+                                    . Los hilos dejarán de usar este documento como contexto. No se puede deshacer.
+                                </>
+                            )}
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2">

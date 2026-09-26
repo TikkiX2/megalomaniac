@@ -145,7 +145,7 @@ test('unattached images and thread documents can still be deleted', function () 
     Storage::disk('local')->assertMissing($document->path);
 });
 
-test('deleting a thread detaches library documents and deletes its message images', function () {
+test('deleting a thread detaches library documents and preserves its message images', function () {
     Storage::fake('local');
     $user = User::factory()->create();
     $thread = ChatThread::factory()->create([
@@ -182,11 +182,12 @@ test('deleting a thread detaches library documents and deletes its message image
 
     expect(ChatThread::query()->whereKey($thread->id)->exists())->toBeFalse()
         ->and(ChatAttachment::query()->whereKey($document->id)->exists())->toBeTrue()
-        ->and(ChatAttachment::query()->whereKey($image->id)->exists())->toBeFalse()
+        ->and(ChatAttachment::query()->whereKey($image->id)->exists())->toBeTrue()
+        ->and($image->refresh()->message_id)->toBeNull()
         ->and(DB::table('chat_thread_sources')->where('thread_id', $thread->id)->count())->toBe(0);
 
     Storage::disk('local')->assertExists($documentPath);
-    Storage::disk('local')->assertMissing($imagePath);
+    Storage::disk('local')->assertExists($imagePath);
 });
 
 test('truncating a thread detaches attachments from the deleted messages', function () {

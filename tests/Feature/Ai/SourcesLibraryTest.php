@@ -38,7 +38,7 @@ function sourcesLibraryDocument(User $user, array $attributes = []): ChatAttachm
     ], $attributes));
 }
 
-test('thread deletion detaches library sources but deletes thread images', function () {
+test('thread deletion detaches library sources and preserves its message images', function () {
     Storage::fake('local');
     $user = User::factory()->create();
     $thread = ChatThread::factory()->create(['participant_type' => $user->getMorphClass(), 'participant_id' => $user->id]);
@@ -54,14 +54,16 @@ test('thread deletion detaches library sources but deletes thread images', funct
 
     (new ChatService)->deleteThread($thread);
 
-    expect(ChatAttachment::query()->whereKey($doc->id)->exists())->toBeTrue();
+    expect(ChatAttachment::query()->whereKey($doc->id)->exists())->toBeTrue()
+        ->and(ChatAttachment::query()->whereKey($image->id)->exists())->toBeTrue()
+        ->and($image->refresh()->message_id)->toBeNull()
+        ->and(DB::table('chat_thread_sources')->where('thread_id', $thread->id)->count())->toBe(0);
+
     Storage::disk('local')->assertExists($doc->path);
-    expect(DB::table('chat_thread_sources')->where('thread_id', $thread->id)->count())->toBe(0);
-    expect(ChatAttachment::query()->whereKey($image->id)->exists())->toBeFalse();
-    Storage::disk('local')->assertMissing($image->path);
+    Storage::disk('local')->assertExists($image->path);
 });
 
-test('thread deletion removes unsent images holding the legacy thread column', function () {
+test('thread deletion preserves unsent images and clears the legacy thread column', function () {
     Storage::fake('local');
     $user = User::factory()->create();
     $thread = ChatThread::factory()->create(['participant_type' => $user->getMorphClass(), 'participant_id' => $user->id]);
@@ -83,11 +85,12 @@ test('thread deletion removes unsent images holding the legacy thread column', f
 
     (new ChatService)->deleteThread($thread);
 
-    expect(ChatAttachment::query()->whereKey($image->id)->exists())->toBeFalse()
+    expect(ChatAttachment::query()->whereKey($image->id)->exists())->toBeTrue()
+        ->and($image->refresh()->thread_id)->toBeNull()
         ->and(ChatAttachment::query()->whereKey($document->id)->exists())->toBeTrue()
         ->and(DB::table('chat_thread_sources')->where('thread_id', $thread->id)->count())->toBe(0);
 
-    Storage::disk('local')->assertMissing($imagePath);
+    Storage::disk('local')->assertExists($imagePath);
     Storage::disk('local')->assertExists($documentPath);
 });
 
@@ -106,8 +109,7 @@ test('migration backfills existing thread documents into the pivot', function ()
         ->and(DB::table('chat_thread_sources')->where('attachment_id', $legacyImage->id)->exists())->toBeFalse();
 });
 
-test('sources index lists own documents with thread counts and titles', function () {
-    // The ai/sources page component lands in a later task; only assert props.
+test('sources index lists own documents and images with thread counts and titles', function () {
     $this->withoutVite();
 
     $user = User::factory()->withAiProvider()->create();
@@ -123,18 +125,26 @@ test('sources index lists own documents with thread counts and titles', function
     $newest = sourcesLibraryDocument($user, ['original_name' => 'nuevo.txt']);
 
     sourcesLibraryDocument(User::factory()->create(), ['original_name' => 'ajeno.txt']);
-    ChatAttachment::factory()->create(['user_id' => $user->id, 'kind' => 'image']);
+
+    $image = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'created_at' => now()->subSeconds(30),
+    ]);
 
     $this->actingAs($user)
         ->get(route('ai.sources.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('ai/sources', false)
-            ->has('documents', 2)
-            ->where('documents.0.id', $newest->id)
-            ->where('documents.1.id', $document->id)
-            ->where('documents.1.threads_count', 2)
-            ->where('documents.1.threads', ['Hilo B', 'Hilo A'])
+            ->has('items', 3)
+            ->where('items.0.id', $newest->id)
+            ->where('items.0.is_image', false)
+            ->where('items.1.id', $image->id)
+            ->where('items.1.is_image', true)
+            ->where('items.2.id', $document->id)
+            ->where('items.2.threads_count', 2)
+            ->where('items.2.threads', ['Hilo B', 'Hilo A'])
             ->where('ai.enabled', true)
             ->where('ai.configured', true)
             ->where('ai.defaultModel', $user->ai_model)
