@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Ai\Services\ChatService;
+use App\Ai\Support\WebCitations;
 use App\Ai\Tools\ToolCatalog;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ai\ApproveChatTurnRequest;
@@ -272,7 +273,11 @@ class ChatController extends Controller
         ?array $attachmentIds = null,
         ?string $webWarning = null,
     ): StreamedResponse {
-        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds, $webWarning): void {
+        // The forced pre-search sources are snapshotted before the closure runs
+        // (like $webWarning) so it never reads ChatService mutable state.
+        $preSearchSources = $this->service->lastWebSources;
+
+        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds, $webWarning, $preSearchSources): void {
             if (function_exists('set_time_limit')) {
                 set_time_limit(0);
             }
@@ -303,6 +308,10 @@ class ChatController extends Controller
             $assistantIdBefore = $thread->messages()->where('role', 'assistant')->orderByDesc('id')->value('id');
             $userMessageIdBefore = $thread->messages()->where('role', 'user')->orderByDesc('id')->value('id');
 
+            /** @var array<int, array{url: string, title: ?string, snippet: ?string}> $webCitations */
+            $webCitations = [];
+            $seenCitationUrls = [];
+
             try {
                 foreach ($stream as $event) {
                     $eventArray = $event->toArray();
@@ -315,6 +324,21 @@ class ChatController extends Controller
 
                     echo 'data: '.((string) $event)."\n\n";
                     flush();
+
+                    foreach (WebCitations::fromToolResult($eventArray) as $citation) {
+                        if (isset($seenCitationUrls[$citation['url']])) {
+                            continue;
+                        }
+
+                        $seenCitationUrls[$citation['url']] = true;
+                        $webCitations[] = $citation;
+
+                        echo 'data: '.json_encode([
+                            'type' => 'citation',
+                            'citation' => ['title' => $citation['title'], 'url' => $citation['url']],
+                        ])."\n\n";
+                        flush();
+                    }
                 }
             } catch (Throwable $exception) {
                 report($exception);
@@ -346,6 +370,10 @@ class ChatController extends Controller
                 $this->storeReasoning($thread, $reasoning, $reasoningStartedAt, $assistantIdBefore);
             }
 
+            if ($webCitations !== [] || $preSearchSources !== []) {
+                $this->storeCitations($thread, $webCitations, $preSearchSources, $assistantIdBefore);
+            }
+
             echo "data: [DONE]\n\n";
             flush();
         }, 200, [
@@ -371,6 +399,45 @@ class ChatController extends Controller
             'text' => trim($reasoning),
             'duration_ms' => $startedAt === null ? null : (int) round((microtime(true) - $startedAt) * 1000),
         ];
+
+        $message->update(['meta' => $meta]);
+    }
+
+    /**
+     * Persist the turn's web sources (tool results plus the forced pre-search)
+     * after any native provider citations, with the same guard as
+     * storeReasoning: only a new assistant message stored by this turn may
+     * receive them.
+     *
+     * @param  array<int, array{url: string, title: ?string, snippet: ?string}>  $webCitations
+     * @param  array<int, array<string, mixed>>  $preSearchSources
+     */
+    protected function storeCitations(
+        ChatThread $thread,
+        array $webCitations,
+        array $preSearchSources,
+        ?string $assistantIdBefore = null,
+    ): void {
+        $message = $thread->messages()->orderByDesc('id')->first();
+
+        if (! $message instanceof ChatMessage || $message->role !== 'assistant' || $message->id === $assistantIdBefore) {
+            return;
+        }
+
+        $meta = $message->meta ?? [];
+        $native = is_array($meta['citations'] ?? null) ? $meta['citations'] : [];
+
+        $citations = WebCitations::merge(
+            $native,
+            $webCitations,
+            WebCitations::fromRows($preSearchSources),
+        );
+
+        if ($citations === []) {
+            return;
+        }
+
+        $meta['citations'] = $citations;
 
         $message->update(['meta' => $meta]);
     }

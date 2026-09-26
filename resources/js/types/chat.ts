@@ -16,6 +16,7 @@ export interface ChatThread {
 export interface Citation {
     url: string;
     title: string | null;
+    snippet?: string | null;
     start_index?: number | null;
     end_index?: number | null;
 }
