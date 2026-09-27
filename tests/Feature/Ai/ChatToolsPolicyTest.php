@@ -36,7 +36,7 @@ it('routes automatically when no policy is given', function () {
     ])->streamedContent();
 
     expect($content)->toContain('"mode":"auto"')
-        ->and($content)->toContain('"groups":["tasks"]');
+        ->and($content)->toContain('"groups":["tasks","memory"]');
 
     expect(ChatThread::query()->forUser($user)->first()->tools_policy)->toBeNull();
 });

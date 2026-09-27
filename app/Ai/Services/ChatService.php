@@ -336,7 +336,13 @@ class ChatService
             }
         }
 
-        return ['mode' => 'auto', 'groups' => ToolRouter::route($message)];
+        $groups = ToolRouter::route($message);
+
+        if (! in_array('memory', $groups, true)) {
+            $groups[] = 'memory';
+        }
+
+        return ['mode' => 'auto', 'groups' => $groups];
     }
 
     /**

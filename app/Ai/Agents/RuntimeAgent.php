@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Memory\MemoryCatalog;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
 use App\Ai\Tools\ToolCatalog;
@@ -28,11 +29,13 @@ class RuntimeAgent implements Agent, Conversational, HasTools
     public function instructions(): string
     {
         $context = json_encode($this->context, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $memory = app(MemoryCatalog::class)->blockFor($this->definition->user, null);
+        $memorySection = $memory === null ? '' : "\n{$memory}\n";
 
         return <<<TEXT
         Sos el agente "{$this->definition->name}" del cockpit personal Megalomaniac.
         {$this->definition->instructions}
-
+        {$memorySection}
         Contexto de tus ejecuciones recientes (JSON):
         {$context}
 
