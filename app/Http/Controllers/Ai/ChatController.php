@@ -69,6 +69,8 @@ class ChatController extends Controller
 
         $user = $request->user();
 
+        $thread->loadCount('memories');
+
         return Inertia::render('ai/thread', [
             'thread' => (new ChatThreadResource($thread))->resolve($request),
             'messages' => ChatMessageResource::collection(

@@ -3,6 +3,7 @@
 use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
+use App\Models\Memory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -115,6 +116,7 @@ test('thread can be deleted with its messages', function () {
     $user = User::factory()->create();
     $thread = ownThread($user);
     ChatMessage::factory()->create(['conversation_id' => $thread->id]);
+    Memory::factory()->forThread($thread)->create(['user_id' => $user->id]);
 
     $this->actingAs($user)
         ->delete(route('ai.chat.destroy', $thread))
@@ -122,4 +124,5 @@ test('thread can be deleted with its messages', function () {
 
     expect(ChatThread::query()->whereKey($thread->id)->exists())->toBeFalse();
     expect(ChatMessage::query()->where('conversation_id', $thread->id)->exists())->toBeFalse();
+    expect(Memory::query()->where('thread_id', $thread->id)->count())->toBe(0);
 });

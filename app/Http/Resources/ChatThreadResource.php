@@ -20,6 +20,7 @@ class ChatThreadResource extends JsonResource
             'mode' => app(ChatService::class)->sourceMode($this->resource),
             'tools_policy' => $this->tools_policy,
             'is_pinned' => $this->pinned_at !== null,
+            'memories_count' => $this->whenCounted('memories'),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

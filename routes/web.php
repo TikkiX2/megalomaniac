@@ -4,6 +4,7 @@ use App\Http\Controllers\AgentSuggestionController;
 use App\Http\Controllers\Ai\AiFitnessController;
 use App\Http\Controllers\Ai\ChatAttachmentController;
 use App\Http\Controllers\Ai\ChatController;
+use App\Http\Controllers\Ai\MemoryController;
 use App\Http\Controllers\Ai\SourcesController;
 use App\Http\Controllers\AiInsightController;
 use App\Http\Controllers\Finance\CreditCardController;
@@ -196,6 +197,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('ai/chat/{thread}/edit', [ChatController::class, 'edit'])->middleware('throttle:30,1')->name('ai.chat.edit');
     Route::post('ai/chat/{thread}/approve', [ChatController::class, 'approve'])->middleware('throttle:30,1')->name('ai.chat.approve');
     Route::get('ai/models', [ChatController::class, 'models'])->name('ai.models');
+
+    // AI Memory
+    Route::get('ai/memory', [MemoryController::class, 'index'])->name('ai.memory.index');
+    Route::post('ai/memory', [MemoryController::class, 'store'])->name('ai.memory.store');
+    Route::patch('ai/memory/{memory}', [MemoryController::class, 'update'])->name('ai.memory.update');
+    Route::delete('ai/memory/{memory}', [MemoryController::class, 'destroy'])->name('ai.memory.destroy');
+    Route::post('ai/memory/{memory}/promote', [MemoryController::class, 'promote'])->name('ai.memory.promote');
 
     // AI Suggestions Routes
     Route::get('ai/suggestions', [AgentSuggestionController::class, 'index'])->name('ai.suggestions.index');
