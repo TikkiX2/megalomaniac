@@ -31,6 +31,11 @@ class ChatThread extends Conversation
         return $this->hasMany(ChatMessage::class, 'conversation_id');
     }
 
+    public function memories(): HasMany
+    {
+        return $this->hasMany(Memory::class, 'thread_id');
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(ChatAttachment::class, 'thread_id');
