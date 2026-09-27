@@ -15,7 +15,7 @@ class UpdatePersonalTaskRequest extends FormRequest
     {
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
-            'description' => ['nullable', 'array'],
+            'description' => ['nullable'],
             'status' => ['nullable', 'string', 'max:50'],
             'priority' => ['nullable', 'string', 'max:50'],
             'project_id' => ['nullable', 'exists:projects,id'],

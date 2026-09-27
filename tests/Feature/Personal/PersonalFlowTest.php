@@ -126,6 +126,59 @@ it('lists personal tasks with filters', function () {
     $response->assertInertia(fn ($page) => $page->component('personal/tasks/Index'));
 });
 
+it('updates a task keeping a plain string description', function () {
+    $task = ProjectTask::factory()->create([
+        'user_id' => $this->user->id,
+        'status' => 'Pending',
+        'description' => 'Probar toda la app',
+    ]);
+
+    $this->patchJson("/personal/tasks/{$task->id}", [
+        'title' => $task->title,
+        'description' => 'Probar toda la app',
+    ])->assertOk();
+
+    expect($task->fresh()->description)->toBe('Probar toda la app');
+});
+
+it('updates a task with a yoopta description array', function () {
+    $task = ProjectTask::factory()->create([
+        'user_id' => $this->user->id,
+        'status' => 'Pending',
+        'description' => 'descripción previa',
+    ]);
+
+    $blocks = [
+        [
+            'id' => 'block-1',
+            'type' => 'Paragraph',
+            'value' => [
+                ['id' => 'element-1', 'type' => 'paragraph', 'children' => [['text' => 'Nueva descripción']]],
+            ],
+            'meta' => ['align' => 'left', 'depth' => 0, 'order' => 0],
+        ],
+    ];
+
+    $this->patchJson("/personal/tasks/{$task->id}", [
+        'title' => $task->title,
+        'description' => $blocks,
+    ])->assertOk();
+
+    expect($task->fresh()->description)->toBe($blocks);
+});
+
+it('creates a task with a plain string description', function () {
+    $this->post('/personal/tasks', [
+        'title' => 'Tarea con texto',
+        'status' => 'Pending',
+        'description' => 'Detalle en texto plano',
+    ])->assertRedirect();
+
+    $task = ProjectTask::where('title', 'Tarea con texto')->first();
+
+    expect($task->description)->toBe('Detalle en texto plano');
+});
+
 it('can move task status via kanban', function () {
     $task = ProjectTask::factory()->create(['user_id' => $this->user->id, 'status' => 'Pending']);
     $this->patch("/personal/tasks/{$task->id}/move", ['status' => 'Done'])->assertRedirect();

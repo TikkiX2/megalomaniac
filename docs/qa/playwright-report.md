@@ -419,3 +419,31 @@ Al reconstruir la imagen de prod sin el pipeline, **copiar siempre el build a ho
 ### Verificado en vivo (dev, Playwright)
 - Diálogo lista imágenes y docs; "Usar en mensaje" agrega el chip al composer ("Preparada" en el diálogo); al enviar, el mensaje persiste el descriptor `stored-image` y `message_id` de la imagen; el doc adjunto aparece en "Fuentes adjuntas · 1"; "Quitar" del chip deja la imagen intacta en la biblioteca. **PASS**
 - Suite **611 passed**, Pint/types/eslint/build OK. Commit `edca13b`; deploy a prod con rebuild + sync de `public/build` al host.
+
+## Fix: 502 de nginx al recargar chat/tareas — 2026-09-27
+
+> **Reporte del usuario:** al recargar (F5) una página de chat o de tareas aparece 502 Bad Gateway.
+
+### Causa raíz (evidencia)
+- nginx de prod (`megalomaniac-nginx`): `upstream sent too big header while reading response header from upstream` en `GET /ai/chat/{thread}` (5 veces: 04:32, 04:57, 05:00, 05:13 y 06:02), upstream `fastcgi://…:8070`.
+- `AddLinkHeadersForPreloadedAssets` (`bootstrap/app.php`) emitía **un solo header `Link`** con todos los preloads de Vite, y solo se llena en cargas completas de página (`@vite` en `app.blade.php`); las navegaciones Inertia (XHR) no renderizan Blade → sin header. Por eso fallaba **solo al recargar**, no al navegar.
+- Tamaños medidos contra el manifest desplegado: chat thread 30 assets ≈3,2 KB; tasks Index 36 assets (grafo del editor Yoopta) ≈3,8 KB; + ~1,1 KB de cookies/resto. `fastcgi_buffer_size` default = 4096 B (ninguna de las 3 confs lo definía) → bloque > 4 KB → 502. `/login` (~2,9 KB) y `/ai/chat/` (~3,5 KB) quedaban por debajo (200 en logs).
+
+### Fix
+- nginx (prod, dev host y `docker/nginx` del repo): `fastcgi_buffer_size 32k; fastcgi_buffers 8 16k; fastcgi_busy_buffers_size 32k;` + reload.
+- `bootstrap/app.php`: se quitó `AddLinkHeadersForPreloadedAssets` (redundante: `@vite` ya emite los `<link rel="modulepreload">` en el HTML).
+
+### Verificado
+- Prod `/login`: sin header `Link`; bloque de headers 2725 → **1162 B**.
+- Dev e2e autenticado (`test@example.com`): `/ai/chat/` y `/personal/tasks` (index pesado) → **200**, 1147 B de headers, 0 `Link`.
+- Suite **631 passed**; Pint OK; deploy con `deploy.sh` (imagen recreada); 0 nuevos `too big header` en logs tras el fix.
+
+## QA: Memoria del agente (global + hilo) — 2026-09-27
+
+> **Feature:** página `/ai/memory`, chip `Memoria · N` en el hilo y tools `remember/forget/promote` (spec `docs/superpowers/specs/2026-09-27-memoria-agente-design.md`, plan `docs/superpowers/plans/2026-09-27-memoria-agente.md`).
+
+### Verificado en vivo (dev, Playwright, `test@example.com`)
+- `/ai/memory`: segmented General | Por hilo, contador de ámbito y `0/500` en el form, alta de memoria general → aparece con badge "Usuario" y fecha; borrado con diálogo de confirmación → vuelve al empty state. 0 errores de consola.
+- Chip en hilo: `Memoria · 2` / `Memoria · 1` con href `/ai/memory?thread=<id>`; el deep-link preselecciona "Por hilo" y su contador (smoke de Tasks 6/7).
+- Mutaciones: promover con el límite alcanzado muestra el error del servidor en banner; botones deshabilitados in-flight previenen doble submit (fix Task 6).
+- Suite completa **656 passed** (2564 assertions); `npm run types` 0 errores; `npm run build` OK; Pint OK.
