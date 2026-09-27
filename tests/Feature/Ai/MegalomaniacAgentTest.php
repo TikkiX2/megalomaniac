@@ -4,12 +4,15 @@ use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Tools\ActionTool;
 use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\FinanceQueryTool;
+use App\Ai\Tools\ForgetMemoryTool;
 use App\Ai\Tools\GroceryQueryTool;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
 use App\Ai\Tools\LoadSkillTool;
 use App\Ai\Tools\ManageAgentsTool;
 use App\Ai\Tools\NutritionQueryTool;
+use App\Ai\Tools\PromoteMemoryTool;
+use App\Ai\Tools\RememberMemoryTool;
 use App\Ai\Tools\TaskQueryTool;
 use App\Ai\Tools\WebFetchTool;
 use App\Ai\Tools\WebSearchTool;
@@ -39,7 +42,7 @@ test('megalomaniac agent has correct tools', function () {
 
     $tools = iterator_to_array($agent->tools());
 
-    expect($tools)->toHaveCount(13);
+    expect($tools)->toHaveCount(16);
     expect($tools[0])->toBeInstanceOf(TaskQueryTool::class);
     expect($tools[1])->toBeInstanceOf(WorkoutQueryTool::class);
     expect($tools[2])->toBeInstanceOf(FinanceQueryTool::class);
@@ -50,9 +53,12 @@ test('megalomaniac agent has correct tools', function () {
     expect($tools[7])->toBeInstanceOf(IntegrationCallTool::class);
     expect($tools[8])->toBeInstanceOf(ManageAgentsTool::class);
     expect($tools[9])->toBeInstanceOf(LoadSkillTool::class);
-    expect($tools[10])->toBeInstanceOf(WebSearchTool::class);
-    expect($tools[11])->toBeInstanceOf(WebFetchTool::class);
-    expect($tools[12])->toBeInstanceOf(AskUserTool::class);
+    expect($tools[10])->toBeInstanceOf(RememberMemoryTool::class);
+    expect($tools[11])->toBeInstanceOf(ForgetMemoryTool::class);
+    expect($tools[12])->toBeInstanceOf(PromoteMemoryTool::class);
+    expect($tools[13])->toBeInstanceOf(WebSearchTool::class);
+    expect($tools[14])->toBeInstanceOf(WebFetchTool::class);
+    expect($tools[15])->toBeInstanceOf(AskUserTool::class);
 });
 
 test('workout query tool returns workouts', function () {
