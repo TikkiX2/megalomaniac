@@ -46,6 +46,7 @@ interface ChatThreadProps {
     threads: ChatThread[];
     models: string[];
     toolGroups: { key: string; label: string }[];
+    skills: { key: string; name: string }[];
     ai: AiChatState;
 }
 
@@ -57,10 +58,12 @@ export default function ChatThread({
     threads,
     models,
     toolGroups,
+    skills,
     ai,
 }: ChatThreadProps) {
     const [model, setModel] = useState<string | null>(thread.model ?? ai.defaultModel ?? models[0] ?? null);
     const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>(thread.tools_policy ?? { mode: 'auto', groups: [] });
+    const [skillKeys, setSkillKeys] = useState<string[]>([]);
     const [forceWeb, setForceWeb] = useState(false);
     const [sourceMode, setSourceMode] = useState<SourceMode>(thread.mode);
     const [renaming, setRenaming] = useState(false);
@@ -116,6 +119,7 @@ export default function ChatThread({
                     : undefined,
             force_web: forceWeb ? true : undefined,
             attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
+            skill_keys: skillKeys.length > 0 ? skillKeys : undefined,
         });
         setForceWeb(false);
     };
@@ -399,6 +403,9 @@ export default function ChatThread({
                         toolGroups={toolGroups}
                         toolsPolicy={toolsPolicy}
                         onToolsPolicyChange={setToolsPolicy}
+                        skills={skills}
+                        selectedSkills={skillKeys}
+                        onSelectedSkillsChange={setSkillKeys}
                         sourceMode={sourceMode}
                         forceWeb={forceWeb}
                         onSourceModeChange={changeSourceMode}

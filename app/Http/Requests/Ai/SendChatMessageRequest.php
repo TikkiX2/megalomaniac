@@ -27,6 +27,14 @@ class SendChatMessageRequest extends FormRequest
             'tools_policy.groups' => ['nullable', 'array'],
             'tools_policy.groups.*' => ['string', 'max:30'],
             'force_web' => ['sometimes', 'boolean'],
+            'skill_keys' => ['nullable', 'array', 'max:5'],
+            'skill_keys.*' => [
+                'string',
+                'max:64',
+                Rule::exists('skills', 'key')
+                    ->where('user_id', $this->user()?->getKey())
+                    ->where('enabled', true),
+            ],
             'attachment_ids' => ['nullable', 'array', 'max:5'],
             'attachment_ids.*' => [
                 'string',

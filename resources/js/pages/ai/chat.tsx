@@ -15,6 +15,7 @@ interface ChatIndexProps {
     models: string[];
     agents: { key: string; name: string }[];
     toolGroups: { key: string; label: string }[];
+    skills: { key: string; name: string }[];
     ai: AiChatState;
 }
 
@@ -25,10 +26,11 @@ const SUGGESTIONS = [
     '¿Qué tareas tengo pendientes con fecha límite próxima?',
 ];
 
-export default function ChatIndex({ threads, models, agents, toolGroups, ai }: ChatIndexProps) {
+export default function ChatIndex({ threads, models, agents, toolGroups, skills, ai }: ChatIndexProps) {
     const [model, setModel] = useState<string | null>(ai.defaultModel ?? models[0] ?? null);
     const [agent, setAgent] = useState('megalomaniac');
     const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>({ mode: 'auto', groups: [] });
+    const [skillKeys, setSkillKeys] = useState<string[]>([]);
     const [forceWeb, setForceWeb] = useState(false);
     const [pendingMessage, setPendingMessage] = useState<string | null>(null);
     const [composerSeed, setComposerSeed] = useState('');
@@ -93,6 +95,7 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                     : undefined,
             force_web: forceWeb ? true : undefined,
             attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
+            skill_keys: skillKeys.length > 0 ? skillKeys : undefined,
         });
         setForceWeb(false);
     };
@@ -147,6 +150,9 @@ export default function ChatIndex({ threads, models, agents, toolGroups, ai }: C
                         toolGroups={toolGroups}
                         toolsPolicy={toolsPolicy}
                         onToolsPolicyChange={setToolsPolicy}
+                        skills={skills}
+                        selectedSkills={skillKeys}
+                        onSelectedSkillsChange={setSkillKeys}
                         // Hilo nuevo: el modo se fija al crearlo (default "both"), aquí solo se ofrece "Buscar siempre".
                         sourceMode="both"
                         forceWeb={forceWeb}

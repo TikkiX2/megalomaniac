@@ -8,6 +8,7 @@ import { cn, toUrl } from '@/lib/utils';
 import { edit as editAi } from '@/routes/ai-settings';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
+import { index as skillsIndex } from '@/routes/skills';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 import type { NavItem } from '@/types';
@@ -36,6 +37,11 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'AI',
         href: editAi(),
+        icon: null,
+    },
+    {
+        title: 'Skills',
+        href: skillsIndex(),
         icon: null,
     },
     {

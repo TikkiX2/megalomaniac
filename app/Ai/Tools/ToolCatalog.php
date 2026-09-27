@@ -3,6 +3,7 @@
 namespace App\Ai\Tools;
 
 use App\Ai\Agents\AgentDefinitionService;
+use App\Ai\Skills\SkillCatalog;
 use App\Integrations\IntegrationExecutor;
 use App\Models\User;
 use Laravel\Ai\Contracts\Tool;
@@ -23,6 +24,7 @@ final class ToolCatalog
             'actions' => ['label' => 'Acciones (crear/actualizar)', 'tools' => [ActionTool::class]],
             'integrations' => ['label' => 'Integraciones', 'tools' => [IntegrationCatalogTool::class, IntegrationCallTool::class]],
             'agents' => ['label' => 'Agentes', 'tools' => [ManageAgentsTool::class]],
+            'skills' => ['label' => 'Skills', 'tools' => [LoadSkillTool::class]],
             'web' => ['label' => 'Web', 'tools' => [WebSearchTool::class, WebFetchTool::class]],
         ];
     }
@@ -74,6 +76,7 @@ final class ToolCatalog
             IntegrationCatalogTool::class => new IntegrationCatalogTool($user),
             IntegrationCallTool::class => new IntegrationCallTool($user, app(IntegrationExecutor::class)),
             ManageAgentsTool::class => new ManageAgentsTool($user, app(AgentDefinitionService::class)),
+            LoadSkillTool::class => new LoadSkillTool($user, app(SkillCatalog::class)),
             default => new $class($user),
         };
     }

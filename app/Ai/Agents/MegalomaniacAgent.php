@@ -4,6 +4,7 @@ namespace App\Ai\Agents;
 
 use App\Ai\Middleware\InjectThreadDocumentContext;
 use App\Ai\Middleware\InjectWebSearchContext;
+use App\Ai\Skills\SkillCatalog;
 use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\ToolCatalog;
 use App\Models\ChatThread;
@@ -13,11 +14,15 @@ use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\HasTools;
+use Laravel\Ai\Files\Image;
+use Laravel\Ai\Messages\UserMessage;
 use Laravel\Ai\Promptable;
 
 class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTools
 {
-    use Promptable, RemembersConversations;
+    use Promptable, RemembersConversations {
+        messages as conversationMessages;
+    }
 
     protected ?string $documentQuery = null;
 
@@ -29,6 +34,13 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
      * @var array<int, array<string, mixed>>
      */
     protected array $webSearchResults = [];
+
+    /**
+     * Skills explicitly selected for this turn (composer picker).
+     *
+     * @var array<int, array{key: string, name: string, instructions: string}>
+     */
+    protected array $explicitSkills = [];
 
     /**
      * @param  string[]  $toolGroups  Grupos de ToolCatalog; ['*'] = todos
@@ -75,6 +87,66 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
     }
 
     /**
+     * Follow the given skills for this turn. The composer picker resolves them
+     * in ChatService and hands the full instructions over.
+     *
+     * @param  array<int, array{key: string, name: string, instructions: string}>  $skills
+     */
+    public function withSkills(array $skills): static
+    {
+        $this->explicitSkills = $skills;
+
+        return $this;
+    }
+
+    /**
+     * Conversation history with the photos of all but the newest user message
+     * replaced by a text placeholder. The provider re-embeds every attachment
+     * as base64 on each request, so keeping every historical photo would grow
+     * the payload (and PHP's memory) without bound.
+     *
+     * @return array<int, object>
+     */
+    public function messages(): array
+    {
+        $messages = array_values((array) $this->conversationMessages());
+
+        $lastUserIndex = null;
+
+        foreach ($messages as $index => $message) {
+            if ($message instanceof UserMessage && $message->attachments->isNotEmpty()) {
+                $lastUserIndex = $index;
+            }
+        }
+
+        if ($lastUserIndex === null) {
+            return $messages;
+        }
+
+        foreach ($messages as $index => $message) {
+            if ($index === $lastUserIndex || ! $message instanceof UserMessage || $message->attachments->isEmpty()) {
+                continue;
+            }
+
+            $images = $message->attachments->filter(fn (mixed $attachment): bool => $attachment instanceof Image);
+            $message->attachments = $message->attachments->reject(fn (mixed $attachment): bool => $attachment instanceof Image)->values();
+
+            if ($images->isEmpty()) {
+                continue;
+            }
+
+            $message->content = trim(sprintf(
+                '%s [%d %s omitidas del historial]',
+                (string) $message->content,
+                $images->count(),
+                $images->count() === 1 ? 'imagen' : 'imágenes',
+            ));
+        }
+
+        return $messages;
+    }
+
+    /**
      * @return array<int, object>
      */
     public function middleware(): array
@@ -116,7 +188,36 @@ EOF;
             $instructions .= "\n\n".InjectThreadDocumentContext::HEADER."\n".$this->resumeDocumentContext;
         }
 
+        if ($this->explicitSkills !== []) {
+            $instructions .= "\n\nEl usuario pidió seguir estas skills en este turno. Aplicalas como guía principal:\n";
+
+            foreach ($this->explicitSkills as $skill) {
+                $instructions .= "\n### Skill: {$skill['name']} ({$skill['key']})\n{$skill['instructions']}\n";
+            }
+        }
+
+        if ($this->skillsToolEnabled()) {
+            $available = app(SkillCatalog::class)->summariesFor($this->user);
+
+            if ($available !== []) {
+                $instructions .= "\n\nSkills disponibles (cargá las instrucciones con load_skill cuando la tarea encaje):\n";
+
+                foreach ($available as $skill) {
+                    $instructions .= sprintf(
+                        "- %s — %s\n",
+                        $skill['key'],
+                        $skill['description'] ?? $skill['name'],
+                    );
+                }
+            }
+        }
+
         return $instructions;
+    }
+
+    protected function skillsToolEnabled(): bool
+    {
+        return in_array('*', $this->toolGroups, true) || in_array('skills', $this->toolGroups, true);
     }
 
     public function tools(): iterable

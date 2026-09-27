@@ -4,6 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { AgentPicker } from '@/components/ai/chat/AgentPicker';
 import { AttachmentChips } from '@/components/ai/chat/AttachmentChips';
 import { ModelPicker } from '@/components/ai/chat/ModelPicker';
+import { SkillsPicker } from '@/components/ai/chat/SkillsPicker';
 import { SourceModeMenu } from '@/components/ai/chat/SourceModeMenu';
 import { ToolsPicker } from '@/components/ai/chat/ToolsPicker';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,9 @@ interface ComposerProps {
     toolGroups?: { key: string; label: string }[];
     toolsPolicy?: ToolPolicy;
     onToolsPolicyChange?: (policy: ToolPolicy) => void;
+    skills?: { key: string; name: string }[];
+    selectedSkills?: string[];
+    onSelectedSkillsChange?: (keys: string[]) => void;
     sourceMode?: SourceMode;
     forceWeb?: boolean;
     onSourceModeChange?: (mode: SourceMode) => void;
@@ -61,6 +65,9 @@ export function Composer({
     toolGroups = [],
     toolsPolicy,
     onToolsPolicyChange,
+    skills = [],
+    selectedSkills = [],
+    onSelectedSkillsChange,
     sourceMode,
     forceWeb = false,
     onSourceModeChange,
@@ -232,6 +239,14 @@ export function Composer({
                             groups={toolGroups}
                             policy={toolsPolicy}
                             onChange={onToolsPolicyChange}
+                            disabled={disabled || streaming}
+                        />
+                    )}
+                    {onSelectedSkillsChange && skills.length > 0 && (
+                        <SkillsPicker
+                            skills={skills}
+                            selected={selectedSkills}
+                            onChange={onSelectedSkillsChange}
                             disabled={disabled || streaming}
                         />
                     )}

@@ -29,6 +29,6 @@ it('routes project creation and task moves to the action tools', function () {
 });
 
 it('falls back to the cheap default set', function () {
-    expect(ToolRouter::route('Hola, ¿cómo estás?'))->toBe(['tasks', 'integrations'])
+    expect(ToolRouter::route('Hola, ¿cómo estás?'))->toBe(['tasks', 'integrations', 'skills'])
         ->and(ToolRouter::route('Contame algo interesante'))->not->toContain('actions', 'agents');
 });

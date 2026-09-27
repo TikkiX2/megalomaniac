@@ -12,12 +12,14 @@ use App\Models\AgentDefinition;
 use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
+use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Laravel\Ai\Approvals\Decisions;
 use Laravel\Ai\Files\StoredImage;
 use Laravel\Ai\Responses\StreamableAgentResponse;
@@ -58,6 +60,14 @@ class ChatService
      * @var array<int, string>
      */
     public const LOCAL_SOURCE_MODES = ['local', 'both'];
+
+    /**
+     * Hard ceiling for the images re-embedded on a single turn (base64 grows
+     * them by ~33% before the provider request is built).
+     */
+    public const MAX_TURN_IMAGE_BYTES = 20 * 1024 * 1024;
+
+    public const MAX_SINGLE_IMAGE_BYTES = 8 * 1024 * 1024;
 
     public function isConfigured(User $user): bool
     {
@@ -106,6 +116,7 @@ class ChatService
     /**
      * @param  array<string, mixed>|null  $toolsPolicy
      * @param  array<int, string>|null  $attachmentIds
+     * @param  array<int, string>  $skillKeys  Skills explicitly selected for this turn
      */
     public function streamTurn(
         User $user,
@@ -115,6 +126,7 @@ class ChatService
         ?array $toolsPolicy = null,
         ?array $attachmentIds = null,
         bool $forceWeb = false,
+        array $skillKeys = [],
     ): StreamableAgentResponse {
         $this->lastWebSources = [];
         $this->lastWebWarning = null;
@@ -124,6 +136,10 @@ class ChatService
         }
 
         $this->pruneMissingStoredImages($thread);
+
+        // Failing here is far better than letting Guzzle exhaust PHP's memory
+        // midway through the stream, which would leave the UI stuck waiting.
+        $this->guardImagePayload($user, $thread, $attachmentIds);
 
         [$provider, $defaultModel] = AiProviderResolver::for($user, $thread->id);
 
@@ -140,6 +156,10 @@ class ChatService
             ->all();
 
         $agent = $this->agentFor($user, $thread, $policy['groups']);
+
+        if ($agent instanceof MegalomaniacAgent && $skillKeys !== []) {
+            $agent->withSkills($this->resolveSkills($user, $skillKeys));
+        }
 
         if ($agent instanceof MegalomaniacAgent && in_array($this->sourceMode($thread), self::LOCAL_SOURCE_MODES, true)) {
             $agent->withDocumentContext($message);
@@ -184,6 +204,33 @@ class ChatService
 
         $this->lastWebSources = $result['results'] ?? [];
         $agent->withWebSearchContext($this->lastWebSources);
+    }
+
+    /**
+     * Resolve the explicitly selected skills into instruction blocks for the
+     * turn, preserving the picker order.
+     *
+     * @param  array<int, string>  $keys
+     * @return array<int, array{key: string, name: string, instructions: string}>
+     */
+    protected function resolveSkills(User $user, array $keys): array
+    {
+        $skills = Skill::query()
+            ->forUser($user)
+            ->enabled()
+            ->whereIn('key', $keys)
+            ->get()
+            ->keyBy('key');
+
+        return collect($keys)
+            ->map(fn (string $key): ?array => ($skill = $skills->get($key)) === null ? null : [
+                'key' => $skill->key,
+                'name' => $skill->name,
+                'instructions' => $skill->instructions,
+            ])
+            ->filter()
+            ->values()
+            ->all();
     }
 
     /**
@@ -422,6 +469,58 @@ class ChatService
     }
 
     /**
+     * Reject a turn whose re-embedded images would exceed the safe payload:
+     * the newest history message (the only one the agent keeps) plus the
+     * attachments sent with this turn.
+     *
+     * @param  array<int, string>|null  $attachmentIds
+     */
+    protected function guardImagePayload(User $user, ChatThread $thread, ?array $attachmentIds): void
+    {
+        $currentAttachments = ChatAttachment::query()
+            ->forUser($user)
+            ->whereIn('id', $attachmentIds ?? [])
+            ->images()
+            ->ready()
+            ->get(['id', 'size']);
+
+        foreach ($currentAttachments as $attachment) {
+            if ((int) $attachment->size > self::MAX_SINGLE_IMAGE_BYTES) {
+                throw ValidationException::withMessages([
+                    'attachment_ids' => 'Cada imagen puede pesar como máximo 8 MB.',
+                ]);
+            }
+        }
+
+        $historyBytes = 0;
+        $lastUserMessage = $thread->messages()->where('role', 'user')->orderByDesc('id')->first();
+
+        foreach ((array) ($lastUserMessage?->attachments ?? []) as $attachment) {
+            if (! is_array($attachment) || ($attachment['type'] ?? null) !== 'stored-image') {
+                continue;
+            }
+
+            $path = $attachment['path'] ?? null;
+            $disk = $attachment['disk'] ?? null;
+
+            if (is_string($path) && is_string($disk) && Storage::disk($disk)->exists($path)) {
+                $historyBytes += (int) Storage::disk($disk)->size($path);
+            }
+        }
+
+        $totalBytes = $historyBytes + (int) $currentAttachments->sum('size');
+
+        if ($totalBytes > self::MAX_TURN_IMAGE_BYTES) {
+            throw ValidationException::withMessages([
+                'attachment_ids' => sprintf(
+                    'Las imágenes del turno pesan demasiado (%.1f MB; el máximo es 20 MB). Enviá menos imágenes o más chicas.',
+                    $totalBytes / 1048576,
+                ),
+            ]);
+        }
+    }
+
+    /**
      * Prompt history can outlive the files it references (an image removed
      * after being sent keeps its descriptor). Re-sending that history builds
      * empty `data:image/...;base64,` parts, which the provider rejects with a
@@ -446,7 +545,15 @@ class ChatService
                 $path = $attachment['path'] ?? null;
                 $disk = $attachment['disk'] ?? null;
 
-                return is_string($path) && is_string($disk) && Storage::disk($disk)->exists($path);
+                if (! is_string($path) || ! is_string($disk)) {
+                    return false;
+                }
+
+                $storage = Storage::disk($disk);
+
+                // An empty file would be re-embedded as an empty base64 part
+                // and the provider rejects the whole request with a 400.
+                return $storage->exists($path) && (int) $storage->size($path) > 0;
             }));
 
             if (count($kept) !== count($attachments)) {

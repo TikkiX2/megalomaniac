@@ -5,6 +5,7 @@ use App\Http\Controllers\Settings\AiSettingsController;
 use App\Http\Controllers\Settings\ApiTokenController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\SkillController;
 use App\Http\Controllers\Settings\TwoFactorAuthenticationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -17,6 +18,13 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/ai', [AiSettingsController::class, 'edit'])->name('ai-settings.edit');
     Route::put('settings/ai', [AiSettingsController::class, 'update'])->name('ai-settings.update');
+
+    Route::get('settings/skills', [SkillController::class, 'index'])->name('skills.index');
+    Route::post('settings/skills', [SkillController::class, 'store'])->name('skills.store');
+    Route::post('settings/skills/import', [SkillController::class, 'import'])->name('skills.import');
+    Route::patch('settings/skills/{skill}', [SkillController::class, 'update'])->name('skills.update');
+    Route::patch('settings/skills/{skill}/toggle', [SkillController::class, 'toggle'])->name('skills.toggle');
+    Route::delete('settings/skills/{skill}', [SkillController::class, 'destroy'])->name('skills.destroy');
 
     Route::get('settings/api-keys', [ApiTokenController::class, 'index'])->name('api-tokens.index');
     Route::post('settings/api-keys', [ApiTokenController::class, 'store'])->name('api-tokens.store');

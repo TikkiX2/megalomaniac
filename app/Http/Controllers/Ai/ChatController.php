@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Ai\Services\ChatService;
+use App\Ai\Skills\SkillCatalog;
 use App\Ai\Support\WebCitations;
 use App\Ai\Tools\ToolCatalog;
 use App\Http\Controllers\Ai\Concerns\ProvidesAiState;
@@ -43,7 +44,10 @@ class ChatController extends Controller
 {
     use ProvidesAiState;
 
-    public function __construct(protected ChatService $service) {}
+    public function __construct(
+        protected ChatService $service,
+        protected SkillCatalog $skillCatalog,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -54,6 +58,7 @@ class ChatController extends Controller
             'models' => $this->service->availableModels($user),
             'agents' => $this->agentsFor($user),
             'toolGroups' => $this->toolGroups(),
+            'skills' => $this->skillCatalog->summariesFor($user),
             'ai' => $this->aiState($user),
         ]);
     }
@@ -88,6 +93,7 @@ class ChatController extends Controller
             'models' => $this->service->availableModels($user),
             'agents' => $this->agentsFor($user),
             'toolGroups' => $this->toolGroups(),
+            'skills' => $this->skillCatalog->summariesFor($user),
             'ai' => $this->aiState($user),
         ]);
     }
@@ -198,6 +204,7 @@ class ChatController extends Controller
             $request->validated('tools_policy'),
             $attachmentIds,
             (bool) $request->validated('force_web'),
+            $request->validated('skill_keys') ?? [],
         );
 
         return $this->streamResponse(
@@ -306,6 +313,32 @@ class ChatController extends Controller
                 set_time_limit(0);
             }
 
+            // A fatal (for example an out-of-memory during the provider read)
+            // is not catchable, so the client would wait forever for a stream
+            // that will never finish. Best effort: close the SSE turn with an
+            // explicit error when the process dies mid-stream.
+            $completed = false;
+
+            register_shutdown_function(function () use (&$completed): void {
+                if ($completed || ! headers_sent()) {
+                    return;
+                }
+
+                $error = error_get_last();
+
+                if ($error === null || ! in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+                    return;
+                }
+
+                echo 'data: '.json_encode([
+                    'type' => 'error',
+                    'message' => 'La generación se interrumpió por un error del servidor. Inténtalo de nuevo.',
+                    'recoverable' => false,
+                ])."\n\n";
+                echo "data: [DONE]\n\n";
+                flush();
+            });
+
             echo 'data: '.json_encode(['type' => 'thread', 'threadId' => $thread->id])."\n\n";
             flush();
 
@@ -400,6 +433,8 @@ class ChatController extends Controller
 
             echo "data: [DONE]\n\n";
             flush();
+
+            $completed = true;
         }, 200, [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',

@@ -77,6 +77,6 @@ return [
     |
     */
 
-    'fallback' => ['tasks', 'integrations'],
+    'fallback' => ['tasks', 'integrations', 'skills'],
 
 ];
