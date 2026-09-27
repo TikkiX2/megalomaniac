@@ -402,3 +402,20 @@ Al reconstruir la imagen de prod sin el pipeline, **copiar siempre el build a ho
 ### Verificado en vivo (dev, Playwright)
 - Kanban: tarjeta con descripción en **mapa** y en **string** → texto visible; detalle (dialog) → editor con contenido en ambos formatos; galería → texto visible. **PASS**
 - Suite **611 passed**, Pint/types/eslint/build OK. Commit `299ab90`; deploy a prod con rebuild + sincronización de `public/build` al host (assets 200).
+
+## Fix: fuentes de archivos vacías en el chat + panel enorme — 2026-09-27
+
+> **Reporte del usuario:** en el chat "Fuentes adjuntas" aparece vacía aunque en `/ai/sources` están los archivos; la sección debajo del chat es enorme.
+
+### Causa raíz (evidencia)
+- La biblioteca del usuario tenía **13 imágenes y 0 documentos**; el panel y el diálogo del hilo solo listaban `kind=document` (`ChatController@show` aplicaba `documents()`), así que todo aparecía vacío aunque `/ai/sources` (que ya lista imágenes) mostrara archivos.
+- El estado vacío del panel renderizaba un párrafo explicativo que agrandaba la sección bajo el composer.
+
+### Fix
+- `show`: prop `library` incluye **toda** la biblioteca (docs + imágenes).
+- Diálogo "Adjuntar fuentes": filas de imagen con miniatura y acción **"Usar en mensaje"** (se envía con el próximo mensaje, vía `attachment_ids` como el clip); docs siguen adjuntándose como contexto del hilo (pivote). "Quitar" en el composer solo des-prepara la imagen (la biblioteca no se toca).
+- Panel compacto: sin estado vacío verboso (solo la línea "Fuentes adjuntas · N" + Adjuntar); lista con `max-h-40`.
+
+### Verificado en vivo (dev, Playwright)
+- Diálogo lista imágenes y docs; "Usar en mensaje" agrega el chip al composer ("Preparada" en el diálogo); al enviar, el mensaje persiste el descriptor `stored-image` y `message_id` de la imagen; el doc adjunto aparece en "Fuentes adjuntas · 1"; "Quitar" del chip deja la imagen intacta en la biblioteca. **PASS**
+- Suite **611 passed**, Pint/types/eslint/build OK. Commit `edca13b`; deploy a prod con rebuild + sync de `public/build` al host.
