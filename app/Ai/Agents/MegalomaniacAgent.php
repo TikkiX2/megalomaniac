@@ -225,7 +225,7 @@ EOF;
         // AskUserTool is always available: the model must be able to pause and
         // ask a question even when the resolved policy filters out DB tools.
         return [
-            ...ToolCatalog::toolsFor($this->user, $this->toolGroups),
+            ...ToolCatalog::toolsFor($this->user, $this->toolGroups, $this->thread),
             new AskUserTool,
         ];
     }

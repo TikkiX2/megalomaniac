@@ -10,7 +10,7 @@ use App\Models\User;
 
 it('exposes the tool groups', function () {
     expect(ToolCatalog::allGroups())->toBe([
-        'tasks', 'workout', 'finance', 'nutrition', 'grocery', 'actions', 'integrations', 'agents', 'skills', 'web',
+        'tasks', 'workout', 'finance', 'nutrition', 'grocery', 'actions', 'integrations', 'agents', 'skills', 'memory', 'web',
     ])
         ->and(ToolCatalog::isValidGroup('tasks'))->toBeTrue()
         ->and(ToolCatalog::isValidGroup('nope'))->toBeFalse();
@@ -31,7 +31,7 @@ it('builds every tool for the wildcard', function () {
         ->map(fn ($tool): string => $tool::class)
         ->all();
 
-    expect($tools)->toHaveCount(12)
+    expect($tools)->toHaveCount(15)
         ->toContain(TaskQueryTool::class, WorkoutQueryTool::class, ActionTool::class);
 });
 
@@ -45,5 +45,5 @@ it('lets the main agent be built with a tool subset', function () {
     expect($subset)->toBe([TaskQueryTool::class, AskUserTool::class]);
 
     $all = collect(iterator_to_array((new MegalomaniacAgent($user))->tools()))->count();
-    expect($all)->toBe(13);
+    expect($all)->toBe(16);
 });

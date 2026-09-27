@@ -3,8 +3,10 @@
 namespace App\Ai\Tools;
 
 use App\Ai\Agents\AgentDefinitionService;
+use App\Ai\Memory\MemoryCatalog;
 use App\Ai\Skills\SkillCatalog;
 use App\Integrations\IntegrationExecutor;
+use App\Models\ChatThread;
 use App\Models\User;
 use Laravel\Ai\Contracts\Tool;
 
@@ -25,6 +27,7 @@ final class ToolCatalog
             'integrations' => ['label' => 'Integraciones', 'tools' => [IntegrationCatalogTool::class, IntegrationCallTool::class]],
             'agents' => ['label' => 'Agentes', 'tools' => [ManageAgentsTool::class]],
             'skills' => ['label' => 'Skills', 'tools' => [LoadSkillTool::class]],
+            'memory' => ['label' => 'Memoria', 'tools' => [RememberMemoryTool::class, ForgetMemoryTool::class, PromoteMemoryTool::class]],
             'web' => ['label' => 'Web', 'tools' => [WebSearchTool::class, WebFetchTool::class]],
         ];
     }
@@ -46,7 +49,7 @@ final class ToolCatalog
      * @param  string[]  $groups  ['*'] = todas
      * @return array<int, Tool>
      */
-    public static function toolsFor(User $user, array $groups): array
+    public static function toolsFor(User $user, array $groups, ?ChatThread $thread = null): array
     {
         if (in_array('*', $groups, true)) {
             $groups = self::allGroups();
@@ -60,7 +63,7 @@ final class ToolCatalog
             }
 
             foreach ($group['tools'] as $class) {
-                $tools[] = self::make($user, $class);
+                $tools[] = self::make($user, $class, $thread);
             }
         }
 
@@ -70,13 +73,16 @@ final class ToolCatalog
     /**
      * @param  class-string<Tool>  $class
      */
-    private static function make(User $user, string $class): Tool
+    private static function make(User $user, string $class, ?ChatThread $thread = null): Tool
     {
         return match ($class) {
             IntegrationCatalogTool::class => new IntegrationCatalogTool($user),
             IntegrationCallTool::class => new IntegrationCallTool($user, app(IntegrationExecutor::class)),
             ManageAgentsTool::class => new ManageAgentsTool($user, app(AgentDefinitionService::class)),
             LoadSkillTool::class => new LoadSkillTool($user, app(SkillCatalog::class)),
+            RememberMemoryTool::class => new RememberMemoryTool($user, app(MemoryCatalog::class), $thread),
+            ForgetMemoryTool::class => new ForgetMemoryTool($user, app(MemoryCatalog::class), $thread),
+            PromoteMemoryTool::class => new PromoteMemoryTool($user, app(MemoryCatalog::class)),
             default => new $class($user),
         };
     }
