@@ -1,5 +1,12 @@
-import { Head, router } from '@inertiajs/react';
-import { MoreHorizontal, Pin, PinOff, RotateCcw, Trash2 } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import {
+    BrainCircuit,
+    MoreHorizontal,
+    Pin,
+    PinOff,
+    RotateCcw,
+    Trash2,
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import ChatAttachmentController from '@/actions/App/Http/Controllers/Ai/ChatAttachmentController';
 import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
@@ -24,10 +31,14 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { errorMessageFromPayload, useAttachmentUpload } from '@/hooks/use-attachment-upload';
+import {
+    errorMessageFromPayload,
+    useAttachmentUpload,
+} from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
 import { csrfHeaders } from '@/lib/csrf';
+import { index as memoryIndex } from '@/routes/ai/memory';
 import type {
     AiChatState,
     ChatAttachment,
@@ -61,8 +72,12 @@ export default function ChatThread({
     skills,
     ai,
 }: ChatThreadProps) {
-    const [model, setModel] = useState<string | null>(thread.model ?? ai.defaultModel ?? models[0] ?? null);
-    const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>(thread.tools_policy ?? { mode: 'auto', groups: [] });
+    const [model, setModel] = useState<string | null>(
+        thread.model ?? ai.defaultModel ?? models[0] ?? null,
+    );
+    const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>(
+        thread.tools_policy ?? { mode: 'auto', groups: [] },
+    );
     const [skillKeys, setSkillKeys] = useState<string[]>([]);
     const [forceWeb, setForceWeb] = useState(false);
     const [sourceMode, setSourceMode] = useState<SourceMode>(thread.mode);
@@ -118,7 +133,8 @@ export default function ChatThread({
                     ? toolsPolicy
                     : undefined,
             force_web: forceWeb ? true : undefined,
-            attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
+            attachment_ids:
+                attachmentIds.length > 0 ? attachmentIds : undefined,
             skill_keys: skillKeys.length > 0 ? skillKeys : undefined,
         });
         setForceWeb(false);
@@ -128,7 +144,11 @@ export default function ChatThread({
         if (mode === 'local' || mode === 'off') setForceWeb(false);
 
         setSourceMode(mode);
-        router.patch(ChatController.update.url(thread.id), { mode }, { preserveScroll: true, preserveState: true });
+        router.patch(
+            ChatController.update.url(thread.id),
+            { mode },
+            { preserveScroll: true, preserveState: true },
+        );
     };
 
     const submit = (message: string) => startSend(message);
@@ -141,7 +161,9 @@ export default function ChatThread({
             });
         });
 
-    const addComposerFiles = async (files: File[] | FileList): Promise<void> => {
+    const addComposerFiles = async (
+        files: File[] | FileList,
+    ): Promise<void> => {
         await upload.addFiles(files);
         await reloadSourceProps();
     };
@@ -169,7 +191,9 @@ export default function ChatThread({
         });
 
         if (!succeeded) {
-            throw new Error(validationError ?? 'No se pudo adjuntar la fuente.');
+            throw new Error(
+                validationError ?? 'No se pudo adjuntar la fuente.',
+            );
         }
 
         await reloadSourceProps();
@@ -179,14 +203,20 @@ export default function ChatThread({
         let succeeded = false;
 
         await new Promise<void>((resolve) => {
-            router.delete(SourcesController.detach.url({ thread: thread.id, attachment: attachmentId }), {
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: () => {
-                    succeeded = true;
+            router.delete(
+                SourcesController.detach.url({
+                    thread: thread.id,
+                    attachment: attachmentId,
+                }),
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    onSuccess: () => {
+                        succeeded = true;
+                    },
+                    onFinish: () => resolve(),
                 },
-                onFinish: () => resolve(),
-            });
+            );
         });
 
         if (!succeeded) {
@@ -215,7 +245,10 @@ export default function ChatThread({
         if (!response.ok) {
             const payload: unknown = await response.json().catch(() => null);
 
-            throw new Error(errorMessageFromPayload(payload) ?? 'No se pudo subir el documento.');
+            throw new Error(
+                errorMessageFromPayload(payload) ??
+                    'No se pudo subir el documento.',
+            );
         }
 
         await reloadSourceProps();
@@ -243,7 +276,10 @@ export default function ChatThread({
 
     const edit = (messageId: string, content: string) => {
         clearPending();
-        stream.start(ChatController.edit.url(thread.id), { message_id: messageId, content });
+        stream.start(ChatController.edit.url(thread.id), {
+            message_id: messageId,
+            content,
+        });
     };
 
     const decide: DecideApproval = (id, action, payload) => {
@@ -258,7 +294,9 @@ export default function ChatThread({
         if (ids.length === 0) return;
 
         stream.start(ChatController.approve.url(thread.id), {
-            decisions: Object.fromEntries(ids.map((id) => [id, { action: 'approve' }])),
+            decisions: Object.fromEntries(
+                ids.map((id) => [id, { action: 'approve' }]),
+            ),
         });
     };
 
@@ -273,7 +311,11 @@ export default function ChatThread({
             return;
         }
 
-        router.patch(ChatController.update.url(thread.id), { title: trimmed }, { preserveScroll: true, preserveState: true });
+        router.patch(
+            ChatController.update.url(thread.id),
+            { title: trimmed },
+            { preserveScroll: true, preserveState: true },
+        );
     };
 
     const togglePinned = () => {
@@ -284,10 +326,16 @@ export default function ChatThread({
         );
     };
 
-    const composerAttachments = upload.attachments.filter((attachment) => attachment.kind !== 'document');
+    const composerAttachments = upload.attachments.filter(
+        (attachment) => attachment.kind !== 'document',
+    );
     const hasPendingApprovals =
         stream.pendingApprovals.length > 0 ||
-        messages.some((message) => message.role === 'assistant' && message.pending_approvals.length > 0);
+        messages.some(
+            (message) =>
+                message.role === 'assistant' &&
+                message.pending_approvals.length > 0,
+        );
 
     return (
         <ChatLayout
@@ -323,7 +371,21 @@ export default function ChatThread({
                         </button>
                     )}
 
-                    {thread.is_pinned && <Pin className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                    {thread.is_pinned && (
+                        <Pin className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    )}
+
+                    <Link
+                        href={memoryIndex.url({ query: { thread: thread.id } })}
+                        className="ml-1 flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                        title="Ver la memoria de este hilo"
+                    >
+                        <BrainCircuit className="h-3 w-3" />
+                        Memoria
+                        {thread.memories_count
+                            ? ` · ${thread.memories_count}`
+                            : ''}
+                    </Link>
 
                     <div className="ml-auto flex items-center gap-1">
                         <DropdownMenu>
@@ -337,10 +399,21 @@ export default function ChatThread({
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="border-border bg-card">
-                                <DropdownMenuItem onSelect={() => setRenaming(true)}>Renombrar</DropdownMenuItem>
+                            <DropdownMenuContent
+                                align="end"
+                                className="border-border bg-card"
+                            >
+                                <DropdownMenuItem
+                                    onSelect={() => setRenaming(true)}
+                                >
+                                    Renombrar
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={togglePinned}>
-                                    {thread.is_pinned ? <PinOff className="mr-2 h-3.5 w-3.5" /> : <Pin className="mr-2 h-3.5 w-3.5" />}
+                                    {thread.is_pinned ? (
+                                        <PinOff className="mr-2 h-3.5 w-3.5" />
+                                    ) : (
+                                        <Pin className="mr-2 h-3.5 w-3.5" />
+                                    )}
                                     {thread.is_pinned ? 'Desfijar' : 'Fijar'}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -376,7 +449,10 @@ export default function ChatThread({
             />
 
             {stream.error && (
-                <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4" role="alert">
+                <div
+                    className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4"
+                    role="alert"
+                >
                     <p className="text-xs text-destructive">{stream.error}</p>
 
                     {pendingMessage !== null && (
@@ -427,13 +503,16 @@ export default function ChatThread({
                         disabled={!ai.configured || hasPendingApprovals}
                     />
                     <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-                        La IA puede cometer errores. Verifica la información importante.
+                        La IA puede cometer errores. Verifica la información
+                        importante.
                     </p>
 
                     <ThreadSourcesPanel
                         sources={sources}
                         library={library}
-                        stagedImageIds={composerAttachments.map((attachment) => attachment.id)}
+                        stagedImageIds={composerAttachments.map(
+                            (attachment) => attachment.id,
+                        )}
                         onAttach={attachSource}
                         onDetach={detachSource}
                         onUseImage={upload.stageImage}
@@ -448,15 +527,26 @@ export default function ChatThread({
                     <DialogHeader>
                         <DialogTitle>Eliminar hilo</DialogTitle>
                         <DialogDescription>
-                            Se eliminarán “{thread.title}” y todos sus mensajes. No se puede deshacer.
+                            Se eliminarán “{thread.title}” y todos sus mensajes
+                            {thread.memories_count
+                                ? ` y ${thread.memories_count} ${thread.memories_count === 1 ? 'memoria' : 'memorias'} del hilo`
+                                : ''}
+                            . No se puede deshacer.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2">
-                        <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+                        <Button
+                            variant="ghost"
+                            onClick={() => setConfirmOpen(false)}
+                        >
                             Cancelar
                         </Button>
                         <Button
-                            onClick={() => router.delete(ChatController.destroy.url(thread.id))}
+                            onClick={() =>
+                                router.delete(
+                                    ChatController.destroy.url(thread.id),
+                                )
+                            }
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                             Eliminar
