@@ -195,25 +195,33 @@ test('the thread page exposes pivot attached sources ordered by attach time', fu
         );
 });
 
-test('the thread page exposes the document library scoped to the user', function () {
+test('the thread page exposes the full library (documents and images) scoped to the user', function () {
     $user = User::factory()->withAiProvider()->create();
     $thread = sourcesLibraryThread($user);
 
     $older = sourcesLibraryDocument($user, ['original_name' => 'antiguo.txt', 'created_at' => now()->subMinute()]);
     $newer = sourcesLibraryDocument($user, ['original_name' => 'nuevo.txt']);
+    $image = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'kind' => 'image',
+        'original_name' => 'foto.png',
+        'created_at' => now()->subSeconds(30),
+    ]);
 
     sourcesLibraryDocument(User::factory()->create(), ['original_name' => 'ajeno.txt']);
-    ChatAttachment::factory()->create(['user_id' => $user->id, 'kind' => 'image']);
+    ChatAttachment::factory()->create(['user_id' => User::factory()->create()->id, 'kind' => 'image']);
 
     $this->actingAs($user)
         ->get(route('ai.chat.show', $thread))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('ai/thread')
-            ->has('library', 2)
+            ->has('library', 3)
             ->where('library.0.id', $newer->id)
             ->where('library.0.threads_count', 0)
-            ->where('library.1.id', $older->id)
+            ->where('library.1.id', $image->id)
+            ->where('library.1.is_image', true)
+            ->where('library.2.id', $older->id)
         );
 });
 

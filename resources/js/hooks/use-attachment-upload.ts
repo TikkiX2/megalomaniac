@@ -17,6 +17,7 @@ export interface UseAttachmentUploadResult {
     removeSource: (id: string) => void;
     retry: (id: string) => Promise<void>;
     clearImages: () => void;
+    stageImage: (attachment: ChatAttachment) => void;
     readyIds: () => string[];
     readyImageIds: () => string[];
     uploading: boolean;
@@ -184,6 +185,7 @@ export function useAttachmentUpload(
     const attachmentsRef = useRef<ChatAttachment[]>([]);
     const filesRef = useRef(new Map<string, File>());
     const removedRef = useRef(new Set<string>());
+    const stagedRef = useRef(new Set<string>());
 
     useEffect(() => {
         attachmentsRef.current = attachments;
@@ -314,6 +316,14 @@ export function useAttachmentUpload(
     const remove = useCallback(async (id: string): Promise<void> => {
         setError(null);
 
+        if (stagedRef.current.delete(id)) {
+            // A library image staged for the next message: only unstage it.
+            filesRef.current.delete(id);
+            setAttachments((previous) => previous.filter((attachment) => attachment.id !== id));
+
+            return;
+        }
+
         if (!isPersisted(id)) {
             removedRef.current.add(id);
             filesRef.current.delete(id);
@@ -383,6 +393,24 @@ export function useAttachmentUpload(
         }
 
         setAttachments((previous) => previous.filter((attachment) => attachment.kind !== 'image'));
+    }, []);
+
+    /**
+     * Stage a library image so it is sent with the next message, exactly like
+     * a freshly uploaded attachment. Removing it only unstages (the library
+     * copy survives).
+     */
+    const stageImage = useCallback((attachment: ChatAttachment): void => {
+        if (attachment.kind !== 'image' || attachment.status !== 'ready') {
+            return;
+        }
+
+        if (attachmentsRef.current.some((entry) => entry.id === attachment.id)) {
+            return;
+        }
+
+        stagedRef.current.add(attachment.id);
+        setAttachments((previous) => [...previous, attachment]);
     }, []);
 
     const readyImageIds = useCallback(
@@ -481,6 +509,7 @@ export function useAttachmentUpload(
         removeSource,
         retry,
         clearImages,
+        stageImage,
         readyIds,
         readyImageIds,
         uploading,

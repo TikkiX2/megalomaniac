@@ -79,7 +79,6 @@ class ChatController extends Controller
             'library' => ChatAttachmentResource::collection(
                 ChatAttachment::query()
                     ->forUser($user)
-                    ->documents()
                     ->withCount('threads')
                     ->orderByDesc('created_at')
                     ->limit(50)

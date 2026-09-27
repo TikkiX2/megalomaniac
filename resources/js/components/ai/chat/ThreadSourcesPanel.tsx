@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { FileText, Loader2, Paperclip, Search, Unlink, UploadCloud } from 'lucide-react';
+import { FileText, Image as ImageIcon, Loader2, Paperclip, Search, Unlink, UploadCloud } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { attachmentStatusLabel, formatBytes } from '@/components/ai/chat/AttachmentChips';
@@ -18,8 +18,10 @@ import type { ChatAttachment } from '@/types/chat';
 interface ThreadSourcesPanelProps {
     sources: ChatAttachment[];
     library: ChatAttachment[];
+    stagedImageIds: string[];
     onAttach: (attachmentId: string) => Promise<void>;
     onDetach: (attachmentId: string) => Promise<void>;
+    onUseImage: (attachment: ChatAttachment) => void;
     onUpload: (file: File) => Promise<void>;
     disabled?: boolean;
 }
@@ -56,7 +58,16 @@ function StatusBadge({ attachment }: { attachment: ChatAttachment }) {
     );
 }
 
-export function ThreadSourcesPanel({ sources, library, onAttach, onDetach, onUpload, disabled = false }: ThreadSourcesPanelProps) {
+export function ThreadSourcesPanel({
+    sources,
+    library,
+    stagedImageIds,
+    onAttach,
+    onDetach,
+    onUseImage,
+    onUpload,
+    disabled = false,
+}: ThreadSourcesPanelProps) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -152,12 +163,8 @@ export function ThreadSourcesPanel({ sources, library, onAttach, onDetach, onUpl
                 </Button>
             </div>
 
-            {sources.length === 0 ? (
-                <p className="px-1 py-1 text-[11px] text-muted-foreground">
-                    Sin fuentes adjuntas. La IA usará tus documentos de la biblioteca solo si los adjuntas aquí.
-                </p>
-            ) : (
-                <ul className="mt-1 space-y-0.5">
+            {sources.length === 0 ? null : (
+                <ul className="mt-1 max-h-40 space-y-0.5 overflow-y-auto">
                     {sources.map((source) => (
                         <li key={source.id} className="flex items-center gap-2 rounded-lg px-1 py-1">
                             <FileText
@@ -217,8 +224,8 @@ export function ThreadSourcesPanel({ sources, library, onAttach, onDetach, onUpl
                     <DialogHeader>
                         <DialogTitle>Adjuntar fuentes</DialogTitle>
                         <DialogDescription>
-                            Elige documentos de tu biblioteca o sube uno nuevo. Las fuentes adjuntas se usan como
-                            contexto en este hilo.{' '}
+                            Los documentos se adjuntan como contexto del hilo; las imágenes se envían con tu próximo
+                            mensaje.{' '}
                             <Link href="/ai/sources" className="text-primary hover:underline">
                                 Ver biblioteca
                             </Link>
@@ -289,62 +296,96 @@ export function ThreadSourcesPanel({ sources, library, onAttach, onDetach, onUpl
                         {filtered.length === 0 ? (
                             <p className="px-3 py-6 text-center text-xs text-muted-foreground">
                                 {library.length === 0
-                                    ? 'Tu biblioteca está vacía. Sube un documento para empezar.'
+                                    ? 'Tu biblioteca está vacía. Sube un archivo para empezar.'
                                     : 'Sin resultados para tu búsqueda.'}
                             </p>
                         ) : (
                             <ul className="divide-y divide-border">
-                                {filtered.map((document) => {
-                                    const attached = attachedIds.has(document.id);
-                                    const failed = document.status === 'failed';
+                                {filtered.map((item) => {
+                                    const attached = attachedIds.has(item.id);
+                                    const failed = item.status === 'failed';
+                                    const isImage = item.is_image || item.kind === 'image';
+                                    const staged = isImage && stagedImageIds.includes(item.id);
 
                                     return (
-                                        <li key={document.id} className="flex items-center gap-2 px-3 py-2">
-                                            <FileText
-                                                className={cn(
-                                                    'h-3.5 w-3.5 shrink-0',
-                                                    failed ? 'text-destructive' : 'text-muted-foreground',
-                                                )}
-                                            />
+                                        <li key={item.id} className="flex items-center gap-2 px-3 py-2">
+                                            {isImage && item.url !== '' ? (
+                                                <img
+                                                    src={item.url}
+                                                    alt=""
+                                                    loading="lazy"
+                                                    className="h-8 w-8 shrink-0 rounded border border-border object-cover"
+                                                />
+                                            ) : isImage ? (
+                                                <ImageIcon
+                                                    className={cn(
+                                                        'h-3.5 w-3.5 shrink-0',
+                                                        failed ? 'text-destructive' : 'text-muted-foreground',
+                                                    )}
+                                                />
+                                            ) : (
+                                                <FileText
+                                                    className={cn(
+                                                        'h-3.5 w-3.5 shrink-0',
+                                                        failed ? 'text-destructive' : 'text-muted-foreground',
+                                                    )}
+                                                />
+                                            )}
                                             <div className="min-w-0 flex-1">
-                                                <p className="truncate text-xs text-foreground" title={document.name}>
-                                                    {document.name}
+                                                <p className="truncate text-xs text-foreground" title={item.name}>
+                                                    {item.name}
                                                 </p>
                                                 <p
                                                     className={cn(
                                                         'truncate text-[10px]',
                                                         failed ? 'text-destructive' : 'text-muted-foreground',
                                                     )}
-                                                    title={attachmentStatusLabel(document)}
+                                                    title={attachmentStatusLabel(item)}
                                                 >
-                                                    {STATUS_LABELS[document.status]} · {formatBytes(document.size)}
-                                                    {document.threads_count !== undefined && document.threads_count > 0
-                                                        ? ` · En ${document.threads_count} ${document.threads_count === 1 ? 'hilo' : 'hilos'}`
+                                                    {STATUS_LABELS[item.status]} · {formatBytes(item.size)}
+                                                    {!isImage &&
+                                                    item.threads_count !== undefined &&
+                                                    item.threads_count > 0
+                                                        ? ` · En ${item.threads_count} ${item.threads_count === 1 ? 'hilo' : 'hilos'}`
                                                         : ''}
                                                 </p>
                                             </div>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant={attached ? 'ghost' : 'outline'}
-                                                disabled={attached || failed || disabled || busy}
-                                                onClick={() => {
-                                                    void attach(document.id);
-                                                }}
-                                                className="h-7 shrink-0 border-border px-2 text-[10px]"
-                                            >
-                                                {attachBusyId === document.id ? (
-                                                    <Loader2
-                                                        role="img"
-                                                        aria-label="Adjuntando…"
-                                                        className="h-3 w-3 animate-spin"
-                                                    />
-                                                ) : attached ? (
-                                                    'Adjuntada'
-                                                ) : (
-                                                    'Adjuntar'
-                                                )}
-                                            </Button>
+                                            {isImage ? (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant={staged ? 'ghost' : 'outline'}
+                                                    disabled={staged || failed || disabled || busy}
+                                                    onClick={() => onUseImage(item)}
+                                                    title="Se envía con tu próximo mensaje"
+                                                    className="h-7 shrink-0 border-border px-2 text-[10px]"
+                                                >
+                                                    {staged ? 'Preparada' : 'Usar en mensaje'}
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant={attached ? 'ghost' : 'outline'}
+                                                    disabled={attached || failed || disabled || busy}
+                                                    onClick={() => {
+                                                        void attach(item.id);
+                                                    }}
+                                                    className="h-7 shrink-0 border-border px-2 text-[10px]"
+                                                >
+                                                    {attachBusyId === item.id ? (
+                                                        <Loader2
+                                                            role="img"
+                                                            aria-label="Adjuntando…"
+                                                            className="h-3 w-3 animate-spin"
+                                                        />
+                                                    ) : attached ? (
+                                                        'Adjuntada'
+                                                    ) : (
+                                                        'Adjuntar'
+                                                    )}
+                                                </Button>
+                                            )}
                                         </li>
                                     );
                                 })}

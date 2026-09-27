@@ -426,8 +426,10 @@ export default function ChatThread({
                     <ThreadSourcesPanel
                         sources={sources}
                         library={library}
+                        stagedImageIds={composerAttachments.map((attachment) => attachment.id)}
                         onAttach={attachSource}
                         onDetach={detachSource}
+                        onUseImage={upload.stageImage}
                         onUpload={uploadSource}
                         disabled={stream.status === 'streaming'}
                     />
