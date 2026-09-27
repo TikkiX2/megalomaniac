@@ -143,7 +143,7 @@ class MemoryCatalog
                         ->where('thread_id', $thread->getKey()));
                 }
             })
-            ->whereRaw('LOWER(content) LIKE ?', ['%'.addcslashes($needle, '%_\\').'%'])
+            ->whereRaw("LOWER(content) LIKE ? ESCAPE '\\'", ['%'.addcslashes($needle, '%_\\').'%'])
             ->orderByDesc('updated_at')
             ->orderByDesc('id')
             ->limit(5)
