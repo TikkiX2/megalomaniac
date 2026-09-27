@@ -63,11 +63,13 @@ function SourceBadge({ source }: { source: MemoryRow['source'] }) {
 function MemoryCard({
     memory,
     maxContent,
+    promoteDisabled,
     onPromote,
     onDelete,
 }: {
     memory: MemoryRow;
     maxContent: number;
+    promoteDisabled: boolean;
     onPromote: (memory: MemoryRow) => void;
     onDelete: (memory: MemoryRow) => void;
 }) {
@@ -161,6 +163,7 @@ function MemoryCard({
                                         variant="ghost"
                                         size="sm"
                                         className="h-7 text-xs"
+                                        disabled={promoteDisabled}
                                         onClick={() => onPromote(memory)}
                                     >
                                         <CornerUpLeft className="mr-1 h-3 w-3" />
@@ -199,6 +202,9 @@ export default function MemoryPage() {
     );
     const [search, setSearch] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<MemoryRow | null>(null);
+    const [mutatingId, setMutatingId] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const [mutationError, setMutationError] = useState<string | null>(null);
 
     const createForm = useForm<{ content: string; thread_id: string | null }>({
         content: '',
@@ -242,12 +248,41 @@ export default function MemoryPage() {
         });
     };
 
+    const promoteMemory = (memory: MemoryRow) => {
+        router.post(
+            promote.url(memory.id),
+            {},
+            {
+                preserveScroll: true,
+                onStart: () => {
+                    setMutationError(null);
+                    setMutatingId(memory.id);
+                },
+                onFinish: () => setMutatingId(null),
+                onError: (errors) =>
+                    setMutationError(
+                        Object.values(errors)[0] ??
+                            'No se pudo promover la memoria.',
+                    ),
+            },
+        );
+    };
+
     const confirmDelete = () => {
         if (deleteTarget === null) return;
 
         router.delete(destroy.url(deleteTarget.id), {
             preserveScroll: true,
+            onStart: () => {
+                setMutationError(null);
+                setDeleting(true);
+            },
+            onFinish: () => setDeleting(false),
             onSuccess: () => setDeleteTarget(null),
+            onError: (errors) =>
+                setMutationError(
+                    Object.values(errors)[0] ?? 'No se pudo borrar la memoria.',
+                ),
         });
     };
 
@@ -387,6 +422,12 @@ export default function MemoryPage() {
                     </CardContent>
                 </Card>
 
+                {mutationError && (
+                    <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                        {mutationError}
+                    </div>
+                )}
+
                 {scope === 'thread' && threads.length === 0 ? (
                     <Card className="border-border bg-card">
                         <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -412,13 +453,10 @@ export default function MemoryPage() {
                                 key={memory.id}
                                 memory={memory}
                                 maxContent={limits.max_content}
-                                onPromote={(row) =>
-                                    router.post(
-                                        promote.url(row.id),
-                                        {},
-                                        { preserveScroll: true },
-                                    )
+                                promoteDisabled={
+                                    mutatingId === memory.id || deleting
                                 }
+                                onPromote={promoteMemory}
                                 onDelete={setDeleteTarget}
                             />
                         ))}
@@ -441,11 +479,13 @@ export default function MemoryPage() {
                     <DialogFooter className="gap-2">
                         <Button
                             variant="ghost"
+                            disabled={deleting}
                             onClick={() => setDeleteTarget(null)}
                         >
                             Cancelar
                         </Button>
                         <Button
+                            disabled={deleting}
                             onClick={confirmDelete}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
