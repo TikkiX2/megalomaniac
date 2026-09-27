@@ -423,7 +423,10 @@ export default function MemoryPage() {
                 </Card>
 
                 {mutationError && (
-                    <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                    <div
+                        role="alert"
+                        className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+                    >
                         {mutationError}
                     </div>
                 )}
@@ -476,6 +479,11 @@ export default function MemoryPage() {
                             deshacer.
                         </DialogDescription>
                     </DialogHeader>
+                    {mutationError && (
+                        <p role="alert" className="text-xs text-destructive">
+                            {mutationError}
+                        </p>
+                    )}
                     <DialogFooter className="gap-2">
                         <Button
                             variant="ghost"

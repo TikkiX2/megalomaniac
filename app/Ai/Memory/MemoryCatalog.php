@@ -191,7 +191,7 @@ class MemoryCatalog
         $skipped = 0;
 
         foreach ($memories as $memory) {
-            $line = '- ['.$memory->getKey().'] '.$memory->content;
+            $line = '- ['.$memory->getKey().'] '.preg_replace('/\s+/u', ' ', $memory->content);
             $cost = mb_strlen($line) + 1;
 
             if ($cost > $budget) {
