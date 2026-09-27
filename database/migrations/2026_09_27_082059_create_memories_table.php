@@ -12,7 +12,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('scope', 16);
-            $table->uuid('thread_id')->nullable();
+            $table->string('thread_id', 36)->nullable()->index();
             $table->text('content');
             $table->string('source', 16)->default('agent');
             $table->char('content_hash', 64);

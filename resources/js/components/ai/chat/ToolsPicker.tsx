@@ -28,7 +28,7 @@ export function ToolsPicker({
             : 'Herramientas: Auto';
 
     const toggle = (key: string) => {
-        const current = policy.mode === 'manual' ? policy.groups : [];
+        const current = policy.mode === 'manual' ? policy.groups : ['memory'];
         const next = current.includes(key) ? current.filter((group) => group !== key) : [...current, key];
 
         onChange(next.length > 0 ? { mode: 'manual', groups: next } : { mode: 'auto', groups: [] });

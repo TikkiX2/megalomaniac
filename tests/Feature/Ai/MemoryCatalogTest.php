@@ -137,6 +137,7 @@ test('blockFor renders global and thread sections with ids', function () {
 
     $global = $catalog->remember($user, 'Dato general', MemoryScope::Global);
     $threadMemory = $catalog->remember($user, 'Dato del hilo', MemoryScope::Thread, $thread);
+    $catalog->remember($user, "Linea uno\nLinea dos", MemoryScope::Global);
 
     $block = $catalog->blockFor($user, $thread);
 
@@ -144,5 +145,7 @@ test('blockFor renders global and thread sections with ids', function () {
         ->and($block)->toContain($global->id)
         ->and($block)->toContain('Memoria de este hilo')
         ->and($block)->toContain($threadMemory->id)
+        ->and($block)->toContain('Linea uno Linea dos')
+        ->and($block)->not->toContain("\nLinea dos")
         ->and($catalog->blockFor(User::factory()->create(), null))->toBeNull();
 });
