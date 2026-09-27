@@ -8,7 +8,6 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
-import { destroy, promote, store, update } from '@/routes/ai/memory';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +32,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import { cn } from '@/lib/utils';
+import { destroy, promote, store, update } from '@/routes/ai/memory';
 import type { SharedData } from '@/types';
 import type {
     MemoryLimits,
