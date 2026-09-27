@@ -385,3 +385,20 @@ Tareas de prueba creadas y eliminadas; no quedaron datos nuevos.
 
 ### Regla operativa (deploy manual)
 Al reconstruir la imagen de prod sin el pipeline, **copiar siempre el build a host**: `docker cp megalomaniac-app:/var/www/megalomaniac/public/build /root/docker/megalomaniac/app/public/build` — si no, nginx sirve assets viejos y aparecen 404 de chunks.
+
+## Fix: descripciones no visibles en tareas/kanban — 2026-09-27
+
+> **Reporte del usuario:** no se ven las descripciones en los tickets (tarjetas de tareas).
+
+### Causa raíz (evidencia)
+- Las descripciones en DB tienen 3 formatos: **mapa de bloques Yoopta v4** (lo que produce el editor: `{blockId: {id,type,value:[{children:[{text}]}],meta}}`, 9 filas), **string JSON** (`"Probar toda la app"`, 32 filas) y el todo-lista legacy de IA (ninguna fila).
+- `YooptaEditor` (wrapper) hacía `sanitizeYooptaValue` con `if (!Array.isArray(val)) return undefined` → todo lo que no fuera lista se descartaba y el editor abría **vacío**; `yooptaToText` solo leía `block.children` de listas → galería/lecturas devolvían `''` y las tarjetas de kanban no renderizaban descripción.
+
+### Fix
+- `components/tasks/yoopta.ts`: `yooptaToText` soporta string (strip HTML), lista y mapa (ordena por `meta.order`, lee `value[].children[].text` y `children[].text`); `normalizeYooptaValue` convierte cualquier formato al mapa v4 (strings y bloques legacy → Paragraph/Heading/List).
+- `YooptaEditor` usa `normalizeYooptaValue` (mapas y strings ya no se pierden) y quedó tipado sin `any`.
+- `TaskKanban`: las tarjetas (y el overlay de drag) muestran la descripción `line-clamp-2`; `TaskDetailDialog`/`TaskBoard` aceptan `YooptaValue`.
+
+### Verificado en vivo (dev, Playwright)
+- Kanban: tarjeta con descripción en **mapa** y en **string** → texto visible; detalle (dialog) → editor con contenido en ambos formatos; galería → texto visible. **PASS**
+- Suite **611 passed**, Pint/types/eslint/build OK. Commit `299ab90`; deploy a prod con rebuild + sincronización de `public/build` al host (assets 200).
