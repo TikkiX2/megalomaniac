@@ -94,6 +94,7 @@ test('candidatesFor searches visible memories by normalized content', function (
     $global = $catalog->remember($user, 'Prefiere reportes cortos', MemoryScope::Global);
     $catalog->remember($user, 'Detalle del hilo: PR de press banca', MemoryScope::Thread, $thread);
     $catalog->remember($user, 'Otra memoria', MemoryScope::Thread, memoryThread($user));
+    $percent = $catalog->remember($user, 'Press banca al 80% de 1RM', MemoryScope::Thread, $thread);
 
     $matches = $catalog->candidatesFor($user, $thread, 'PR de press');
 
@@ -102,6 +103,11 @@ test('candidatesFor searches visible memories by normalized content', function (
 
     expect($catalog->candidatesFor($user, $thread, 'prefiere'))->toHaveCount(1)
         ->and($catalog->candidatesFor($user, $thread, 'inexistente'))->toHaveCount(0);
+
+    $percentMatches = $catalog->candidatesFor($user, $thread, '80%');
+
+    expect($percentMatches)->toHaveCount(1)
+        ->and($percentMatches->first()->id)->toBe($percent->id);
 });
 
 test('blockFor orders by recency and respects the injection budget', function () {
