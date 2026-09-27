@@ -1,6 +1,7 @@
 import { Loader2, Sparkles, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import YooptaEditor from '@/components/freelance/YooptaEditor';
+import { yooptaToText } from '@/components/tasks/yoopta';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -20,12 +21,12 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { csrfHeaders } from '@/lib/csrf';
-import type { BoardColumn, YooptaBlock } from '@/types/personal';
+import type { BoardColumn, YooptaValue } from '@/types/personal';
 
 export interface DetailTask {
     id: number;
     title: string;
-    description?: YooptaBlock[] | null;
+    description?: YooptaValue;
     status: string;
     priority?: string | null;
     due_date?: string | null;
@@ -56,16 +57,8 @@ const PRIORITIES = [
     { value: 'Urgent', label: 'Urgente' },
 ];
 
-function hasContent(blocks: YooptaBlock[] | null | undefined): boolean {
-    if (!Array.isArray(blocks)) {
-        return false;
-    }
-
-    return blocks.some((block) =>
-        Array.isArray(block.children)
-            ? block.children.some((child) => String(child.text ?? '').trim() !== '')
-            : false,
-    );
+function hasContent(description: YooptaValue): boolean {
+    return yooptaToText(description).trim() !== '';
 }
 
 function toDateInput(value?: string | null): string {
@@ -157,7 +150,7 @@ function TaskDetailForm({
     const [responsible, setResponsible] = useState(task.responsible ?? '');
     const [area, setArea] = useState(task.area ?? '');
 
-    const [description, setDescription] = useState<YooptaBlock[] | null>(task.description ?? null);
+    const [description, setDescription] = useState<YooptaValue>(task.description ?? null);
     const [editorKey, setEditorKey] = useState(0);
 
     const [saving, setSaving] = useState(false);

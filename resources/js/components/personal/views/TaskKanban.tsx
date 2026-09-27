@@ -23,6 +23,7 @@ import { useRef, useState } from 'react';
 import { move as moveTaskRoute } from '@/actions/App/Http/Controllers/Personal/PersonalTaskController';
 import { boardCollisionDetection } from '@/components/tasks/collisionDetection';
 import { AddColumnButton, ColumnMenu, columnDotClass } from '@/components/tasks/ColumnManager';
+import { yooptaToText } from '@/components/tasks/yoopta';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -97,6 +98,7 @@ function SortableTaskCard({ task, onTaskClick, onDelete, onMove, columns, draggi
         transition,
         opacity: isDragging ? 0.4 : 1,
     };
+    const descriptionText = yooptaToText(task.description);
 
     const currentKey = resolveColumnKey(task.status, columns);
     const currentIdx = columns.findIndex((column) => column.key === currentKey);
@@ -126,6 +128,7 @@ function SortableTaskCard({ task, onTaskClick, onDelete, onMove, columns, draggi
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                        aria-label={`Eliminar ${task.title}`}
                         onClick={(event) => { event.stopPropagation(); onDelete(task); }}
                         onPointerDown={(event) => event.stopPropagation()}
                         onKeyDown={(event) => event.stopPropagation()}
@@ -133,6 +136,11 @@ function SortableTaskCard({ task, onTaskClick, onDelete, onMove, columns, draggi
                         <Trash className="h-3 w-3 text-destructive" />
                     </Button>
                 </div>
+                {descriptionText !== '' && (
+                    <p className="text-xs text-muted-foreground line-clamp-2" title={descriptionText}>
+                        {descriptionText}
+                    </p>
+                )}
                 <div className="flex gap-1 flex-wrap">
                     {task.priority && <Badge variant="outline" className="text-[9px]">{task.priority}</Badge>}
                     {task.project && <Badge variant="secondary" className="text-[9px]">{task.project.name}</Badge>}
@@ -178,6 +186,8 @@ function SortableTaskCard({ task, onTaskClick, onDelete, onMove, columns, draggi
 }
 
 function TaskOverlay({ task }: { task: PersonalTask }) {
+    const descriptionText = yooptaToText(task.description);
+
     return (
         <Card className="bg-card border-primary/50 shadow-2xl rotate-2 opacity-90 w-[280px]">
             <CardContent className="p-3 flex flex-col gap-2">
@@ -185,6 +195,9 @@ function TaskOverlay({ task }: { task: PersonalTask }) {
                     <GripVertical className="h-3.5 w-3.5 text-primary" />
                     <p className="font-semibold text-sm leading-tight">{task.title}</p>
                 </div>
+                {descriptionText !== '' && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{descriptionText}</p>
+                )}
                 <div className="flex gap-1 flex-wrap">
                     {task.priority && <Badge variant="outline" className="text-[9px]">{task.priority}</Badge>}
                     {task.project && <Badge variant="secondary" className="text-[9px]">{task.project.name}</Badge>}

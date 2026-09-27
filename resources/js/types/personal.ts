@@ -1,9 +1,25 @@
-export type YooptaBlock = {
+export interface YooptaElement {
+    id?: string;
+    type?: string;
+    children?: Array<{ text?: string | null } & Record<string, unknown>>;
+    [key: string]: unknown;
+}
+
+export interface YooptaBlock {
     id: string;
     type: string;
-    children: Array<{ text: string } & Record<string, unknown>>;
+    value?: YooptaElement[];
+    children?: Array<{ text?: string | null } & Record<string, unknown>>;
+    meta?: { order?: number; depth?: number; align?: string; [key: string]: unknown };
     [key: string]: unknown;
-};
+}
+
+/**
+ * Yoopta v4 stores the editor value as a map keyed by block id, but legacy
+ * imports/AI generation stored plain strings or block lists. Normalize all of
+ * them on read.
+ */
+export type YooptaValue = YooptaBlock[] | Record<string, YooptaBlock> | string | null;
 
 export interface BoardColumn {
     id: number;
@@ -48,7 +64,7 @@ export interface PersonalTask {
     project_id: number | null;
     user_id: number | null;
     title: string;
-    description: YooptaBlock[] | null;
+    description: YooptaValue;
     status: string;
     priority: string | null;
     due_date: string | null;

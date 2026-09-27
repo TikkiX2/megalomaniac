@@ -64,12 +64,12 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { csrfHeaders } from '@/lib/csrf';
-import type { BoardColumn, YooptaBlock } from '@/types/personal';
+import type { BoardColumn, YooptaValue } from '@/types/personal';
 
 interface Task {
     id: number;
     title: string;
-    description?: YooptaBlock[] | null;
+    description?: YooptaValue;
     status: string;
     priority: string;
     due_date?: string | null;

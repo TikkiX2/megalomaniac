@@ -10,7 +10,9 @@ import Link from '@yoopta/link';
 import Lists from '@yoopta/lists';
 import Paragraph from '@yoopta/paragraph';
 import Toolbar, { DefaultToolbarRender } from '@yoopta/toolbar';
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, type ComponentProps } from 'react';
+import { normalizeYooptaValue } from '@/components/tasks/yoopta';
+import type { YooptaBlock, YooptaValue } from '@/types/personal';
 
 // Styles - Yoopta v4 is headless, but we can add custom styles here if needed.
 // For now, removing invalid imports.
@@ -38,24 +40,44 @@ const TOOLS = {
     },
 };
 
+type EditorValue = ComponentProps<typeof YooptaEditor>['value'];
+type EditorOnChange = NonNullable<ComponentProps<typeof YooptaEditor>['onChange']>;
+
 interface RichTextEditorProps {
-    value?: any;
-    onChange?: (value: any) => void;
+    value?: YooptaValue;
+    onChange?: (value: YooptaValue) => void;
     readOnly?: boolean;
     className?: string;
 }
 
-function sanitizeYooptaValue(val: any): any {
-    if (!val || !Array.isArray(val)) return undefined;
-    return val.map((block: any) => ({
-        ...block,
-        children: Array.isArray(block.children)
-            ? block.children.map((child: any) => ({
-                  ...child,
-                  text: child.text ?? '',
-              }))
-            : block.children,
-    }));
+/**
+ * Accepts Yoopta v4 block maps, legacy block lists and plain strings, and
+ * returns a v4 block map with text nodes never null (React requires a node).
+ */
+function sanitizeYooptaValue(value: YooptaValue | undefined): Record<string, YooptaBlock> | undefined {
+    const normalized = normalizeYooptaValue(value);
+
+    if (!normalized) return undefined;
+
+    return Object.fromEntries(
+        Object.entries(normalized).map(([id, block]) => [
+            id,
+            {
+                ...block,
+                value: Array.isArray(block.value)
+                    ? block.value.map((element) => ({
+                          ...element,
+                          children: Array.isArray(element.children)
+                              ? element.children.map((child) => ({
+                                    ...child,
+                                    text: child.text ?? '',
+                                }))
+                              : element.children,
+                      }))
+                    : block.value,
+            },
+        ]),
+    );
 }
 
 export default function RichTextEditor({ value, onChange, readOnly = false, className }: RichTextEditorProps) {
@@ -70,8 +92,8 @@ export default function RichTextEditor({ value, onChange, readOnly = false, clas
                 plugins={plugins}
                 tools={TOOLS}
                 readOnly={readOnly}
-                value={sanitizedValue}
-                onChange={onChange}
+                value={sanitizedValue as EditorValue}
+                onChange={onChange as EditorOnChange}
                 placeholder="Escribe aquí..."
                 width="100%"
             />
