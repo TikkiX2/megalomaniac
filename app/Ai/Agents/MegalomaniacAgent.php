@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Memory\MemoryCatalog;
 use App\Ai\Middleware\InjectThreadDocumentContext;
 use App\Ai\Middleware\InjectWebSearchContext;
 use App\Ai\Skills\SkillCatalog;
@@ -212,7 +213,22 @@ EOF;
             }
         }
 
+        if ($this->memoryEnabled()) {
+            $memory = app(MemoryCatalog::class)->blockFor($this->user, $this->thread);
+
+            if ($memory !== null) {
+                $instructions .= "\n\n".$memory;
+            }
+
+            $instructions .= "\n\nSobre tu memoria: guardá hechos y preferencias duraderas del usuario en la memoria general (scope \"global\") y detalles situacionales de esta conversación en la del hilo (scope \"thread\"). Usá entradas cortas de una sola idea, preferí actualizar o borrar antes que duplicar, y nunca guardes credenciales, secretos ni datos de pago.";
+        }
+
         return $instructions;
+    }
+
+    protected function memoryEnabled(): bool
+    {
+        return in_array('*', $this->toolGroups, true) || in_array('memory', $this->toolGroups, true);
     }
 
     protected function skillsToolEnabled(): bool
