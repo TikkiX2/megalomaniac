@@ -28,6 +28,14 @@ it('routes project creation and task moves to the action tools', function () {
         ->and(ToolRouter::route('Asigná esta tarea al proyecto nuevo'))->toContain('tasks', 'actions');
 });
 
+it('routes colloquial write verbs to the action tools', function () {
+    expect(ToolRouter::route('dale, conjunta con la de triaje de cajas de taller, de paso arregla la desc'))->toContain('actions')
+        ->and(ToolRouter::route('corregí el título de la tarea'))->toContain('actions')
+        ->and(ToolRouter::route('eliminá la tarea vieja'))->toContain('actions')
+        ->and(ToolRouter::route('ordená las tareas por prioridad'))->toContain('actions')
+        ->and(ToolRouter::route('renombrá el proyecto'))->toContain('actions');
+});
+
 it('falls back to the cheap default set', function () {
     expect(ToolRouter::route('Hola, ¿cómo estás?'))->toBe(['tasks', 'integrations', 'skills'])
         ->and(ToolRouter::route('Contame algo interesante'))->not->toContain('actions', 'agents');

@@ -10,6 +10,7 @@ use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\ToolCatalog;
 use App\Models\ChatThread;
 use App\Models\User;
+use Laravel\Ai\Attributes\RepairToolCalls;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -19,6 +20,7 @@ use Laravel\Ai\Files\Image;
 use Laravel\Ai\Messages\UserMessage;
 use Laravel\Ai\Promptable;
 
+#[RepairToolCalls]
 class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTools
 {
     use Promptable, RemembersConversations {

@@ -65,7 +65,12 @@ return [
         'sumar', 'marca', 'marcar', 'actualiza', 'actualizar', 'completa',
         'completar', 'borra', 'borrar', 'modifica', 'modificar', 'cambia',
         'cambiar', 'mov', 'mueve', 'mueva', 'asigna', 'asignar', 'reasigna',
-        'reasignar', 'traslada', 'trasladar',
+        'reasignar', 'traslada', 'trasladar', 'arregl', 'corrig', 'correg',
+        'edita', 'editar', 'renombr', 'conjunta', 'fusiona', 'fusionar',
+        'combina', 'combinar', 'unir', 'elimina', 'eliminar', 'quita',
+        'quitar', 'ordena', 'ordenar', 'reordena', 'reordenar', 'prioriza',
+        'priorizar', 'cierra', 'cerrar', 'reabre', 'reabrir', 'desmarca',
+        'desmarcar',
     ],
 
     /*
