@@ -11,6 +11,7 @@ use App\Integrations\Connectors\Google\GoogleConnector;
 use App\Integrations\Connectors\HomeAssistant\HomeAssistantConnector;
 use App\Integrations\Connectors\Jellyfin\JellyfinConnector;
 use App\Integrations\Connectors\Listenbrainz\ListenbrainzConnector;
+use App\Integrations\Connectors\Mcp\McpConnector;
 use App\Integrations\Connectors\Notion\NotionConnector;
 use App\Integrations\Connectors\Proxmox\ProxmoxConnector;
 use App\Integrations\Connectors\Reddit\RedditConnector;
@@ -63,6 +64,7 @@ return [
         GoogleDriveStorageConnector::class,
         DropboxStorageConnector::class,
         WebdavStorageConnector::class,
+        McpConnector::class,
     ],
 
     /*
@@ -119,6 +121,17 @@ return [
     */
 
     'retention_days' => (int) env('INTEGRATIONS_RETENTION_DAYS', 90),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom MCP Servers
+    |--------------------------------------------------------------------------
+    */
+
+    'mcp' => [
+        'output_cap_bytes' => (int) env('INTEGRATIONS_MCP_OUTPUT_CAP', 65536),
+        'timeout' => (int) env('INTEGRATIONS_MCP_TIMEOUT', 20),
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -462,3 +462,30 @@ Al reconstruir la imagen de prod sin el pipeline, **copiar siempre el build a ho
 
 ### Verificado
 - Prod (tool real, sintético con limpieza): create_task con `## Objetivo\n- Uno\n- Dos\nTexto final` → `HeadingTwo,BulletedList,BulletedList,Paragraph` con textos correctos. Suite **664 passed**, Pint OK. Commit `187b7dd`; deploy con rebuild + migrate (0 pendientes) + sync de assets.
+
+---
+
+## MCPs Custom en Conexiones — 2026-09-28
+
+> **Alcance:** conexión genérica `mcp` (HTTP) con tools/resources/prompts dinámicos, OAuth DCR+PKCE, toggles de tools, allowlist por nombre/ID y menú de prompts en el chat. Spec `docs/superpowers/specs/2026-09-25-mcp-custom-connections-design.md`.
+
+### Escenario ejecutado (Playwright MCP + executor real)
+1. **Conexión MCP contra nuestro propio server** (`/mcp/megalomaniac` con PAT, segunda instancia en `:8011` porque `artisan serve` es mono-proceso): Probar → `Conexión OK: MCP OK`. **PASS**
+2. **Panel de herramientas** → **14 tools** descubiertas con badges correctos desde las annotations (`Workout Read Tool READ`, `Workout Write Tool WRITE`, …), resources y prompts listados. **PASS**
+3. **Toggle** → deshabilitar `workout-read` persiste (`options.tools` con 13) y el executor la bloquea. **PASS**
+4. **Llamada real end-to-end** (`tools.workout-read` vía executor) → workouts reales de la DB como `structuredContent`, log de auditoría `success`. **PASS**
+5. **Consola** → 0 errores tras el fix. **PASS**
+
+### Bugs encontrados por QA y corregidos
+- **[P1] CSRF 419 en fetches nuevos**: se enviaba el cookie cifrado como `X-CSRF-TOKEN`; corregido a `X-XSRF-TOKEN` usando el helper existente `lib/csrf.ts` (afectaba panel MCP, menú de prompts y share de storage).
+- **`mcp.info` sin conectar**: `initializeResult()` vacío hasta `connect()`; corregido.
+- **Nota de entorno**: la app no puede llamarse a sí misma en `artisan serve` (mono-proceso); el QA usó una segunda instancia.
+
+### Limitaciones del crawl
+El menú **Prompts** del chat no se pudo accionar en browser porque la IA del entorno dev está sin configurar (composer deshabilitado); está cubierto por tests backend (`McpPromptTest`).
+
+### Estáticos
+`php artisan test --compact` **692 passed** / 0 failed (29 tests nuevos de MCP) · `npm run types` 0 · build OK · Pint OK.
+
+### Datos de QA
+Conexión, PAT y logs de prueba eliminados; instancia `:8011` detenida.

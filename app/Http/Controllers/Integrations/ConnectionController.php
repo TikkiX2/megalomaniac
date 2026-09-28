@@ -8,17 +8,22 @@ use App\Http\Requests\Integrations\UpdateConnectionRequest;
 use App\Integrations\Actions\Action;
 use App\Integrations\Actions\AuthField;
 use App\Integrations\ConnectorRegistry;
+use App\Integrations\Contracts\ConnectionAwareConnector;
 use App\Integrations\Contracts\Connector;
 use App\Integrations\Enums\AuthType;
 use App\Integrations\Enums\TransportKind;
 use App\Integrations\IntegrationExecutor;
+use App\Integrations\Mcp\McpDiscoveryService;
+use App\Integrations\Mcp\McpToolMapper;
 use App\Models\Connection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Mcp\Client\Exceptions\AuthorizationRequiredException;
 
 class ConnectionController extends Controller
 {
@@ -130,9 +135,12 @@ class ConnectionController extends Controller
     {
         $model = $this->owned($request, $connection);
         $connector = app(ConnectorRegistry::class)->for($model->kind);
+        $actions = $connector instanceof ConnectionAwareConnector
+            ? $connector->actionsFor($model)
+            : $connector->actions();
 
         return response()->json([
-            'actions' => collect($connector->actions())
+            'actions' => collect($actions)
                 ->map(fn (Action $action): array => [
                     'key' => $action->key,
                     'label' => $action->label,
@@ -141,6 +149,71 @@ class ConnectionController extends Controller
                 ])
                 ->values(),
         ]);
+    }
+
+    public function discover(Request $request, int $connection): JsonResponse
+    {
+        $model = $this->owned($request, $connection);
+
+        abort_unless($model->kind === 'mcp', 404);
+
+        $discovery = app(McpDiscoveryService::class);
+        $enabled = $model->options['tools'] ?? null;
+
+        try {
+            $tools = $discovery->tools($model)
+                ->map(fn ($tool): array => [
+                    'name' => $tool->name,
+                    'title' => $tool->title,
+                    'description' => $tool->description,
+                    'access' => app(McpToolMapper::class)->toAction($tool)->access->value,
+                    'enabled' => ! is_array($enabled) || in_array($tool->name, $enabled, true),
+                ])
+                ->values();
+
+            $resources = $discovery->resources($model)
+                ->map(fn ($resource): array => ['uri' => $resource->uri, 'name' => $resource->name, 'mime_type' => $resource->mimeType])
+                ->values();
+
+            $prompts = $discovery->prompts($model)
+                ->map(fn ($prompt): array => ['name' => $prompt->name, 'description' => $prompt->description])
+                ->values();
+
+            return response()->json([
+                'ok' => true,
+                'tools' => $tools,
+                'resources' => $resources,
+                'prompts' => $prompts,
+            ]);
+        } catch (AuthorizationRequiredException $e) {
+            return response()->json([
+                'ok' => false,
+                'authorization_required' => true,
+                'connect_url' => route('integrations.mcp.connect', $model).'?'.http_build_query($e->query()),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => Str::limit($e->getMessage(), 300)]);
+        }
+    }
+
+    public function updateTools(Request $request, int $connection): JsonResponse
+    {
+        $model = $this->owned($request, $connection);
+
+        abort_unless($model->kind === 'mcp', 404);
+
+        $validated = $request->validate([
+            'enabled_tools' => ['required', 'array'],
+            'enabled_tools.*' => ['string', 'max:100'],
+        ]);
+
+        $model->forceFill([
+            'options' => array_merge($model->options ?? [], ['tools' => array_values($validated['enabled_tools'])]),
+        ])->save();
+
+        app(McpDiscoveryService::class)->forget($model);
+
+        return response()->json(['ok' => true]);
     }
 
     protected function owned(Request $request, int $connectionId): Connection

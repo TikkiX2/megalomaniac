@@ -5,6 +5,7 @@ namespace App\Ai\Tools;
 use App\Integrations\Actions\Action;
 use App\Integrations\Actions\Param;
 use App\Integrations\ConnectorRegistry;
+use App\Integrations\Contracts\ConnectionAwareConnector;
 use App\Models\Connection;
 use App\Models\User;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -35,19 +36,21 @@ class IntegrationCatalogTool implements Tool
         $connections = Connection::query()
             ->forUser($this->user)
             ->enabled()
-            ->when(
-                $this->allowedKinds !== null && $this->allowedKinds !== ['*'],
-                fn ($query) => $query->whereIn('kind', $this->allowedKinds),
-            )
             ->when($request['connection'] ?? null, fn ($query, $name) => $query->where('name', 'like', "%{$name}%"))
             ->orderBy('name')
             ->get()
+            ->filter(fn (Connection $connection): bool => $this->isAllowed($connection))
             ->map(function (Connection $connection) use ($registry, $search): ?array {
                 if (! $registry->has($connection->kind)) {
                     return null;
                 }
 
-                $actions = collect($registry->for($connection->kind)->actions())
+                $connector = $registry->for($connection->kind);
+                $available = $connector instanceof ConnectionAwareConnector
+                    ? $connector->actionsFor($connection)
+                    : $connector->actions();
+
+                $actions = collect($available)
                     ->when($search, fn ($actions) => $actions->filter(
                         fn (Action $action): bool => str_contains(
                             strtolower($action->key.' '.$action->label.' '.$action->description),
@@ -80,6 +83,21 @@ class IntegrationCatalogTool implements Tool
             ->values();
 
         return json_encode(['connections' => $connections], JSON_PRETTY_PRINT);
+    }
+
+    protected function isAllowed(Connection $connection): bool
+    {
+        if ($this->allowedKinds === null || $this->allowedKinds === ['*']) {
+            return true;
+        }
+
+        foreach ($this->allowedKinds as $allowed) {
+            if ($allowed === $connection->kind || $allowed === $connection->name || $allowed === (string) $connection->id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function schema(JsonSchema $schema): array

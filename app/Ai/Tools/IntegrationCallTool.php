@@ -41,10 +41,8 @@ class IntegrationCallTool implements Tool
             $available = Connection::query()
                 ->forUser($this->user)
                 ->enabled()
-                ->when(
-                    $this->allowedKinds !== null && $this->allowedKinds !== ['*'],
-                    fn ($query) => $query->whereIn('kind', $this->allowedKinds),
-                )
+                ->get()
+                ->filter(fn (Connection $connection): bool => $this->isAllowed($connection))
                 ->pluck('name')
                 ->implode(', ');
 
@@ -56,7 +54,7 @@ class IntegrationCallTool implements Tool
             ]);
         }
 
-        if ($this->allowedKinds !== null && $this->allowedKinds !== ['*'] && ! in_array($connection->kind, $this->allowedKinds, true)) {
+        if (! $this->isAllowed($connection)) {
             return json_encode([
                 'status' => 'error',
                 'message' => "La conexión [{$connection->name}] no está permitida para este agente.",
@@ -85,6 +83,21 @@ class IntegrationCallTool implements Tool
             'data' => $result->data,
             'error' => $result->error,
         ]);
+    }
+
+    protected function isAllowed(Connection $connection): bool
+    {
+        if ($this->allowedKinds === null || $this->allowedKinds === ['*']) {
+            return true;
+        }
+
+        foreach ($this->allowedKinds as $allowed) {
+            if ($allowed === $connection->kind || $allowed === $connection->name || $allowed === (string) $connection->id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function schema(JsonSchema $schema): array

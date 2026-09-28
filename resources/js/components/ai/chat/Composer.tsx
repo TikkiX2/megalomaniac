@@ -4,6 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { AgentPicker } from '@/components/ai/chat/AgentPicker';
 import { AttachmentChips } from '@/components/ai/chat/AttachmentChips';
 import { ModelPicker } from '@/components/ai/chat/ModelPicker';
+import { PromptsMenu } from '@/components/ai/chat/PromptsMenu';
 import { SkillsPicker } from '@/components/ai/chat/SkillsPicker';
 import { SourceModeMenu } from '@/components/ai/chat/SourceModeMenu';
 import { ToolsPicker } from '@/components/ai/chat/ToolsPicker';
@@ -242,6 +243,15 @@ export function Composer({
                             disabled={disabled || streaming}
                         />
                     )}
+                    <PromptsMenu
+                        disabled={disabled || streaming}
+                        onInsert={(text) => {
+                            setValue((current) => (current ? `${current}
+
+${text}` : text));
+                            requestAnimationFrame(resize);
+                        }}
+                    />
                     {onSelectedSkillsChange && skills.length > 0 && (
                         <SkillsPicker
                             skills={skills}

@@ -102,14 +102,20 @@ export default function ConnectionCard({
                 )}
 
                 <div className="flex flex-wrap gap-2">
-                    {connection.auth_type === 'oauth2' && (
+                    {(connection.auth_type === 'oauth2' || connection.kind === 'mcp') && (
                         <Button
                             size="sm"
                             variant="outline"
                             asChild
                             className="border-primary/40 text-primary"
                         >
-                            <a href={`/integrations/oauth/${connection.id}/redirect`}>
+                            <a
+                                href={
+                                    connection.kind === 'mcp'
+                                        ? `/integrations/mcp/${connection.id}/connect`
+                                        : `/integrations/oauth/${connection.id}/redirect`
+                                }
+                            >
                                 Conectar
                             </a>
                         </Button>

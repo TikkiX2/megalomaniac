@@ -8,6 +8,7 @@ use App\Integrations\Actions\ActionResult;
 use App\Integrations\Actions\ConnectionTestResult;
 use App\Integrations\Actions\ExecutionContext;
 use App\Integrations\Actions\ParamRules;
+use App\Integrations\Contracts\ConnectionAwareConnector;
 use App\Integrations\Contracts\Connector;
 use App\Integrations\Enums\ActionAccess;
 use App\Integrations\Enums\ApprovalStatus;
@@ -45,7 +46,7 @@ class IntegrationExecutor
             return ActionResult::failure("Conector desconocido [{$connection->kind}].");
         }
 
-        $action = collect($connector->actions())->firstWhere('key', $actionKey);
+        $action = collect($this->actionsFor($connector, $connection))->firstWhere('key', $actionKey);
 
         if (! $action instanceof Action) {
             return ActionResult::failure("Acción desconocida [{$actionKey}].");
@@ -136,7 +137,7 @@ class IntegrationExecutor
             return;
         }
 
-        $action = collect($connector->actions())->firstWhere('key', $this->relativeActionKey($approval));
+        $action = collect($this->actionsFor($connector, $connection))->firstWhere('key', $this->relativeActionKey($approval));
 
         if (! $action instanceof Action) {
             $approval->update(['status' => ApprovalStatus::Failed]);
@@ -254,6 +255,16 @@ class IntegrationExecutor
         ]);
 
         return $result;
+    }
+
+    /**
+     * @return Action[]
+     */
+    protected function actionsFor(Connector $connector, Connection $connection): array
+    {
+        return $connector instanceof ConnectionAwareConnector
+            ? $connector->actionsFor($connection)
+            : $connector->actions();
     }
 
     protected function rateLimited(Connection $connection, Action $action): bool

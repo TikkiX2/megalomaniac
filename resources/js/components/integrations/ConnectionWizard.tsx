@@ -8,6 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import McpToolsPanel from '@/components/integrations/McpToolsPanel';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -358,6 +359,8 @@ export default function ConnectionWizard({
                                 {message}
                             </p>
                         ))}
+
+                    {connection?.kind === 'mcp' && <McpToolsPanel connectionId={connection.id} />}
 
                     <div className="flex flex-wrap justify-end gap-2 pt-2">
                         <Button

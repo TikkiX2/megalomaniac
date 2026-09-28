@@ -36,6 +36,8 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('settings/connections/{connection}', [ConnectionController::class, 'update'])->name('connections.update');
     Route::delete('settings/connections/{connection}', [ConnectionController::class, 'destroy'])->name('connections.destroy');
     Route::get('settings/connections/{connection}/actions', [ConnectionController::class, 'actions'])->name('connections.actions');
+    Route::get('settings/connections/{connection}/discover', [ConnectionController::class, 'discover'])->name('connections.discover');
+    Route::patch('settings/connections/{connection}/tools', [ConnectionController::class, 'updateTools'])->name('connections.tools');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

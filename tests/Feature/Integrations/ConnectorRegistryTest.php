@@ -95,5 +95,6 @@ it('registers all bundled connectors', function () {
         'telegram', 'notion', 'rss', 'reddit', 'youtube', 'listenbrainz',
         'storage_local', 'storage_s3', 'storage_sftp', 'storage_ftp',
         'storage_google_drive', 'storage_dropbox', 'storage_webdav',
+        'mcp',
     ]);
 });
