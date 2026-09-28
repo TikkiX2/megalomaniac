@@ -153,9 +153,13 @@ it('creates projects and moves tasks between them through the action tool', func
 
     $project = Project::where('name', 'Rediseño web')->first();
 
+    $projectBlocks = collect($project->description)->sortBy(fn (array $block): int => $block['meta']['order'] ?? 0)->values();
+
     expect($project)->not->toBeNull()
         ->and($project->boardColumns()->pluck('key')->all())->toBe(['To Do', 'In Progress', 'Done'])
-        ->and($project->description[0]['children'][0]['text'])->toBe('Landing nueva');
+        ->and($projectBlocks)->toHaveCount(1)
+        ->and($projectBlocks[0]['type'])->toBe('Paragraph')
+        ->and($projectBlocks[0]['value'][0]['children'][0]['text'])->toBe('Landing nueva');
 
     $task = personalTask($user, ['title' => 'Moverme']);
 
@@ -203,4 +207,40 @@ it('rejects creating a project without a name', function () {
 
     expect($result['success'] ?? false)->toBeFalse()
         ->and(Project::count())->toBe(0);
+});
+
+it('converts markdown descriptions into yoopta blocks when the model creates or updates tasks', function () {
+    $user = User::factory()->create();
+    $tool = new ActionTool($user);
+
+    $created = json_decode((string) $tool->handle(new Request([
+        'action' => 'create_task',
+        'title' => 'Tarea con markdown',
+        'description' => "## Objetivo\n- Uno\n- Dos\nTexto final",
+    ])), true);
+
+    expect($created['success'])->toBeTrue();
+
+    $task = ProjectTask::query()->where('user_id', $user->id)->where('title', 'Tarea con markdown')->sole();
+    $blocks = collect($task->description)->sortBy(fn (array $block): int => $block['meta']['order'] ?? 0)->values();
+
+    expect($blocks)->toHaveCount(4)
+        ->and($blocks->pluck('type')->all())->toBe(['HeadingTwo', 'BulletedList', 'BulletedList', 'Paragraph'])
+        ->and($blocks[0]['value'][0]['children'][0]['text'])->toBe('Objetivo')
+        ->and($blocks[1]['value'][0]['children'][0]['text'])->toBe('Uno')
+        ->and($blocks[2]['value'][0]['children'][0]['text'])->toBe('Dos')
+        ->and($blocks[3]['value'][0]['children'][0]['text'])->toBe('Texto final');
+
+    $updated = json_decode((string) $tool->handle(new Request([
+        'action' => 'update_task',
+        'task_id' => $task->id,
+        'description' => "# Nuevo\n1. Primero",
+    ])), true);
+
+    expect($updated['success'])->toBeTrue();
+
+    $updatedBlocks = collect($task->fresh()->description)->sortBy(fn (array $block): int => $block['meta']['order'] ?? 0)->values();
+
+    expect($updatedBlocks->pluck('type')->all())->toBe(['HeadingOne', 'NumberedList'])
+        ->and($updatedBlocks[0]['value'][0]['children'][0]['text'])->toBe('Nuevo');
 });

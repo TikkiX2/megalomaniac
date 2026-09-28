@@ -2,6 +2,7 @@
 
 namespace App\Ai\Tools;
 
+use App\Ai\Support\MarkdownToYoopta;
 use App\Models\Client;
 use App\Models\Currency;
 use App\Models\Debt;
@@ -18,7 +19,6 @@ use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 use App\Services\TaskBoardColumnService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Support\Str;
 use Laravel\Ai\Approvals\Approval;
 use Laravel\Ai\Concerns\InteractsWithApprovals;
 use Laravel\Ai\Contracts\Approvable;
@@ -121,7 +121,7 @@ class ActionTool implements Approvable, Tool
             'client_id' => $clientId,
             'currency_id' => $currencyId,
             'name' => $name,
-            'description' => $this->yooptaDescription($request['description'] ?? null),
+            'description' => $this->markdownDescription($request['description'] ?? null),
             'status' => $request['status'] ?? 'pending',
             'type' => $type,
             'deadline' => $request['deadline'] ?? null,
@@ -138,21 +138,20 @@ class ActionTool implements Approvable, Tool
     }
 
     /**
-     * Wrap a plain-text description into the Yoopta block shape the UI renders.
+     * Convert a plain-text or Markdown description into the Yoopta v4 block
+     * map the editor stores, so model-written tasks stay editable.
      *
-     * @return array<int, array<string, mixed>>|null
+     * @return array<string, array<string, mixed>>|null
      */
-    private function yooptaDescription(mixed $description): ?array
+    private function markdownDescription(mixed $description): ?array
     {
         if (! is_string($description) || trim($description) === '') {
             return null;
         }
 
-        return [[
-            'id' => (string) Str::uuid(),
-            'type' => 'paragraph',
-            'children' => [['text' => trim($description)]],
-        ]];
+        $blocks = MarkdownToYoopta::convert($description);
+
+        return $blocks === [] ? null : $blocks;
     }
 
     private function createWorkout(Request $request): string
@@ -279,7 +278,7 @@ class ActionTool implements Approvable, Tool
             'user_id' => $this->user->id,
             'project_id' => $project?->id,
             'title' => $request['title'] ?? 'Task',
-            'description' => $request['description'] ?? null,
+            'description' => $this->markdownDescription($request['description'] ?? null),
             'priority' => $request['priority'] ?? null,
             'due_date' => $request['due_date'] ?? null,
             'status' => $statusKey,
@@ -356,10 +355,13 @@ class ActionTool implements Approvable, Tool
 
         $data = array_filter([
             'title' => $request['title'] ?? null,
-            'description' => $request['description'] ?? null,
             'priority' => $request['priority'] ?? null,
             'due_date' => $request['due_date'] ?? null,
         ], fn (mixed $value): bool => $value !== null);
+
+        if ($request->offsetExists('description')) {
+            $data['description'] = $this->markdownDescription($request['description']);
+        }
 
         $movesProject = $request->offsetExists('project_id');
         $targetProject = $task->project;
@@ -470,7 +472,7 @@ class ActionTool implements Approvable, Tool
             'received_date' => $schema->string()->description('Date YYYY-MM-DD (for add_income)'),
             // Debt params
             'due_date' => $schema->string()->description('Due date YYYY-MM-DD (for add_debt, create_task, update_task)'),
-            'description' => $schema->string()->description('Description (for create_project, add_purchase, add_debt, create_task)'),
+            'description' => $schema->string()->description('Description (for create_project, add_purchase, add_debt, create_task, update_task); Markdown is welcome (## headings, - lists, **bold**)'),
             // Task params
             'project_id' => $schema->integer()->description('Project ID (for create_task, update_task; use 0 to detach the task from its project)'),
             'title' => $schema->string()->description('Title (for create_task, update_task)'),
