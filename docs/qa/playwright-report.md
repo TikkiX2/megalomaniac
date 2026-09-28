@@ -447,3 +447,18 @@ Al reconstruir la imagen de prod sin el pipeline, **copiar siempre el build a ho
 - Chip en hilo: `Memoria · 2` / `Memoria · 1` con href `/ai/memory?thread=<id>`; el deep-link preselecciona "Por hilo" y su contador (smoke de Tasks 6/7).
 - Mutaciones: promover con el límite alcanzado muestra el error del servidor en banner; botones deshabilitados in-flight previenen doble submit (fix Task 6).
 - Suite completa **656 passed** (2564 assertions); `npm run types` 0 errores; `npm run build` OK; Pint OK.
+
+## Fix: descripciones de tareas creadas por IA como bloques — 2026-09-27
+
+> **Reporte del usuario:** los modelos crean descripciones de texto simple en vez de bloques tipo markdown.
+
+### Causa raíz
+- `ActionTool::create_task` y `update_task` guardaban `description` **tal cual** (string plano del modelo), sin convertir; `create_project` envolvía todo en un único párrafo legacy y `MarkdownToYoopta` emitía el shape legacy (lista con `children`, headings sin nivel).
+
+### Fix
+- `MarkdownToYoopta::convert()` ahora emite el shape canónico **Yoopta v4** (mapa `blockId => block` con `value[].children[].text`, `meta.order`, tipos `Paragraph`/`HeadingOne|Two|Three`/`BulletedList`/`NumberedList` y niveles de heading).
+- `ActionTool`: `create_task`, `update_task` y `create_project` convierten markdown con el helper `markdownDescription()` (vacío → null; en update, string vacío limpia la descripción); el schema invita a usar markdown.
+- Tests: unit v4 en `MarkdownToYooptaTest`, `TaskToolsTest` (create/update con markdown → bloques, proyecto con párrafo), `GenerateTaskDescriptionTest` ajustado al mapa.
+
+### Verificado
+- Prod (tool real, sintético con limpieza): create_task con `## Objetivo\n- Uno\n- Dos\nTexto final` → `HeadingTwo,BulletedList,BulletedList,Paragraph` con textos correctos. Suite **664 passed**, Pint OK. Commit `187b7dd`; deploy con rebuild + migrate (0 pendientes) + sync de assets.
