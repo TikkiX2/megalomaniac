@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { Cake, ChevronLeft, ChevronRight } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import PeopleLayout from '@/layouts/people-layout';
@@ -15,6 +15,9 @@ interface Entry {
     date: string;
 }
 
+const isSameLocalDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
 function nextOccurrence(date: string, recurring: boolean): Date | null {
     const original = new Date(`${date.slice(0, 10)}T00:00:00`);
     const today = new Date();
@@ -22,8 +25,12 @@ function nextOccurrence(date: string, recurring: boolean): Date | null {
     let candidate = new Date(original);
 
     if (recurring) {
-        candidate = new Date(today.getFullYear(), original.getMonth(), original.getDate());
-        if (candidate < today) candidate = new Date(today.getFullYear() + 1, original.getMonth(), original.getDate());
+        const lastDayOfMonth = (targetYear: number) => new Date(targetYear, original.getMonth() + 1, 0).getDate();
+        candidate = new Date(today.getFullYear(), original.getMonth(), Math.min(original.getDate(), lastDayOfMonth(today.getFullYear())));
+        if (candidate < today) {
+            const nextYear = today.getFullYear() + 1;
+            candidate = new Date(nextYear, original.getMonth(), Math.min(original.getDate(), lastDayOfMonth(nextYear)));
+        }
     }
 
     return candidate >= today ? candidate : null;
@@ -61,11 +68,10 @@ export default function PeopleCalendar({ people: peopleList, keyDates }: any) {
     ];
 
     const entriesForDay = (day: number) => {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const cellDate = new Date(year, month, day);
         return entries.filter((entry) => {
             const occurrence = nextOccurrence(entry.date, entry.recurring);
-            if (!occurrence) return false;
-            return occurrence.toISOString().slice(0, 10) === dateStr;
+            return occurrence !== null && isSameLocalDay(occurrence, cellDate);
         });
     };
 
