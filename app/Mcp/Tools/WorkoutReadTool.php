@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools;
 
+use App\Models\Routine;
 use App\Models\Workout;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -52,6 +53,7 @@ class WorkoutReadTool extends Tool
                 'notes' => $workout->notes,
                 'exercises' => $workout->exercises->map(fn ($ex) => [
                     'id' => $ex->id,
+                    'exercise_id' => $ex->exercise_id,
                     'exercise_name' => $ex->exercise?->name,
                     'sets' => $ex->sets->map(fn ($set) => [
                         'set_number' => $set->set_number,
@@ -63,8 +65,28 @@ class WorkoutReadTool extends Tool
                 ])->all(),
             ]);
 
+        $routines = Routine::where('user_id', $user->id)
+            ->with('exercises')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Routine $routine) => [
+                'id' => $routine->id,
+                'name' => $routine->name,
+                'focus' => $routine->focus,
+                'scheduled_date' => $routine->scheduled_date,
+                'status' => $routine->status,
+                'exercises' => $routine->exercises->map(fn ($exercise) => [
+                    'exercise_id' => $exercise->id,
+                    'name' => $exercise->name,
+                    'target_sets' => $exercise->pivot->target_sets,
+                    'target_reps' => $exercise->pivot->target_reps,
+                    'target_weight' => $exercise->pivot->target_weight,
+                ])->all(),
+            ]);
+
         return Response::structured([
             'workouts' => $workouts->all(),
+            'routines' => $routines->all(),
             'count' => $workouts->count(),
             'days' => $days,
             'limit' => $limit,

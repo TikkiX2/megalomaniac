@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools;
 
+use App\Models\Routine;
+use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
-use App\Models\WorkoutSet;
+use App\Services\Gym\RoutineService;
+use App\Services\Gym\WorkoutSessionService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use InvalidArgumentException;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -17,127 +23,210 @@ class WorkoutWriteTool extends Tool
 {
     protected string $name = 'workout-write';
 
-    protected string $description = 'Create workouts, add exercises, and log sets for the authenticated user.';
+    protected string $description = 'Create and update workouts, exercises, sets and routines for the authenticated user.';
+
+    public function __construct(
+        protected WorkoutSessionService $sessions,
+        protected RoutineService $routines,
+    ) {}
 
     public function schema(JsonSchema $schema): array
     {
         return [
-            'action' => $schema->string()->description('Action to perform: create_workout, add_exercise, log_set')->enum(['create_workout', 'add_exercise', 'log_set'])->required(),
-            'routine_id' => $schema->integer()->description('Routine ID (required for create_workout)'),
-            'workout_id' => $schema->integer()->description('Workout ID (required for add_exercise)'),
-            'workout_exercise_id' => $schema->integer()->description('Workout exercise ID (required for log_set)'),
-            'exercise_id' => $schema->integer()->description('Exercise ID (required for add_exercise)'),
-            'set_number' => $schema->integer()->description('Set number (required for log_set)'),
-            'weight' => $schema->number()->description('Weight in kg (for log_set)'),
-            'reps' => $schema->integer()->description('Number of reps (for log_set)'),
-            'rpe' => $schema->number()->description('Rate of perceived exertion 1-10 (for log_set)'),
-            'completed' => $schema->boolean()->description('Whether the set was completed (for log_set, default: true)'),
-            'notes' => $schema->string()->description('Notes (for create_workout)'),
+            'action' => $schema->string()
+                ->description('Action: create_workout, add_exercise, log_set, finish_workout, create_routine, add_routine_exercise')
+                ->enum(['create_workout', 'add_exercise', 'log_set', 'finish_workout', 'create_routine', 'add_routine_exercise'])
+                ->required(),
+            'routine_id' => $schema->integer()->description('Routine ID (create_workout, add_routine_exercise)'),
+            'workout_id' => $schema->integer()->description('Workout ID (add_exercise, finish_workout)'),
+            'workout_exercise_id' => $schema->integer()->description('Workout exercise ID (log_set)'),
+            'exercise_id' => $schema->integer()->description('Existing exercise ID (add_exercise, add_routine_exercise)'),
+            'exercise_name' => $schema->string()->description('Exercise name; created if missing (add_exercise, add_routine_exercise)'),
+            'set_number' => $schema->integer()->description('Set number (log_set; auto-increments when omitted)'),
+            'weight' => $schema->number()->description('Weight in kg (log_set)'),
+            'reps' => $schema->integer()->description('Reps (log_set)'),
+            'rpe' => $schema->number()->description('RPE 1-10 (log_set)'),
+            'completed' => $schema->boolean()->description('Completed (log_set; default true)'),
+            'started_at' => $schema->string()->description('ISO 8601 start datetime (create_workout)'),
+            'ended_at' => $schema->string()->description('ISO 8601 end datetime (finish_workout)'),
+            'notes' => $schema->string()->description('Notes (create_workout, finish_workout, routine exercise)'),
+            'name' => $schema->string()->description('Routine name (create_routine)'),
+            'focus' => $schema->string()->description('Routine focus (create_routine)'),
+            'scheduled_date' => $schema->string()->description('Routine schedule (create_routine)'),
+            'target_sets' => $schema->integer()->description('Target sets (add_routine_exercise)'),
+            'target_reps' => $schema->string()->description('Target reps (add_routine_exercise)'),
+            'target_weight' => $schema->string()->description('Target weight (add_routine_exercise)'),
+            'exercises' => $schema->array()
+                ->description('Routine exercises (create_routine)')
+                ->items($schema->object([
+                    'name' => $schema->string()->description('Exercise name; created if missing'),
+                    'exercise_id' => $schema->integer()->description('Existing exercise ID'),
+                    'target_sets' => $schema->integer(),
+                    'target_reps' => $schema->string(),
+                    'target_weight' => $schema->string(),
+                    'notes' => $schema->string(),
+                ])),
         ];
     }
 
     public function handle(Request $request): Response|ResponseFactory
     {
-        $action = (string) $request->get('action');
-
         $user = $request->user();
 
         if (! $user) {
             return Response::error('Unauthenticated.');
         }
 
-        return match ($action) {
-            'create_workout' => $this->createWorkout($request, $user),
-            'add_exercise' => $this->addExercise($request, $user),
-            'log_set' => $this->logSet($request, $user),
-            default => Response::error("Invalid action: {$action}"),
-        };
+        try {
+            return match ((string) $request->get('action')) {
+                'create_workout' => $this->createWorkout($request, $user),
+                'add_exercise' => $this->addExercise($request, $user),
+                'log_set' => $this->logSet($request, $user),
+                'finish_workout' => $this->finishWorkout($request, $user),
+                'create_routine' => $this->createRoutine($request, $user),
+                'add_routine_exercise' => $this->addRoutineExercise($request, $user),
+                default => Response::error('Invalid action: '.(string) $request->get('action')),
+            };
+        } catch (ModelNotFoundException|AuthorizationException|InvalidArgumentException $exception) {
+            return Response::error($exception->getMessage());
+        }
     }
 
-    private function createWorkout(Request $request, $user): Response|ResponseFactory
+    private function createWorkout(Request $request, User $user): Response|ResponseFactory
     {
-        $request->validate([
-            'routine_id' => ['nullable', 'integer', 'exists:routines,id'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
+        if ($active = $this->sessions->activeFor($user)) {
+            return Response::structured([
+                'workout' => $active->load('exercises.sets'),
+                'message' => 'An active workout already exists.',
+            ]);
+        }
 
-        $workout = Workout::create([
-            'user_id' => $user->id,
-            'routine_id' => $request->get('routine_id'),
-            'started_at' => now(),
-            'notes' => $request->get('notes'),
-        ]);
+        $workout = $this->sessions->start(
+            $user,
+            $request->get('routine_id') !== null ? (int) $request->get('routine_id') : null,
+            $request->get('started_at'),
+            $request->get('notes'),
+        );
 
         return Response::structured([
-            'workout' => $workout->fresh(),
+            'workout' => $workout->load('exercises.sets'),
             'message' => 'Workout created successfully.',
         ]);
     }
 
-    private function addExercise(Request $request, $user): Response|ResponseFactory
+    private function addExercise(Request $request, User $user): Response|ResponseFactory
     {
-        $request->validate([
-            'workout_id' => ['required', 'integer', 'exists:workouts,id'],
-            'exercise_id' => ['required', 'integer', 'exists:exercises,id'],
-        ]);
-
-        $workout = Workout::where('id', $request->get('workout_id'))
-            ->where('user_id', $user->id)
-            ->first();
+        $workout = Workout::where('user_id', $user->id)->find((int) $request->get('workout_id'));
 
         if (! $workout) {
             return Response::error('Workout not found or unauthorized.');
         }
 
-        $order = $workout->exercises()->max('order') ?? 0;
-
-        $workoutExercise = WorkoutExercise::create([
-            'workout_id' => $workout->id,
-            'exercise_id' => $request->get('exercise_id'),
-            'order' => $order + 1,
-        ]);
+        $workoutExercise = $this->sessions->addExercise(
+            $user,
+            $workout,
+            $request->get('exercise_id') !== null ? (int) $request->get('exercise_id') : null,
+            $request->get('exercise_name'),
+        );
 
         return Response::structured([
-            'workout_exercise' => $workoutExercise->fresh()->load('exercise'),
+            'workout_exercise' => $workoutExercise->load(['exercise', 'sets']),
             'message' => 'Exercise added to workout.',
         ]);
     }
 
-    private function logSet(Request $request, $user): Response|ResponseFactory
+    private function logSet(Request $request, User $user): Response|ResponseFactory
     {
-        $request->validate([
-            'workout_exercise_id' => ['required', 'integer', 'exists:workout_exercises,id'],
-            'set_number' => ['required', 'integer', 'min:1'],
-            'weight' => ['nullable', 'numeric', 'min:0'],
-            'reps' => ['nullable', 'integer', 'min:1'],
-            'rpe' => ['nullable', 'numeric', 'min:1', 'max:10'],
-            'completed' => ['nullable', 'boolean'],
-        ]);
-
-        $workoutExercise = WorkoutExercise::where('id', $request->get('workout_exercise_id'))
-            ->whereHas('workout', fn ($q) => $q->where('user_id', $user->id))
-            ->first();
+        $workoutExercise = WorkoutExercise::whereHas('workout', fn ($query) => $query->where('user_id', $user->id))
+            ->find((int) $request->get('workout_exercise_id'));
 
         if (! $workoutExercise) {
             return Response::error('Workout exercise not found or unauthorized.');
         }
 
-        $set = WorkoutSet::updateOrCreate(
-            [
-                'workout_exercise_id' => $workoutExercise->id,
-                'set_number' => $request->get('set_number'),
-            ],
-            [
-                'weight' => $request->get('weight'),
-                'reps' => $request->get('reps'),
-                'rpe' => $request->get('rpe'),
-                'completed' => $request->get('completed', true),
-            ]
-        );
+        $data = array_filter([
+            'set_number' => $request->get('set_number') !== null ? (int) $request->get('set_number') : null,
+            'weight' => $request->get('weight'),
+            'reps' => $request->get('reps'),
+            'rpe' => $request->get('rpe'),
+            'completed' => $request->get('completed', true),
+        ], fn (mixed $value): bool => $value !== null);
+
+        $set = $this->sessions->logSet($user, $workoutExercise, $data);
 
         return Response::structured([
             'set' => $set,
             'message' => 'Set logged successfully.',
+        ]);
+    }
+
+    private function finishWorkout(Request $request, User $user): Response|ResponseFactory
+    {
+        $workout = Workout::where('user_id', $user->id)->find((int) $request->get('workout_id'));
+
+        if (! $workout) {
+            return Response::error('Workout not found or unauthorized.');
+        }
+
+        $workout = $this->sessions->finish($user, $workout, $request->get('ended_at'), $request->get('notes'));
+
+        return Response::structured([
+            'workout' => $workout,
+            'message' => 'Workout finished.',
+        ]);
+    }
+
+    private function createRoutine(Request $request, User $user): Response|ResponseFactory
+    {
+        $name = trim((string) $request->get('name'));
+
+        if ($name === '') {
+            return Response::error('Routine name is required.');
+        }
+
+        $routine = $this->routines->create($user, [
+            'name' => $name,
+            'focus' => $request->get('focus'),
+            'scheduled_date' => $request->get('scheduled_date'),
+            'exercises' => $request->get('exercises', []),
+        ]);
+
+        return Response::structured([
+            'routine' => $routine->load('exercises'),
+            'message' => 'Routine created.',
+        ]);
+    }
+
+    private function addRoutineExercise(Request $request, User $user): Response|ResponseFactory
+    {
+        $routine = Routine::where('user_id', $user->id)->find((int) $request->get('routine_id'));
+
+        if (! $routine) {
+            return Response::error('Routine not found or unauthorized.');
+        }
+
+        $exercises = $routine->exercises->map(fn ($exercise) => [
+            'id' => $exercise->id,
+            'target_sets' => $exercise->pivot->target_sets,
+            'target_reps' => $exercise->pivot->target_reps,
+            'target_weight' => $exercise->pivot->target_weight,
+            'notes' => $exercise->pivot->notes,
+        ])->all();
+
+        $exercises[] = array_filter([
+            'id' => $request->get('exercise_id') !== null ? (int) $request->get('exercise_id') : null,
+            'name' => $request->get('exercise_name'),
+            'target_sets' => $request->get('target_sets') !== null ? (int) $request->get('target_sets') : null,
+            'target_reps' => $request->get('target_reps'),
+            'target_weight' => $request->get('target_weight'),
+            'notes' => $request->get('notes'),
+        ], fn (mixed $value): bool => $value !== null);
+
+        $routine = $this->routines->update($user, $routine, ['exercises' => $exercises]);
+
+        return Response::structured([
+            'routine' => $routine->load('exercises'),
+            'message' => 'Exercise added to routine.',
         ]);
     }
 }
