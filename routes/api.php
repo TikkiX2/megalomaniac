@@ -219,18 +219,20 @@ Route::prefix('v1')->group(function () {
         Route::patch('personal/tasks/{task}/move', [PersonalTaskController::class, 'move']);
 
         // People
-        Route::get('people/upcoming', [PersonController::class, 'upcoming']);
-        Route::apiResource('people', PersonController::class);
-        Route::get('people/{person}/interactions', [PersonInteractionController::class, 'index']);
-        Route::post('people/{person}/interactions', [PersonInteractionController::class, 'store']);
-        Route::delete('people/{person}/interactions/{interaction}', [PersonInteractionController::class, 'destroy']);
-        Route::get('people/{person}/key-dates', [PersonKeyDateController::class, 'index']);
-        Route::post('people/{person}/key-dates', [PersonKeyDateController::class, 'store']);
-        Route::patch('key-dates/{keyDate}', [PersonKeyDateController::class, 'update']);
-        Route::delete('key-dates/{keyDate}', [PersonKeyDateController::class, 'destroy']);
-        Route::get('people/{person}/socials', [PersonSocialController::class, 'index']);
-        Route::post('people/{person}/socials', [PersonSocialController::class, 'store']);
-        Route::patch('socials/{social}', [PersonSocialController::class, 'update']);
-        Route::delete('socials/{social}', [PersonSocialController::class, 'destroy']);
+        Route::name('api.')->group(function () {
+            Route::get('people/upcoming', [PersonController::class, 'upcoming'])->name('people.upcoming');
+            Route::apiResource('people', PersonController::class);
+            Route::get('people/{person}/interactions', [PersonInteractionController::class, 'index'])->name('people.interactions.index');
+            Route::post('people/{person}/interactions', [PersonInteractionController::class, 'store'])->name('people.interactions.store');
+            Route::delete('people/{person}/interactions/{interaction}', [PersonInteractionController::class, 'destroy'])->name('people.interactions.destroy');
+            Route::get('people/{person}/key-dates', [PersonKeyDateController::class, 'index'])->name('people.key-dates.index');
+            Route::post('people/{person}/key-dates', [PersonKeyDateController::class, 'store'])->name('people.key-dates.store');
+            Route::patch('key-dates/{keyDate}', [PersonKeyDateController::class, 'update'])->name('people.key-dates.update');
+            Route::delete('key-dates/{keyDate}', [PersonKeyDateController::class, 'destroy'])->name('people.key-dates.destroy');
+            Route::get('people/{person}/socials', [PersonSocialController::class, 'index'])->name('people.socials.index');
+            Route::post('people/{person}/socials', [PersonSocialController::class, 'store'])->name('people.socials.store');
+            Route::patch('socials/{social}', [PersonSocialController::class, 'update'])->name('people.socials.update');
+            Route::delete('socials/{social}', [PersonSocialController::class, 'destroy'])->name('people.socials.destroy');
+        });
     });
 });
