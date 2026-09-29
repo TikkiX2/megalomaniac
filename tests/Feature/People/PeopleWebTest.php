@@ -5,6 +5,8 @@ use App\Models\PersonInteraction;
 use App\Models\User;
 use App\People\Enums\Closeness;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -69,4 +71,57 @@ it('renders the global timeline', function () {
     $this->get('/people/timeline')
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('people/Timeline')->has('interactions.data', 1));
+});
+
+it('renders the person form', function () {
+    $this->get('/people/create')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('people/Form'));
+});
+
+it('creates a person from the web form', function () {
+    $this->post('/people', [
+        'first_name' => 'Ana',
+        'last_name' => 'Gómez',
+        'closeness' => 'close',
+        'is_favorite' => true,
+    ])->assertRedirect();
+
+    $this->assertDatabaseHas('people', [
+        'first_name' => 'Ana',
+        'user_id' => $this->user->id,
+        'is_favorite' => true,
+    ]);
+});
+
+it('updates and deletes a person', function () {
+    $person = Person::factory()->create(['user_id' => $this->user->id]);
+
+    $this->put("/people/{$person->id}", [
+        'first_name' => 'Ana Renombrada',
+        'closeness' => 'inner_circle',
+    ])->assertRedirect(route('people.show', $person));
+
+    expect($person->fresh()->first_name)->toBe('Ana Renombrada');
+
+    $this->delete("/people/{$person->id}")->assertRedirect(route('people.index'));
+
+    expect(Person::find($person->id))->toBeNull();
+});
+
+it('uploads an avatar through medialibrary', function () {
+    Storage::fake('public');
+    $person = Person::factory()->create(['user_id' => $this->user->id]);
+
+    $this->post("/people/{$person->id}/avatar", [
+        'avatar' => UploadedFile::fake()->image('ana.jpg'),
+    ])->assertRedirect();
+
+    expect($person->fresh()->getMedia('avatar'))->toHaveCount(1)
+        ->and($person->fresh()->avatar_url)->not->toBeNull();
+});
+
+it('rejects an invalid payload', function () {
+    $this->post('/people', ['first_name' => '', 'closeness' => 'nope'])
+        ->assertSessionHasErrors(['first_name', 'closeness']);
 });
