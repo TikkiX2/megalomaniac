@@ -3,6 +3,7 @@
 use App\Models\Person;
 use App\Models\PersonInteraction;
 use App\Models\PersonKeyDate;
+use App\Models\PersonSocial;
 use App\Models\User;
 use App\People\Enums\Closeness;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -221,4 +222,33 @@ it('forbids touching key dates from another user', function () {
     $this->delete("/people/key-dates/{$keyDate->id}")->assertForbidden();
 
     expect($keyDate->fresh()->remind_days_before)->not->toBe(14);
+});
+
+it('adds and deletes person socials', function () {
+    $person = Person::factory()->create(['user_id' => $this->user->id]);
+
+    $this->post("/people/{$person->id}/socials", [
+        'network' => 'instagram',
+        'handle' => '@ana',
+        'url' => 'https://instagram.com/ana',
+    ])->assertRedirect();
+
+    $social = $person->socials()->firstOrFail();
+
+    $this->patch("/people/socials/{$social->id}", ['handle' => '@ana.gomez'])->assertRedirect();
+    expect($social->fresh()->handle)->toBe('@ana.gomez');
+
+    $this->delete("/people/socials/{$social->id}")->assertRedirect();
+    expect($person->socials()->count())->toBe(0);
+});
+
+it('forbids touching socials from another user', function () {
+    $person = Person::factory()->create();
+    $social = PersonSocial::factory()->create(['person_id' => $person->id]);
+
+    $this->post("/people/{$person->id}/socials", ['network' => 'instagram'])->assertForbidden();
+    $this->patch("/people/socials/{$social->id}", ['handle' => '@hacker'])->assertForbidden();
+    $this->delete("/people/socials/{$social->id}")->assertForbidden();
+
+    expect($social->fresh()->handle)->not->toBe('@hacker');
 });

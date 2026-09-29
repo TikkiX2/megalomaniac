@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Cake, MessageCircle, Pencil, Plus, Star, Trash } from 'lucide-react';
+import { ArrowLeft, Cake, MessageCircle, Pencil, Plus, Star, Trash, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +72,19 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
             onSuccess: () => {
                 keyDateForm.reset();
                 setKeyDateOpen(false);
+            },
+        });
+    };
+
+    const [socialOpen, setSocialOpen] = useState(false);
+    const socialForm = useForm({ network: '', handle: '', url: '' });
+    const submitSocial = (e: React.FormEvent) => {
+        e.preventDefault();
+        socialForm.post(people.socials.store(person.id).url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                socialForm.reset();
+                setSocialOpen(false);
             },
         });
     };
@@ -203,7 +216,60 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                                 </DialogContent>
                             </Dialog>
                         </Card>
-                        {/* Task 8 inserta aquí la sección de redes. */}
+                        <Card className="bg-card border-border">
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">Redes</CardTitle>
+                                <Button size="sm" variant="outline" onClick={() => setSocialOpen(true)}>
+                                    <Plus className="mr-2 h-4 w-4" /> Agregar
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="flex flex-wrap gap-2">
+                                {person.socials.length === 0 ? (
+                                    <p className="w-full py-4 text-center text-sm text-muted-foreground italic">Sin redes cargadas.</p>
+                                ) : person.socials.map((social: any) => (
+                                    <div key={social.id} className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5">
+                                        <span className="text-xs font-bold text-white">{social.network}</span>
+                                        {social.handle && <span className="text-xs text-muted-foreground">{social.handle}</span>}
+                                        <button
+                                            type="button"
+                                            className="text-destructive"
+                                            onClick={() => router.delete(people.socials.destroy(social.id).url, { preserveScroll: true })}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </CardContent>
+
+                            <Dialog open={socialOpen} onOpenChange={setSocialOpen}>
+                                <DialogContent className="bg-card border-border">
+                                    <DialogHeader><DialogTitle>Nueva red</DialogTitle></DialogHeader>
+                                    <form onSubmit={submitSocial} className="flex flex-col gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="network">Red</Label>
+                                            <Input id="network" list="social-networks" value={socialForm.data.network}
+                                                onChange={(e) => socialForm.setData('network', e.target.value)} />
+                                            <datalist id="social-networks">
+                                                {['instagram', 'x', 'facebook', 'tiktok', 'linkedin', 'github', 'telegram', 'whatsapp'].map((network) => (
+                                                    <option key={network} value={network} />
+                                                ))}
+                                            </datalist>
+                                            {socialForm.errors.network && <p className="text-xs text-destructive">{socialForm.errors.network}</p>}
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="handle">Usuario</Label>
+                                            <Input id="handle" value={socialForm.data.handle} onChange={(e) => socialForm.setData('handle', e.target.value)} />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="url">URL</Label>
+                                            <Input id="url" value={socialForm.data.url} onChange={(e) => socialForm.setData('url', e.target.value)} />
+                                            {socialForm.errors.url && <p className="text-xs text-destructive">{socialForm.errors.url}</p>}
+                                        </div>
+                                        <Button type="submit" disabled={socialForm.processing} className="bg-primary text-white font-bold">Guardar</Button>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </Card>
                         <Card className="bg-card border-border">
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">
