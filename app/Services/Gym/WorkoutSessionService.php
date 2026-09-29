@@ -86,6 +86,12 @@ class WorkoutSessionService
     {
         $this->assertOwnsWorkout($user, $workout);
 
+        $routineId = $attributes['routine_id'] ?? null;
+
+        if ($routineId !== null) {
+            Routine::where('user_id', $user->id)->findOrFail($routineId);
+        }
+
         $workout->update(Arr::only($attributes, ['routine_id', 'started_at', 'ended_at', 'notes']));
 
         return $workout;

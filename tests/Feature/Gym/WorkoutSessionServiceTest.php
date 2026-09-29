@@ -66,6 +66,27 @@ it('rejects starting from another users routine', function () {
         ->toThrow(ModelNotFoundException::class);
 });
 
+it('rejects linking another users routine when updating a workout', function () {
+    $user = User::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+    $routine = Routine::factory()->create();
+
+    expect(fn () => sessions()->update($user, $workout, ['routine_id' => $routine->id]))
+        ->toThrow(ModelNotFoundException::class);
+
+    expect($workout->refresh()->routine_id)->toBeNull();
+});
+
+it('links an owned routine when updating a workout', function () {
+    $user = User::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+
+    $updated = sessions()->update($user, $workout, ['routine_id' => $routine->id]);
+
+    expect($updated->routine_id)->toBe($routine->id);
+});
+
 it('adds an exercise by name, creating it once', function () {
     $user = User::factory()->create();
     $workout = Workout::factory()->create(['user_id' => $user->id]);
