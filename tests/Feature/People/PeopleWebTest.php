@@ -100,9 +100,11 @@ it('updates and deletes a person', function () {
     $this->put("/people/{$person->id}", [
         'first_name' => 'Ana Renombrada',
         'closeness' => 'inner_circle',
+        'address' => 'Av. Siempreviva 742',
     ])->assertRedirect(route('people.show', $person));
 
-    expect($person->fresh()->first_name)->toBe('Ana Renombrada');
+    expect($person->fresh()->first_name)->toBe('Ana Renombrada')
+        ->and($person->fresh()->address)->toBe('Av. Siempreviva 742');
 
     $this->delete("/people/{$person->id}")->assertRedirect(route('people.index'));
 

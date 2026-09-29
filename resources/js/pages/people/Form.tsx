@@ -206,6 +206,11 @@ export default function PersonForm({ person, closenessOptions, relationshipOptio
                                 <Label htmlFor="country">País</Label>
                                 <Input id="country" value={data.country} onChange={(e) => setData('country', e.target.value)} />
                             </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="address">Dirección</Label>
+                                <Input id="address" value={data.address} onChange={(e) => setData('address', e.target.value)} />
+                                {errors.address && <p className="text-xs text-destructive">{errors.address}</p>}
+                            </div>
                         </CardContent>
                     </Card>
 
