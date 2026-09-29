@@ -12,7 +12,10 @@ use Illuminate\Support\Arr;
 
 class WorkoutSessionService
 {
-    public function __construct(protected ExerciseResolver $resolver) {}
+    public function __construct(
+        protected ExerciseResolver $resolver,
+        protected PersonalRecordService $records,
+    ) {}
 
     public function activeFor(User $user): ?Workout
     {
@@ -73,10 +76,16 @@ class WorkoutSessionService
         $setNumber = $data['set_number']
             ?? (($workoutExercise->sets()->max('set_number') ?? 0) + 1);
 
-        return $workoutExercise->sets()->updateOrCreate(
+        $set = $workoutExercise->sets()->updateOrCreate(
             ['set_number' => $setNumber],
             Arr::only($data, ['weight', 'reps', 'rpe', 'completed']),
         );
+
+        if ($set->completed) {
+            $this->records->evaluate($user, $set);
+        }
+
+        return $set;
     }
 
     /**
