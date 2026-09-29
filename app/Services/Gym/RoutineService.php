@@ -37,11 +37,14 @@ class RoutineService
     {
         $this->assertOwns($user, $routine);
 
-        $routine->update(Arr::only($data, ['name', 'focus', 'scheduled_date', 'status']));
+        $routine->update(array_filter(
+            Arr::only($data, ['name', 'focus', 'scheduled_date', 'status']),
+            fn ($value) => $value !== null,
+        ));
 
-        if (array_key_exists('exercises', $data)) {
+        if (array_key_exists('exercises', $data) && $data['exercises'] !== null) {
             $routine->exercises()->detach();
-            $this->attachExercises($routine, $data['exercises'] ?? []);
+            $this->attachExercises($routine, $data['exercises']);
         }
 
         return $routine->refresh();

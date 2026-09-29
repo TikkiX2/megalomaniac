@@ -49,6 +49,44 @@ it('updates metadata and replaces the exercise list', function () {
         ->and($updated->exercises->first()->name)->toBe('Peso muerto');
 });
 
+it('preserves metadata when null values are sent on update', function () {
+    $user = User::factory()->create();
+    $routine = routines()->create($user, [
+        'name' => 'Old',
+        'focus' => 'Chest',
+        'scheduled_date' => 'Monday',
+        'status' => 'inactive',
+    ]);
+
+    $updated = routines()->update($user, $routine, [
+        'name' => 'New',
+        'focus' => null,
+        'scheduled_date' => null,
+        'status' => null,
+    ]);
+
+    expect($updated->name)->toBe('New')
+        ->and($updated->focus)->toBe('Chest')
+        ->and($updated->scheduled_date)->toBe('Monday')
+        ->and($updated->status)->toBe('inactive');
+});
+
+it('preserves exercises when null is sent on update', function () {
+    $user = User::factory()->create();
+    $routine = routines()->create($user, [
+        'name' => 'Old',
+        'exercises' => [['name' => 'Sentadilla']],
+    ]);
+
+    $updated = routines()->update($user, $routine, [
+        'name' => 'New',
+        'exercises' => null,
+    ]);
+
+    expect($updated->exercises)->toHaveCount(1)
+        ->and($updated->exercises->first()->name)->toBe('Sentadilla');
+});
+
 it('deletes only own routines', function () {
     $user = User::factory()->create();
     $other = User::factory()->create();
