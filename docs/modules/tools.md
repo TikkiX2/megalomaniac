@@ -13,6 +13,7 @@
 | `grocery` | `GroceryQueryTool` | `GroceryActionTool` | `Services\Grocery\GroceryService` |
 | `supplements` | `SupplementQueryTool` | `SupplementActionTool` | `Services\Supplement\SupplementService` |
 | `freelance` | `FreelanceQueryTool` | `FreelanceActionTool` | `Services\Freelance\FreelanceService` |
+| `people` | `PeopleQueryTool` | `PeopleActionTool` | `Services\People\PeopleService` |
 | `actions` | — | alias de **todas** las action tools | — |
 | `integrations`, `agents`, `skills`, `memory`, `web` | — | — | integraciones/agentes/skills/memoria/web |
 

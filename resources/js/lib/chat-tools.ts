@@ -6,6 +6,8 @@ export const TOOL_LABELS: Record<string, string> = {
     FinanceQueryTool: 'Consultando finanzas',
     NutritionQueryTool: 'Consultando nutrición',
     GroceryQueryTool: 'Consultando compras',
+    PeopleQueryTool: 'Consultando personas',
+    PeopleActionTool: 'Actualizando personas',
     ActionTool: 'Ejecutando acción',
 };
 

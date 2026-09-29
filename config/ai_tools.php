@@ -54,6 +54,11 @@ return [
             'cliente', 'clientes', 'cotiza', 'quote', 'freelance', 'contrato',
             'presupuesto', 'factura',
         ],
+        'people' => [
+            'persona', 'personas', 'contacto', 'contactos', 'amig', 'familia',
+            'cumple', 'cumpleanos', 'vinculo', 'interaccion', 'hable', 'llam',
+            'escribi', 'conoci', 'regalo', 'aniversario',
+        ],
         'integrations' => [
             'github', 'docker', 'proxmox', 'servidor', 'contenedor', 'reddit',
             'telegram', 'notion', 'youtube', 'feed', 'drive', 's3', 'storage',
@@ -118,6 +123,6 @@ return [
     |
     */
 
-    'fallback' => ['tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'integrations', 'skills'],
+    'fallback' => ['tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'people', 'integrations', 'skills'],
 
 ];

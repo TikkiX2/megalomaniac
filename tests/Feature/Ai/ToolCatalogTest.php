@@ -8,6 +8,8 @@ use App\Ai\Tools\GroceryActionTool;
 use App\Ai\Tools\GymActionTool;
 use App\Ai\Tools\GymQueryTool;
 use App\Ai\Tools\NutritionActionTool;
+use App\Ai\Tools\PeopleActionTool;
+use App\Ai\Tools\PeopleQueryTool;
 use App\Ai\Tools\ProjectActionTool;
 use App\Ai\Tools\SupplementActionTool;
 use App\Ai\Tools\TaskActionTool;
@@ -17,7 +19,7 @@ use App\Models\User;
 
 it('exposes the tool groups', function () {
     expect(ToolCatalog::allGroups())->toBe([
-        'tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'actions', 'integrations', 'agents', 'skills', 'memory', 'web',
+        'tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'people', 'actions', 'integrations', 'agents', 'skills', 'memory', 'web',
     ])
         ->and(ToolCatalog::isValidGroup('tasks'))->toBeTrue()
         ->and(ToolCatalog::isValidGroup('nope'))->toBeFalse();
@@ -40,6 +42,7 @@ it('builds only the requested groups', function () {
         GroceryActionTool::class,
         SupplementActionTool::class,
         FreelanceActionTool::class,
+        PeopleActionTool::class,
     ]);
 });
 
@@ -48,8 +51,9 @@ it('builds every tool for the wildcard', function () {
         ->map(fn ($tool): string => $tool::class)
         ->all();
 
-    expect($tools)->toHaveCount(24)
-        ->toContain(TaskQueryTool::class, ProjectActionTool::class, GymQueryTool::class, GymActionTool::class);
+    expect($tools)->toHaveCount(26)
+        ->toContain(TaskQueryTool::class, ProjectActionTool::class, GymQueryTool::class, GymActionTool::class)
+        ->toContain(PeopleQueryTool::class, PeopleActionTool::class);
 });
 
 it('lets the main agent be built with a tool subset', function () {
@@ -62,5 +66,5 @@ it('lets the main agent be built with a tool subset', function () {
     expect($subset)->toBe([TaskQueryTool::class, ProjectActionTool::class, TaskActionTool::class, AskUserTool::class]);
 
     $all = collect(iterator_to_array((new MegalomaniacAgent($user))->tools()))->count();
-    expect($all)->toBe(25);
+    expect($all)->toBe(27);
 });
