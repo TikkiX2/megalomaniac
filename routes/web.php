@@ -237,6 +237,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::apiResource('workouts', WorkoutController::class);
         Route::post('workouts/{workout}/exercises', [WorkoutController::class, 'addExercise']);
         Route::post('workout-exercises/{workoutExercise}/sets', [WorkoutController::class, 'logSet']);
+        Route::delete('workout-exercises/{workoutExercise}', [WorkoutController::class, 'removeExercise'])->name('workout-exercises.destroy');
+        Route::delete('workout-sets/{workoutSet}', [WorkoutController::class, 'removeSet'])->name('workout-sets.destroy');
     });
 
     // Nutrition Routes

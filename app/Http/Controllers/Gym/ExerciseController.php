@@ -28,7 +28,7 @@ class ExerciseController extends Controller
             ->first();
 
         if ($activeWorkout) {
-            $activeWorkout = (new WorkoutController)->loadWorkoutWithHistory($activeWorkout);
+            $activeWorkout = app(WorkoutController::class)->loadWorkoutWithHistory($activeWorkout);
         }
 
         // Weekly volume + streak for gym-routine (last 7 days)

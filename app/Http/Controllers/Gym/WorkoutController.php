@@ -3,18 +3,25 @@
 namespace App\Http\Controllers\Gym;
 
 use App\Http\Controllers\Controller;
-use App\Models\Routine;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
+use App\Models\WorkoutSet;
+use App\Services\Gym\PersonalRecordService;
+use App\Services\Gym\WorkoutSessionService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class WorkoutController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    public function __construct(
+        protected WorkoutSessionService $sessions,
+        protected PersonalRecordService $records,
+    ) {}
+
     public function index(Request $request)
     {
         return Workout::with('routine')
@@ -34,67 +41,37 @@ class WorkoutController extends Controller
 
         return Inertia::render('fitness/history', [
             'workouts' => $workouts,
+            'personalRecords' => $this->records->timeline($request->user(), 20),
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'routine_id' => 'nullable|exists:routines,id',
+            'routine_id' => [
+                'nullable',
+                Rule::exists('routines', 'id')->where('user_id', $request->user()->id),
+            ],
             'started_at' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
-        // Check if there's already an active workout
-        $activeWorkout = $request->user()->workouts()->whereNull('ended_at')->first();
-        if ($activeWorkout) {
-            if ($request->wantsJson() && ! $request->header('X-Inertia')) {
-                return response()->json($activeWorkout->load(['routine', 'exercises.sets', 'exercises.exercise']));
+        if ($activeWorkout = $this->sessions->activeFor($request->user())) {
+            if ($this->wantsJson($request)) {
+                return response()->json($this->loadWorkoutWithHistory($activeWorkout));
             }
 
             return redirect()->back();
         }
 
-        $workout = $request->user()->workouts()->create([
-            'routine_id' => $validated['routine_id'] ?? null,
-            'started_at' => $validated['started_at'] ?? now(),
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        $workout = $this->sessions->start(
+            $request->user(),
+            $validated['routine_id'] ?? null,
+            $validated['started_at'] ?? null,
+            $validated['notes'] ?? null,
+        );
 
-        // If routine is provided, copy exercises and pre-fill sets from history/targets
-        if ($workout->routine_id) {
-            $routine = Routine::with('exercises')->find($workout->routine_id);
-            foreach ($routine->exercises as $exercise) {
-                $workoutExercise = $workout->exercises()->create([
-                    'exercise_id' => $exercise->id,
-                    'order' => $exercise->pivot->order ?? 0,
-                ]);
-
-                // Find previous sets for this exercise
-                $previousExercise = WorkoutExercise::whereHas('workout', function ($query) use ($request) {
-                    $query->where('user_id', $request->user()->id)->whereNotNull('ended_at');
-                })
-                    ->where('exercise_id', $exercise->id)
-                    ->latest()
-                    ->with('sets')
-                    ->first();
-
-                $targetSets = $exercise->pivot->target_sets ?? 3;
-
-                for ($i = 1; $i <= $targetSets; $i++) {
-                    $prevSet = $previousExercise ? $previousExercise->sets->where('set_number', $i)->first() : null;
-
-                    $workoutExercise->sets()->create([
-                        'set_number' => $i,
-                        'weight' => $prevSet ? $prevSet->weight : ($exercise->pivot->target_weight ?? null),
-                        'reps' => $prevSet ? $prevSet->reps : ($exercise->pivot->target_reps ?? null),
-                        'completed' => false,
-                    ]);
-                }
-            }
-        }
-
-        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
+        if ($this->wantsJson($request)) {
             return response()->json($this->loadWorkoutWithHistory($workout), 201);
         }
 
@@ -112,31 +89,44 @@ class WorkoutController extends Controller
                     ->where('workouts.id', '!=', $workout->id);
             })
                 ->where('exercise_id', $exercise->exercise_id)
-                ->latest()
+                ->latest('id')
                 ->with('sets')
                 ->first();
 
-            $exercise->previous = $previous ? $previous->sets->sortBy('set_number')->values() : null;
+            $exercise->setAttribute(
+                'previous',
+                $previous ? $previous->sets->sortBy('set_number')->values() : null,
+            );
+
+            $exercise->setAttribute('best_weight', $exercise->exercise
+                ? $this->records->bestWeightFor($workout->user, $exercise->exercise)
+                : null);
+
+            $this->records->annotateSets($exercise->sets);
         }
 
         return $workout;
     }
 
-    public function show(Workout $workout)
+    public function show(Request $request, Workout $workout)
     {
+        $this->authorize('view', $workout);
+
         return $this->loadWorkoutWithHistory($workout);
     }
 
     public function update(Request $request, Workout $workout)
     {
+        $this->authorize('update', $workout);
+
         $validated = $request->validate([
             'ended_at' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
-        $workout->update($validated);
+        $this->sessions->update($request->user(), $workout, $validated);
 
-        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
+        if ($this->wantsJson($request)) {
             return response()->json($this->loadWorkoutWithHistory($workout));
         }
 
@@ -145,18 +135,19 @@ class WorkoutController extends Controller
 
     public function addExercise(Request $request, Workout $workout)
     {
+        $this->authorize('update', $workout);
+
         $validated = $request->validate([
             'exercise_id' => 'required|exists:exercises,id',
         ]);
 
-        $maxOrder = $workout->exercises()->max('order') ?? 0;
+        $workoutExercise = $this->sessions->addExercise(
+            $request->user(),
+            $workout,
+            $validated['exercise_id'],
+        );
 
-        $workoutExercise = $workout->exercises()->create([
-            'exercise_id' => $validated['exercise_id'],
-            'order' => $maxOrder + 1,
-        ]);
-
-        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
+        if ($this->wantsJson($request)) {
             return response()->json($workoutExercise->load(['exercise', 'sets']), 201);
         }
 
@@ -165,6 +156,8 @@ class WorkoutController extends Controller
 
     public function logSet(Request $request, WorkoutExercise $workoutExercise)
     {
+        $this->authorize('update', $workoutExercise->workout);
+
         $validated = $request->validate([
             'set_number' => 'required|integer',
             'weight' => 'nullable|numeric',
@@ -173,22 +166,52 @@ class WorkoutController extends Controller
             'completed' => 'nullable|boolean',
         ]);
 
-        $set = $workoutExercise->sets()->updateOrCreate(
-            ['set_number' => $validated['set_number']],
-            $validated
-        );
+        $set = $this->sessions->logSet($request->user(), $workoutExercise, $validated);
 
-        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
+        if ($this->wantsJson($request)) {
             return response()->json($set, 200);
         }
 
         return redirect()->back();
     }
 
-    public function destroy(Workout $workout)
+    public function removeExercise(Request $request, WorkoutExercise $workoutExercise): JsonResponse|RedirectResponse
     {
-        $workout->delete();
+        $this->authorize('update', $workoutExercise->workout);
+
+        $this->sessions->removeExercise($request->user(), $workoutExercise);
+
+        if ($this->wantsJson($request)) {
+            return response()->json(['message' => 'Exercise removed']);
+        }
+
+        return redirect()->back();
+    }
+
+    public function removeSet(Request $request, WorkoutSet $workoutSet): JsonResponse|RedirectResponse
+    {
+        $this->authorize('update', $workoutSet->workoutExercise->workout);
+
+        $this->sessions->removeSet($request->user(), $workoutSet);
+
+        if ($this->wantsJson($request)) {
+            return response()->json(['message' => 'Set removed']);
+        }
+
+        return redirect()->back();
+    }
+
+    public function destroy(Request $request, Workout $workout): JsonResponse
+    {
+        $this->authorize('delete', $workout);
+
+        $this->sessions->delete($request->user(), $workout);
 
         return response()->noContent();
+    }
+
+    private function wantsJson(Request $request): bool
+    {
+        return $request->wantsJson() && ! $request->header('X-Inertia');
     }
 }
