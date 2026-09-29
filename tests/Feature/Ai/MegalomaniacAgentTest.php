@@ -18,9 +18,11 @@ use App\Ai\Tools\WebFetchTool;
 use App\Ai\Tools\WebSearchTool;
 use App\Ai\Tools\WorkoutQueryTool;
 use App\Models\Currency;
+use App\Models\Exercise;
 use App\Models\GroceryItem;
 use App\Models\MealLog;
 use App\Models\Purchase;
+use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -183,6 +185,41 @@ test('action tool adds purchase', function () {
     expect($data)->toHaveKey('purchase');
     expect($data['purchase']['amount'])->toBe('29.99');
     expect($data['purchase']['description'])->toBe('Groceries');
+});
+
+test('action tool logs sets with automatic numbering', function () {
+    $user = User::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+    $workoutExercise = $workout->exercises()->create(['exercise_id' => Exercise::factory()->create()->id]);
+
+    $tool = new ActionTool($user);
+    $result = $tool->handle(new Request([
+        'action' => 'log_set',
+        'workout_exercise_id' => $workoutExercise->id,
+        'weight' => 60,
+        'reps' => 8,
+        'completed' => true,
+    ]));
+
+    $data = json_decode($result, true);
+
+    expect($data['success'])->toBeTrue()
+        ->and($data['set']['set_number'])->toBe(1);
+});
+
+test('action tool copies the routine template when creating a workout', function () {
+    $user = User::factory()->create();
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+    $routine->exercises()->attach(Exercise::factory()->create()->id, ['order' => 1, 'target_sets' => 2]);
+
+    $tool = new ActionTool($user);
+    $data = json_decode($tool->handle(new Request([
+        'action' => 'create_workout',
+        'routine_id' => $routine->id,
+    ])), true);
+
+    expect($data['success'])->toBeTrue()
+        ->and($data['workout']['exercises'])->toHaveCount(1);
 });
 
 test('action tool returns error for unknown action', function () {

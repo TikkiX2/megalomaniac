@@ -14,9 +14,8 @@ use App\Models\ProjectTask;
 use App\Models\Purchase;
 use App\Models\SupplementLog;
 use App\Models\User;
-use App\Models\Workout;
 use App\Models\WorkoutExercise;
-use App\Models\WorkoutSet;
+use App\Services\Gym\WorkoutSessionService;
 use App\Services\TaskBoardColumnService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Approvals\Approval;
@@ -156,30 +155,36 @@ class ActionTool implements Approvable, Tool
 
     private function createWorkout(Request $request): string
     {
-        $workout = Workout::create([
-            'user_id' => $this->user->id,
-            'started_at' => $request['started_at'] ?? now()->toIso8601String(),
-            'notes' => $request['notes'] ?? null,
-        ]);
+        $workout = app(WorkoutSessionService::class)->start(
+            $this->user,
+            $request['routine_id'] ?? null,
+            $request['started_at'] ?? null,
+            $request['notes'] ?? null,
+        );
 
         return json_encode([
             'success' => true,
             'message' => 'Workout created',
-            'workout' => $workout->toArray(),
+            'workout' => $workout->load(['exercises.sets', 'exercises.exercise'])->toArray(),
         ], JSON_PRETTY_PRINT);
     }
 
     private function logSet(Request $request): string
     {
         $workoutExercise = WorkoutExercise::whereHas('workout', fn ($q) => $q->where('user_id', $this->user->id))
-            ->findOrFail($request['workout_exercise_id']);
+            ->find($request['workout_exercise_id']);
 
-        $set = WorkoutSet::create([
-            'workout_exercise_id' => $workoutExercise->id,
-            'weight' => $request['weight'] ?? 0,
-            'reps' => $request['reps'] ?? 0,
+        if (! $workoutExercise) {
+            return json_encode(['success' => false, 'error' => 'Workout exercise not found']);
+        }
+
+        $set = app(WorkoutSessionService::class)->logSet($this->user, $workoutExercise, array_filter([
+            'set_number' => $request['set_number'] ?? null,
+            'weight' => $request['weight'] ?? null,
+            'reps' => $request['reps'] ?? null,
             'rpe' => $request['rpe'] ?? null,
-        ]);
+            'completed' => $request['completed'] ?? true,
+        ], fn ($value) => $value !== null));
 
         return json_encode([
             'success' => true,
@@ -445,9 +450,11 @@ class ActionTool implements Approvable, Tool
             'total_amount' => $schema->number()->description('Total amount (for create_project)'),
             'deadline' => $schema->string()->description('Deadline YYYY-MM-DD (for create_project)'),
             // Workout params
+            'routine_id' => $schema->integer()->description('Routine ID (for create_workout; copies the template)'),
             'started_at' => $schema->string()->description('ISO 8601 datetime (for create_workout)'),
             'notes' => $schema->string()->description('Notes (for create_project, create_workout, add_debt)'),
             // Log set params
+            'set_number' => $schema->integer()->description('Set number (for log_set; auto-increments when omitted)'),
             'workout_exercise_id' => $schema->integer()->description('Workout Exercise ID (for log_set)'),
             'weight' => $schema->number()->description('Weight in kg/lbs (for log_set)'),
             'reps' => $schema->integer()->description('Number of reps (for log_set)'),
