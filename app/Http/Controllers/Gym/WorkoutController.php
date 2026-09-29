@@ -11,6 +11,7 @@ use App\Services\Gym\WorkoutSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -201,7 +202,7 @@ class WorkoutController extends Controller
         return redirect()->back();
     }
 
-    public function destroy(Request $request, Workout $workout): JsonResponse
+    public function destroy(Request $request, Workout $workout): JsonResponse|HttpResponse
     {
         $this->authorize('delete', $workout);
 

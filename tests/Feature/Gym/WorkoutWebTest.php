@@ -14,12 +14,24 @@ it('blocks access to another users workout through web routes', function () {
     $other = User::factory()->create();
     $workout = Workout::factory()->create(['user_id' => $other->id]);
     $workoutExercise = $workout->exercises()->create(['exercise_id' => Exercise::factory()->create()->id]);
+    $set = $workoutExercise->sets()->create(['set_number' => 1]);
 
     $this->actingAs($user)->getJson("/gym/workouts/{$workout->id}")->assertForbidden();
     $this->actingAs($user)->patchJson("/gym/workouts/{$workout->id}", ['notes' => 'x'])->assertForbidden();
     $this->actingAs($user)->postJson("/gym/workouts/{$workout->id}/exercises", ['exercise_id' => 1])->assertForbidden();
     $this->actingAs($user)->postJson("/gym/workout-exercises/{$workoutExercise->id}/sets", ['set_number' => 1])->assertForbidden();
+    $this->actingAs($user)->deleteJson("/gym/workout-exercises/{$workoutExercise->id}")->assertForbidden();
+    $this->actingAs($user)->deleteJson("/gym/workout-sets/{$set->id}")->assertForbidden();
     $this->actingAs($user)->deleteJson("/gym/workouts/{$workout->id}")->assertForbidden();
+});
+
+it('deletes the owners workout', function () {
+    $user = User::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)->deleteJson("/gym/workouts/{$workout->id}")->assertNoContent();
+
+    $this->assertDatabaseMissing('workouts', ['id' => $workout->id]);
 });
 
 it('removes exercises and sets for the owner', function () {
