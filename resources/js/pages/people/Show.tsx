@@ -1,10 +1,15 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, MessageCircle, Pencil, Star } from 'lucide-react';
-import React from 'react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, MessageCircle, Pencil, Plus, Star, Trash } from 'lucide-react';
+import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import PeopleLayout from '@/layouts/people-layout';
 import people from '@/routes/people';
 
@@ -18,6 +23,24 @@ const CLOSENESS_LABELS: Record<string, string> = {
 export default function PersonShow({ person, interactions, upcoming, channelOptions }: any) {
     const quickLog = () => {
         router.post(people.contacted(person.id).url, {}, { preserveScroll: true });
+    };
+
+    const [logOpen, setLogOpen] = useState(false);
+    const form = useForm({
+        channel: 'message',
+        occurred_at: new Date().toISOString().slice(0, 16),
+        title: '',
+        notes: '',
+    });
+    const submitInteraction = (e: React.FormEvent) => {
+        e.preventDefault();
+        form.post(people.interactions.store(person.id).url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                form.reset();
+                setLogOpen(false);
+            },
+        });
     };
 
     return (
@@ -78,7 +101,83 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                     <div className="flex flex-col gap-4 lg:col-span-2">
                         {/* Task 7 inserta aquí la sección de fechas clave. */}
                         {/* Task 8 inserta aquí la sección de redes. */}
-                        {/* Task 6 inserta aquí la sección de historial. */}
+                        <Card className="bg-card border-border">
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                                    Historial de contacto
+                                </CardTitle>
+                                <Dialog open={logOpen} onOpenChange={setLogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button size="sm" variant="outline"><Plus className="mr-2 h-4 w-4" /> Registrar</Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="bg-card border-border">
+                                        <DialogHeader><DialogTitle>Registrar interacción</DialogTitle></DialogHeader>
+                                        <form onSubmit={submitInteraction} className="flex flex-col gap-4">
+                                            <div className="grid gap-2">
+                                                <Label>Canal</Label>
+                                                <Select value={form.data.channel} onValueChange={(value) => form.setData('channel', value)}>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                                    <SelectContent>
+                                                        {channelOptions.map((value: string) => (
+                                                            <SelectItem key={value} value={value}>{value.replace(/_/g, ' ')}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                {form.errors.channel && <p className="text-xs text-destructive">{form.errors.channel}</p>}
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="occurred_at">Fecha y hora</Label>
+                                                <Input
+                                                    id="occurred_at"
+                                                    type="datetime-local"
+                                                    value={form.data.occurred_at}
+                                                    onChange={(e) => form.setData('occurred_at', e.target.value)}
+                                                />
+                                                {form.errors.occurred_at && <p className="text-xs text-destructive">{form.errors.occurred_at}</p>}
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="title">Título</Label>
+                                                <Input id="title" value={form.data.title} onChange={(e) => form.setData('title', e.target.value)} />
+                                            </div>
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="notes">Notas</Label>
+                                                <Textarea id="notes" value={form.data.notes} onChange={(e) => form.setData('notes', e.target.value)} />
+                                            </div>
+                                            <Button type="submit" disabled={form.processing} className="bg-primary text-white font-bold">Guardar</Button>
+                                        </form>
+                                    </DialogContent>
+                                </Dialog>
+                            </CardHeader>
+                            <CardContent className="flex flex-col gap-1">
+                                {interactions.data.length === 0 ? (
+                                    <p className="py-6 text-center text-sm text-muted-foreground italic">Todavía no hay interacciones.</p>
+                                ) : interactions.data.map((item: any) => (
+                                    <div key={item.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/5">
+                                        <MessageCircle className="h-4 w-4 text-primary" />
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-white">{item.title || 'Interacción'}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {new Date(item.occurred_at).toLocaleDateString('es-ES')} · {item.channel.replace(/_/g, ' ')}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-destructive"
+                                            onClick={() => router.delete(people.interactions.destroy(item.id).url, { preserveScroll: true })}
+                                        >
+                                            <Trash className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                {(interactions.prev_page_url || interactions.next_page_url) && (
+                                    <div className="flex justify-end gap-3 pt-2 text-xs">
+                                        {interactions.prev_page_url && <Link className="text-primary" href={interactions.prev_page_url}>Anterior</Link>}
+                                        {interactions.next_page_url && <Link className="text-primary" href={interactions.next_page_url}>Siguiente</Link>}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>

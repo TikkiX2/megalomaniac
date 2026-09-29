@@ -127,3 +127,43 @@ it('rejects an invalid payload', function () {
     $this->post('/people', ['first_name' => '', 'closeness' => 'nope'])
         ->assertSessionHasErrors(['first_name', 'closeness']);
 });
+
+it('logs an interaction and refreshes last_contacted_at', function () {
+    $person = Person::factory()->create(['user_id' => $this->user->id]);
+    $occurredAt = now()->subDay()->startOfMinute();
+
+    $this->post("/people/{$person->id}/interactions", [
+        'channel' => 'call',
+        'occurred_at' => $occurredAt->toDateTimeString(),
+        'title' => 'Llamada',
+    ])->assertRedirect();
+
+    $this->assertDatabaseHas('person_interactions', [
+        'person_id' => $person->id,
+        'channel' => 'call',
+    ]);
+    expect($person->fresh()->last_contacted_at->equalTo($occurredAt))->toBeTrue();
+});
+
+it('quick logs a contact with the default channel', function () {
+    $person = Person::factory()->create(['user_id' => $this->user->id]);
+
+    $this->post("/people/{$person->id}/contacted")->assertRedirect();
+
+    $this->assertDatabaseHas('person_interactions', [
+        'person_id' => $person->id,
+        'channel' => 'message',
+    ]);
+});
+
+it('deletes an interaction owned by the user', function () {
+    $person = Person::factory()->create(['user_id' => $this->user->id]);
+    $interaction = PersonInteraction::factory()->create([
+        'user_id' => $this->user->id,
+        'person_id' => $person->id,
+    ]);
+
+    $this->delete("/people/interactions/{$interaction->id}")->assertRedirect();
+
+    expect(PersonInteraction::find($interaction->id))->toBeNull();
+});
