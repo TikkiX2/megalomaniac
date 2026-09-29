@@ -489,3 +489,23 @@ El menú **Prompts** del chat no se pudo accionar en browser porque la IA del en
 
 ### Datos de QA
 Conexión, PAT y logs de prueba eliminados; instancia `:8011` detenida.
+
+---
+
+## Gym Module Completion (chat + UI + datos + seguridad) — 2026-09-29
+
+> **Rama:** `feat/gym-module-completion` (base 5d2773d) · **Entorno:** `php artisan serve :8010`, Playwright MCP, usuario `test@example.com`, proveedor OpenAI-compatible falso en `:9998` (SSE con tool call `GymActionTool`), migraciones `2026_09_29_*` corridas, DB dev sin duplicados de sets (dedupe 0). Artefactos QA borrados (2 workouts, 2 PRs, 1 hilo) y usuario restaurado (`ai_enabled=false`, sin URL/key, modelo `gpt-4`). Spec/plan del módulo en `docs/superpowers/`.
+
+### Verificado en vivo
+1. **Gym (`/fitness/gym`)** — iniciar workout, agregar ejercicio desde la librería, badge `PR histórico` alimentado por `best_weight` server-side, botón video deshabilitado sin URL, grilla de series con columna delete. **PASS**
+2. **Registrar serie** — 85kg × 8 → Total Volume 680kg, Completed Sets 1, trofeo `is_pr` en la fila y badge actualizado a `PR 85kg` por el servidor. **PASS**
+3. **Borrar serie** — diálogo `Are you sure you want to delete this set?` → serie eliminada, volumen vuelve a 0. **PASS**
+4. **Finish + Historial (`/fitness/history`)** — PR Timeline con Bench Press "Peso 85 kg" y "1RM 107.67 kg" (Epley). **PASS**
+5. **Chat (`/ai/chat`)** — mensaje "Escribí mi entrenamiento de pecho" (antes inalcanzable): el agente llamó **GymActionTool**, la UI mostró la aprobación "Va a iniciar un entrenamiento", al aprobar se ejecutó y respondió "Listo, entrenamiento creado con tu aprobación.". DB: workout #10 con `notes=QA en vivo GymActionTool`. **PASS**
+
+### Estáticos
+`php artisan test --compact` **753 passed** (2957 assertions) · `npm run types` 0 errores · `npm run build` OK · Pint OK.
+
+### Limitaciones
+- El encadenado multi-paso del chat (add_exercise/log_set en un mismo turno) se verificó por tests (`GymActionToolTest`, `ChatApprovalTest`, `WorkoutToolsTest`), no en vivo: el fake de QA emite un tool call por turno.
+- Follow-up documentado: agentes background con policy `workout_query` reciben `GymActionTool` (aprobación no reanudada por el runner; sin escrituras no autorizadas).
