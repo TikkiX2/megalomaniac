@@ -16,7 +16,7 @@ Laravel 12, Inertia v2, React 19, Tailwind v4, Wayfinder, Fortify, Pest 4, Vite 
 ## Módulos
 
 ### Gym
-Models: `Exercise, Routine, RoutineExercise, Workout, WorkoutExercise, WorkoutSet, User`
+Models: `Exercise, Routine, Workout, WorkoutExercise, WorkoutSet, PersonalRecord, User` (la plantilla de rutina usa el pivote `routine_exercises`, sin modelo propio)
 Flujo: `routines/index` → `gym-routine.tsx` (activeWorkout + suggestedRoutine) → `POST /gym/workouts` → `POST /gym/workouts/{id}/exercises` → `POST /gym/workout-exercises/{id}/sets`
 Estado: timer en `useState` + `setInterval`, `router.post/patch` con Inertia.
 
@@ -54,7 +54,7 @@ Fortify + `auth/*` pages + `settings/{profile,password,appearance,two-factor}` +
 ## ERD (resumen)
 ```
 User 1—N Workout N—N Exercise (via WorkoutExercise 1—N WorkoutSet)
-User 1—N Routine 1—N RoutineExercise N—1 Exercise
+User 1—N Routine N—N Exercise (via pivote routine_exercises)
 User 1—N MealLog 1—N MealItem N—1 Food
 User 1—N Supplement + SupplementLog
 User 1—N GroceryItem 1—N GroceryPriceHistory
