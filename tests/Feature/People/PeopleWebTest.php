@@ -2,6 +2,7 @@
 
 use App\Models\Person;
 use App\Models\PersonInteraction;
+use App\Models\PersonKeyDate;
 use App\Models\User;
 use App\People\Enums\Closeness;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -166,4 +167,58 @@ it('deletes an interaction owned by the user', function () {
     $this->delete("/people/interactions/{$interaction->id}")->assertRedirect();
 
     expect(PersonInteraction::find($interaction->id))->toBeNull();
+});
+
+it('creates, updates and deletes key dates', function () {
+    $person = Person::factory()->create(['user_id' => $this->user->id]);
+
+    $this->post("/people/{$person->id}/key-dates", [
+        'type' => 'anniversary',
+        'label' => 'Aniversario',
+        'date' => now()->addDays(10)->toDateString(),
+        'is_recurring_annually' => true,
+    ])->assertRedirect();
+
+    $keyDate = $person->keyDates()->firstOrFail();
+
+    $this->patch("/people/key-dates/{$keyDate->id}", ['remind_days_before' => 14])->assertRedirect();
+    expect($keyDate->fresh()->remind_days_before)->toBe(14);
+
+    $this->delete("/people/key-dates/{$keyDate->id}")->assertRedirect();
+    expect(PersonKeyDate::find($keyDate->id))->toBeNull();
+});
+
+it('renders the key dates calendar', function () {
+    $person = Person::factory()->create(['user_id' => $this->user->id, 'birthday' => now()->addDays(5)]);
+    PersonKeyDate::factory()->create([
+        'user_id' => $this->user->id,
+        'person_id' => $person->id,
+        'type' => 'anniversary',
+        'date' => now()->addDays(10)->toDateString(),
+    ]);
+
+    $archived = Person::factory()->create(['user_id' => $this->user->id, 'is_archived' => true]);
+    PersonKeyDate::factory()->create([
+        'user_id' => $this->user->id,
+        'person_id' => $archived->id,
+        'type' => 'custom',
+        'date' => now()->addDays(3)->toDateString(),
+    ]);
+
+    $this->get('/people/calendar')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('people/Calendar')
+            ->has('people', 1)
+            ->has('keyDates', 1)
+            ->where('keyDates.0.person_id', $person->id));
+});
+
+it('forbids touching key dates from another user', function () {
+    $keyDate = PersonKeyDate::factory()->create();
+
+    $this->patch("/people/key-dates/{$keyDate->id}", ['remind_days_before' => 14])->assertForbidden();
+    $this->delete("/people/key-dates/{$keyDate->id}")->assertForbidden();
+
+    expect($keyDate->fresh()->remind_days_before)->not->toBe(14);
 });

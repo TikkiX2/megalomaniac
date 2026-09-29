@@ -79,6 +79,30 @@ it('returns upcoming birthdays and key dates inside the window', function () {
         ->and($upcoming->last()['kind'])->toBe('key_date');
 });
 
+it('excludes key dates of archived people from upcoming reminders', function () {
+    $active = $this->service->createPerson($this->user, ['first_name' => 'Gina']);
+    $this->service->addKeyDate($this->user, $active, [
+        'type' => 'anniversary',
+        'label' => 'Aniversario activo',
+        'date' => now()->addDays(5)->toDateString(),
+        'is_recurring_annually' => true,
+    ]);
+
+    $archived = $this->service->createPerson($this->user, ['first_name' => 'Hugo', 'is_archived' => true]);
+    $this->service->addKeyDate($this->user, $archived, [
+        'type' => 'anniversary',
+        'label' => 'Aniversario archivado',
+        'date' => now()->addDays(2)->toDateString(),
+        'is_recurring_annually' => true,
+    ]);
+
+    $upcoming = $this->service->upcoming($this->user, 30);
+
+    expect($upcoming)->toHaveCount(1)
+        ->and($upcoming->first()['label'])->toBe('Aniversario activo')
+        ->and($this->service->upcoming($this->user, 30, $archived))->toHaveCount(0);
+});
+
 it('deletes key dates and socials with ownership checks', function () {
     $person = $this->service->createPerson($this->user, ['first_name' => 'Dani']);
     $keyDate = $this->service->addKeyDate($this->user, $person, [

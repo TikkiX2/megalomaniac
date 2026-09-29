@@ -1,10 +1,11 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, MessageCircle, Pencil, Plus, Star, Trash } from 'lucide-react';
+import { ArrowLeft, Cake, MessageCircle, Pencil, Plus, Star, Trash } from 'lucide-react';
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,6 +53,25 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                 form.reset();
                 form.setData('occurred_at', localDateTimeInput());
                 setLogOpen(false);
+            },
+        });
+    };
+
+    const [keyDateOpen, setKeyDateOpen] = useState(false);
+    const keyDateForm = useForm({
+        type: 'custom',
+        label: '',
+        date: '',
+        remind_days_before: '7',
+        is_recurring_annually: true,
+    });
+    const submitKeyDate = (e: React.FormEvent) => {
+        e.preventDefault();
+        keyDateForm.post(people.keyDates.store(person.id).url, {
+            preserveScroll: true,
+            onSuccess: () => {
+                keyDateForm.reset();
+                setKeyDateOpen(false);
             },
         });
     };
@@ -112,7 +132,77 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                     </Card>
 
                     <div className="flex flex-col gap-4 lg:col-span-2">
-                        {/* Task 7 inserta aquí la sección de fechas clave. */}
+                        <Card className="bg-card border-border">
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">Fechas clave</CardTitle>
+                                <Button size="sm" variant="outline" onClick={() => setKeyDateOpen(true)}>
+                                    <Plus className="mr-2 h-4 w-4" /> Agregar
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="flex flex-col gap-2">
+                                {person.key_dates.length === 0 ? (
+                                    <p className="py-4 text-center text-sm text-muted-foreground italic">Sin fechas clave.</p>
+                                ) : person.key_dates.map((keyDate: any) => (
+                                    <div key={keyDate.id} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/5">
+                                        <Cake className="h-4 w-4 text-primary" />
+                                        <div className="flex-1">
+                                            <p className="text-sm font-medium text-white">{keyDate.label || keyDate.type.replace(/_/g, ' ')}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {keyDate.date.slice(0, 10)} · avisa {keyDate.remind_days_before} días antes
+                                                {keyDate.is_recurring_annually ? ' · cada año' : ''}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-destructive"
+                                            onClick={() => router.delete(people.keyDates.destroy(keyDate.id).url, { preserveScroll: true })}
+                                        >
+                                            <Trash className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </CardContent>
+
+                            <Dialog open={keyDateOpen} onOpenChange={setKeyDateOpen}>
+                                <DialogContent className="bg-card border-border">
+                                    <DialogHeader><DialogTitle>Nueva fecha clave</DialogTitle></DialogHeader>
+                                    <form onSubmit={submitKeyDate} className="flex flex-col gap-4">
+                                        <div className="grid gap-2">
+                                            <Label>Tipo</Label>
+                                            <Select value={keyDateForm.data.type} onValueChange={(value) => keyDateForm.setData('type', value)}>
+                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectContent>
+                                                    {['birthday', 'anniversary', 'graduation', 'memorial', 'custom'].map((value) => (
+                                                        <SelectItem key={value} value={value}>{value}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="kd_label">Etiqueta</Label>
+                                            <Input id="kd_label" value={keyDateForm.data.label} onChange={(e) => keyDateForm.setData('label', e.target.value)} />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="kd_date">Fecha</Label>
+                                            <Input id="kd_date" type="date" value={keyDateForm.data.date} onChange={(e) => keyDateForm.setData('date', e.target.value)} />
+                                            {keyDateForm.errors.date && <p className="text-xs text-destructive">{keyDateForm.errors.date}</p>}
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="kd_remind">Días de aviso</Label>
+                                            <Input id="kd_remind" type="number" min={0} max={90} value={keyDateForm.data.remind_days_before}
+                                                onChange={(e) => keyDateForm.setData('remind_days_before', e.target.value)} />
+                                        </div>
+                                        <label className="flex items-center gap-2 text-sm text-white/90">
+                                            <Checkbox checked={keyDateForm.data.is_recurring_annually}
+                                                onCheckedChange={(checked) => keyDateForm.setData('is_recurring_annually', !!checked)} />
+                                            Se repite cada año
+                                        </label>
+                                        <Button type="submit" disabled={keyDateForm.processing} className="bg-primary text-white font-bold">Guardar</Button>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </Card>
                         {/* Task 8 inserta aquí la sección de redes. */}
                         <Card className="bg-card border-border">
                             <CardHeader className="flex flex-row items-center justify-between">
@@ -143,6 +233,7 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                                                 <Input
                                                     id="occurred_at"
                                                     type="datetime-local"
+                                                    required
                                                     value={form.data.occurred_at}
                                                     onChange={(e) => form.setData('occurred_at', e.target.value)}
                                                 />

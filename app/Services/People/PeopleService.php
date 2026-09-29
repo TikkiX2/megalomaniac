@@ -149,6 +149,7 @@ class PeopleService
 
         $keyDates = PersonKeyDate::with('person:id,first_name,last_name')
             ->where('user_id', $user->id)
+            ->whereHas('person', fn ($query) => $query->where('is_archived', false))
             ->when($person, fn ($query) => $query->where('person_id', $person->id))
             ->get();
 

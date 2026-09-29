@@ -138,6 +138,7 @@ class PersonController extends Controller
                 ->get(['id', 'first_name', 'last_name', 'birthday']),
             'keyDates' => PersonKeyDate::query()
                 ->where('user_id', $request->user()->id)
+                ->whereHas('person', fn ($query) => $query->where('is_archived', false))
                 ->with('person:id,first_name,last_name')
                 ->get(),
         ]);
