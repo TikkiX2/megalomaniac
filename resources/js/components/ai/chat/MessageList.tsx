@@ -3,7 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 import { AssistantMessage } from '@/components/ai/chat/AssistantMessage';
 import { UserMessage } from '@/components/ai/chat/UserMessage';
 import { Button } from '@/components/ui/button';
-import type { ChatMessage, Citation, DecideApproval, PendingApproval, ToolActivity } from '@/types/chat';
+import type {
+    ChatMessage,
+    Citation,
+    DecideApproval,
+    PendingApproval,
+    ToolActivity,
+} from '@/types/chat';
 
 interface MessageListProps {
     messages: ChatMessage[];
@@ -37,7 +43,9 @@ export function MessageList({
     pendingUser = null,
 }: MessageListProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const [pinned, setPinned] = useState(true);
+    const pinnedRef = useRef(true);
 
     const scrollToBottom = (behavior: ScrollBehavior = 'auto') => {
         const container = containerRef.current;
@@ -48,28 +56,93 @@ export function MessageList({
     };
 
     useEffect(() => {
+        pinnedRef.current = pinned;
+    }, [pinned]);
+
+    useEffect(() => {
         if (pinned) scrollToBottom();
-    }, [messages, liveText, liveApprovals, streaming, pinned, pendingUser]);
+    }, [
+        messages,
+        liveText,
+        liveReasoning,
+        liveTools,
+        liveApprovals,
+        streaming,
+        pinned,
+        pendingUser,
+    ]);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        const content = contentRef.current;
+
+        if (
+            container === null ||
+            content === null ||
+            typeof ResizeObserver === 'undefined'
+        ) {
+            return;
+        }
+
+        let frame = 0;
+
+        const observer = new ResizeObserver(() => {
+            if (!pinnedRef.current) return;
+
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() => {
+                container.scrollTop = container.scrollHeight;
+            });
+        });
+
+        observer.observe(content);
+
+        return () => {
+            cancelAnimationFrame(frame);
+            observer.disconnect();
+        };
+    }, []);
 
     const handleScroll = () => {
         const container = containerRef.current;
 
         if (!container) return;
 
-        const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+        const distance =
+            container.scrollHeight -
+            container.scrollTop -
+            container.clientHeight;
         setPinned(distance < 80);
     };
 
-    const lastAssistantId = [...messages].reverse().find((message) => message.role === 'assistant')?.id ?? null;
-    const showLive = streaming || liveText !== '' || liveReasoning !== '' || liveApprovals.length > 0;
+    const lastAssistantId =
+        [...messages].reverse().find((message) => message.role === 'assistant')
+            ?.id ?? null;
+    const showLive =
+        streaming ||
+        liveText !== '' ||
+        liveReasoning !== '' ||
+        liveApprovals.length > 0;
 
     return (
         <div className="relative min-h-0 flex-1">
-            <div ref={containerRef} onScroll={handleScroll} className="h-full overflow-y-auto">
-                <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6">
+            <div
+                ref={containerRef}
+                onScroll={handleScroll}
+                className="h-full overflow-y-auto"
+            >
+                <div
+                    ref={contentRef}
+                    className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6"
+                >
                     {messages.map((message) =>
                         message.role === 'user' ? (
-                            <UserMessage key={message.id} message={message} onEdit={onEdit} disabled={streaming} />
+                            <UserMessage
+                                key={message.id}
+                                message={message}
+                                onEdit={onEdit}
+                                disabled={streaming}
+                            />
                         ) : (
                             <AssistantMessage
                                 key={message.id}
@@ -80,7 +153,11 @@ export function MessageList({
                                 pendingApprovals={message.pending_approvals}
                                 onDecide={onDecide}
                                 onApproveAll={onApproveAll}
-                                onRegenerate={message.id === lastAssistantId ? onRegenerate : undefined}
+                                onRegenerate={
+                                    message.id === lastAssistantId
+                                        ? onRegenerate
+                                        : undefined
+                                }
                                 disabled={streaming}
                             />
                         ),
@@ -88,7 +165,7 @@ export function MessageList({
 
                     {pendingUser !== null && pendingUser !== '' && (
                         <article className="flex justify-end">
-                            <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-tr-sm border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground">
+                            <div className="max-w-[85%] rounded-2xl rounded-tr-sm border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm break-words whitespace-pre-wrap text-foreground">
                                 {pendingUser}
                             </div>
                         </article>

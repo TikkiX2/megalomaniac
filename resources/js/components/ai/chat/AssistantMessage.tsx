@@ -1,13 +1,18 @@
-import { Check, Copy, RefreshCw } from 'lucide-react';
+import { Check, Copy, Loader2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { ApprovalCardList } from '@/components/ai/chat/ApprovalCard';
 import { Markdown } from '@/components/ai/chat/Markdown';
 import { ReasoningPanel } from '@/components/ai/chat/ReasoningPanel';
 import { SourcesPanel } from '@/components/ai/chat/SourcesPanel';
-import { StreamStatus } from '@/components/ai/chat/StreamStatus';
+import { ToolActivityPanel } from '@/components/ai/chat/ToolActivityPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { Citation, DecideApproval, PendingApproval, ToolActivity } from '@/types/chat';
+import type {
+    Citation,
+    DecideApproval,
+    PendingApproval,
+    ToolActivity,
+} from '@/types/chat';
 
 interface AssistantMessageProps {
     content: string;
@@ -50,6 +55,9 @@ export function AssistantMessage({
     };
 
     const thinking = streaming && content === '';
+    const hasReasoning = (reasoning ?? '').trim() !== '';
+    const showThinkingFallback =
+        thinking && !hasReasoning && tools.length === 0;
 
     return (
         <article className="flex gap-3" aria-live="polite">
@@ -58,7 +66,18 @@ export function AssistantMessage({
             </div>
 
             <div className="min-w-0 flex-1">
-                <StreamStatus thinking={thinking} tools={tools} />
+                {showThinkingFallback && (
+                    <span
+                        role="status"
+                        aria-live="polite"
+                        className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"
+                    >
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary motion-reduce:animate-none" />
+                        Pensando…
+                    </span>
+                )}
+
+                <ToolActivityPanel tools={tools} />
 
                 <ReasoningPanel
                     key={thinking ? 'reasoning-streaming' : 'reasoning-settled'}
@@ -78,7 +97,10 @@ export function AssistantMessage({
                     <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-primary/70 align-text-bottom motion-reduce:animate-none" />
                 )}
 
-                <SourcesPanel citations={citations} activeIndex={activeCitation} />
+                <SourcesPanel
+                    citations={citations}
+                    activeIndex={activeCitation}
+                />
 
                 {!streaming && content !== '' && (
                     <div className="mt-2 flex items-center gap-1">
@@ -90,7 +112,11 @@ export function AssistantMessage({
                             aria-label="Copiar respuesta"
                             className="h-7 w-7 text-muted-foreground hover:text-foreground"
                         >
-                            {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+                            {copied ? (
+                                <Check className="h-3.5 w-3.5 text-primary" />
+                            ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                            )}
                         </Button>
 
                         {onRegenerate && (
