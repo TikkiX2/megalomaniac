@@ -194,4 +194,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(AgentSuggestion::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | People Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function people(): HasMany
+    {
+        return $this->hasMany(Person::class);
+    }
 }
