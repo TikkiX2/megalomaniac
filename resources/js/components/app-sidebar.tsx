@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bot, Brain, BrainCircuit, Briefcase, CheckSquare, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, LayoutGrid, Library, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
+import { Bot, Brain, BrainCircuit, Briefcase, Cake, CalendarClock, CheckSquare, Contact, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, LayoutGrid, Library, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -46,6 +46,12 @@ const financeNavItems: NavItem[] = [
 const personalNavItems: NavItem[] = [
     { title: 'Tareas', href: '/personal/tasks', icon: CheckSquare },
     { title: 'Proyectos', href: '/personal/projects', icon: FolderKanban },
+];
+
+const peopleNavItems: NavItem[] = [
+    { title: 'Personas', href: '/people', icon: Contact },
+    { title: 'Historial', href: '/people/timeline', icon: CalendarClock },
+    { title: 'Calendario', href: '/people/calendar', icon: Cake },
 ];
 
 function SidebarPinToggle() {
@@ -189,6 +195,22 @@ export function AppSidebar() {
                     <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Personal</SidebarGroupLabel>
                     <SidebarMenu>
                         {personalNavItems.map((item) => (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton asChild tooltip={item.title} isActive={window.location.pathname === item.href}>
+                                    <Link href={item.href} prefetch>
+                                        {item.icon && <item.icon className="h-4 w-4" />}
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Personas</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {peopleNavItems.map((item) => (
                             <SidebarMenuItem key={item.title}>
                                 <SidebarMenuButton asChild tooltip={item.title} isActive={window.location.pathname === item.href}>
                                     <Link href={item.href} prefetch>

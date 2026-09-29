@@ -174,6 +174,7 @@ Route::get('dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 require __DIR__.'/settings.php';
+require __DIR__.'/people.php';
 require __DIR__.'/integrations.php';
 require __DIR__.'/agents.php';
 require __DIR__.'/feed.php';
