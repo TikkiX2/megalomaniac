@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Gym;
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
 use App\Models\Routine;
+use App\Services\Gym\RoutineService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class RoutineController extends Controller
 {
+    public function __construct(protected RoutineService $routines) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -46,38 +49,7 @@ class RoutineController extends Controller
             'exercises.*.notes' => 'nullable|string',
         ]);
 
-        $routine = $request->user()->routines()->create([
-            'name' => $validated['name'],
-            'focus' => $validated['focus'] ?? null,
-            'scheduled_date' => $validated['scheduled_date'] ?? null,
-            'status' => 'active',
-        ]);
-
-        if (! empty($validated['exercises'])) {
-            foreach ($validated['exercises'] as $index => $exerciseData) {
-                $exerciseId = $exerciseData['id'] ?? null;
-
-                // Create new exercise if ID is not provided
-                if (! $exerciseId && ! empty($exerciseData['name'])) {
-                    $exercise = Exercise::create([
-                        'name' => $exerciseData['name'],
-                        'muscle_group' => $exerciseData['muscle_group'] ?? null,
-                        'type' => $exerciseData['type'] ?? null,
-                    ]);
-                    $exerciseId = $exercise->id;
-                }
-
-                if ($exerciseId) {
-                    $routine->exercises()->attach($exerciseId, [
-                        'order' => $index + 1,
-                        'target_sets' => $exerciseData['target_sets'] ?? null,
-                        'target_reps' => $exerciseData['target_reps'] ?? null,
-                        'target_weight' => $exerciseData['target_weight'] ?? null,
-                        'notes' => $exerciseData['notes'] ?? null,
-                    ]);
-                }
-            }
-        }
+        $routine = $this->routines->create($request->user(), $validated);
 
         if ($request->wantsJson()) {
             return response()->json($routine->load('exercises'), 201);
@@ -86,13 +58,17 @@ class RoutineController extends Controller
         return redirect()->back();
     }
 
-    public function show(Routine $routine)
+    public function show(Request $request, Routine $routine)
     {
+        $this->authorize('view', $routine);
+
         return $routine->load('exercises');
     }
 
     public function update(Request $request, Routine $routine)
     {
+        $this->authorize('update', $routine);
+
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'focus' => 'nullable|string|max:255',
@@ -109,40 +85,7 @@ class RoutineController extends Controller
             'exercises.*.notes' => 'nullable|string',
         ]);
 
-        $routine->update([
-            'name' => $validated['name'] ?? $routine->name,
-            'focus' => $validated['focus'] ?? $routine->focus,
-            'scheduled_date' => $validated['scheduled_date'] ?? $routine->scheduled_date,
-            'status' => $validated['status'] ?? $routine->status,
-        ]);
-
-        if (isset($validated['exercises'])) {
-            $syncData = [];
-            foreach ($validated['exercises'] as $index => $exerciseData) {
-                $exerciseId = $exerciseData['id'] ?? null;
-
-                // Create new exercise if ID is not provided
-                if (! $exerciseId && ! empty($exerciseData['name'])) {
-                    $exercise = Exercise::create([
-                        'name' => $exerciseData['name'],
-                        'muscle_group' => $exerciseData['muscle_group'] ?? null,
-                        'type' => $exerciseData['type'] ?? null,
-                    ]);
-                    $exerciseId = $exercise->id;
-                }
-
-                if ($exerciseId) {
-                    $syncData[$exerciseId] = [
-                        'order' => $index + 1,
-                        'target_sets' => $exerciseData['target_sets'] ?? null,
-                        'target_reps' => $exerciseData['target_reps'] ?? null,
-                        'target_weight' => $exerciseData['target_weight'] ?? null,
-                        'notes' => $exerciseData['notes'] ?? null,
-                    ];
-                }
-            }
-            $routine->exercises()->sync($syncData);
-        }
+        $routine = $this->routines->update($request->user(), $routine, $validated);
 
         if ($request->wantsJson()) {
             return response()->json($routine->load('exercises'), 200);
@@ -151,9 +94,11 @@ class RoutineController extends Controller
         return redirect()->back();
     }
 
-    public function destroy(Routine $routine)
+    public function destroy(Request $request, Routine $routine)
     {
-        $routine->delete();
+        $this->authorize('delete', $routine);
+
+        $this->routines->delete($request->user(), $routine);
 
         return response()->noContent();
     }
