@@ -21,5 +21,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(PersonalSeeder::class);
+
+        $this->call(ExerciseSeeder::class);
     }
 }

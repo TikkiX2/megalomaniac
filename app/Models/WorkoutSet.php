@@ -19,11 +19,15 @@ class WorkoutSet extends Model
         'completed',
     ];
 
-    protected $casts = [
-        'completed' => 'boolean',
-        'weight' => 'decimal:2',
-        'rpe' => 'decimal:1',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'completed' => 'boolean',
+            'weight' => 'decimal:2',
+            'rpe' => 'decimal:1',
+            'reps' => 'integer',
+        ];
+    }
 
     public function workoutExercise(): BelongsTo
     {

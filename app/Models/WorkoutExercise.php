@@ -17,6 +17,13 @@ class WorkoutExercise extends Model
         'order',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'order' => 'integer',
+        ];
+    }
+
     public function workout(): BelongsTo
     {
         return $this->belongsTo(Workout::class);
