@@ -1,7 +1,8 @@
 import type { ToolActivity } from '@/types/chat';
 
 export const TOOL_LABELS: Record<string, string> = {
-    WorkoutQueryTool: 'Consultando entrenamientos',
+    GymQueryTool: 'Consultando entrenamientos',
+    GymActionTool: 'Actualizando entrenamiento',
     FinanceQueryTool: 'Consultando finanzas',
     NutritionQueryTool: 'Consultando nutrición',
     GroceryQueryTool: 'Consultando compras',

@@ -20,6 +20,7 @@ return [
         'workout' => [
             'entren', 'ejercicio', 'rutina', 'serie', 'repeticion', 'press',
             'sentadilla', 'gym', 'workout', 'peso muerto',
+            'pesa', 'banca', 'dominada', 'curl',
         ],
         'finance' => [
             'gasto', 'gaste', 'plata', 'dinero', 'presupuesto', 'deuda', 'tarjeta',
@@ -61,7 +62,7 @@ return [
 
     'write_verbs' => [
         'crea', 'crear', 'agrega', 'agregar', 'registra', 'registrar', 'anota',
-        'anotar', 'loguea', 'loguear', 'guarda', 'guardar', 'anadi', 'suma',
+        'anotar', 'loguea', 'loguear', 'guarda', 'guardar', 'anad', 'suma',
         'sumar', 'marca', 'marcar', 'actualiza', 'actualizar', 'completa',
         'completar', 'borra', 'borrar', 'modifica', 'modificar', 'cambia',
         'cambiar', 'mov', 'mueve', 'mueva', 'asigna', 'asignar', 'reasigna',
@@ -71,6 +72,7 @@ return [
         'quitar', 'ordena', 'ordenar', 'reordena', 'reordenar', 'prioriza',
         'priorizar', 'cierra', 'cerrar', 'reabre', 'reabrir', 'desmarca',
         'desmarcar',
+        'escrib', 'ingres', 'carg', 'hazme', 'prepara',
     ],
 
     /*

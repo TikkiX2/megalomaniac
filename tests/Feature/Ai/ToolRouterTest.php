@@ -40,3 +40,10 @@ it('falls back to the cheap default set', function () {
     expect(ToolRouter::route('Hola, ¿cómo estás?'))->toBe(['tasks', 'integrations', 'skills'])
         ->and(ToolRouter::route('Contame algo interesante'))->not->toContain('actions', 'agents');
 });
+
+it('routes gym messages to the workout group with its own write tool', function () {
+    expect(ToolRouter::route('¿Cómo viene mi entrenamiento?'))->toContain('workout')
+        ->and(ToolRouter::route('Escribí mi entrenamiento de pecho'))->toContain('workout')
+        ->and(ToolRouter::route('Anadí press banca a mi rutina'))->toContain('workout')
+        ->and(ToolRouter::route('Hazme una rutina de piernas'))->toContain('workout');
+});

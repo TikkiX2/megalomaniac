@@ -8,6 +8,8 @@ use App\Ai\Skills\SkillCatalog;
 use App\Integrations\IntegrationExecutor;
 use App\Models\ChatThread;
 use App\Models\User;
+use App\Services\Gym\RoutineService;
+use App\Services\Gym\WorkoutSessionService;
 use Laravel\Ai\Contracts\Tool;
 
 final class ToolCatalog
@@ -19,7 +21,7 @@ final class ToolCatalog
     {
         return [
             'tasks' => ['label' => 'Tareas', 'tools' => [TaskQueryTool::class]],
-            'workout' => ['label' => 'Entrenamientos', 'tools' => [WorkoutQueryTool::class]],
+            'workout' => ['label' => 'Entrenamientos', 'tools' => [GymQueryTool::class, GymActionTool::class]],
             'finance' => ['label' => 'Finanzas', 'tools' => [FinanceQueryTool::class]],
             'nutrition' => ['label' => 'Nutrición', 'tools' => [NutritionQueryTool::class]],
             'grocery' => ['label' => 'Compras', 'tools' => [GroceryQueryTool::class]],
@@ -83,6 +85,7 @@ final class ToolCatalog
             RememberMemoryTool::class => new RememberMemoryTool($user, app(MemoryCatalog::class), $thread),
             ForgetMemoryTool::class => new ForgetMemoryTool($user, app(MemoryCatalog::class), $thread),
             PromoteMemoryTool::class => new PromoteMemoryTool($user, app(MemoryCatalog::class)),
+            GymActionTool::class => new GymActionTool($user, app(WorkoutSessionService::class), app(RoutineService::class)),
             default => new $class($user),
         };
     }

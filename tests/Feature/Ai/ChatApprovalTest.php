@@ -262,7 +262,7 @@ test('a resumed turn keeps the manual tool policy pinned on the thread', functio
         ->toContain('ActionTool')
         ->toContain('TaskQueryTool')
         ->not->toContain('FinanceQueryTool')
-        ->not->toContain('WorkoutQueryTool');
+        ->not->toContain('GymQueryTool');
 });
 
 test('a resumed turn keeps the thread document context', function () {

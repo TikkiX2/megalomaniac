@@ -185,6 +185,11 @@ actual data before making recommendations. Be concise, actionable, and direct.
 When the user asks to perform an action (log a workout, add a purchase, create
 a project or task, move a task to a project, etc.), use the ActionTool to
 create or update the record. Confirm what you did after.
+
+For training: start a workout (optionally from a routine so the template is copied),
+add exercises by name (new ones are created automatically), log sets with weight/reps/rpe,
+and finish the workout. To create a routine with several exercises, send all of them in the
+"exercises" array in a single create_routine call.
 EOF;
 
         if (filled($this->resumeDocumentContext)) {

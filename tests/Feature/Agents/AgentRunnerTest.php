@@ -4,9 +4,9 @@ use App\Ai\Agents\AgentRunner;
 use App\Ai\Agents\RuntimeAgent;
 use App\Ai\Agents\TelegramNotifier;
 use App\Ai\Tools\FinanceQueryTool;
+use App\Ai\Tools\GymQueryTool;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
-use App\Ai\Tools\WorkoutQueryTool;
 use App\Models\AgentDefinition;
 use App\Models\AgentRun;
 use App\Models\AgentSuggestion;
@@ -135,7 +135,7 @@ it('filters tools by the definition policy', function () {
         ->all();
 
     expect($classes)->toContain(FinanceQueryTool::class, IntegrationCatalogTool::class, IntegrationCallTool::class)
-        ->not->toContain(WorkoutQueryTool::class);
+        ->not->toContain(GymQueryTool::class);
 });
 
 it('sends telegram notifications only when a connection exists', function () {

@@ -3,9 +3,10 @@
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Tools\ActionTool;
 use App\Ai\Tools\AskUserTool;
+use App\Ai\Tools\GymActionTool;
+use App\Ai\Tools\GymQueryTool;
 use App\Ai\Tools\TaskQueryTool;
 use App\Ai\Tools\ToolCatalog;
-use App\Ai\Tools\WorkoutQueryTool;
 use App\Models\User;
 
 it('exposes the tool groups', function () {
@@ -31,8 +32,8 @@ it('builds every tool for the wildcard', function () {
         ->map(fn ($tool): string => $tool::class)
         ->all();
 
-    expect($tools)->toHaveCount(15)
-        ->toContain(TaskQueryTool::class, WorkoutQueryTool::class, ActionTool::class);
+    expect($tools)->toHaveCount(16)
+        ->toContain(TaskQueryTool::class, GymQueryTool::class, GymActionTool::class);
 });
 
 it('lets the main agent be built with a tool subset', function () {
@@ -45,5 +46,5 @@ it('lets the main agent be built with a tool subset', function () {
     expect($subset)->toBe([TaskQueryTool::class, AskUserTool::class]);
 
     $all = collect(iterator_to_array((new MegalomaniacAgent($user))->tools()))->count();
-    expect($all)->toBe(16);
+    expect($all)->toBe(17);
 });

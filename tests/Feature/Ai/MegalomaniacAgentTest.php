@@ -6,6 +6,8 @@ use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\FinanceQueryTool;
 use App\Ai\Tools\ForgetMemoryTool;
 use App\Ai\Tools\GroceryQueryTool;
+use App\Ai\Tools\GymActionTool;
+use App\Ai\Tools\GymQueryTool;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
 use App\Ai\Tools\LoadSkillTool;
@@ -16,7 +18,6 @@ use App\Ai\Tools\RememberMemoryTool;
 use App\Ai\Tools\TaskQueryTool;
 use App\Ai\Tools\WebFetchTool;
 use App\Ai\Tools\WebSearchTool;
-use App\Ai\Tools\WorkoutQueryTool;
 use App\Models\Currency;
 use App\Models\Exercise;
 use App\Models\GroceryItem;
@@ -44,30 +45,31 @@ test('megalomaniac agent has correct tools', function () {
 
     $tools = iterator_to_array($agent->tools());
 
-    expect($tools)->toHaveCount(16);
+    expect($tools)->toHaveCount(17);
     expect($tools[0])->toBeInstanceOf(TaskQueryTool::class);
-    expect($tools[1])->toBeInstanceOf(WorkoutQueryTool::class);
-    expect($tools[2])->toBeInstanceOf(FinanceQueryTool::class);
-    expect($tools[3])->toBeInstanceOf(NutritionQueryTool::class);
-    expect($tools[4])->toBeInstanceOf(GroceryQueryTool::class);
-    expect($tools[5])->toBeInstanceOf(ActionTool::class);
-    expect($tools[6])->toBeInstanceOf(IntegrationCatalogTool::class);
-    expect($tools[7])->toBeInstanceOf(IntegrationCallTool::class);
-    expect($tools[8])->toBeInstanceOf(ManageAgentsTool::class);
-    expect($tools[9])->toBeInstanceOf(LoadSkillTool::class);
-    expect($tools[10])->toBeInstanceOf(RememberMemoryTool::class);
-    expect($tools[11])->toBeInstanceOf(ForgetMemoryTool::class);
-    expect($tools[12])->toBeInstanceOf(PromoteMemoryTool::class);
-    expect($tools[13])->toBeInstanceOf(WebSearchTool::class);
-    expect($tools[14])->toBeInstanceOf(WebFetchTool::class);
-    expect($tools[15])->toBeInstanceOf(AskUserTool::class);
+    expect($tools[1])->toBeInstanceOf(GymQueryTool::class);
+    expect($tools[2])->toBeInstanceOf(GymActionTool::class);
+    expect($tools[3])->toBeInstanceOf(FinanceQueryTool::class);
+    expect($tools[4])->toBeInstanceOf(NutritionQueryTool::class);
+    expect($tools[5])->toBeInstanceOf(GroceryQueryTool::class);
+    expect($tools[6])->toBeInstanceOf(ActionTool::class);
+    expect($tools[7])->toBeInstanceOf(IntegrationCatalogTool::class);
+    expect($tools[8])->toBeInstanceOf(IntegrationCallTool::class);
+    expect($tools[9])->toBeInstanceOf(ManageAgentsTool::class);
+    expect($tools[10])->toBeInstanceOf(LoadSkillTool::class);
+    expect($tools[11])->toBeInstanceOf(RememberMemoryTool::class);
+    expect($tools[12])->toBeInstanceOf(ForgetMemoryTool::class);
+    expect($tools[13])->toBeInstanceOf(PromoteMemoryTool::class);
+    expect($tools[14])->toBeInstanceOf(WebSearchTool::class);
+    expect($tools[15])->toBeInstanceOf(WebFetchTool::class);
+    expect($tools[16])->toBeInstanceOf(AskUserTool::class);
 });
 
 test('workout query tool returns workouts', function () {
     $user = User::factory()->create();
     $workout = Workout::factory()->create(['user_id' => $user->id]);
 
-    $tool = new WorkoutQueryTool($user);
+    $tool = new GymQueryTool($user);
     $request = new Request(['days' => 30]);
     $result = $tool->handle($request);
 
