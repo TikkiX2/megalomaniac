@@ -26,6 +26,16 @@ interface Workout {
     exercises: WorkoutExercise[];
 }
 
+interface PersonalRecordItem {
+    id: number;
+    type: string;
+    value: string | number;
+    reps: number | null;
+    weight: string | number | null;
+    achieved_at: string;
+    exercise?: { name: string } | null;
+}
+
 interface PaginatedWorkouts {
     data: Workout[];
     links: { url: string | null; label: string; active: boolean }[];
@@ -36,6 +46,7 @@ interface PaginatedWorkouts {
 
 interface Props {
     workouts: PaginatedWorkouts;
+    personalRecords?: PersonalRecordItem[];
 }
 
 function calcVolume(w: Workout): number {
@@ -65,7 +76,13 @@ function formatDate(dt: string): string {
     }
 }
 
-export default function History({ workouts }: Props) {
+function prLabel(type: string): string {
+    if (type === 'one_rm') return '1RM';
+    if (type === 'reps') return 'Reps';
+    return 'Peso';
+}
+
+export default function History({ workouts, personalRecords }: Props) {
     const { auth } = usePage<SharedData>().props;
     const user = auth.user as unknown as AiEnabled;
     const aiEnabled = user?.ai_enabled ?? false;
@@ -180,6 +197,35 @@ export default function History({ workouts }: Props) {
                                 </button>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {(personalRecords ?? []).length > 0 && (
+                    <div className="bg-[#2b1a1a] border border-[#3e2121] rounded-2xl p-6 mb-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                                <span className="material-symbols-outlined">emoji_events</span>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-black text-white">PR Timeline</h3>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Récords personales</p>
+                            </div>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {(personalRecords ?? []).map((record) => (
+                                <div key={record.id} className="rounded-xl border border-[#3e2121] bg-[#1c0f0f] p-4">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-sm font-bold text-white truncate">{record.exercise?.name ?? 'Ejercicio'}</span>
+                                        <span className="rounded-full bg-primary/15 border border-primary/30 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-primary">{prLabel(record.type)}</span>
+                                    </div>
+                                    <p className="mt-2 text-lg font-black text-white tabular-nums">
+                                        {record.type === 'reps' ? `${record.reps} reps` : `${Number(record.value)} kg`}
+                                        {record.type === 'one_rm' && <span className="ml-1 text-xs font-bold text-[#e8b4b4]">1RM est.</span>}
+                                    </p>
+                                    <p className="mt-1 text-[11px] font-medium text-[#e8b4b4]">{formatDate(record.achieved_at)}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 

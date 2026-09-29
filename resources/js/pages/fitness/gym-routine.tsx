@@ -14,6 +14,7 @@ interface Set {
     reps: string;
     rpe: string;
     completed: boolean;
+    is_pr?: boolean;
 }
 
 interface WorkoutExercise {
@@ -24,9 +25,11 @@ interface WorkoutExercise {
         name: string;
         muscle_group: string;
         type: string;
+        video_url?: string | null;
     };
     sets: Set[];
     previous: Set[] | null;
+    best_weight?: number | null;
 }
 
 interface Workout {
@@ -173,6 +176,26 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
         });
     };
 
+    const handleRemoveExercise = (workoutExerciseId: number) => {
+        router.delete(`/gym/workout-exercises/${workoutExerciseId}`, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const updatedWorkout = (page.props as any).activeWorkout;
+                if (updatedWorkout) setActiveWorkout(updatedWorkout);
+            }
+        });
+    };
+
+    const handleRemoveSet = (setId: number) => {
+        router.delete(`/gym/workout-sets/${setId}`, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                const updatedWorkout = (page.props as any).activeWorkout;
+                if (updatedWorkout) setActiveWorkout(updatedWorkout);
+            }
+        });
+    };
+
     const handleAddExercise = (exerciseId: number) => {
         if (!activeWorkout) {
             router.post('/gym/workouts', {
@@ -302,7 +325,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                         {/* Exercise List */}
                         <div className="space-y-6 max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
                             {activeWorkout?.exercises.map((workoutExercise) => {
-                                const pr = getPrBadge(workoutExercise.previous);
+                                const pr = workoutExercise.best_weight ?? getPrBadge(workoutExercise.previous);
                                 return (
                                 <div key={workoutExercise.id} className="bg-[#2b1a1a] rounded-2xl overflow-hidden border border-[#3e2121] shadow-lg group hover:border-[#3e2121] transition-all">
                                     {/* Card Header */}
@@ -328,10 +351,19 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <button className="p-2 text-[#e8b4b4] hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                                            <button
+                                                onClick={() => workoutExercise.exercise.video_url && window.open(workoutExercise.exercise.video_url, '_blank', 'noopener')}
+                                                disabled={!workoutExercise.exercise.video_url}
+                                                title={workoutExercise.exercise.video_url ? 'Ver video' : 'Sin video'}
+                                                className="p-2 text-[#e8b4b4] hover:text-white hover:bg-white/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                            >
                                                 <span className="material-symbols-outlined">videocam</span>
                                             </button>
-                                            <button className="p-2 text-[#e8b4b4] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+                                            <button
+                                                onClick={() => handleRemoveExercise(workoutExercise.id)}
+                                                title="Eliminar ejercicio"
+                                                className="p-2 text-[#e8b4b4] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                            >
                                                 <span className="material-symbols-outlined">delete</span>
                                             </button>
                                         </div>
@@ -339,13 +371,14 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
 
                                     {/* Card Body (Sets) */}
                                     <div className="p-4">
-                                        <div className="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 mb-2 text-[10px] uppercase tracking-widest font-black text-[#e8b4b4] px-2">
+                                        <div className="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px_40px] gap-4 mb-2 text-[10px] uppercase tracking-widest font-black text-[#e8b4b4] px-2">
                                             <div className="text-center">Set</div>
                                             <div>Previous</div>
                                             <div>kg</div>
                                             <div>Reps</div>
                                             <div>RPE</div>
                                             <div className="text-center"><span className="material-symbols-outlined text-sm">check</span></div>
+                                            <div className="text-center"><span className="material-symbols-outlined text-sm">delete</span></div>
                                         </div>
 
                                         {/* Set Rows */}
@@ -353,12 +386,17 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                             {workoutExercise.sets.map((set, setIndex) => (
                                                 <div
                                                     key={set.id}
-                                                    className={`grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px] gap-4 items-center rounded-xl p-2 border transition-all ${set.completed
+                                                    className={`grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px_40px] gap-4 items-center rounded-xl p-2 border transition-all ${set.completed
                                                         ? 'bg-primary/5 border-primary/20'
                                                         : 'border-transparent hover:bg-white/5'
                                                         }`}
                                                 >
-                                                    <div className={`text-center font-black ${set.completed ? 'text-primary' : 'text-white'}`}>{set.set_number}</div>
+                                                    <div className={`flex flex-col items-center font-black ${set.completed ? 'text-primary' : 'text-white'}`}>
+                                                        <span>{set.set_number}</span>
+                                                        {set.is_pr && (
+                                                            <span className="material-symbols-outlined text-[12px] text-primary" title="Nuevo PR">emoji_events</span>
+                                                        )}
+                                                    </div>
                                                     <div className="text-[#e8b4b4] text-[10px] font-bold">
                                                         {workoutExercise.previous?.find(ps => ps.set_number === set.set_number)
                                                             ? `${workoutExercise.previous.find(ps => ps.set_number === set.set_number)?.weight}kg x ${workoutExercise.previous.find(ps => ps.set_number === set.set_number)?.reps}`
@@ -393,6 +431,13 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                                             }`}
                                                     >
                                                         <span className="material-symbols-outlined text-lg font-black">check</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleRemoveSet(set.id)}
+                                                        title="Eliminar serie"
+                                                        className="flex items-center justify-center h-9 w-full rounded-lg bg-[#3e2121] text-[#e8b4b4] hover:bg-red-400/10 hover:text-red-400 transition-all"
+                                                    >
+                                                        <span className="material-symbols-outlined text-lg">delete</span>
                                                     </button>
                                                 </div>
                                             ))}
