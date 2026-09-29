@@ -177,23 +177,27 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
     };
 
     const handleRemoveExercise = (workoutExerciseId: number) => {
-        router.delete(`/gym/workout-exercises/${workoutExerciseId}`, {
-            preserveScroll: true,
-            onSuccess: (page) => {
-                const updatedWorkout = (page.props as any).activeWorkout;
-                if (updatedWorkout) setActiveWorkout(updatedWorkout);
-            }
-        });
+        if (confirm('Are you sure you want to delete this exercise?')) {
+            router.delete(`/gym/workout-exercises/${workoutExerciseId}`, {
+                preserveScroll: true,
+                onSuccess: (page) => {
+                    const updatedWorkout = (page.props as any).activeWorkout;
+                    if (updatedWorkout) setActiveWorkout(updatedWorkout);
+                }
+            });
+        }
     };
 
     const handleRemoveSet = (setId: number) => {
-        router.delete(`/gym/workout-sets/${setId}`, {
-            preserveScroll: true,
-            onSuccess: (page) => {
-                const updatedWorkout = (page.props as any).activeWorkout;
-                if (updatedWorkout) setActiveWorkout(updatedWorkout);
-            }
-        });
+        if (confirm('Are you sure you want to delete this set?')) {
+            router.delete(`/gym/workout-sets/${setId}`, {
+                preserveScroll: true,
+                onSuccess: (page) => {
+                    const updatedWorkout = (page.props as any).activeWorkout;
+                    if (updatedWorkout) setActiveWorkout(updatedWorkout);
+                }
+            });
+        }
     };
 
     const handleAddExercise = (exerciseId: number) => {
@@ -339,7 +343,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                                     {workoutExercise.exercise.name}
                                                     <span className="material-symbols-outlined text-[#e8b4b4] text-sm cursor-help hover:text-primary transition-colors" title="View History">history</span>
                                                     {pr !== null && (
-                                                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 border border-primary/30 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-widest text-primary" title={`Best previous: ${pr}kg`}>
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 border border-primary/30 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-widest text-primary" title={`PR histórico: ${pr}kg`}>
                                                             <span className="material-symbols-outlined text-xs">emoji_events</span>
                                                             PR {pr}kg
                                                         </span>
