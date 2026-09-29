@@ -58,10 +58,81 @@ it('tracks rep PRs per weight and ignores incomplete sets', function () {
 
     $repsRecords = PersonalRecord::where('type', 'reps')->get();
 
-    // The first set at a weight only sets the rep baseline when it beats nothing;
-    // the 10-rep set is the first true rep PR and the incomplete 12-rep set is ignored.
+    // The first completed set at a weight is only the baseline (no reps PR);
+    // the 10-rep set beats it and the incomplete 12-rep set is ignored.
     expect($repsRecords)->toHaveCount(1)
         ->and((int) $repsRecords->first()->value)->toBe(10);
+});
+
+it('keeps a single rep PR when the same set is logged again unchanged', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+    $workoutExercise = $workout->exercises()->create(['exercise_id' => $exercise->id]);
+    $sessions = app(WorkoutSessionService::class);
+
+    $sessions->logSet($user, $workoutExercise, ['weight' => 80, 'reps' => 8, 'completed' => true]);
+    $set = $sessions->logSet($user, $workoutExercise, ['weight' => 80, 'reps' => 10, 'completed' => true]);
+
+    $sessions->logSet($user, $workoutExercise, ['set_number' => $set->set_number, 'weight' => 80, 'reps' => 10, 'completed' => true]);
+
+    $repsRecords = PersonalRecord::where('type', 'reps')->where('workout_set_id', $set->id)->get();
+
+    expect($repsRecords)->toHaveCount(1)
+        ->and((int) $repsRecords->first()->value)->toBe(10);
+});
+
+it('does not lower a rep PR when the same set is corrected down', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+    $workoutExercise = $workout->exercises()->create(['exercise_id' => $exercise->id]);
+    $sessions = app(WorkoutSessionService::class);
+
+    $sessions->logSet($user, $workoutExercise, ['weight' => 80, 'reps' => 8, 'completed' => true]);
+    $set = $sessions->logSet($user, $workoutExercise, ['weight' => 80, 'reps' => 10, 'completed' => true]);
+
+    $sessions->logSet($user, $workoutExercise, ['set_number' => $set->set_number, 'weight' => 80, 'reps' => 9, 'completed' => true]);
+
+    $repsRecords = PersonalRecord::where('type', 'reps')->where('workout_set_id', $set->id)->get();
+
+    expect($repsRecords)->toHaveCount(1)
+        ->and((int) $repsRecords->first()->value)->toBe(10);
+});
+
+it('records the improved rep PR when the same set is corrected with more reps', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+    $workoutExercise = $workout->exercises()->create(['exercise_id' => $exercise->id]);
+    $sessions = app(WorkoutSessionService::class);
+
+    $sessions->logSet($user, $workoutExercise, ['weight' => 80, 'reps' => 8, 'completed' => true]);
+    $set = $sessions->logSet($user, $workoutExercise, ['weight' => 80, 'reps' => 10, 'completed' => true]);
+
+    $sessions->logSet($user, $workoutExercise, ['set_number' => $set->set_number, 'weight' => 80, 'reps' => 12, 'completed' => true]);
+
+    $repsRecords = PersonalRecord::where('type', 'reps')->where('workout_set_id', $set->id)->orderBy('value')->get();
+
+    expect($repsRecords)->toHaveCount(2)
+        ->and((int) $repsRecords->last()->value)->toBe(12)
+        ->and((int) $repsRecords->first()->value)->toBe(10);
+});
+
+it('annotates sets without a PR as not PR', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+    $workoutExercise = $workout->exercises()->create(['exercise_id' => $exercise->id]);
+    $sessions = app(WorkoutSessionService::class);
+
+    $prSet = $sessions->logSet($user, $workoutExercise, ['weight' => 100, 'reps' => 5, 'completed' => true]);
+    $plainSet = $sessions->logSet($user, $workoutExercise, ['weight' => 90, 'reps' => 5, 'completed' => true]);
+
+    recordService()->annotateSets(collect([$prSet, $plainSet]));
+
+    expect($prSet->is_pr)->toBeTrue()
+        ->and($plainSet->is_pr)->toBeFalse();
 });
 
 it('returns the timeline with exercises and annotations', function () {

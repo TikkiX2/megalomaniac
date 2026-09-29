@@ -42,8 +42,18 @@ class PersonalRecordService
             ->where('id', '!=', $set->id)
             ->max('reps');
 
-        // A rep PR only exists when there is a previous completed set to beat at this weight.
-        if ($repsBest !== null && $reps > (int) $repsBest) {
+        $recordedBest = PersonalRecord::query()
+            ->where('user_id', $user->id)
+            ->where('exercise_id', $exercise->id)
+            ->where('type', 'reps')
+            ->where('weight', $weight)
+            ->max('value');
+
+        // A set cannot beat itself: compare against previous completed sets at this
+        // weight and the best reps PR already recorded for it.
+        $repsBest = max((int) ($repsBest ?? 0), (int) ($recordedBest ?? 0));
+
+        if ($repsBest > 0 && $reps > $repsBest) {
             $this->store($user, $exercise, $set, 'reps', $reps, $weight, $reps);
         }
     }
