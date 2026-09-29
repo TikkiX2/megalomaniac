@@ -141,6 +141,13 @@ export function normalizeYooptaValue(value: YooptaValue | undefined): Record<str
             return { [block.id]: block };
         }
 
+        // Legacy wrapper: { id, value: [ ...legacy blocks ] }
+        const legacy = (value as { value?: unknown }).value;
+
+        if (Array.isArray(legacy) && legacy.some((item) => item !== null && typeof item === 'object')) {
+            return normalizeYooptaValue(legacy as YooptaValue);
+        }
+
         return Object.keys(value).length > 0 ? value : undefined;
     }
 

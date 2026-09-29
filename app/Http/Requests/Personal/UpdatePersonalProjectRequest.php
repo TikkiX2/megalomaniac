@@ -15,6 +15,8 @@ class UpdatePersonalProjectRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'type' => ['sometimes', 'in:personal,freelance'],
+            'client_id' => ['nullable', 'integer'],
             'description' => ['nullable', 'array'],
             'status' => ['nullable', 'in:pending,in_progress,completed,cancelled,maintenance,active,archived'],
             'color' => ['nullable', 'string', 'max:20'],

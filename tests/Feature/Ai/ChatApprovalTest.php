@@ -26,7 +26,7 @@ function pausedToolSse(string $tool): string
 }
 
 test('write tools pause the turn with a tool approval request', function () {
-    Http::fake(['*' => Http::response(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])]);
+    Http::fake(['*' => Http::response(pausedToolSse('GymActionTool'), 200, ['Content-Type' => 'text/event-stream'])]);
 
     $user = User::factory()->withAiProvider()->create();
     $thread = ChatThread::factory()->create(['participant_type' => $user->getMorphClass(), 'participant_id' => $user->id]);
@@ -35,7 +35,7 @@ test('write tools pause the turn with a tool approval request', function () {
         ->post(route('ai.chat.send'), ['message' => 'loguea mi workout', 'thread_id' => $thread->id])
         ->streamedContent();
 
-    expect($content)->toContain('tool_approval_request')->toContain('ActionTool')->toContain('[DONE]');
+    expect($content)->toContain('tool_approval_request')->toContain('GymActionTool')->toContain('[DONE]');
 
     $assistant = $thread->messages()->where('role', 'assistant')->orderByDesc('id')->first();
     expect($assistant->approval_state['pending'])->toHaveKey('call_1');
@@ -43,12 +43,12 @@ test('write tools pause the turn with a tool approval request', function () {
     $resource = (new ChatMessageResource($assistant->refresh()))->resolve(request());
     expect($resource['pending_approvals'])->toHaveCount(1);
     expect($resource['pending_approvals'][0]['kind'])->toBe('approval');
-    expect($resource['pending_approvals'][0]['tool'])->toBe('ActionTool');
+    expect($resource['pending_approvals'][0]['tool'])->toBe('GymActionTool');
 });
 
 test('approving resumes the run and executes the tool', function () {
     Http::fakeSequence()
-        ->push(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push(pausedToolSse('GymActionTool'), 200, ['Content-Type' => 'text/event-stream'])
         ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Listo\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
 
     $user = User::factory()->withAiProvider()->create();
@@ -82,7 +82,7 @@ test('approving resumes the run and executes the tool', function () {
 
 test('rejecting records the denial without a follow-up completion', function () {
     Http::fakeSequence()
-        ->push(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push(pausedToolSse('GymActionTool'), 200, ['Content-Type' => 'text/event-stream'])
         ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Vale, no lo hago\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
 
     $user = User::factory()->withAiProvider()->create();
@@ -124,7 +124,7 @@ test('ask user answers travel back as a rejected tool result', function () {
 });
 
 test('a decision that does not match the pending call returns 422', function () {
-    Http::fake(['*' => Http::response(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])]);
+    Http::fake(['*' => Http::response(pausedToolSse('GymActionTool'), 200, ['Content-Type' => 'text/event-stream'])]);
 
     $user = User::factory()->withAiProvider()->create();
     $thread = ChatThread::factory()->create(['participant_type' => $user->getMorphClass(), 'participant_id' => $user->id]);
@@ -188,7 +188,7 @@ test('resuming uses the thread agent instead of the default', function () {
     ]);
 
     Http::fakeSequence()
-        ->push(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push(pausedToolSse('GymActionTool'), 200, ['Content-Type' => 'text/event-stream'])
         ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Reporte listo\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
 
     $this->actingAs($user)->post(route('ai.chat.send'), ['message' => 'loguea mi workout', 'thread_id' => $thread->id])->streamedContent();
@@ -208,7 +208,7 @@ test('resuming uses the thread agent instead of the default', function () {
 
     expect($secondRequest)
         ->toContain('Sos el agente de reportes unico.')
-        ->toContain('ActionTool')
+        ->toContain('GymActionTool')
         ->not->toContain('TaskQueryTool');
 });
 
@@ -234,7 +234,7 @@ function resumeIndexedDocument(ChatThread $thread, User $user, string $content, 
 
 test('a resumed turn keeps the manual tool policy pinned on the thread', function () {
     Http::fakeSequence()
-        ->push(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push(pausedToolSse('GymActionTool'), 200, ['Content-Type' => 'text/event-stream'])
         ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Listo\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
 
     $user = User::factory()->withAiProvider()->create();
@@ -259,7 +259,7 @@ test('a resumed turn keeps the manual tool policy pinned on the thread', functio
     // The resume must advertise exactly the pinned manual groups (including
     // groups the message itself would not route to), never the whole catalog.
     expect(json_encode($requests[1][0]->data()))
-        ->toContain('ActionTool')
+        ->toContain('GymActionTool')
         ->toContain('TaskQueryTool')
         ->not->toContain('FinanceQueryTool')
         ->not->toContain('GymQueryTool');
@@ -269,7 +269,7 @@ test('a resumed turn keeps the thread document context', function () {
     Storage::fake('local');
 
     Http::fakeSequence()
-        ->push(pausedToolSse('ActionTool'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push(pausedToolSse('GymActionTool'), 200, ['Content-Type' => 'text/event-stream'])
         ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Listo\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
 
     $user = User::factory()->withAiProvider()->create();

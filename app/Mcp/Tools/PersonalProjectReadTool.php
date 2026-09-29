@@ -29,7 +29,7 @@ class PersonalProjectReadTool extends Tool
 
     public function handle(Request $request): Response|ResponseFactory
     {
-        $limit = (int) $request['limit'] ?? 20;
+        $limit = (int) $request->get('limit', 20);
         $user = $request->user();
 
         if (! $user) {
@@ -41,8 +41,10 @@ class PersonalProjectReadTool extends Tool
             ->with(['tasks', 'milestones'])
             ->withCount('tasks');
 
-        if (isset($request['status'])) {
-            $query->where('status', $request['status']);
+        $status = $request->get('status');
+
+        if ($status) {
+            $query->where('status', $status);
         }
 
         $projects = $query->latest()->limit($limit)->get();

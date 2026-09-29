@@ -4,6 +4,7 @@ use App\Ai\Tools\GymActionTool;
 use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\User;
+use App\Models\Workout;
 use App\Services\Gym\RoutineService;
 use App\Services\Gym\WorkoutSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -143,4 +144,54 @@ it('returns readable errors and requires approval', function () {
 
     expect(gymTool($user)->needsApproval(new Request(['action' => 'log_set'])))
         ->toBeInstanceOf(Approval::class);
+});
+
+it('updates, prunes and deletes workouts and routines', function () {
+    $user = User::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id, 'notes' => 'original']);
+    $exercise = Exercise::factory()->create(['name' => 'Remo']);
+    $workoutExercise = $workout->exercises()->create(['exercise_id' => $exercise->id]);
+    $set = $workoutExercise->sets()->create(['set_number' => 1, 'weight' => 40, 'reps' => 10, 'completed' => true]);
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+
+    $updated = json_decode((string) gymTool($user)->handle(new Request([
+        'action' => 'update_workout',
+        'workout_id' => $workout->id,
+        'notes' => 'ajustado',
+    ])), true);
+
+    expect($updated['success'])->toBeTrue()
+        ->and($workout->fresh()->notes)->toBe('ajustado');
+
+    $removedSet = json_decode((string) gymTool($user)->handle(new Request([
+        'action' => 'remove_set',
+        'workout_set_id' => $set->id,
+    ])), true);
+
+    expect($removedSet['success'])->toBeTrue()
+        ->and($workoutExercise->sets()->count())->toBe(0);
+
+    $removedExercise = json_decode((string) gymTool($user)->handle(new Request([
+        'action' => 'remove_exercise',
+        'workout_exercise_id' => $workoutExercise->id,
+    ])), true);
+
+    expect($removedExercise['success'])->toBeTrue()
+        ->and($workout->exercises()->count())->toBe(0);
+
+    $deletedRoutine = json_decode((string) gymTool($user)->handle(new Request([
+        'action' => 'delete_routine',
+        'routine_id' => $routine->id,
+    ])), true);
+
+    expect($deletedRoutine['success'])->toBeTrue()
+        ->and(Routine::find($routine->id))->toBeNull();
+
+    $deletedWorkout = json_decode((string) gymTool($user)->handle(new Request([
+        'action' => 'delete_workout',
+        'workout_id' => $workout->id,
+    ])), true);
+
+    expect($deletedWorkout['success'])->toBeTrue()
+        ->and(Workout::find($workout->id))->toBeNull();
 });

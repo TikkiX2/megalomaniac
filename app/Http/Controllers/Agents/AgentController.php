@@ -51,10 +51,13 @@ class AgentController extends Controller
             'agents' => $agents,
             'scheduleIntervals' => array_keys(AgentScheduler::INTERVALS),
             'internalTools' => [
+                ['key' => 'tasks_query', 'label' => 'Tareas y proyectos'],
                 ['key' => 'workout_query', 'label' => 'Entrenamientos'],
                 ['key' => 'finance_query', 'label' => 'Finanzas'],
                 ['key' => 'nutrition_query', 'label' => 'Nutrición'],
                 ['key' => 'grocery_query', 'label' => 'Compras'],
+                ['key' => 'supplements_query', 'label' => 'Suplementos'],
+                ['key' => 'freelance_query', 'label' => 'Freelance'],
                 ['key' => 'actions', 'label' => 'Acciones internas (crear registros)'],
             ],
             'integrations' => Connection::query()

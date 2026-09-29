@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Personal\StorePersonalProjectRequest;
 use App\Http\Requests\Personal\UpdatePersonalProjectRequest;
 use App\Models\Client;
-use App\Models\Currency;
 use App\Models\Project;
+use App\Services\Projects\ProjectService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -41,39 +41,31 @@ class PersonalProjectController extends Controller
         ]);
     }
 
-    public function store(StorePersonalProjectRequest $request)
+    public function store(StorePersonalProjectRequest $request, ProjectService $projects)
     {
         $validated = $request->validated();
-        $validated['user_id'] = $request->user()->id;
-        $validated['type'] = 'personal';
 
-        // Auto-assign client and currency for personal projects if not provided
-        if (empty($validated['client_id'])) {
-            $client = Client::firstOrCreate(
-                ['user_id' => $request->user()->id, 'name' => 'Personal'],
-                ['email' => null, 'phone' => null]
-            );
-            $validated['client_id'] = $client->id;
-        }
-        if (empty($validated['currency_id'])) {
-            $currency = Currency::first();
-            $validated['currency_id'] = $currency?->id ?? 1;
-        }
+        $project = $projects->create($request->user(), [
+            ...$validated,
+            'type' => $validated['type'] ?? 'personal',
+        ]);
 
-        $project = Project::create($validated);
+        $route = $project->type === 'freelance' ? 'freelance.projects.show' : 'personal.projects.show';
 
-        return redirect()->route('personal.projects.show', $project)->with('success', 'Proyecto creado.');
+        return redirect()->route($route, $project)->with('success', 'Proyecto creado.');
     }
 
     public function create()
     {
-        return Inertia::render('personal/projects/Form');
+        return Inertia::render('personal/projects/Form', [
+            'clients' => Client::where('user_id', auth()->id())->orderBy('name')->get(),
+        ]);
     }
 
     public function show(Project $project)
     {
         abort_if($project->type !== 'personal', 404);
-        abort_if($project->user_id !== auth()->id(), 403);
+        $this->authorize('view', $project);
 
         $project->load(['tasks.properties', 'milestones', 'members.user', 'client', 'currency']);
         $project->append('progress');
@@ -81,33 +73,37 @@ class PersonalProjectController extends Controller
 
         return Inertia::render('personal/projects/Show', [
             'project' => $project,
+            'clients' => Client::where('user_id', auth()->id())->orderBy('name')->get(),
         ]);
     }
 
     public function edit(Project $project)
     {
         abort_if($project->type !== 'personal', 404);
-        abort_if($project->user_id !== auth()->id(), 403);
+        $this->authorize('view', $project);
 
         return Inertia::render('personal/projects/Form', [
             'project' => $project,
+            'clients' => Client::where('user_id', auth()->id())->orderBy('name')->get(),
         ]);
     }
 
-    public function update(UpdatePersonalProjectRequest $request, Project $project)
+    public function update(UpdatePersonalProjectRequest $request, Project $project, ProjectService $projects)
     {
         abort_if($project->type !== 'personal', 404);
-        abort_if($project->user_id !== auth()->id(), 403);
+        $this->authorize('update', $project);
 
-        $project->update($request->validated());
+        $project = $projects->update($request->user(), $project, $request->validated());
 
-        return back()->with('success', 'Proyecto actualizado.');
+        $route = $project->type === 'freelance' ? 'freelance.projects.show' : 'personal.projects.show';
+
+        return redirect()->route($route, $project)->with('success', 'Proyecto actualizado.');
     }
 
     public function destroy(Project $project)
     {
         abort_if($project->type !== 'personal', 404);
-        abort_if($project->user_id !== auth()->id(), 403);
+        $this->authorize('delete', $project);
 
         $project->delete();
 
@@ -117,7 +113,7 @@ class PersonalProjectController extends Controller
     public function storeMilestone(Request $request, Project $project)
     {
         abort_if($project->type !== 'personal', 404);
-        abort_if($project->user_id !== auth()->id(), 403);
+        $this->authorize('update', $project);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],

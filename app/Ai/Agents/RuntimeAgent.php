@@ -56,10 +56,13 @@ class RuntimeAgent implements Agent, Conversational, HasTools
         $integrations = (array) ($policy['integrations'] ?? []);
 
         $map = [
+            'tasks_query' => 'tasks',
             'workout_query' => 'workout',
             'finance_query' => 'finance',
             'nutrition_query' => 'nutrition',
             'grocery_query' => 'grocery',
+            'supplements_query' => 'supplements',
+            'freelance_query' => 'freelance',
             'actions' => 'actions',
         ];
 

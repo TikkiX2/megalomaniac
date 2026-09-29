@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Currency;
 use App\Models\Project;
+use App\Services\Projects\ProjectService;
 use App\Services\TaskBoardColumnService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -21,6 +23,7 @@ class ProjectController extends Controller
         $projects = Project::query()
             ->with(['client', 'currency'])
             ->where('user_id', $request->user()->id)
+            ->where('type', 'freelance')
             ->when($request->status, function ($query, $status) {
                 $query->where('status', $status);
             })
@@ -52,17 +55,18 @@ class ProjectController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, ProjectService $projects)
     {
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
+            'type' => 'sometimes|in:personal,freelance',
+            'client_id' => 'nullable|exists:clients,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|array', // Rich text JSON
             'status' => 'required|in:pending,in_progress,completed,cancelled,maintenance',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'deadline' => 'nullable|date',
-            'currency_id' => 'required|exists:currencies,id',
+            'currency_id' => 'nullable|exists:currencies,id',
             'hourly_rate' => 'nullable|numeric|min:0',
             'estimated_hours' => 'nullable|numeric|min:0',
             'total_amount' => 'nullable|numeric|min:0',
@@ -75,7 +79,18 @@ class ProjectController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $project = $request->user()->projects()->create($validated);
+        $type = $validated['type'] ?? 'freelance';
+
+        if ($type === 'freelance' && empty($validated['client_id'])) {
+            throw ValidationException::withMessages([
+                'client_id' => 'Los proyectos freelance requieren un cliente.',
+            ]);
+        }
+
+        $project = $projects->create($request->user(), [
+            ...$validated,
+            'type' => $type,
+        ]);
 
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $file) {
@@ -83,7 +98,9 @@ class ProjectController extends Controller
             }
         }
 
-        return redirect()->route('freelance.projects.show', $project)
+        $route = $project->type === 'freelance' ? 'freelance.projects.show' : 'personal.projects.show';
+
+        return redirect()->route($route, $project)
             ->with('success', 'Proyecto creado exitosamente.');
     }
 
@@ -92,6 +109,9 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
+        $this->authorize('view', $project);
+        abort_if($project->type !== 'freelance', 404);
+
         $project->load(['client', 'currency', 'tasks', 'payments.income', 'comments.user', 'media']);
 
         // Calculate totals or stats if needed
@@ -100,6 +120,7 @@ class ProjectController extends Controller
             'project' => $project,
             'boardColumns' => TaskBoardColumnService::columnsFor($project, $project->user)->values(),
             'currencies' => Currency::all(),
+            'clients' => Client::where('user_id', $project->user_id)->orderBy('name')->get(),
         ]);
     }
 
@@ -108,6 +129,9 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
+        $this->authorize('view', $project);
+        abort_if($project->type !== 'freelance', 404);
+
         return Inertia::render('freelance/projects/Form', [
             'project' => $project,
             'clients' => Client::where('user_id', auth()->id())->get(),
@@ -118,17 +142,21 @@ class ProjectController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Project $project)
+    public function update(Request $request, Project $project, ProjectService $projects)
     {
+        $this->authorize('update', $project);
+        abort_if($project->type !== 'freelance', 404);
+
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
+            'type' => 'sometimes|in:personal,freelance',
+            'client_id' => 'nullable|exists:clients,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|array',
             'status' => 'required|in:pending,in_progress,completed,cancelled,maintenance',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'deadline' => 'nullable|date',
-            'currency_id' => 'required|exists:currencies,id',
+            'currency_id' => 'nullable|exists:currencies,id',
             'hourly_rate' => 'nullable|numeric|min:0',
             'estimated_hours' => 'nullable|numeric|min:0',
             'total_amount' => 'nullable|numeric|min:0',
@@ -141,9 +169,19 @@ class ProjectController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $project->update($validated);
+        $type = $validated['type'] ?? $project->type;
 
-        return redirect()->back()
+        if ($type === 'freelance' && empty($validated['client_id'] ?? $project->client_id)) {
+            throw ValidationException::withMessages([
+                'client_id' => 'Los proyectos freelance requieren un cliente.',
+            ]);
+        }
+
+        $project = $projects->update($request->user(), $project, $validated);
+
+        $route = $project->type === 'freelance' ? 'freelance.projects.show' : 'personal.projects.show';
+
+        return redirect()->route($route, $project)
             ->with('success', 'Proyecto actualizado exitosamente.');
     }
 
@@ -152,6 +190,9 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        $this->authorize('delete', $project);
+        abort_if($project->type !== 'freelance', 404);
+
         $project->delete();
 
         return redirect()->route('freelance.projects.index')
@@ -160,6 +201,9 @@ class ProjectController extends Controller
 
     public function uploadFile(Request $request, Project $project)
     {
+        $this->authorize('update', $project);
+        abort_if($project->type !== 'freelance', 404);
+
         $request->validate([
             'file' => 'required|file|max:10240', // 10MB
         ]);
@@ -171,16 +215,23 @@ class ProjectController extends Controller
 
     public function downloadFile($mediaId)
     {
-        // Permission check? Assuming Auth middleware protects route, but should check if user owns project of media.
         $media = Media::findOrFail($mediaId);
+        $project = $media->model;
 
-        // Add robust check here if needed
+        abort_unless($project instanceof Project, 404);
+        $this->authorize('view', $project);
+
         return response()->download($media->getPath(), $media->file_name);
     }
 
     public function deleteFile($mediaId)
     {
         $media = Media::findOrFail($mediaId);
+        $project = $media->model;
+
+        abort_unless($project instanceof Project, 404);
+        $this->authorize('update', $project);
+
         $media->delete();
 
         return back()->with('success', 'Archivo eliminado.');
@@ -188,6 +239,9 @@ class ProjectController extends Controller
 
     public function addPayment(Request $request, Project $project)
     {
+        $this->authorize('update', $project);
+        abort_if($project->type !== 'freelance', 404);
+
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0',
             'payment_date' => 'required|date',

@@ -7,6 +7,7 @@ namespace App\Mcp\Tools;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectTask;
+use App\Models\Quote;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -19,12 +20,12 @@ class FreelanceReadTool extends Tool
 {
     protected string $name = 'freelance-read';
 
-    protected string $description = 'Read the authenticated user\'s freelance data: clients, projects, and tasks with optional filters.';
+    protected string $description = 'Read the authenticated user\'s freelance data: clients, projects, quotes, and tasks with optional filters.';
 
     public function schema(JsonSchema $schema): array
     {
         return [
-            'type' => $schema->string()->description('Data type to read: clients, projects, or tasks (default: clients)')->enum(['clients', 'projects', 'tasks']),
+            'type' => $schema->string()->description('Data type to read: clients, projects, quotes, or tasks (default: clients)')->enum(['clients', 'projects', 'quotes', 'tasks']),
             'limit' => $schema->integer()->description('Maximum records to return (default: 20)')->min(1)->max(100),
         ];
     }
@@ -50,6 +51,11 @@ class FreelanceReadTool extends Tool
                 ->where('type', 'freelance')
                 ->with(['client', 'currency'])
                 ->withCount('tasks')
+                ->latest()
+                ->limit($limit)
+                ->get(),
+            'quotes' => Quote::where('user_id', $user->id)
+                ->with(['client', 'items'])
                 ->latest()
                 ->limit($limit)
                 ->get(),

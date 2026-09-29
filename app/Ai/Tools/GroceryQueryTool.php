@@ -23,7 +23,7 @@ class GroceryQueryTool implements Tool
         $query = GroceryItem::where('user_id', $this->user->id);
 
         if (! empty($request['low_stock'])) {
-            $query->whereColumn('quantity', '<=', 'low_stock_threshold');
+            $query->whereColumn('current_stock', '<=', 'target_stock');
         }
 
         if (isset($request['category'])) {
@@ -36,7 +36,7 @@ class GroceryQueryTool implements Tool
             return 'No grocery items found.';
         }
 
-        $lowStock = $items->filter(fn ($item) => $item->quantity <= $item->low_stock_threshold);
+        $lowStock = $items->filter(fn ($item) => $item->current_stock <= $item->target_stock);
 
         return json_encode([
             'total_items' => $items->count(),

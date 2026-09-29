@@ -60,10 +60,15 @@ class FinanceReadTool extends Tool
             return Response::error("Invalid type: {$type}");
         }
 
-        $records = $query->where($dateColumn, '>=', now()->subDays($days))
-            ->latest($dateColumn)
-            ->limit($limit)
-            ->get();
+        if ($type === 'debts') {
+            // Overdue debts stay visible: the window does not apply to debts.
+            $records = $query->latest('created_at')->limit($limit)->get();
+        } else {
+            $records = $query->where($dateColumn, '>=', now()->subDays($days)->toDateString())
+                ->latest($dateColumn)
+                ->limit($limit)
+                ->get();
+        }
 
         return Response::structured([
             'type' => $type,

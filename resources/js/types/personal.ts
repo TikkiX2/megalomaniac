@@ -37,7 +37,8 @@ export interface PersonalProject {
     user_id: number;
     name: string;
     description: string | null;
-    type: 'personal';
+    type: 'personal' | 'freelance';
+    client_id: number | null;
     status: string;
     color: string | null;
     icon: string | null;

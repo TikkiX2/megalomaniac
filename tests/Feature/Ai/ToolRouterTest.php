@@ -36,10 +36,47 @@ it('routes colloquial write verbs to the action tools', function () {
         ->and(ToolRouter::route('renombrá el proyecto'))->toContain('actions');
 });
 
-it('falls back to the cheap default set', function () {
-    expect(ToolRouter::route('Hola, ¿cómo estás?'))->toBe(['tasks', 'integrations', 'skills'])
+it('falls back to data groups for ambiguous messages', function () {
+    expect(ToolRouter::route('Hola, ¿cómo estás?'))
+        ->toBe(['tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'integrations', 'skills'])
         ->and(ToolRouter::route('Contame algo interesante'))->not->toContain('actions', 'agents');
 });
+
+it('routes common imperatives and english verbs to actions', function (string $message) {
+    expect(ToolRouter::route($message))->toContain('actions');
+})->with([
+    'paga la deuda',
+    'apunta que gasté 5000',
+    'archiva el proyecto viejo',
+    'agenda una tarea para mañana',
+    'termina la tarea',
+    'duplica el proyecto',
+    'pospon la reunión',
+    'cancela la tarea',
+    'abona 100 a la deuda',
+    'retira de la reserva',
+    'compra leche',
+    'muevo la tarea a otro proyecto',
+    'create a task for tomorrow',
+    'update my project',
+    'delete the old task',
+    'archive the project',
+    'add a purchase',
+    'pay the debt',
+]);
+
+it('routes body-part, finance, supplement and client vocabulary to module groups', function (string $message, string $group) {
+    expect(ToolRouter::route($message))->toContain($group);
+})->with([
+    ['hice pecho y espalda hoy', 'workout'],
+    ['cómo va mi cardio', 'workout'],
+    ['cuánto pagué este mes', 'finance'],
+    ['cuánto tengo en la reserva', 'finance'],
+    ['qué suplementos tomo', 'supplements'],
+    ['qué me falta en la tienda', 'grocery'],
+    ['qué clientes tengo', 'tasks'],
+    ['qué cotizaciones tengo pendientes', 'tasks'],
+]);
 
 it('routes gym messages to the workout group with its own write tool', function () {
     expect(ToolRouter::route('¿Cómo viene mi entrenamiento?'))->toContain('workout')

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Client;
 use App\Models\Currency;
 use App\Models\Project;
 use App\Models\ProjectTask;
@@ -35,15 +36,46 @@ it('can create personal project', function () {
         'type' => 'personal',
         'user_id' => $this->user->id,
     ]);
+
+    expect(Client::where('user_id', $this->user->id)->where('name', 'Personal')->exists())
+        ->toBeFalse();
+});
+
+it('changes a personal project type through the web update', function () {
+    $client = Client::factory()->create(['user_id' => $this->user->id]);
+    $project = Project::factory()->create([
+        'type' => 'personal',
+        'user_id' => $this->user->id,
+        'client_id' => null,
+    ]);
+
+    $task = ProjectTask::factory()->create([
+        'user_id' => $this->user->id,
+        'project_id' => $project->id,
+        'status' => 'Pending',
+        'is_done' => false,
+    ]);
+
+    $this->put("/personal/projects/{$project->id}", [
+        'name' => 'Movido',
+        'type' => 'freelance',
+        'client_id' => $client->id,
+    ])->assertRedirect(route('freelance.projects.show', $project));
+
+    expect($project->fresh()->type)->toBe('freelance')
+        ->and($project->fresh()->client_id)->toBe($client->id)
+        ->and($task->fresh()->status)->toBe('To Do');
 });
 
 it('lists personal projects', function () {
     Project::factory()->count(2)->create(['type' => 'personal', 'user_id' => $this->user->id]);
-    Project::factory()->create(['type' => 'freelance', 'user_id' => $this->user->id]);
+    Project::factory()->create(['type' => 'freelance', 'user_id' => $this->user->id, 'name' => 'Freelance Oculto']);
 
     $response = $this->get('/personal/projects');
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('personal/projects/Index'));
+    $response->assertInertia(fn ($page) => $page
+        ->component('personal/projects/Index')
+        ->where('projects.data', fn ($rows) => collect($rows)->pluck('name')->doesntContain('Freelance Oculto')));
 });
 
 it('orders personal projects by sort_order', function () {
@@ -85,6 +117,28 @@ it('prevents accessing other user personal project', function () {
     $this->get("/personal/projects/{$project->id}")->assertStatus(403);
 });
 
+it('rejects attaching a task to a foreign or freelance project', function () {
+    $other = User::factory()->create();
+    $foreign = Project::factory()->create(['user_id' => $other->id, 'type' => 'personal']);
+    $freelance = Project::factory()->create(['user_id' => $this->user->id, 'type' => 'freelance']);
+
+    $task = ProjectTask::factory()->create(['user_id' => $this->user->id, 'project_id' => null]);
+    $this->patchJson("/personal/tasks/{$task->id}", ['project_id' => $foreign->id])->assertForbidden();
+    $this->patchJson("/personal/tasks/{$task->id}", ['project_id' => $freelance->id])->assertForbidden();
+
+    $this->patchJson("/personal/tasks/{$task->id}/move", [
+        'status' => 'Pending',
+        'project_id' => $freelance->id,
+    ])->assertForbidden();
+
+    $this->patchJson("/personal/tasks/{$task->id}/move", [
+        'status' => 'Pending',
+        'project_id' => $foreign->id,
+    ])->assertNotFound();
+
+    expect($task->fresh()->project_id)->toBeNull();
+});
+
 it('can create personal task', function () {
     $project = Project::factory()->create(['type' => 'personal', 'user_id' => $this->user->id]);
     $response = $this->post('/personal/tasks', [
@@ -124,6 +178,27 @@ it('lists personal tasks with filters', function () {
     $response = $this->get('/personal/tasks?status=Pending');
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page->component('personal/tasks/Index'));
+});
+
+it('excludes freelance tasks from the personal task list', function () {
+    $freelanceProject = Project::factory()->create(['type' => 'freelance', 'user_id' => $this->user->id]);
+    ProjectTask::factory()->create([
+        'project_id' => $freelanceProject->id,
+        'user_id' => $this->user->id,
+        'title' => 'Tarea Freelance',
+    ]);
+    ProjectTask::factory()->create([
+        'project_id' => null,
+        'user_id' => $this->user->id,
+        'title' => 'Tarea Suelta',
+    ]);
+
+    $this->get('/personal/tasks')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('personal/tasks/Index')
+            ->where('tasks.data', fn ($rows) => collect($rows)->pluck('title')->contains('Tarea Suelta'))
+            ->where('tasks.data', fn ($rows) => collect($rows)->pluck('title')->doesntContain('Tarea Freelance')));
 });
 
 it('updates a task keeping a plain string description', function () {

@@ -181,16 +181,13 @@ You help the user with:
 
 You have access to the user's real data through tools. Always use tools to fetch
 actual data before making recommendations. Be concise, actionable, and direct.
-
-When the user asks to perform an action (log a workout, add a purchase, create
-a project or task, move a task to a project, etc.), use the ActionTool to
-create or update the record. Confirm what you did after.
-
-For training: start a workout (optionally from a routine so the template is copied),
-add exercises by name (new ones are created automatically), log sets with weight/reps/rpe,
-and finish the workout. To create a routine with several exercises, send all of them in the
-"exercises" array in a single create_routine call.
 EOF;
+
+        $instructions .= $this->writeInstructions();
+
+        if ($this->workoutEnabled()) {
+            $instructions .= "\n\nFor training: start a workout (optionally from a routine so the template is copied), add exercises by name (new ones are created automatically), log sets with weight/reps/rpe, and finish the workout. To create a routine with several exercises, send all of them in the \"exercises\" array in a single create_routine call.";
+        }
 
         if (filled($this->resumeDocumentContext)) {
             $instructions .= "\n\n".InjectThreadDocumentContext::HEADER."\n".$this->resumeDocumentContext;
@@ -236,6 +233,33 @@ EOF;
     protected function memoryEnabled(): bool
     {
         return in_array('*', $this->toolGroups, true) || in_array('memory', $this->toolGroups, true);
+    }
+
+    protected function actionsEnabled(): bool
+    {
+        return in_array('*', $this->toolGroups, true) || in_array('actions', $this->toolGroups, true);
+    }
+
+    protected function workoutEnabled(): bool
+    {
+        return in_array('*', $this->toolGroups, true) || in_array('workout', $this->toolGroups, true);
+    }
+
+    /**
+     * Write instructions matching the tool groups advertised for this turn, so
+     * the model never mentions a tool that is not in its tool list.
+     */
+    protected function writeInstructions(): string
+    {
+        if ($this->actionsEnabled()) {
+            return "\n\nWhen the user asks to perform an action, use the matching write tool: TaskActionTool for tasks, ProjectActionTool for projects, GymActionTool for training, FinanceActionTool for money, NutritionActionTool for meals, GroceryActionTool for groceries, SupplementActionTool for supplements. Confirm what you did after.";
+        }
+
+        if ($this->workoutEnabled()) {
+            return "\n\nWhen the user asks to record or update training data, use the GymActionTool. Confirm what you did after.";
+        }
+
+        return "\n\nOnly read tools are available for this turn. If the user asks to modify data, explain that you can only read in this turn and suggest enabling the write tools.";
     }
 
     protected function skillsToolEnabled(): bool

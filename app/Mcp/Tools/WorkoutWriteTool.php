@@ -8,6 +8,7 @@ use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
+use App\Models\WorkoutSet;
 use App\Services\Gym\RoutineService;
 use App\Services\Gym\WorkoutSessionService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -34,12 +35,13 @@ class WorkoutWriteTool extends Tool
     {
         return [
             'action' => $schema->string()
-                ->description('Action: create_workout, add_exercise, log_set, finish_workout, create_routine, add_routine_exercise')
-                ->enum(['create_workout', 'add_exercise', 'log_set', 'finish_workout', 'create_routine', 'add_routine_exercise'])
+                ->description('Action: create_workout, add_exercise, log_set, finish_workout, create_routine, add_routine_exercise, update_workout, delete_workout, remove_exercise, remove_set, delete_routine')
+                ->enum(['create_workout', 'add_exercise', 'log_set', 'finish_workout', 'create_routine', 'add_routine_exercise', 'update_workout', 'delete_workout', 'remove_exercise', 'remove_set', 'delete_routine'])
                 ->required(),
             'routine_id' => $schema->integer()->description('Routine ID (create_workout, add_routine_exercise)'),
             'workout_id' => $schema->integer()->description('Workout ID (add_exercise, finish_workout)'),
-            'workout_exercise_id' => $schema->integer()->description('Workout exercise ID (log_set)'),
+            'workout_exercise_id' => $schema->integer()->description('Workout exercise ID (log_set, remove_exercise)'),
+            'workout_set_id' => $schema->integer()->description('Workout set ID (remove_set)'),
             'exercise_id' => $schema->integer()->description('Existing exercise ID (add_exercise, add_routine_exercise)'),
             'exercise_name' => $schema->string()->description('Exercise name; created if missing (add_exercise, add_routine_exercise)'),
             'set_number' => $schema->integer()->description('Set number (log_set; auto-increments when omitted)'),
@@ -49,7 +51,7 @@ class WorkoutWriteTool extends Tool
             'completed' => $schema->boolean()->description('Completed (log_set; default true)'),
             'started_at' => $schema->string()->description('ISO 8601 start datetime (create_workout)'),
             'ended_at' => $schema->string()->description('ISO 8601 end datetime (finish_workout)'),
-            'notes' => $schema->string()->description('Notes (create_workout, finish_workout, routine exercise)'),
+            'notes' => $schema->string()->description('Notes (create_workout, finish_workout, update_workout, routine exercise)'),
             'name' => $schema->string()->description('Routine name (create_routine)'),
             'focus' => $schema->string()->description('Routine focus (create_routine)'),
             'scheduled_date' => $schema->string()->description('Routine schedule (create_routine)'),
@@ -85,6 +87,11 @@ class WorkoutWriteTool extends Tool
                 'finish_workout' => $this->finishWorkout($request, $user),
                 'create_routine' => $this->createRoutine($request, $user),
                 'add_routine_exercise' => $this->addRoutineExercise($request, $user),
+                'update_workout' => $this->updateWorkout($request, $user),
+                'delete_workout' => $this->deleteWorkout($request, $user),
+                'remove_exercise' => $this->removeExercise($request, $user),
+                'remove_set' => $this->removeSet($request, $user),
+                'delete_routine' => $this->deleteRoutine($request, $user),
                 default => Response::error('Invalid action: '.(string) $request->get('action')),
             };
         } catch (ModelNotFoundException) {
@@ -194,6 +201,79 @@ class WorkoutWriteTool extends Tool
             'workout' => $workout,
             'message' => 'Workout finished.',
         ]);
+    }
+
+    private function updateWorkout(Request $request, User $user): Response|ResponseFactory
+    {
+        $workout = $user->workouts()->find($request->get('workout_id', 0));
+
+        if (! $workout) {
+            return Response::error('Workout not found or unauthorized.');
+        }
+
+        $workout = $this->sessions->update($user, $workout, array_filter([
+            'notes' => $request->get('notes'),
+            'ended_at' => $request->get('ended_at'),
+        ], fn ($value) => $value !== null));
+
+        return Response::structured([
+            'workout' => $workout->load(['exercises.sets', 'exercises.exercise']),
+            'message' => 'Workout updated successfully.',
+        ]);
+    }
+
+    private function deleteWorkout(Request $request, User $user): Response|ResponseFactory
+    {
+        $workout = $user->workouts()->find($request->get('workout_id', 0));
+
+        if (! $workout) {
+            return Response::error('Workout not found or unauthorized.');
+        }
+
+        $this->sessions->delete($user, $workout);
+
+        return Response::structured(['message' => 'Workout deleted successfully.']);
+    }
+
+    private function removeExercise(Request $request, User $user): Response|ResponseFactory
+    {
+        $workoutExercise = WorkoutExercise::whereHas('workout', fn ($query) => $query->where('user_id', $user->id))
+            ->find($request->get('workout_exercise_id', 0));
+
+        if (! $workoutExercise) {
+            return Response::error('Workout exercise not found or unauthorized.');
+        }
+
+        $this->sessions->removeExercise($user, $workoutExercise);
+
+        return Response::structured(['message' => 'Exercise removed from workout.']);
+    }
+
+    private function removeSet(Request $request, User $user): Response|ResponseFactory
+    {
+        $set = WorkoutSet::whereHas('workoutExercise.workout', fn ($query) => $query->where('user_id', $user->id))
+            ->find($request->get('workout_set_id', 0));
+
+        if (! $set) {
+            return Response::error('Set not found or unauthorized.');
+        }
+
+        $this->sessions->removeSet($user, $set);
+
+        return Response::structured(['message' => 'Set removed successfully.']);
+    }
+
+    private function deleteRoutine(Request $request, User $user): Response|ResponseFactory
+    {
+        $routine = $user->routines()->find($request->get('routine_id', 0));
+
+        if (! $routine) {
+            return Response::error('Routine not found or unauthorized.');
+        }
+
+        $this->routines->delete($user, $routine);
+
+        return Response::structured(['message' => 'Routine deleted successfully.']);
     }
 
     private function createRoutine(Request $request, User $user): Response|ResponseFactory

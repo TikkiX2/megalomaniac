@@ -6,6 +6,7 @@ use App\Http\Requests\Api\StoreProjectRequest;
 use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use App\Models\ProjectPayment;
+use App\Services\Projects\ProjectService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -37,11 +38,10 @@ class ProjectController extends Controller
         return ProjectResource::collection($projects);
     }
 
-    public function store(StoreProjectRequest $request): JsonResponse
+    public function store(StoreProjectRequest $request, ProjectService $projects): JsonResponse
     {
-        $project = Project::create([
+        $project = $projects->create($request->user(), [
             ...$request->validated(),
-            'user_id' => $request->user()->id,
             'type' => 'freelance',
         ]);
 
@@ -59,11 +59,11 @@ class ProjectController extends Controller
         ]));
     }
 
-    public function update(StoreProjectRequest $request, Project $project): JsonResponse
+    public function update(StoreProjectRequest $request, Project $project, ProjectService $projects): JsonResponse
     {
         abort_if($project->user_id !== $request->user()->id, 403);
 
-        $project->update($request->validated());
+        $project = $projects->update($request->user(), $project, $request->validated());
 
         return new ProjectResource($project->fresh(['client', 'tasks', 'comments']));
     }

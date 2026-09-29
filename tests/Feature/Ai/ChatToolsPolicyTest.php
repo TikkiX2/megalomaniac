@@ -3,6 +3,8 @@
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Services\ChatService;
 use App\Ai\Tools\AskUserTool;
+use App\Ai\Tools\ProjectActionTool;
+use App\Ai\Tools\TaskActionTool;
 use App\Ai\Tools\TaskQueryTool;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -84,5 +86,20 @@ it('builds the turn agent with only the resolved groups', function () {
     $agent = $service->agentFor($user, $thread, $policy['groups']);
     $classes = collect(iterator_to_array($agent->tools()))->map(fn ($tool): string => $tool::class)->all();
 
-    expect($classes)->toBe([TaskQueryTool::class, AskUserTool::class]);
+    expect($classes)->toBe([TaskQueryTool::class, ProjectActionTool::class, TaskActionTool::class, AskUserTool::class]);
+});
+
+it('resets a manual thread policy back to auto when an auto override is sent', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->getKey(),
+        'tools_policy' => ['mode' => 'manual', 'groups' => ['tasks']],
+    ]);
+
+    $policy = app(ChatService::class)->prepareToolPolicy($thread, 'paga la deuda', ['mode' => 'auto', 'groups' => []]);
+
+    expect($policy['mode'])->toBe('auto')
+        ->and($policy['groups'])->toContain('finance', 'actions')
+        ->and($thread->fresh()->tools_policy['mode'])->toBe('auto');
 });

@@ -10,12 +10,15 @@ import type { PersonalProject } from '@/types/personal';
 
 interface Props {
     project?: PersonalProject;
+    clients?: { id: number; name: string }[];
 }
 
-export default function PersonalProjectForm({ project }: Props) {
+export default function PersonalProjectForm({ project, clients = [] }: Props) {
     const isEdit = !!project;
     const { data, setData, post, put, processing, errors } = useForm({
         name: project?.name ?? '',
+        type: project?.type ?? 'personal',
+        client_id: project?.client_id ? String(project.client_id) : '',
         status: project?.status ?? 'pending',
         color: project?.color ?? '#EF4444',
         icon: project?.icon ?? '',
@@ -37,6 +40,7 @@ export default function PersonalProjectForm({ project }: Props) {
             start_date: data.start_date || null,
             end_date: data.end_date || null,
             deadline: data.deadline || null,
+            client_id: data.client_id === '' ? null : data.client_id,
         };
         if (isEdit) {
             put(`/personal/projects/${project!.id}`, { ...payload });
@@ -85,6 +89,34 @@ export default function PersonalProjectForm({ project }: Props) {
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                            <Label>Módulo</Label>
+                            <Select value={data.type} onValueChange={(v) => setData('type', v as 'personal' | 'freelance')}>
+                                <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="personal">Personal</SelectItem>
+                                    <SelectItem value="freelance">Freelance</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">Al cambiar de módulo se re-mapean las columnas del tablero.</p>
+                        </div>
+                        {data.type === 'freelance' && (
+                            <div className="flex flex-col gap-2">
+                                <Label>Cliente *</Label>
+                                <Select value={data.client_id} onValueChange={(v) => setData('client_id', v)}>
+                                    <SelectTrigger className="bg-background border-border"><SelectValue placeholder="Seleccionar cliente" /></SelectTrigger>
+                                    <SelectContent>
+                                        {clients.map((client) => (
+                                            <SelectItem key={client.id} value={String(client.id)}>{client.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.client_id && <p className="text-xs text-destructive">{errors.client_id}</p>}
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

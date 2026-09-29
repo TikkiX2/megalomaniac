@@ -1,10 +1,11 @@
 <?php
 
-use App\Ai\Tools\ActionTool;
+use App\Ai\Tools\TaskActionTool;
 use App\Ai\Tools\TaskQueryTool;
 use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\User;
+use App\Services\Tasks\TaskService;
 use Laravel\Ai\Tools\Request;
 
 function personalTask(User $user, array $attributes = []): ProjectTask
@@ -16,6 +17,11 @@ function personalTask(User $user, array $attributes = []): ProjectTask
         'is_done' => false,
         'is_archived' => false,
     ], $attributes));
+}
+
+function taskTool(User $user): TaskActionTool
+{
+    return new TaskActionTool($user, app(TaskService::class));
 }
 
 it('lists pending tasks with a summary', function () {
@@ -87,7 +93,7 @@ it('never returns other users tasks', function () {
 it('completes and updates tasks through the action tool', function () {
     $user = User::factory()->create();
     $task = personalTask($user, ['title' => 'Cerrar mes']);
-    $tool = new ActionTool($user);
+    $tool = taskTool($user);
 
     $completed = json_decode((string) $tool->handle(new Request([
         'action' => 'complete_task',
@@ -114,7 +120,7 @@ it('completes and updates tasks through the action tool', function () {
 
 it('creates tasks with a due date and rejects foreign tasks', function () {
     $user = User::factory()->create();
-    $tool = new ActionTool($user);
+    $tool = taskTool($user);
 
     $created = json_decode((string) $tool->handle(new Request([
         'action' => 'create_task',
@@ -136,30 +142,10 @@ it('creates tasks with a due date and rejects foreign tasks', function () {
         ->and($foreign->fresh()->is_done)->toBeFalse();
 });
 
-it('creates projects and moves tasks between them through the action tool', function () {
+it('moves tasks between projects through the action tool', function () {
     $user = User::factory()->create();
-    $tool = new ActionTool($user);
-
-    $created = json_decode((string) $tool->handle(new Request([
-        'action' => 'create_project',
-        'name' => 'Rediseño web',
-        'type' => 'freelance',
-        'description' => 'Landing nueva',
-        'deadline' => now()->addMonth()->toDateString(),
-    ])), true);
-
-    expect($created['success'])->toBeTrue()
-        ->and($created['project']['type'])->toBe('freelance');
-
-    $project = Project::where('name', 'Rediseño web')->first();
-
-    $projectBlocks = collect($project->description)->sortBy(fn (array $block): int => $block['meta']['order'] ?? 0)->values();
-
-    expect($project)->not->toBeNull()
-        ->and($project->boardColumns()->pluck('key')->all())->toBe(['To Do', 'In Progress', 'Done'])
-        ->and($projectBlocks)->toHaveCount(1)
-        ->and($projectBlocks[0]['type'])->toBe('Paragraph')
-        ->and($projectBlocks[0]['value'][0]['children'][0]['text'])->toBe('Landing nueva');
+    $tool = taskTool($user);
+    $project = Project::factory()->for($user)->create(['type' => 'freelance']);
 
     $task = personalTask($user, ['title' => 'Moverme']);
 
@@ -188,7 +174,7 @@ it('rejects moving a task to a foreign project', function () {
     $user = User::factory()->create();
     $foreignProject = Project::factory()->create();
     $task = personalTask($user);
-    $tool = new ActionTool($user);
+    $tool = taskTool($user);
 
     $result = json_decode((string) $tool->handle(new Request([
         'action' => 'update_task',
@@ -200,18 +186,9 @@ it('rejects moving a task to a foreign project', function () {
         ->and($task->fresh()->project_id)->toBeNull();
 });
 
-it('rejects creating a project without a name', function () {
-    $tool = new ActionTool(User::factory()->create());
-
-    $result = json_decode((string) $tool->handle(new Request(['action' => 'create_project'])), true);
-
-    expect($result['success'] ?? false)->toBeFalse()
-        ->and(Project::count())->toBe(0);
-});
-
 it('converts markdown descriptions into yoopta blocks when the model creates or updates tasks', function () {
     $user = User::factory()->create();
-    $tool = new ActionTool($user);
+    $tool = taskTool($user);
 
     $created = json_decode((string) $tool->handle(new Request([
         'action' => 'create_task',

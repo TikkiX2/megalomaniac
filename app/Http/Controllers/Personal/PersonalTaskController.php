@@ -22,6 +22,10 @@ class PersonalTaskController extends Controller
         $query = ProjectTask::query()
             ->where('user_id', $request->user()->id)
             ->where('is_archived', false)
+            ->where(function ($scope) {
+                $scope->whereNull('project_id')
+                    ->orWhereHas('project', fn ($project) => $project->where('type', 'personal'));
+            })
             ->with(['project', 'properties'])
             ->when($request->project_id, fn ($q, $v) => $q->where('project_id', $v))
             ->when($request->status, fn ($q, $v) => $q->where('status', $v))
@@ -143,6 +147,14 @@ class PersonalTaskController extends Controller
 
         $validated = $request->validated();
 
+        if (array_key_exists('project_id', $validated) && $validated['project_id'] !== null) {
+            $project = Project::find($validated['project_id']);
+
+            if (! $project || $project->user_id !== $request->user()->id || $project->type !== 'personal') {
+                abort(403);
+            }
+        }
+
         if (isset($validated['description']) && is_string($validated['description']) && trim($validated['description']) === '') {
             $validated['description'] = null;
         }
@@ -193,6 +205,10 @@ class PersonalTaskController extends Controller
             $project = Project::where('id', $validated['project_id'])
                 ->where('user_id', $request->user()->id)
                 ->firstOrFail();
+
+            if ($project->type !== 'personal') {
+                abort(403);
+            }
         } else {
             $project = $task->project;
         }

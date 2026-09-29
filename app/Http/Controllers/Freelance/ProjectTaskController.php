@@ -21,6 +21,9 @@ class ProjectTaskController extends Controller
      */
     public function index(Request $request, Project $project)
     {
+        abort_if($project->user_id !== $request->user()->id, 403);
+        abort_if($project->type !== 'freelance', 404);
+
         // Usually tasks are shown in project show, but if we have a standalone index:
         // Or if we use shallow nesting, index might not be used here if we nest or if tasks are loaded in project.
         // But for route resource 'projects.tasks', index is for tasks of a project.
@@ -40,6 +43,9 @@ class ProjectTaskController extends Controller
      */
     public function store(Request $request, Project $project)
     {
+        abort_if($project->user_id !== $request->user()->id, 403);
+        abort_if($project->type !== 'freelance', 404);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable', // acepta string (Dialog textarea) o array (Yoopta JSON) — cast array en modelo
@@ -84,6 +90,8 @@ class ProjectTaskController extends Controller
      */
     public function move(Request $request, ProjectTask $task)
     {
+        $this->authorizeTask($task);
+
         $validated = $request->validate([
             'status' => ['required', 'string', 'max:50'],
             'ordered_ids' => ['required', 'array'],
@@ -123,6 +131,8 @@ class ProjectTaskController extends Controller
      */
     public function update(Request $request, ProjectTask $task)
     {
+        $this->authorizeTask($task);
+
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable',
@@ -171,6 +181,8 @@ class ProjectTaskController extends Controller
      */
     public function destroy(ProjectTask $task)
     {
+        $this->authorizeTask($task);
+
         // Trigger Notion delete/archive
         // $notionService->deleteTask($task);
 
@@ -181,6 +193,8 @@ class ProjectTaskController extends Controller
 
     public function syncToNotion(ProjectTask $task)
     {
+        $this->authorizeTask($task);
+
         // Service call
         // $notionService->syncToNotion($task);
         return back()->with('success', 'Sincronizado con Notion.');
@@ -188,6 +202,8 @@ class ProjectTaskController extends Controller
 
     public function syncFromNotion(ProjectTask $task)
     {
+        $this->authorizeTask($task);
+
         // Service call
         // $notionService->syncFromNotion($task);
         return back()->with('success', 'Sincronizado desde Notion.');
@@ -197,5 +213,19 @@ class ProjectTaskController extends Controller
     {
         // Handle webhook from Notion/Integration platform
         return response()->json(['status' => 'received']);
+    }
+
+    /**
+     * Freelance tasks are owned through their project, so a task belongs to
+     * the user who owns the project even when the task row predates that.
+     */
+    private function authorizeTask(ProjectTask $task): void
+    {
+        $userId = auth()->id();
+
+        abort_unless(
+            $task->user_id === $userId || $task->project?->user_id === $userId,
+            403,
+        );
     }
 }

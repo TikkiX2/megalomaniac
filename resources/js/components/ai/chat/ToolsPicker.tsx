@@ -16,11 +16,13 @@ export function ToolsPicker({
     policy,
     onChange,
     disabled,
+    activeGroups,
 }: {
     groups: { key: string; label: string }[];
     policy: ToolPolicy;
     onChange: (policy: ToolPolicy) => void;
     disabled?: boolean;
+    activeGroups?: string[];
 }) {
     const label =
         policy.mode === 'manual'
@@ -28,7 +30,10 @@ export function ToolsPicker({
             : 'Herramientas: Auto';
 
     const toggle = (key: string) => {
-        const current = policy.mode === 'manual' ? policy.groups : ['memory'];
+        const current =
+            policy.mode === 'manual'
+                ? policy.groups
+                : (activeGroups ?? ['memory']);
         const next = current.includes(key) ? current.filter((group) => group !== key) : [...current, key];
 
         onChange(next.length > 0 ? { mode: 'manual', groups: next } : { mode: 'auto', groups: [] });

@@ -18,6 +18,7 @@ import CommentSection from '@/components/freelance/CommentSection';
 import MediaGallery from '@/components/freelance/MediaGallery';
 import TaskBoard from '@/components/freelance/TaskBoard';
 import RichTextEditor from '@/components/freelance/YooptaEditor';
+import { MoveProjectDialog } from '@/components/projects/MoveProjectDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,7 +37,7 @@ import {
 import MainLayout from '@/layouts/main-layout';
 import freelance from '@/routes/freelance';
 
-export default function ProjectShow({ project, tasks, comments, currencies, boardColumns }: any) {
+export default function ProjectShow({ project, tasks, comments, currencies, clients, boardColumns }: any) {
     const { data, setData, patch, processing } = useForm({
         status: project.status,
     });
@@ -86,6 +87,11 @@ export default function ProjectShow({ project, tasks, comments, currencies, boar
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <MoveProjectDialog
+                            project={project}
+                            clients={clients ?? []}
+                            updateUrl={freelance.projects.update(project.id).url}
+                        />
                         <Button variant="outline" asChild className="bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-white/5">
                             <Link href={freelance.projects.edit(project.id).url}>
                                 <Pencil className="mr-2 h-4 w-4" /> Editar

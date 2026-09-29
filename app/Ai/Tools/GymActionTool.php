@@ -7,6 +7,7 @@ use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
+use App\Models\WorkoutSet;
 use App\Services\Gym\RoutineService;
 use App\Services\Gym\WorkoutSessionService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -53,6 +54,11 @@ class GymActionTool implements Approvable, Tool
             'create_routine' => 'crear una rutina',
             'add_routine_exercise' => 'añadir un ejercicio a la rutina',
             'update_routine' => 'actualizar la rutina',
+            'update_workout' => 'actualizar el entrenamiento',
+            'delete_workout' => 'eliminar el entrenamiento',
+            'remove_exercise' => 'quitar un ejercicio del entrenamiento',
+            'remove_set' => 'quitar una serie',
+            'delete_routine' => 'eliminar la rutina',
         ];
     }
 
@@ -67,7 +73,12 @@ class GymActionTool implements Approvable, Tool
                 'create_routine' => $this->createRoutine($request),
                 'add_routine_exercise' => $this->addRoutineExercise($request),
                 'update_routine' => $this->updateRoutine($request),
-                default => $this->error('Invalid action. Use: create_workout, add_exercise, log_set, finish_workout, create_routine, add_routine_exercise, update_routine'),
+                'update_workout' => $this->updateWorkout($request),
+                'delete_workout' => $this->deleteWorkout($request),
+                'remove_exercise' => $this->removeExercise($request),
+                'remove_set' => $this->removeSet($request),
+                'delete_routine' => $this->deleteRoutine($request),
+                default => $this->error('Invalid action. Use: create_workout, add_exercise, log_set, finish_workout, create_routine, add_routine_exercise, update_routine, update_workout, delete_workout, remove_exercise, remove_set, delete_routine'),
             };
         } catch (ModelNotFoundException|AuthorizationException|InvalidArgumentException $exception) {
             return $this->error($exception->getMessage());
@@ -230,6 +241,80 @@ class GymActionTool implements Approvable, Tool
         ]);
     }
 
+    private function updateWorkout(Request $request): string
+    {
+        $workout = $this->findWorkout($request['workout_id'] ?? null);
+
+        if (! $workout) {
+            return $this->error('Workout not found');
+        }
+
+        $workout = $this->sessions->update($this->user, $workout, array_filter([
+            'notes' => $request['notes'] ?? null,
+            'ended_at' => $request['ended_at'] ?? null,
+        ], fn (mixed $value): bool => $value !== null));
+
+        return $this->success('Workout updated', [
+            'workout' => $workout->load(['exercises.sets', 'exercises.exercise'])->toArray(),
+        ]);
+    }
+
+    private function deleteWorkout(Request $request): string
+    {
+        $workout = $this->findWorkout($request['workout_id'] ?? null);
+
+        if (! $workout) {
+            return $this->error('Workout not found');
+        }
+
+        $this->sessions->delete($this->user, $workout);
+
+        return $this->success('Workout deleted', ['workout' => ['id' => $workout->id]]);
+    }
+
+    private function removeExercise(Request $request): string
+    {
+        $workoutExercise = WorkoutExercise::whereHas('workout', fn ($query) => $query->where('user_id', $this->user->id))
+            ->find($request['workout_exercise_id'] ?? null);
+
+        if (! $workoutExercise) {
+            return $this->error('Workout exercise not found');
+        }
+
+        $this->sessions->removeExercise($this->user, $workoutExercise);
+
+        return $this->success('Exercise removed from workout', [
+            'workout_exercise' => ['id' => $workoutExercise->id],
+        ]);
+    }
+
+    private function removeSet(Request $request): string
+    {
+        $set = WorkoutSet::whereHas('workoutExercise.workout', fn ($query) => $query->where('user_id', $this->user->id))
+            ->find($request['workout_set_id'] ?? null);
+
+        if (! $set) {
+            return $this->error('Set not found');
+        }
+
+        $this->sessions->removeSet($this->user, $set);
+
+        return $this->success('Set removed', ['set' => ['id' => $set->id]]);
+    }
+
+    private function deleteRoutine(Request $request): string
+    {
+        $routine = $this->findRoutine($request['routine_id'] ?? null);
+
+        if (! $routine) {
+            return $this->error('Routine not found');
+        }
+
+        $this->routines->delete($this->user, $routine);
+
+        return $this->success('Routine deleted', ['routine' => ['id' => $routine->id]]);
+    }
+
     private function findWorkout(mixed $workoutId): ?Workout
     {
         if (! $workoutId) {
@@ -276,7 +361,7 @@ class GymActionTool implements Approvable, Tool
     {
         return [
             'action' => $schema->string()
-                ->enum(['create_workout', 'add_exercise', 'log_set', 'finish_workout', 'create_routine', 'add_routine_exercise', 'update_routine'])
+                ->enum(['create_workout', 'add_exercise', 'log_set', 'finish_workout', 'create_routine', 'add_routine_exercise', 'update_routine', 'update_workout', 'delete_workout', 'remove_exercise', 'remove_set', 'delete_routine'])
                 ->description('Action to perform')
                 ->required(),
             'routine_id' => $schema->integer()->description('Routine ID (create_workout, add_routine_exercise, update_routine)'),
@@ -291,7 +376,7 @@ class GymActionTool implements Approvable, Tool
             'completed' => $schema->boolean()->description('Completed (log_set; default true)'),
             'started_at' => $schema->string()->description('ISO 8601 start datetime (create_workout)'),
             'ended_at' => $schema->string()->description('ISO 8601 end datetime (finish_workout)'),
-            'notes' => $schema->string()->description('Notes (create_workout, finish_workout)'),
+            'notes' => $schema->string()->description('Notes (create_workout, finish_workout, update_workout)'),
             'name' => $schema->string()->description('Routine name (create_routine, update_routine)'),
             'focus' => $schema->string()->description('Routine focus (create_routine, update_routine)'),
             'scheduled_date' => $schema->string()->description('Routine scheduled date (create_routine, update_routine)'),

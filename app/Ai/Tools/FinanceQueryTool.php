@@ -23,19 +23,20 @@ class FinanceQueryTool implements Tool
     public function handle(Request $request): Stringable|string
     {
         $type = $request['type'] ?? 'purchases';
-        $days = $request['days'] ?? 30;
+        $days = (int) ($request['days'] ?? 30);
+        $since = now()->subDays($days)->toDateString();
 
         $data = match ($type) {
             'purchases' => Purchase::with(['category', 'currency'])
                 ->where('user_id', $this->user->id)
-                ->where('date', '>=', now()->subDays($days))
-                ->latest()
+                ->where('purchase_date', '>=', $since)
+                ->latest('purchase_date')
                 ->limit(20)
                 ->get(),
-            'incomes' => Income::with(['source', 'currency'])
+            'incomes' => Income::with(['incomeSource', 'currency'])
                 ->where('user_id', $this->user->id)
-                ->where('date', '>=', now()->subDays($days))
-                ->latest()
+                ->where('received_date', '>=', $since)
+                ->latest('received_date')
                 ->limit(20)
                 ->get(),
             'debts' => Debt::with('payments')

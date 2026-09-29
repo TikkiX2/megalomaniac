@@ -18,6 +18,8 @@ use App\Mcp\Tools\PersonalProjectReadTool;
 use App\Mcp\Tools\PersonalProjectWriteTool;
 use App\Mcp\Tools\PersonalTaskReadTool;
 use App\Mcp\Tools\PersonalTaskWriteTool;
+use App\Mcp\Tools\SupplementReadTool;
+use App\Mcp\Tools\SupplementWriteTool;
 use App\Mcp\Tools\WorkoutReadTool;
 use App\Mcp\Tools\WorkoutWriteTool;
 use Laravel\Mcp\Server;
@@ -27,7 +29,7 @@ use Laravel\Mcp\Server\Attributes\Version;
 
 #[Name('Megalomaniac')]
 #[Version('1.0.0')]
-#[Instructions('Megalomaniac fitness, finance, freelance, and personal task management MCP server. Provides read and write access to workouts, nutrition, grocery inventory, finances, freelance projects, and personal projects/tasks. All operations are scoped to the authenticated user.')]
+#[Instructions('Megalomaniac fitness, nutrition, supplements, grocery, finance, freelance, and personal task management MCP server. Offers read and write tools per module (workouts, nutrition and supplements, grocery inventory, finances including debt payments and withdrawals, freelance clients/quotes/projects, and personal projects/tasks) plus module moves for projects. All operations are scoped to the authenticated user.')]
 class MegalomaniacServer extends Server
 {
     protected array $tools = [
@@ -45,6 +47,8 @@ class MegalomaniacServer extends Server
         PersonalProjectWriteTool::class,
         PersonalTaskReadTool::class,
         PersonalTaskWriteTool::class,
+        SupplementReadTool::class,
+        SupplementWriteTool::class,
     ];
 
     protected array $resources = [

@@ -160,6 +160,11 @@ class User extends Authenticatable
         return $this->hasMany(Client::class);
     }
 
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class);
+    }
+
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);

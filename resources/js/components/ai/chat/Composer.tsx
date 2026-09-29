@@ -21,6 +21,7 @@ interface ComposerProps {
     onAgentChange?: (key: string) => void;
     toolGroups?: { key: string; label: string }[];
     toolsPolicy?: ToolPolicy;
+    activeToolGroups?: string[];
     onToolsPolicyChange?: (policy: ToolPolicy) => void;
     skills?: { key: string; name: string }[];
     selectedSkills?: string[];
@@ -65,6 +66,7 @@ export function Composer({
     onAgentChange,
     toolGroups = [],
     toolsPolicy,
+    activeToolGroups,
     onToolsPolicyChange,
     skills = [],
     selectedSkills = [],
@@ -239,6 +241,7 @@ export function Composer({
                         <ToolsPicker
                             groups={toolGroups}
                             policy={toolsPolicy}
+                            activeGroups={activeToolGroups}
                             onChange={onToolsPolicyChange}
                             disabled={disabled || streaming}
                         />

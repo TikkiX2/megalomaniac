@@ -7,6 +7,7 @@ use App\Ai\Tools\FinanceQueryTool;
 use App\Ai\Tools\GymQueryTool;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
+use App\Ai\Tools\TaskQueryTool;
 use App\Models\AgentDefinition;
 use App\Models\AgentRun;
 use App\Models\AgentSuggestion;
@@ -136,6 +137,19 @@ it('filters tools by the definition policy', function () {
 
     expect($classes)->toContain(FinanceQueryTool::class, IntegrationCatalogTool::class, IntegrationCallTool::class)
         ->not->toContain(GymQueryTool::class);
+});
+
+it('exposes the tasks group to agents through the tasks_query policy', function () {
+    $user = User::factory()->create();
+    $definition = AgentDefinition::factory()->for($user)->make([
+        'tools_policy' => ['internal' => ['tasks_query'], 'integrations' => []],
+    ]);
+
+    $classes = collect(iterator_to_array((new RuntimeAgent($definition))->tools()))
+        ->map(fn ($tool): string => $tool::class)
+        ->all();
+
+    expect($classes)->toContain(TaskQueryTool::class);
 });
 
 it('sends telegram notifications only when a connection exists', function () {

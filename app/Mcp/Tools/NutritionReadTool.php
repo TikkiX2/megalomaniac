@@ -39,7 +39,7 @@ class NutritionReadTool extends Tool
         }
 
         $mealLogs = MealLog::where('user_id', $user->id)
-            ->where('date', '>=', now()->subDays($days))
+            ->where('date', '>=', now()->subDays($days)->toDateString())
             ->with(['items.food'])
             ->latest('date')
             ->limit($limit)

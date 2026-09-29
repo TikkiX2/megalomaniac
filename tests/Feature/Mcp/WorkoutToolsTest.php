@@ -209,3 +209,24 @@ it('maps missing related resources to a friendly error', function () {
         ->tool(WorkoutWriteTool::class, ['action' => 'create_workout', 'routine_id' => 999999])
         ->assertHasErrors(['Resource not found or unauthorized']);
 });
+
+it('updates and deletes workouts through the mcp server', function () {
+    $user = User::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id, 'notes' => 'original']);
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, [
+            'action' => 'update_workout',
+            'workout_id' => $workout->id,
+            'notes' => 'ajustado',
+        ])
+        ->assertOk();
+
+    expect($workout->fresh()->notes)->toBe('ajustado');
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, ['action' => 'delete_workout', 'workout_id' => $workout->id])
+        ->assertOk();
+
+    expect(Workout::find($workout->id))->toBeNull();
+});

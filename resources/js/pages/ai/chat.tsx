@@ -90,9 +90,9 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
             model: model ?? undefined,
             agent: agent !== 'megalomaniac' ? agent : undefined,
             tools_policy:
-                toolsPolicy.mode === 'manual' && toolsPolicy.groups.length > 0
-                    ? toolsPolicy
-                    : undefined,
+                toolsPolicy.mode === 'auto'
+                    ? { mode: 'auto', groups: [] }
+                    : toolsPolicy,
             force_web: forceWeb ? true : undefined,
             attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
             skill_keys: skillKeys.length > 0 ? skillKeys : undefined,
@@ -149,6 +149,7 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                         onAgentChange={setAgent}
                         toolGroups={toolGroups}
                         toolsPolicy={toolsPolicy}
+                        activeToolGroups={stream.toolPolicy?.groups}
                         onToolsPolicyChange={setToolsPolicy}
                         skills={skills}
                         selectedSkills={skillKeys}

@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Trash, Pencil, Target, Users, CheckSquare } from 'lucide-react';
+import { ArrowLeft, Trash, Pencil, Target, Users, CheckSquare } from 'lucide-react';
+import { MoveProjectDialog } from '@/components/projects/MoveProjectDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +10,10 @@ import type { PersonalProject } from '@/types/personal';
 
 interface Props {
     project: PersonalProject;
+    clients?: { id: number; name: string }[];
 }
 
-export default function PersonalProjectShow({ project }: Props) {
+export default function PersonalProjectShow({ project, clients = [] }: Props) {
     const handleDelete = () => {
         if (confirm('¿Eliminar proyecto y sus tareas?')) {
             router.delete(`/personal/projects/${project.id}`);
@@ -41,6 +43,11 @@ export default function PersonalProjectShow({ project }: Props) {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <MoveProjectDialog
+                            project={project}
+                            clients={clients}
+                            updateUrl={`/personal/projects/${project.id}`}
+                        />
                         <Button variant="outline" asChild><Link href={`/personal/projects/${project.id}/edit`}><Pencil className="mr-2 h-4 w-4" />Editar</Link></Button>
                         <Button variant="destructive" onClick={handleDelete}><Trash className="mr-2 h-4 w-4" />Eliminar</Button>
                     </div>

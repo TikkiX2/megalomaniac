@@ -129,9 +129,9 @@ export default function ChatThread({
             thread_id: thread.id,
             model: model ?? undefined,
             tools_policy:
-                toolsPolicy.mode === 'manual' && toolsPolicy.groups.length > 0
-                    ? toolsPolicy
-                    : undefined,
+                toolsPolicy.mode === 'auto'
+                    ? { mode: 'auto', groups: [] }
+                    : toolsPolicy,
             force_web: forceWeb ? true : undefined,
             attachment_ids:
                 attachmentIds.length > 0 ? attachmentIds : undefined,
@@ -478,6 +478,7 @@ export default function ChatThread({
                         models={models}
                         toolGroups={toolGroups}
                         toolsPolicy={toolsPolicy}
+                        activeToolGroups={stream.toolPolicy?.groups}
                         onToolsPolicyChange={setToolsPolicy}
                         skills={skills}
                         selectedSkills={skillKeys}

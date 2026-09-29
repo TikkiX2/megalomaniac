@@ -17,7 +17,7 @@ class PersonalTaskReadTool extends Tool
 {
     protected string $name = 'personal-task-read';
 
-    protected string $description = 'Read the authenticated user\'s personal tasks (standalone tasks without a project).';
+    protected string $description = 'Read the authenticated user\'s personal tasks: standalone tasks plus tasks inside personal projects.';
 
     public function schema(JsonSchema $schema): array
     {
@@ -30,7 +30,7 @@ class PersonalTaskReadTool extends Tool
 
     public function handle(Request $request): Response|ResponseFactory
     {
-        $limit = (int) $request['limit'] ?? 20;
+        $limit = (int) $request->get('limit', 20);
         $user = $request->user();
 
         if (! $user) {
@@ -38,15 +38,22 @@ class PersonalTaskReadTool extends Tool
         }
 
         $query = ProjectTask::where('user_id', $user->id)
-            ->whereNull('project_id')
-            ->with('properties');
+            ->where(function ($scope) {
+                $scope->whereNull('project_id')
+                    ->orWhereHas('project', fn ($project) => $project->where('type', 'personal'));
+            })
+            ->with(['properties', 'project']);
 
-        if (isset($request['status'])) {
-            $query->where('status', $request['status']);
+        $status = $request->get('status');
+
+        if ($status) {
+            $query->where('status', $status);
         }
 
-        if (isset($request['priority'])) {
-            $query->where('priority', $request['priority']);
+        $priority = $request->get('priority');
+
+        if ($priority) {
+            $query->where('priority', $priority);
         }
 
         $tasks = $query->latest()->limit($limit)->get();

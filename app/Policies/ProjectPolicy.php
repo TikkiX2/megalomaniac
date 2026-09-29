@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\Project;
 use App\Models\User;
 
-class PersonalProjectPolicy
+class ProjectPolicy
 {
     public function viewAny(User $user): bool
     {

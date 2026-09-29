@@ -64,6 +64,47 @@ class TaskBoardColumnService
     }
 
     /**
+     * Board defaults for a project type.
+     *
+     * @return array<int, array{key: string, label: string, color: string, is_done: bool}>
+     */
+    public static function defaultsForType(string $type): array
+    {
+        return $type === 'personal' ? self::PERSONAL_DEFAULTS : self::FREELANCE_DEFAULTS;
+    }
+
+    /**
+     * Ensure the project has the default columns for its current type,
+     * inserting only the missing keys. Custom columns are left untouched.
+     */
+    public static function seedDefaultsForType(Project $project): void
+    {
+        $existing = $project->boardColumns()->pluck('key')->all();
+        $missing = array_values(array_filter(
+            self::defaultsForType($project->type),
+            fn (array $column): bool => ! in_array($column['key'], $existing, true),
+        ));
+
+        if ($missing === []) {
+            return;
+        }
+
+        $sortOrder = (int) $project->boardColumns()->max('sort_order') + 1;
+
+        foreach ($missing as $offset => $column) {
+            TaskBoardColumn::create([
+                'user_id' => $project->user_id,
+                'project_id' => $project->id,
+                'key' => $column['key'],
+                'label' => $column['label'],
+                'color' => $column['color'],
+                'sort_order' => $sortOrder + $offset,
+                'is_done' => $column['is_done'],
+            ]);
+        }
+    }
+
+    /**
      * @return Collection<int, TaskBoardColumn>
      */
     public static function columnsFor(?Project $project, User $user): Collection

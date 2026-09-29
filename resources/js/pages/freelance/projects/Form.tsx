@@ -27,6 +27,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
     const isEditing = !!project;
 
     const { data, setData, post, put, processing, errors } = useForm({
+        type: project?.type || 'freelance',
         client_id: project?.client_id || '',
         name: project?.name || '',
         description: project?.description || null, // Yoopta JSON
@@ -81,7 +82,23 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label className="text-white/80">Cliente *</Label>
+                                    <Label className="text-white/80">Módulo</Label>
+                                    <Select
+                                        value={data.type}
+                                        onValueChange={(val) => setData('type', val)}
+                                    >
+                                        <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121]">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-[#2b1a1a] border-[#3e2121] text-white">
+                                            <SelectItem value="freelance">Freelance</SelectItem>
+                                            <SelectItem value="personal">Personal</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-white/40">Al cambiar de módulo se re-mapean las columnas del tablero.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-white/80">Cliente {data.type === 'freelance' ? '*' : '(opcional)'}</Label>
                                     <Select
                                         value={String(data.client_id)}
                                         onValueChange={(val) => setData('client_id', val)}
@@ -99,6 +116,8 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                     </Select>
                                     {errors.client_id && <p className="text-xs text-rose-400">{errors.client_id}</p>}
                                 </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label className="text-white/80">Nombre del Proyecto *</Label>
                                     <Input
@@ -247,7 +266,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-white/80">Módulo</Label>
+                                    <Label className="text-white/80">Submódulo</Label>
                                     <Input
                                         value={data.module}
                                         onChange={(e) => setData('module', e.target.value)}

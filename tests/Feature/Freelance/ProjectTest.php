@@ -60,3 +60,30 @@ test('project show page is accessible', function () {
             ->component('freelance/projects/Show')
         );
 });
+
+test('projects index excludes personal projects', function () {
+    $user = User::factory()->create();
+    Project::factory()->create(['user_id' => $user->id, 'type' => 'personal', 'name' => 'Personal Oculto']);
+    Project::factory()->create(['user_id' => $user->id, 'type' => 'freelance', 'name' => 'Freelance Visible']);
+
+    actingAs($user)
+        ->get(route('freelance.projects.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('freelance/projects/Index')
+            ->where('projects.data', fn ($rows) => collect($rows)->pluck('name')->all() === ['Freelance Visible']));
+});
+
+test('freelance dashboard excludes personal projects', function () {
+    $user = User::factory()->create();
+    Project::factory()->create(['user_id' => $user->id, 'type' => 'personal', 'name' => 'Personal Oculto', 'status' => 'in_progress']);
+    Project::factory()->create(['user_id' => $user->id, 'type' => 'freelance', 'name' => 'Freelance Visible', 'status' => 'in_progress']);
+
+    actingAs($user)
+        ->get(route('freelance.dashboard'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('freelance/Dashboard')
+            ->where('stats.active_projects', 1)
+            ->where('recent_projects', fn ($rows) => collect($rows)->pluck('name')->all() === ['Freelance Visible']));
+});
