@@ -42,12 +42,16 @@ Route::prefix('v1')->group(function () {
         Route::get('workouts/{workout}', [WorkoutController::class, 'show']);
         Route::patch('workouts/{workout}', [WorkoutController::class, 'update']);
         Route::delete('workouts/{workout}', [WorkoutController::class, 'destroy']);
+        Route::post('workouts/{workout}/exercises', [WorkoutController::class, 'addExercise']);
+        Route::post('workout-exercises/{workoutExercise}/sets', [WorkoutController::class, 'logSet']);
 
         Route::get('exercises', [ExerciseController::class, 'index']);
         Route::post('exercises', [ExerciseController::class, 'store']);
 
         Route::get('routines', [RoutineController::class, 'index']);
         Route::post('routines', [RoutineController::class, 'store']);
+        Route::patch('routines/{routine}', [RoutineController::class, 'update']);
+        Route::delete('routines/{routine}', [RoutineController::class, 'destroy']);
 
         // Nutrition
         Route::get('foods', [NutritionController::class, 'searchFoods']);
