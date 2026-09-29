@@ -535,3 +535,8 @@ Conexión, PAT y logs de prueba eliminados; instancia `:8011` detenida.
 
 ### Estáticos
 `php artisan test --compact` **877 passed** / 0 failed (3485 assertions) · Pint OK · `npm run types` OK · `npm run build` OK. Sin commits (rama local).
+
+### Deploy a prod (2026-09-29)
+- Backup previo: `backups/pre-tools-repair-20260929-203958.sql` (7.4M).
+- `deploy.sh`: rsync repo→stack, rebuild `megalomaniac-prod`, sync de `public/` al host, `migrate --force` (0 pendientes), `up -d` con app/worker/scheduler recreados (app healthy).
+- Verificado: `https://megalomaniac.tikkix2.space/login` **200**; los 13 assets referenciados por el HTML **200**; en la imagen `mcp_tools=16` y grupos `…,supplements,freelance,…`; `ActionTool` ausente; worker/scheduler sin errores nuevos; assets nuevos (`MoveProjectDialog-*.js`) servidos por nginx.
