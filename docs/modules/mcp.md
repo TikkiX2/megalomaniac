@@ -42,3 +42,26 @@ El composer del chat tiene un menú **Prompts** con los prompts de los MCPs cone
 - Solo transporte **HTTP remoto** (stdio no soportado en esta versión).
 - Resultados capados a 64 KB (config `integrations.mcp.output_cap_bytes`), timeout 20 s (`integrations.mcp.timeout`).
 - La conexión usa el client oficial de `laravel/mcp`; el handshake/sesión (`MCP-Session-Id`) y el refresh OAuth son automáticos.
+
+---
+
+## Servidor MCP propio (`/mcp/megalomaniac`)
+
+Además de conectar MCPs externos, la app expone su **propio** servidor MCP en `POST /mcp/megalomaniac` (`routes/ai.php`, auth `auth:sanctum` + `throttle:mcp`, PAT).
+
+### Tools registradas (16)
+
+| Módulo | Read | Write |
+|---|---|---|
+| Gym | `workout-read` | `workout-write` (create/update/delete workout, add/remove exercise, log/remove set, crear/actualizar/eliminar rutina) |
+| Nutrición | `nutrition-read` | `nutrition-write` (meal log idempotente por fecha+tipo, items con macros ×cantidad, delete item, crear alimento) |
+| Suplementos | `supplement-read` | `supplement-write` (CRUD + log de toma con descuento de stock) |
+| Compras | `grocery-read` | `grocery-write` (CRUD, consumir, reponer con historial de precios) |
+| Finanzas | `finance-read` (deudas vencidas incluidas) | `finance-write` (CRUD purchases/incomes/debts, pagos de deuda, retiros) |
+| Freelance | `freelance-read` (clients/projects/quotes/tasks) | `freelance-write` (clientes, proyectos con `type`/move, cotizaciones y conversión, tareas con type-guard) |
+| Personal | `personal-project-read`, `personal-task-read` | `personal-project-write` (create/update con `type` para mover/delete), `personal-task-write` (create/update/move/delete, rechaza mover a proyectos freelance) |
+
+- Los write tools delegan en los servicios compartidos (`app/Services/*`), las mismas reglas que el chat (`docs/modules/tools.md`).
+- `tools/list` está **paginado** por el SDK (15 por página + `nextCursor`).
+- Recursos: `user-profile`, `workout-history`.
+- Smoke test: `tests/Feature/Mcp/McpToolsSmokeTest.php` recorre las 16 tools y falla ante errores internos.

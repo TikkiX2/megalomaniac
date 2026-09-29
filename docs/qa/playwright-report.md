@@ -509,3 +509,29 @@ Conexión, PAT y logs de prueba eliminados; instancia `:8011` detenida.
 ### Limitaciones
 - El encadenado multi-paso del chat (add_exercise/log_set en un mismo turno) se verificó por tests (`GymActionToolTest`, `ChatApprovalTest`, `WorkoutToolsTest`), no en vivo: el fake de QA emite un tool call por turno.
 - Follow-up documentado: agentes background con policy `workout_query` reciben `GymActionTool` (aprobación no reanudada por el runner; sin escrituras no autorizadas).
+
+---
+
+## Reparación de módulos y herramientas (chat + MCP) — 2026-09-29
+
+> **Rama:** `fix/module-tools-repair` · **Entorno:** app `:8010` (Docker), Playwright MCP, usuario `test@example.com`. Spec: `docs/superpowers/specs/2026-09-29-module-tools-repair-design.md` · Plan: `docs/superpowers/plans/2026-09-29-module-tools-repair.md`.
+
+### Verificado en vivo (UI)
+1. **Mover proyecto Personal → Freelance** — Show del proyecto → "Mover a…" → módulo destino Freelance + cliente → el proyecto aparece en `/freelance/projects` y ya no en `/personal/projects`; columnas del tablero re-mapeadas. **PASS**
+2. **Mover Freelance → Personal** — diálogo inverso (sin selector de cliente) → vuelve a `/personal/projects/6` y desaparece del índice freelance (aislamiento por `type`). **PASS**
+3. **Selector "Módulo" en el Form de edición** — muestra el módulo actual y helper de re-mapeo. **PASS**
+4. **Mobile (390×844)** — diálogo "Mover proyecto de módulo" sin clipping, botón deshabilitado hasta elegir cliente (`qa-move-dialog-mobile.png`). **PASS**
+5. **Fix Yoopta legado** — el Show freelance crasheaba con descripciones `{id, value:[...]}`; tras `normalizeYooptaValue` renderiza sin errores de consola. **PASS**
+
+### Verificado en vivo (MCP real `POST /mcp/megalomaniac` con PAT)
+1. `initialize` OK + `tools/list` paginado: 16 tools (15 + `supplement-write` con cursor). **PASS**
+2. `personal-project-read`: devuelve `records` (antes crasheaba siempre con `Cannot use object of type Laravel\Mcp\Request as array`). **PASS**
+3. `personal-project-write` `update` sobre proyecto 6 (ruta del crash anterior): `isError=false`. **PASS**
+4. `supplement-write create`/`delete` (módulo que no existía en MCP): alta y baja OK. **PASS**
+
+### Limitaciones
+- El chat en vivo no se pudo accionar: el entorno dev no tiene proveedor IA configurado (composer deshabilitado). El flujo de escritura/aprobación y el routing de tools quedan cubiertos por tests (`ChatApprovalTest`, `ChatToolsPolicyTest`, `ToolRouterTest`, `*ActionToolTest`).
+- La paginación de `tools/list` (15 por página) es del SDK `laravel/mcp`, no un tool faltante.
+
+### Estáticos
+`php artisan test --compact` **877 passed** / 0 failed (3485 assertions) · Pint OK · `npm run types` OK · `npm run build` OK. Sin commits (rama local).
