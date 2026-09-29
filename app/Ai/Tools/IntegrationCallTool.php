@@ -29,12 +29,18 @@ class IntegrationCallTool implements Tool
 
     public function handle(Request $request): Stringable|string
     {
+        $connectionName = $request['connection'];
+
         $connection = Connection::query()
             ->forUser($this->user)
             ->enabled()
-            ->where(fn ($query) => $query
-                ->where('name', $request['connection'])
-                ->orWhere('id', $request['connection']))
+            ->where(function ($query) use ($connectionName): void {
+                $query->where('name', $connectionName);
+
+                if (is_numeric($connectionName)) {
+                    $query->orWhere('id', (int) $connectionName);
+                }
+            })
             ->first();
 
         if (! $connection) {

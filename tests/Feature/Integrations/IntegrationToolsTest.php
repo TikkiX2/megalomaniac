@@ -8,6 +8,7 @@ use App\Integrations\IntegrationExecutor;
 use App\Models\ApprovalRequest;
 use App\Models\Connection;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Tools\Request;
 use Tests\Support\FakeConnector;
 
@@ -75,6 +76,40 @@ it('reports unknown connections with available names', function () {
 
     expect($payload['status'])->toBe('error')
         ->and($payload['message'])->toContain('Mi fake');
+});
+
+it('resolves connections by non-numeric name without casting to id', function () {
+    $user = User::factory()->create();
+    $connection = Connection::factory()->for($user)->create(['kind' => 'fake', 'name' => 'notio0n']);
+
+    $queries = [];
+    DB::listen(function ($query) use (&$queries): void {
+        if (str_contains($query->sql, 'from "connections"')) {
+            $queries[] = $query->sql;
+        }
+    });
+
+    $tool = new IntegrationCallTool($user, app(IntegrationExecutor::class));
+
+    $byName = json_decode((string) $tool->handle(new Request([
+        'connection' => 'notio0n',
+        'action' => 'ping',
+        'params' => [],
+    ])), true);
+
+    expect($byName['status'])->toBe('success')
+        ->and(collect($queries)->first())->not->toContain('"id" =');
+
+    $queries = [];
+
+    $byId = json_decode((string) $tool->handle(new Request([
+        'connection' => (string) $connection->id,
+        'action' => 'ping',
+        'params' => [],
+    ])), true);
+
+    expect($byId['status'])->toBe('success')
+        ->and(collect($queries)->first())->toContain('"id" =');
 });
 
 it('filters the catalog and rejects calls outside the allowlist', function () {
