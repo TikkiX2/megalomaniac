@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Freelance;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Person;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ClientController extends Controller
@@ -38,7 +40,11 @@ class ClientController extends Controller
      */
     public function create()
     {
-        return Inertia::render('freelance/clients/Form');
+        return Inertia::render('freelance/clients/Form', [
+            'people' => Person::where('user_id', request()->user()->id)
+                ->visible()
+                ->get(['id', 'first_name', 'last_name']),
+        ]);
     }
 
     /**
@@ -54,6 +60,10 @@ class ClientController extends Controller
             'address' => 'nullable|string|max:255',
             'tax_id' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
+            'person_id' => [
+                'nullable',
+                Rule::exists('people', 'id')->where('user_id', $request->user()->id),
+            ],
         ]);
 
         $request->user()->clients()->create($validated);
@@ -77,6 +87,9 @@ class ClientController extends Controller
     {
         return Inertia::render('freelance/clients/Form', [
             'client' => $client,
+            'people' => Person::where('user_id', request()->user()->id)
+                ->visible()
+                ->get(['id', 'first_name', 'last_name']),
         ]);
     }
 
@@ -94,6 +107,10 @@ class ClientController extends Controller
             'tax_id' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+            'person_id' => [
+                'nullable',
+                Rule::exists('people', 'id')->where('user_id', $request->user()->id),
+            ],
         ]);
 
         $client->update($validated);

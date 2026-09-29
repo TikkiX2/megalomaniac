@@ -20,6 +20,8 @@ class ClientResource extends JsonResource
             'tax_id' => $this->tax_id,
             'notes' => $this->notes,
             'is_active' => $this->is_active,
+            'person_id' => $this->person_id,
+            'person' => $this->whenLoaded('person', fn () => PersonResource::make($this->person)),
             'projects_count' => $this->whenCounted('projects'),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

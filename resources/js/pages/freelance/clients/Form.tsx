@@ -5,15 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import freelance from '@/routes/freelance';
 
 interface ClientFormProps {
     client?: any;
+    people: any[];
 }
 
-export default function ClientForm({ client }: ClientFormProps) {
+export default function ClientForm({ client, people }: ClientFormProps) {
     const isEditing = !!client;
 
     const { data, setData, post, put, processing, errors } = useForm({
@@ -25,6 +33,7 @@ export default function ClientForm({ client }: ClientFormProps) {
         tax_id: client?.tax_id || '',
         notes: client?.notes || '',
         is_active: client?.is_active ?? true,
+        person_id: client?.person_id?.toString() || '',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -70,6 +79,27 @@ export default function ClientForm({ client }: ClientFormProps) {
                                     placeholder="Juan Pérez"
                                 />
                                 {errors.name && <p className="text-sm text-rose-400">{errors.name}</p>}
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="person_id">Persona vinculada</Label>
+                                <Select
+                                    value={data.person_id || 'none'}
+                                    onValueChange={(value) => setData('person_id', value === 'none' ? '' : value)}
+                                >
+                                    <SelectTrigger id="person_id">
+                                        <SelectValue placeholder="Sin vincular" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Sin vincular</SelectItem>
+                                        {people.map((person: any) => (
+                                            <SelectItem key={person.id} value={String(person.id)}>
+                                                {person.first_name} {person.last_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.person_id && <p className="text-sm text-destructive">{errors.person_id}</p>}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
