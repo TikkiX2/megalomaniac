@@ -4,7 +4,7 @@ Models: Exercise, Routine, Workout, WorkoutExercise, WorkoutSet, PersonalRecord 
 
 Rutas: `gym/exercises`, `gym/routines`, `gym/workouts`, `gym/workouts/{id}/exercises`, `gym/workout-exercises/{id}/sets`, `fitness/gym`, `fitness/routines`, `fitness/gym-routine`
 
-Pages: `fitness/gym-routine.tsx` (461 líneas), `fitness/routines.tsx`, `fitness/dashboard.tsx`, `layouts/gym-layout.tsx`
+Pages: `fitness/gym-routine.tsx` (694 líneas), `fitness/routines.tsx`, `fitness/dashboard.tsx`, `layouts/gym-layout.tsx`
 
 Flujo diario: crear workout → añadir exercise desde quick library → log sets (kg/reps/RPE) → complete → finish → timer → volume/sets footer.
 

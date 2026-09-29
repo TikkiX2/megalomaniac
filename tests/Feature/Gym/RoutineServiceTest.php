@@ -47,6 +47,22 @@ it('attaches an existing exercise by exercise_id key', function () {
         ->and($routine->exercises->first()->id)->toBe($existing->id);
 });
 
+it('matches existing exercises ignoring accents and case', function () {
+    $user = User::factory()->create();
+    $existing = Exercise::factory()->create(['name' => 'Extensión de cuádriceps']);
+
+    $routine = routines()->create($user, [
+        'name' => 'Piernas',
+        'exercises' => [
+            ['name' => 'extension de cuadriceps', 'target_sets' => 4],
+        ],
+    ]);
+
+    expect($routine->exercises)->toHaveCount(1)
+        ->and($routine->exercises->first()->id)->toBe($existing->id)
+        ->and(Exercise::count())->toBe(1);
+});
+
 it('updates metadata and replaces the exercise list', function () {
     $user = User::factory()->create();
     $routine = routines()->create($user, [

@@ -76,6 +76,38 @@ it('finishes workouts and creates routines through mcp', function () {
         });
 });
 
+it('appends an exercise to an existing routine via mcp', function () {
+    $user = User::factory()->create();
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, [
+            'action' => 'create_routine',
+            'name' => 'Leg day',
+            'exercises' => [
+                ['name' => 'Sentadilla', 'target_sets' => 5],
+            ],
+        ])
+        ->assertOk();
+
+    $routine = Routine::where('user_id', $user->id)->where('name', 'Leg day')->firstOrFail();
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, [
+            'action' => 'add_routine_exercise',
+            'routine_id' => $routine->id,
+            'exercise_name' => 'Prensa',
+            'target_sets' => 3,
+        ])
+        ->assertOk()
+        ->assertStructuredContent(function ($json) {
+            $json->where('routine.exercises.1.name', 'Prensa')
+                ->where('routine.exercises.1.pivot.target_sets', 3)
+                ->etc();
+        });
+
+    expect($routine->refresh()->exercises)->toHaveCount(2);
+});
+
 it('refuses to write on another users workout via mcp', function () {
     $user = User::factory()->create();
     $other = User::factory()->create();

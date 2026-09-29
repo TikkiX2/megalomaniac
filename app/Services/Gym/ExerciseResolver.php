@@ -3,6 +3,7 @@
 namespace App\Services\Gym;
 
 use App\Models\Exercise;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class ExerciseResolver
@@ -21,14 +22,19 @@ class ExerciseResolver
         }
 
         $name = trim($exerciseName);
+        $key = $this->normalize($name);
 
-        return Exercise::query()
-            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
-            ->first()
+        return Exercise::all()
+            ->first(fn (Exercise $exercise) => $this->normalize($exercise->name) === $key)
             ?? Exercise::create([
                 'name' => $name,
                 'muscle_group' => $attributes['muscle_group'] ?? null,
                 'type' => $attributes['type'] ?? null,
             ]);
+    }
+
+    private function normalize(string $name): string
+    {
+        return mb_strtolower(Str::ascii(trim($name)));
     }
 }

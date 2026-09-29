@@ -105,6 +105,30 @@ it('creates a routine with exercises in one call and updates it', function () {
         ->and($updated['routine']['name'])->toBe('Piernas v2');
 });
 
+it('appends an exercise to an existing routine', function () {
+    $user = User::factory()->create();
+
+    $created = json_decode(gymTool($user)->handle(new Request([
+        'action' => 'create_routine',
+        'name' => 'Piernas',
+        'exercises' => [
+            ['name' => 'Sentadilla', 'target_sets' => 5],
+        ],
+    ])), true);
+
+    $appended = json_decode(gymTool($user)->handle(new Request([
+        'action' => 'add_routine_exercise',
+        'routine_id' => $created['routine']['id'],
+        'exercise_name' => 'Prensa',
+        'target_sets' => 3,
+    ])), true);
+
+    expect($appended['success'])->toBeTrue()
+        ->and($appended['routine']['exercises'])->toHaveCount(2)
+        ->and($appended['routine']['exercises'][1]['name'])->toBe('Prensa')
+        ->and($appended['routine']['exercises'][1]['pivot']['target_sets'])->toBe(3);
+});
+
 it('returns readable errors and requires approval', function () {
     $user = User::factory()->create();
 
