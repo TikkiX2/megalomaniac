@@ -15,6 +15,10 @@ use App\Http\Controllers\Api\V1\IncomeSourceController;
 use App\Http\Controllers\Api\V1\NutritionController;
 use App\Http\Controllers\Api\V1\PersonalProjectController;
 use App\Http\Controllers\Api\V1\PersonalTaskController;
+use App\Http\Controllers\Api\V1\PersonController;
+use App\Http\Controllers\Api\V1\PersonInteractionController;
+use App\Http\Controllers\Api\V1\PersonKeyDateController;
+use App\Http\Controllers\Api\V1\PersonSocialController;
 use App\Http\Controllers\Api\V1\ProjectCommentController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\ProjectTaskController;
@@ -213,5 +217,20 @@ Route::prefix('v1')->group(function () {
         Route::patch('personal/tasks/{task}', [PersonalTaskController::class, 'update']);
         Route::delete('personal/tasks/{task}', [PersonalTaskController::class, 'destroy']);
         Route::patch('personal/tasks/{task}/move', [PersonalTaskController::class, 'move']);
+
+        // People
+        Route::get('people/upcoming', [PersonController::class, 'upcoming']);
+        Route::apiResource('people', PersonController::class);
+        Route::get('people/{person}/interactions', [PersonInteractionController::class, 'index']);
+        Route::post('people/{person}/interactions', [PersonInteractionController::class, 'store']);
+        Route::delete('people/{person}/interactions/{interaction}', [PersonInteractionController::class, 'destroy']);
+        Route::get('people/{person}/key-dates', [PersonKeyDateController::class, 'index']);
+        Route::post('people/{person}/key-dates', [PersonKeyDateController::class, 'store']);
+        Route::patch('key-dates/{keyDate}', [PersonKeyDateController::class, 'update']);
+        Route::delete('key-dates/{keyDate}', [PersonKeyDateController::class, 'destroy']);
+        Route::get('people/{person}/socials', [PersonSocialController::class, 'index']);
+        Route::post('people/{person}/socials', [PersonSocialController::class, 'store']);
+        Route::patch('socials/{social}', [PersonSocialController::class, 'update']);
+        Route::delete('socials/{social}', [PersonSocialController::class, 'destroy']);
     });
 });
