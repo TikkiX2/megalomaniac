@@ -20,6 +20,11 @@ const CLOSENESS_LABELS: Record<string, string> = {
     acquaintance: 'Conocido',
 };
 
+const localDateTimeInput = () => {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+};
+
 export default function PersonShow({ person, interactions, upcoming, channelOptions }: any) {
     const quickLog = () => {
         router.post(people.contacted(person.id).url, {}, { preserveScroll: true });
@@ -28,16 +33,24 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
     const [logOpen, setLogOpen] = useState(false);
     const form = useForm({
         channel: 'message',
-        occurred_at: new Date().toISOString().slice(0, 16),
+        occurred_at: localDateTimeInput(),
         title: '',
         notes: '',
     });
+    const openLogDialog = (open: boolean) => {
+        if (open) {
+            form.setData('occurred_at', localDateTimeInput());
+        }
+        setLogOpen(open);
+    };
     const submitInteraction = (e: React.FormEvent) => {
         e.preventDefault();
+        form.transform((data) => ({ ...data, occurred_at: new Date(data.occurred_at).toISOString() }));
         form.post(people.interactions.store(person.id).url, {
             preserveScroll: true,
             onSuccess: () => {
                 form.reset();
+                form.setData('occurred_at', localDateTimeInput());
                 setLogOpen(false);
             },
         });
@@ -106,7 +119,7 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                                 <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">
                                     Historial de contacto
                                 </CardTitle>
-                                <Dialog open={logOpen} onOpenChange={setLogOpen}>
+                                <Dialog open={logOpen} onOpenChange={openLogDialog}>
                                     <DialogTrigger asChild>
                                         <Button size="sm" variant="outline"><Plus className="mr-2 h-4 w-4" /> Registrar</Button>
                                     </DialogTrigger>
