@@ -64,7 +64,7 @@ class RoutineService
     {
         foreach (array_values($exercises) as $index => $exerciseData) {
             $exercise = $this->resolver->resolve(
-                $exerciseData['id'] ?? null,
+                $exerciseData['id'] ?? $exerciseData['exercise_id'] ?? null,
                 $exerciseData['name'] ?? null,
                 $exerciseData,
             );

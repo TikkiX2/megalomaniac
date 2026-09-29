@@ -87,7 +87,9 @@ class WorkoutWriteTool extends Tool
                 'add_routine_exercise' => $this->addRoutineExercise($request, $user),
                 default => Response::error('Invalid action: '.(string) $request->get('action')),
             };
-        } catch (ModelNotFoundException|AuthorizationException|InvalidArgumentException $exception) {
+        } catch (ModelNotFoundException) {
+            return Response::error('Resource not found or unauthorized.');
+        } catch (AuthorizationException|InvalidArgumentException $exception) {
             return Response::error($exception->getMessage());
         }
     }
@@ -142,6 +144,24 @@ class WorkoutWriteTool extends Tool
 
         if (! $workoutExercise) {
             return Response::error('Workout exercise not found or unauthorized.');
+        }
+
+        if ($request->get('set_number') !== null && (int) $request->get('set_number') < 1) {
+            return Response::error('set_number must be at least 1.');
+        }
+
+        if ($request->get('weight') !== null && (float) $request->get('weight') < 0) {
+            return Response::error('weight must be at least 0.');
+        }
+
+        if ($request->get('reps') !== null && (int) $request->get('reps') < 1) {
+            return Response::error('reps must be at least 1.');
+        }
+
+        $rpe = $request->get('rpe');
+
+        if ($rpe !== null && ((float) $rpe < 1 || (float) $rpe > 10)) {
+            return Response::error('rpe must be between 1 and 10.');
         }
 
         $data = array_filter([

@@ -103,3 +103,77 @@ it('exposes exercise ids and routines in workout-read', function () {
                 ->etc();
         });
 });
+
+it('returns the active workout instead of creating another', function () {
+    $user = User::factory()->create();
+    $existing = Workout::factory()->create(['user_id' => $user->id]);
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, ['action' => 'create_workout'])
+        ->assertOk()
+        ->assertStructuredContent(function ($json) use ($existing) {
+            $json->where('workout.id', $existing->id)->etc();
+        });
+
+    expect(Workout::where('user_id', $user->id)->count())->toBe(1);
+});
+
+it('creates routines with existing exercise ids through mcp', function () {
+    $user = User::factory()->create();
+    $existing = Exercise::factory()->create(['name' => 'Remo con barra']);
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, [
+            'action' => 'create_routine',
+            'name' => 'Pull day',
+            'exercises' => [
+                ['exercise_id' => $existing->id, 'target_sets' => 3],
+            ],
+        ])
+        ->assertOk()
+        ->assertStructuredContent(function ($json) use ($existing) {
+            $json->where('routine.exercises.0.id', $existing->id)
+                ->where('routine.exercises.0.pivot.target_sets', 3)
+                ->etc();
+        });
+
+    $routine = Routine::where('user_id', $user->id)->where('name', 'Pull day')->firstOrFail();
+
+    expect($routine->exercises)->toHaveCount(1)
+        ->and($routine->exercises->first()->id)->toBe($existing->id);
+});
+
+it('rejects invalid set numbers and rpe via mcp', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id]);
+    $workoutExercise = $workout->exercises()->create(['exercise_id' => $exercise->id, 'order' => 1]);
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, [
+            'action' => 'log_set',
+            'workout_exercise_id' => $workoutExercise->id,
+            'set_number' => 0,
+            'weight' => 60,
+            'reps' => 8,
+        ])
+        ->assertHasErrors(['set_number must be at least 1']);
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, [
+            'action' => 'log_set',
+            'workout_exercise_id' => $workoutExercise->id,
+            'weight' => 60,
+            'reps' => 8,
+            'rpe' => 99,
+        ])
+        ->assertHasErrors(['rpe must be between 1 and 10']);
+});
+
+it('maps missing related resources to a friendly error', function () {
+    $user = User::factory()->create();
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(WorkoutWriteTool::class, ['action' => 'create_workout', 'routine_id' => 999999])
+        ->assertHasErrors(['Resource not found or unauthorized']);
+});

@@ -32,6 +32,21 @@ it('creates a routine with exercises by name and targets', function () {
         ->and(Exercise::where('name', 'Aperturas')->exists())->toBeTrue();
 });
 
+it('attaches an existing exercise by exercise_id key', function () {
+    $user = User::factory()->create();
+    $existing = Exercise::factory()->create(['name' => 'Remo con barra']);
+
+    $routine = routines()->create($user, [
+        'name' => 'Pull day',
+        'exercises' => [
+            ['exercise_id' => $existing->id, 'target_sets' => 3],
+        ],
+    ]);
+
+    expect($routine->exercises)->toHaveCount(1)
+        ->and($routine->exercises->first()->id)->toBe($existing->id);
+});
+
 it('updates metadata and replaces the exercise list', function () {
     $user = User::factory()->create();
     $routine = routines()->create($user, [
