@@ -153,7 +153,7 @@ class PeopleService
             ->get();
 
         foreach ($keyDates as $keyDate) {
-            $next = $this->nextKeyDateOccurrence($keyDate);
+            $next = $keyDate->nextOccurrence();
 
             if ($next === null || $today->diffInDays($next, false) > $days) {
                 continue;
@@ -184,17 +184,6 @@ class PeopleService
         }
 
         return $candidate;
-    }
-
-    private function nextKeyDateOccurrence(PersonKeyDate $keyDate): ?CarbonInterface
-    {
-        if (! $keyDate->is_recurring_annually) {
-            return $keyDate->date->isToday() || $keyDate->date->isFuture()
-                ? $keyDate->date->copy()
-                : null;
-        }
-
-        return $this->nextAnnualOccurrence($keyDate->date);
     }
 
     private function assertOwner(User $user, Model $model): void

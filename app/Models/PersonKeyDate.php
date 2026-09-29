@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\People\Enums\KeyDateType;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,7 +33,7 @@ class PersonKeyDate extends Model
         return $this->label ?: ucfirst(str_replace('_', ' ', $this->type->value));
     }
 
-    public function nextOccurrence(): ?Carbon
+    public function nextOccurrence(): ?CarbonInterface
     {
         if (! $this->is_recurring_annually) {
             return $this->date->isToday() || $this->date->isFuture()
@@ -41,10 +41,10 @@ class PersonKeyDate extends Model
                 : null;
         }
 
-        $candidate = $this->date->copy()->year((int) now()->year);
+        $candidate = $this->date->copy()->setYear((int) now()->year);
 
         if ($candidate->lt(now()->startOfDay())) {
-            $candidate->addYear();
+            $candidate = $candidate->addYear();
         }
 
         return $candidate;

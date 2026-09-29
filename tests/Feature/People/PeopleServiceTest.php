@@ -7,6 +7,7 @@ use App\Models\User;
 use App\People\Enums\Closeness;
 use App\People\Enums\InteractionChannel;
 use App\Services\People\PeopleService;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -101,4 +102,21 @@ it('deletes key dates and socials with ownership checks', function () {
 
     expect(PersonKeyDate::find($keyDate->id))->toBeNull()
         ->and(PersonSocial::find($social->id))->toBeNull();
+});
+
+it('resolves the next occurrence of a recurring key date under immutable dates', function () {
+    $person = $this->service->createPerson($this->user, ['first_name' => 'Eva']);
+    $target = now()->addDays(5)->startOfDay();
+
+    $keyDate = $this->service->addKeyDate($this->user, $person, [
+        'type' => 'anniversary',
+        'label' => 'Aniversario',
+        'date' => $target->toDateString(),
+        'is_recurring_annually' => true,
+    ]);
+
+    $next = $keyDate->nextOccurrence();
+
+    expect($next)->toBeInstanceOf(CarbonInterface::class)
+        ->and($next?->toDateString())->toBe($target->toDateString());
 });
