@@ -140,6 +140,55 @@ it('does not touch the profile weight when deleting a family weight measurement'
     expect((float) $this->user->fresh()->weight)->toBe(62.0);
 });
 
+it('recalculates the profile weight when a personal weight is converted to family', function () {
+    $familyPerson = Person::factory()->create(['user_id' => $this->user->id]);
+    $older = $this->service->logMeasurement($this->user, [
+        'type' => MeasurementType::Weight->value,
+        'value' => 61.5,
+        'unit' => 'kg',
+        'measured_at' => now()->subDays(10)->toDateTimeString(),
+    ]);
+    $this->service->logMeasurement($this->user, [
+        'type' => MeasurementType::Weight->value,
+        'value' => 62.5,
+        'unit' => 'kg',
+        'measured_at' => now()->subDay()->toDateTimeString(),
+    ]);
+
+    $this->service->updateMeasurement($this->user, $older, ['person_id' => $familyPerson->id]);
+
+    expect((float) $this->user->fresh()->weight)->toBe(62.5);
+});
+
+it('nulls the profile weight when the only personal weight becomes family', function () {
+    $familyPerson = Person::factory()->create(['user_id' => $this->user->id]);
+    $measurement = $this->service->logMeasurement($this->user, [
+        'type' => MeasurementType::Weight->value,
+        'value' => 61.5,
+        'unit' => 'kg',
+        'measured_at' => now()->toDateTimeString(),
+    ]);
+
+    $this->service->updateMeasurement($this->user, $measurement, ['person_id' => $familyPerson->id]);
+
+    expect($this->user->fresh()->weight)->toBeNull();
+});
+
+it('syncs the profile weight when a family weight becomes personal', function () {
+    $familyPerson = Person::factory()->create(['user_id' => $this->user->id]);
+    $measurement = $this->service->logMeasurement($this->user, [
+        'person_id' => $familyPerson->id,
+        'type' => MeasurementType::Weight->value,
+        'value' => 70.0,
+        'unit' => 'kg',
+        'measured_at' => now()->toDateTimeString(),
+    ]);
+
+    $this->service->updateMeasurement($this->user, $measurement, ['person_id' => null]);
+
+    expect((float) $this->user->fresh()->weight)->toBe(70.0);
+});
+
 it('does not sync weight for family members', function () {
     $person = Person::factory()->create(['user_id' => $this->user->id]);
     $this->user->forceFill(['weight' => 62.0])->save();

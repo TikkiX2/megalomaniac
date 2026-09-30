@@ -92,7 +92,7 @@ class HealthService
             $measurement = $user->healthMeasurements()->create($data);
 
             if ($this->shouldSyncProfileWeight($measurement)) {
-                $this->syncProfileWeight($user, $measurement);
+                $this->syncProfileWeight($user);
             }
 
             return $measurement;
@@ -108,7 +108,7 @@ class HealthService
             $measurement->update($data);
 
             if ($wasPersonalWeight || $this->shouldSyncProfileWeight($measurement)) {
-                $this->syncProfileWeight($user, $measurement);
+                $this->syncProfileWeight($user);
             }
 
             return $measurement->refresh();
@@ -207,12 +207,8 @@ class HealthService
         return $measurement->type === MeasurementType::Weight && $measurement->person_id === null;
     }
 
-    private function syncProfileWeight(User $user, ?HealthMeasurement $measurement = null): void
+    private function syncProfileWeight(User $user): void
     {
-        if ($measurement !== null && $measurement->person_id !== null) {
-            return;
-        }
-
         $latest = HealthMeasurement::query()
             ->where('user_id', $user->id)
             ->whereNull('person_id')
