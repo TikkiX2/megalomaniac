@@ -205,4 +205,35 @@ class User extends Authenticatable
     {
         return $this->hasMany(Person::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Health Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function healthConditions(): HasMany
+    {
+        return $this->hasMany(HealthCondition::class);
+    }
+
+    public function healthMedications(): HasMany
+    {
+        return $this->hasMany(HealthMedication::class);
+    }
+
+    public function healthMeasurements(): HasMany
+    {
+        return $this->hasMany(HealthMeasurement::class);
+    }
+
+    public function healthSymptoms(): HasMany
+    {
+        return $this->hasMany(HealthSymptom::class);
+    }
+
+    public function healthProfessionals(): HasMany
+    {
+        return $this->hasMany(HealthProfessional::class);
+    }
 }
