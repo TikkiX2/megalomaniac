@@ -12,7 +12,7 @@ it('every registered tool responds without internal errors', function () {
 
     $tools = (new ReflectionClass(MegalomaniacServer::class))->getDefaultProperties()['tools'];
 
-    expect($tools)->toHaveCount(19);
+    expect($tools)->toHaveCount(22);
 
     foreach ($tools as $tool) {
         $response = MegalomaniacServer::actingAs($user)->tool($tool, ['action' => 'noop']);
