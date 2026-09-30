@@ -91,6 +91,14 @@ export function ThreadItem({ thread, active }: ThreadItemProps) {
             >
                 {thread.is_pinned && <Pin className="mr-1 inline h-3 w-3 text-primary" />}
                 {thread.title}
+                {thread.category === 'salud' && (
+                    <>
+                        {' '}
+                        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-primary">
+                            Salud
+                        </span>
+                    </>
+                )}
             </Link>
 
             <DropdownMenu>

@@ -3,6 +3,9 @@
 namespace App\Http\Resources;
 
 use App\Ai\Services\ChatService;
+use App\Models\ChatThread;
+use App\Models\HealthCondition;
+use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,6 +24,14 @@ class ChatThreadResource extends JsonResource
             'tools_policy' => $this->tools_policy,
             'is_pinned' => $this->pinned_at !== null,
             'memories_count' => $this->whenCounted('memories'),
+            'category' => $this->category ?? ChatThread::CATEGORY_GENERAL,
+            'context_type' => $this->context_type,
+            'context_id' => $this->context_id,
+            'context_label' => $this->whenLoaded('context', fn (): ?string => match (true) {
+                $this->context instanceof HealthCondition => $this->context->name,
+                $this->context instanceof Person => $this->context->full_name,
+                default => null,
+            }),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

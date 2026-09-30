@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Laravel\Ai\Models\Conversation;
@@ -14,6 +15,10 @@ use Throwable;
 class ChatThread extends Conversation
 {
     use HasFactory;
+
+    public const CATEGORY_GENERAL = 'general';
+
+    public const CATEGORY_HEALTH = 'salud';
 
     public $incrementing = false;
 
@@ -41,6 +46,11 @@ class ChatThread extends Conversation
         return $this->hasMany(ChatAttachment::class, 'thread_id');
     }
 
+    public function context(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
     /**
      * Library documents explicitly attached to this thread (N:N).
      *
@@ -61,6 +71,11 @@ class ChatThread extends Conversation
     public function scopeActive(Builder $query): void
     {
         $query->whereNull('archived_at');
+    }
+
+    public function scopeCategory(Builder $query, string $category): void
+    {
+        $query->where('category', $category);
     }
 
     public function scopeWithMessages(Builder $query): void

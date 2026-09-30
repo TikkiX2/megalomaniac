@@ -13,6 +13,10 @@ export interface ChatThread {
     tools_policy: ToolPolicy | null;
     is_pinned: boolean;
     memories_count?: number;
+    category: string;
+    context_type: string | null;
+    context_id: number | null;
+    context_label?: string | null;
     created_at: string | null;
     updated_at: string | null;
 }
