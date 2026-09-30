@@ -138,6 +138,7 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                             {person.company && <p><span className="text-muted-foreground">Empresa:</span> {person.company}{person.job_title ? ` · ${person.job_title}` : ''}</p>}
                             {person.website && <p><span className="text-muted-foreground">Web:</span> {person.website}</p>}
                             {(person.city || person.country) && <p><span className="text-muted-foreground">Ubicación:</span> {[person.city, person.country].filter(Boolean).join(', ')}</p>}
+                            {person.address && <p><span className="text-muted-foreground">Dirección:</span> {person.address}</p>}
                             {person.preferred_contact_channel && <p><span className="text-muted-foreground">Canal preferido:</span> {person.preferred_contact_channel}</p>}
                             {person.how_we_met && <p><span className="text-muted-foreground">Cómo se conocieron:</span> {person.how_we_met}</p>}
                             {person.notes && <p className="whitespace-pre-line"><span className="text-muted-foreground">Notas:</span> {person.notes}</p>}

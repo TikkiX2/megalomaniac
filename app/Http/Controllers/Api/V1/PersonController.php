@@ -77,7 +77,7 @@ class PersonController extends Controller
 
     public function upcoming(Request $request): JsonResponse
     {
-        $days = (int) $request->integer('days', 30);
+        $days = max(1, min((int) $request->integer('days', 30), 365));
 
         return response()->json([
             'data' => $this->people->upcoming($request->user(), $days)->all(),
