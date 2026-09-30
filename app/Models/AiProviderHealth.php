@@ -10,6 +10,8 @@ class AiProviderHealth extends Model
 {
     use HasFactory;
 
+    protected $table = 'ai_provider_health';
+
     protected $fillable = [
         'user_id', 'provider_id', 'consecutive_failures', 'last_success_at',
         'last_failure_at', 'broken_until', 'last_error',

@@ -35,7 +35,8 @@ class AiProvider extends Model
 
     public function health(): HasOne
     {
-        return $this->hasOne(AiProviderHealth::class);
+        // The column is `provider_id`, not the `ai_provider_id` convention.
+        return $this->hasOne(AiProviderHealth::class, 'provider_id');
     }
 
     public function scopeAssignments(): HasMany
