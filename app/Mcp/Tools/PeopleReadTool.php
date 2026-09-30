@@ -48,7 +48,7 @@ class PeopleReadTool extends Tool
         $personId = $request->get('person_id');
 
         if ($personId) {
-            $person = Person::with(['keyDates', 'socials'])
+            $person = Person::with(['keyDates', 'socials', 'media'])
                 ->where('user_id', $user->id)
                 ->find((int) $personId);
 
@@ -69,7 +69,7 @@ class PeopleReadTool extends Tool
 
         $limit = (int) $request->get('limit', 20);
 
-        $query = Person::query()->where('user_id', $user->id);
+        $query = Person::query()->where('user_id', $user->id)->with('media');
 
         $query->when($request->get('search'), fn ($q, $search) => $q->where(function ($w) use ($search) {
             $w->where('first_name', 'like', "%{$search}%")

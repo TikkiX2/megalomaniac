@@ -136,6 +136,29 @@ class PeopleWriteTool extends Tool
     {
         $person = $this->people->findPerson($user, (int) $request->get('person_id', 0));
 
+        $request->validate([
+            'first_name' => ['sometimes', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
+            'nickname' => ['nullable', 'string', 'max:255'],
+            'birthday' => ['nullable', 'date'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'whatsapp' => ['nullable', 'string', 'max:50'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'country' => ['nullable', 'string', 'max:255'],
+            'company' => ['nullable', 'string', 'max:255'],
+            'job_title' => ['nullable', 'string', 'max:255'],
+            'website' => ['nullable', 'url', 'max:255'],
+            'how_we_met' => ['nullable', 'string'],
+            'closeness' => ['sometimes', Rule::enum(Closeness::class)],
+            'relationship_status' => ['nullable', Rule::enum(RelationshipStatus::class)],
+            'preferred_contact_channel' => ['nullable', Rule::enum(PreferredContactChannel::class)],
+            'is_favorite' => ['sometimes', 'boolean'],
+            'is_archived' => ['sometimes', 'boolean'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
         $data = array_filter($request->all([
             'first_name', 'last_name', 'nickname', 'birthday', 'email', 'phone',
             'whatsapp', 'address', 'city', 'country', 'company', 'job_title',
@@ -195,8 +218,20 @@ class PeopleWriteTool extends Tool
 
     private function updateKeyDate(Request $request, $user): Response|ResponseFactory
     {
-        $keyDate = PersonKeyDate::where('user_id', $user->id)
-            ->findOrFail((int) $request->get('key_date_id', 0));
+        try {
+            $keyDate = PersonKeyDate::where('user_id', $user->id)
+                ->findOrFail((int) $request->get('key_date_id', 0));
+        } catch (ModelNotFoundException) {
+            return Response::error('PersonKeyDate not found.');
+        }
+
+        $request->validate([
+            'key_date_type' => ['sometimes', Rule::enum(KeyDateType::class)],
+            'date' => ['sometimes', 'date'],
+            'label' => ['nullable', 'string', 'max:255'],
+            'remind_days_before' => ['nullable', 'integer', 'min:0', 'max:90'],
+            'is_recurring_annually' => ['sometimes', 'boolean'],
+        ]);
 
         $data = array_filter($request->all([
             'label', 'date', 'remind_days_before',
@@ -246,8 +281,18 @@ class PeopleWriteTool extends Tool
 
     private function updateSocial(Request $request, $user): Response|ResponseFactory
     {
-        $social = PersonSocial::whereHas('person', fn ($q) => $q->where('user_id', $user->id))
-            ->findOrFail((int) $request->get('social_id', 0));
+        try {
+            $social = PersonSocial::whereHas('person', fn ($q) => $q->where('user_id', $user->id))
+                ->findOrFail((int) $request->get('social_id', 0));
+        } catch (ModelNotFoundException) {
+            return Response::error('PersonSocial not found.');
+        }
+
+        $request->validate([
+            'network' => ['sometimes', 'string', 'max:50'],
+            'handle' => ['nullable', 'string', 'max:255'],
+            'url' => ['nullable', 'url', 'max:255'],
+        ]);
 
         $data = array_filter($request->all(['network', 'handle', 'url']), fn ($value) => $value !== null);
 

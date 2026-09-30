@@ -17,7 +17,7 @@ class PersonController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Person::query()->where('user_id', $request->user()->id);
+        $query = Person::query()->where('user_id', $request->user()->id)->with('media');
 
         $query->when($request->search, fn ($q, $search) => $q->where(function ($w) use ($search) {
             $w->where('first_name', 'like', "%{$search}%")

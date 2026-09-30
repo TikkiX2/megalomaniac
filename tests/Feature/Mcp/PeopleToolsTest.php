@@ -68,6 +68,21 @@ it('logs an interaction through the log tool and refreshes last contact', functi
         ->and($person->fresh()->last_contacted_at)->not->toBeNull();
 });
 
+it('returns a validation error instead of throwing on invalid update values', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->create(['user_id' => $user->id]);
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(PeopleWriteTool::class, [
+            'action' => 'update_person',
+            'person_id' => $person->id,
+            'closeness' => 'buddy',
+        ])
+        ->assertHasErrors(['closeness']);
+
+    expect($person->fresh()->closeness->value)->toBe('friend');
+});
+
 it('returns upcoming key dates and scopes tools to the authenticated user', function () {
     $owner = User::factory()->create();
     $intruder = User::factory()->create();

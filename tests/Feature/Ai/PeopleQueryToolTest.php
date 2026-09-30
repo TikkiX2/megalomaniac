@@ -42,6 +42,17 @@ it('finds people by search and returns the detail with key dates', function () {
         ->and($detail['person']['upcoming'])->not->toBeEmpty();
 });
 
+it('excludes archived people from the list', function () {
+    $user = User::factory()->create();
+    Person::factory()->create(['user_id' => $user->id, 'first_name' => 'Ana']);
+    Person::factory()->create(['user_id' => $user->id, 'first_name' => 'Zoe', 'is_archived' => true]);
+
+    $list = json_decode(peopleQueryTool($user)->handle(new Request([])), true);
+
+    expect($list['records'])->toHaveCount(1)
+        ->and($list['records'][0]['first_name'])->toBe('Ana');
+});
+
 it('lists stale contacts and upcoming dates', function () {
     $user = User::factory()->create();
     Person::factory()->create([

@@ -9,12 +9,14 @@ use App\Services\People\PeopleService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use InvalidArgumentException;
 use Laravel\Ai\Approvals\Approval;
 use Laravel\Ai\Concerns\InteractsWithApprovals;
 use Laravel\Ai\Contracts\Approvable;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use ValueError;
 
 class PeopleActionTool implements Approvable, Tool
 {
@@ -58,7 +60,7 @@ class PeopleActionTool implements Approvable, Tool
                 'add_key_date' => $this->addKeyDate($request),
                 default => $this->error('Invalid action. Use: create_person, update_person, log_interaction, add_key_date'),
             };
-        } catch (ModelNotFoundException|AuthorizationException $exception) {
+        } catch (ModelNotFoundException|AuthorizationException|ValueError|InvalidArgumentException $exception) {
             return $this->error($exception->getMessage());
         }
     }

@@ -29,7 +29,7 @@ class PeopleQueryTool implements Tool
         $personId = $request['person_id'] ?? null;
 
         if ($personId) {
-            $person = Person::with(['keyDates', 'socials'])
+            $person = Person::with(['keyDates', 'socials', 'media'])
                 ->where('user_id', $this->user->id)
                 ->find((int) $personId);
 
@@ -48,7 +48,10 @@ class PeopleQueryTool implements Tool
             return json_encode(['person' => $payload], JSON_PRETTY_PRINT);
         }
 
-        $query = Person::query()->where('user_id', $this->user->id);
+        $query = Person::query()
+            ->where('user_id', $this->user->id)
+            ->where('is_archived', false)
+            ->with('media');
 
         $query->when($request['search'] ?? null, fn ($q, $search) => $q->where(function ($w) use ($search) {
             $w->where('first_name', 'like', "%{$search}%")

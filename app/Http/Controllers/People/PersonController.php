@@ -139,7 +139,7 @@ class PersonController extends Controller
             'keyDates' => PersonKeyDate::query()
                 ->where('user_id', $request->user()->id)
                 ->whereHas('person', fn ($query) => $query->where('is_archived', false))
-                ->with('person:id,first_name,last_name')
+                ->with(['person:id,first_name,last_name', 'person.media'])
                 ->get(),
         ]);
     }
@@ -148,7 +148,7 @@ class PersonController extends Controller
     {
         $interactions = PersonInteraction::query()
             ->where('user_id', $request->user()->id)
-            ->with('person:id,first_name,last_name')
+            ->with(['person:id,first_name,last_name', 'person.media'])
             ->latest('occurred_at')
             ->paginate(30)
             ->withQueryString();

@@ -39,6 +39,38 @@ it('creates a person and logs an interaction', function () {
         ->and($person->fresh()->last_contacted_at)->not->toBeNull();
 });
 
+it('returns an error instead of throwing on invalid enum or date values', function () {
+    $user = User::factory()->create();
+    $person = Person::factory()->create(['user_id' => $user->id]);
+
+    $invalidCloseness = json_decode(peopleTool($user)->handle(new Request([
+        'action' => 'update_person',
+        'person_id' => $person->id,
+        'closeness' => 'buddy',
+    ])), true);
+
+    expect($invalidCloseness['success'])->toBeFalse()
+        ->and($invalidCloseness['error'])->toContain('buddy');
+
+    $invalidDate = json_decode(peopleTool($user)->handle(new Request([
+        'action' => 'add_key_date',
+        'person_id' => $person->id,
+        'key_date_type' => 'custom',
+        'date' => 'not-a-date',
+    ])), true);
+
+    expect($invalidDate['success'])->toBeFalse();
+
+    $invalidType = json_decode(peopleTool($user)->handle(new Request([
+        'action' => 'add_key_date',
+        'person_id' => $person->id,
+        'key_date_type' => 'nope',
+        'date' => '2026-12-01',
+    ])), true);
+
+    expect($invalidType['success'])->toBeFalse();
+});
+
 it('requires approval with a readable label', function () {
     $user = User::factory()->create();
 
