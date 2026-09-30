@@ -16,33 +16,33 @@ const CLOSENESS_LABELS: Record<string, string> = {
     inner_circle: 'Círculo íntimo', close: 'Cercano', friend: 'Amigo', acquaintance: 'Conocido',
 };
 
-export default function PersonForm({ person, closenessOptions, relationshipOptions, channelOptions }: any) {
-    const isEditing = !!person;
-    const p = person ?? {};
+export default function PersonForm({ person: personProp, closenessOptions, relationshipOptions, channelOptions }: any) {
+    const person = personProp ?? {};
+    const isEditing = !!personProp;
     const avatarInput = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
 
     const { data, setData, post, put, processing, errors } = useForm({
-        first_name: p.first_name || '',
-        last_name: p.last_name || '',
-        nickname: p.nickname || '',
-        birthday: p.birthday ? String(p.birthday).slice(0, 10) : '',
-        email: p.email || '',
-        phone: p.phone || '',
-        whatsapp: p.whatsapp || '',
-        address: p.address || '',
-        city: p.city || '',
-        country: p.country || '',
-        company: p.company || '',
-        job_title: p.job_title || '',
-        website: p.website || '',
-        how_we_met: p.how_we_met || '',
-        closeness: p.closeness || 'friend',
-        relationship_status: p.relationship_status || '',
-        preferred_contact_channel: p.preferred_contact_channel || '',
-        is_favorite: p.is_favorite || false,
-        is_archived: p.is_archived || false,
-        notes: p.notes || '',
+        first_name: person.first_name || '',
+        last_name: person.last_name || '',
+        nickname: person.nickname || '',
+        birthday: person.birthday ? String(person.birthday).slice(0, 10) : '',
+        email: person.email || '',
+        phone: person.phone || '',
+        whatsapp: person.whatsapp || '',
+        address: person.address || '',
+        city: person.city || '',
+        country: person.country || '',
+        company: person.company || '',
+        job_title: person.job_title || '',
+        website: person.website || '',
+        how_we_met: person.how_we_met || '',
+        closeness: person.closeness || 'friend',
+        relationship_status: person.relationship_status || '',
+        preferred_contact_channel: person.preferred_contact_channel || '',
+        is_favorite: person.is_favorite || false,
+        is_archived: person.is_archived || false,
+        notes: person.notes || '',
     });
 
     const submit = (e: React.FormEvent) => {
