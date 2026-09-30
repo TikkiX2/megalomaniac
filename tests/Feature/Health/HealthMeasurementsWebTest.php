@@ -46,12 +46,17 @@ it('renders measurements with chart data and symptoms list', function () {
 
     $this->get('/health/measurements')
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('health/measurements/Index')->has('chart', 2));
+        ->assertInertia(fn ($page) => $page
+            ->component('health/measurements/Index')
+            ->has('typeOptions')
+            ->has('unitSuggestions')
+            ->has('chart', 2));
 
     $this->get('/health/symptoms')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('health/symptoms/Index')
+            ->has('severityOptions')
             ->where('symptoms.data', fn ($rows) => collect($rows)->pluck('symptom')->contains('calambre')));
 });
 
@@ -90,6 +95,19 @@ it('scopes the measurements list and chart to the authenticated user personal ro
             ->where('chart', fn ($rows) => collect($rows)->pluck('value')->map(fn ($value) => (float) $value)->all() === [70.0]));
 });
 
+it('stores measurement timestamps as utc instants from offset input', function () {
+    $this->post('/health/measurements', [
+        'type' => 'weight',
+        'value' => 70,
+        'unit' => 'kg',
+        'measured_at' => '2026-09-30T12:00:00-03:00',
+    ])->assertRedirect();
+
+    $measurement = HealthMeasurement::where('user_id', $this->user->id)->firstOrFail();
+
+    expect($measurement->measured_at->utc()->toDateTimeString())->toBe('2026-09-30 15:00:00');
+});
+
 it('charts the selected measurement type', function () {
     HealthMeasurement::factory()->create([
         'user_id' => $this->user->id,
@@ -108,6 +126,16 @@ it('charts the selected measurement type', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('chart', fn ($rows) => collect($rows)->pluck('value')->map(fn ($value) => (float) $value)->all() === [72.0]));
+});
+
+it('ignores an unknown measurement type filter', function () {
+    HealthMeasurement::factory()->create(['user_id' => $this->user->id, 'type' => 'weight', 'value' => 70]);
+
+    $this->get('/health/measurements?type=bogus')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('measurements.data', fn ($rows) => collect($rows)->pluck('value')->all() === ['70.00'])
+            ->where('chart', fn ($rows) => collect($rows)->pluck('value')->map(fn ($value) => (float) $value)->all() === [70.0]));
 });
 
 it('creates updates and deletes a measurement from the web', function () {

@@ -83,7 +83,7 @@ export default function MedicationsIndex({ medications: paginator, filters, stat
 
         router.post(
             health.medications.intakes.store(intakeMedication.id).url,
-            { taken_at: intakeDate, status: intakeStatus },
+            { taken_at: intakeDate ? new Date(intakeDate).toISOString() : intakeDate, status: intakeStatus },
             {
                 preserveScroll: true,
                 onStart: () => setProcessingIntake(true),

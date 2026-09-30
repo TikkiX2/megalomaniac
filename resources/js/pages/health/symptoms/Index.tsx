@@ -104,6 +104,11 @@ export default function SymptomsIndex({ symptoms: paginator, filters, severityOp
             },
         };
 
+        form.transform((data) => ({
+            ...data,
+            occurred_at: data.occurred_at ? new Date(data.occurred_at).toISOString() : data.occurred_at,
+        }));
+
         if (editing) {
             form.put(health.symptoms.update(editing.id).url, options);
         } else {

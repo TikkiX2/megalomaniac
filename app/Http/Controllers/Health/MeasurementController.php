@@ -11,6 +11,7 @@ use App\Models\Person;
 use App\Services\Health\HealthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,13 +37,13 @@ class MeasurementController extends Controller
             ->where('user_id', $request->user()->id)
             ->with('person:id,first_name,last_name');
 
-        $query->when($request->type, fn ($q, $type) => $q->where('type', $type));
+        $selectedType = MeasurementType::tryFrom((string) $request->type);
 
-        $selectedType = MeasurementType::tryFrom((string) ($request->type ?? '')) ?? MeasurementType::Weight;
+        $query->when($selectedType, fn ($q, $type) => $q->where('type', $type->value));
 
         return Inertia::render('health/measurements/Index', [
             'measurements' => $query->latest('measured_at')->orderByDesc('id')->paginate(15)->withQueryString(),
-            'chart' => $this->chart($request, $selectedType),
+            'chart' => $this->chart($request, $selectedType ?? MeasurementType::Weight),
             'filters' => $request->only(['type']),
             'typeOptions' => MeasurementType::values(),
             'unitSuggestions' => self::UNIT_SUGGESTIONS,
@@ -54,6 +55,7 @@ class MeasurementController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate($this->rules($request));
+        $data['measured_at'] = Carbon::parse($data['measured_at'])->utc();
 
         $this->health->logMeasurement($request->user(), $data);
 
@@ -69,10 +71,16 @@ class MeasurementController extends Controller
 
         $wasPersonalWeight = $this->isPersonalWeight($measurement);
 
+        $data = $request->validate($this->rules($request, partial: true));
+
+        if (array_key_exists('measured_at', $data)) {
+            $data['measured_at'] = Carbon::parse($data['measured_at'])->utc();
+        }
+
         $measurement = $this->health->updateMeasurement(
             $request->user(),
             $measurement,
-            $request->validate($this->rules($request, partial: true)),
+            $data,
         );
 
         $synced = $wasPersonalWeight || $this->isPersonalWeight($measurement);

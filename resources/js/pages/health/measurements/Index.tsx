@@ -146,12 +146,14 @@ export default function MeasurementsIndex({ measurements: paginator, chart, filt
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing] = useState<any | null>(null);
 
-    const selectedType = filters.type || 'weight';
+    const currentType = typeOptions.includes(filters.type) ? filters.type : undefined;
+    const selectedType = currentType || 'all';
+    const chartType = currentType || 'weight';
 
     const form = useForm(blankForm());
 
     const applyFilter = (type: string) => {
-        router.get(health.measurements.index().url, { ...filters, type }, {
+        router.get(health.measurements.index().url, { ...filters, type: type === 'all' ? '' : type }, {
             preserveState: true,
             replace: true,
         });
@@ -202,6 +204,11 @@ export default function MeasurementsIndex({ measurements: paginator, chart, filt
             },
         };
 
+        form.transform((data) => ({
+            ...data,
+            measured_at: data.measured_at ? new Date(data.measured_at).toISOString() : data.measured_at,
+        }));
+
         if (editing) {
             form.put(health.measurements.update(editing.id).url, options);
         } else {
@@ -233,11 +240,12 @@ export default function MeasurementsIndex({ measurements: paginator, chart, filt
                     <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <CardTitle className="flex items-center gap-2 text-white">
                             <Activity className="h-4 w-4 text-primary" />
-                            Evolución · {TYPE_LABELS[selectedType] ?? selectedType}
+                            Evolución · {TYPE_LABELS[chartType] ?? chartType}
                         </CardTitle>
                         <Select value={selectedType} onValueChange={applyFilter}>
                             <SelectTrigger className="md:w-56 bg-background border-border"><SelectValue placeholder="Tipo" /></SelectTrigger>
                             <SelectContent className="bg-card border-border text-white">
+                                <SelectItem value="all">Todos los tipos</SelectItem>
                                 {typeOptions.map((value: string) => (
                                     <SelectItem key={value} value={value}>{TYPE_LABELS[value] ?? value}</SelectItem>
                                 ))}
@@ -245,7 +253,7 @@ export default function MeasurementsIndex({ measurements: paginator, chart, filt
                         </Select>
                     </CardHeader>
                     <CardContent>
-                        <EvolutionChart points={chart ?? []} label={TYPE_LABELS[selectedType] ?? selectedType} />
+                        <EvolutionChart points={chart ?? []} label={TYPE_LABELS[chartType] ?? chartType} />
                     </CardContent>
                 </Card>
 
