@@ -67,6 +67,12 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
     protected array $explicitSkills = [];
 
     /**
+     * Editable prompt layers (global → module → surface) built by
+     * AiPromptComposer, injected right after the base instructions.
+     */
+    protected ?string $personalizationBlock = null;
+
+    /**
      * @param  string[]  $toolGroups  Grupos de ToolCatalog; ['*'] = todos
      */
     public function __construct(
@@ -119,6 +125,17 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
     public function withSkills(array $skills): static
     {
         $this->explicitSkills = $skills;
+
+        return $this;
+    }
+
+    /**
+     * Attach the composed personalization layers (global → module → surface).
+     * Passing null keeps the instructions untouched.
+     */
+    public function withPersonalization(?string $block): static
+    {
+        $this->personalizationBlock = $block;
 
         return $this;
     }
@@ -203,6 +220,10 @@ You help the user with:
 You have access to the user's real data through tools. Always use tools to fetch
 actual data before making recommendations. Be concise, actionable, and direct.
 EOF;
+
+        if ($this->personalizationBlock !== null && trim($this->personalizationBlock) !== '') {
+            $instructions .= "\n\n### Personalización del usuario\n".trim($this->personalizationBlock);
+        }
 
         $instructions .= $this->writeInstructions();
 
