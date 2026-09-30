@@ -37,3 +37,40 @@ it('requires authentication for health routes', function () {
 
     $this->get('/health')->assertRedirect('/login');
 });
+
+it('creates, updates and deletes a condition', function () {
+    $this->post('/health/conditions', [
+        'kind' => 'diagnosis',
+        'name' => 'Hipotiroidismo',
+        'status' => 'active',
+        'severity' => 'moderate',
+    ])->assertRedirect(route('health.conditions.index'));
+
+    $condition = HealthCondition::where('user_id', $this->user->id)->firstOrFail();
+
+    $this->put("/health/conditions/{$condition->id}", ['status' => 'resolved'])
+        ->assertRedirect(route('health.conditions.index'));
+    expect($condition->fresh()->status->value)->toBe('resolved');
+
+    $this->delete("/health/conditions/{$condition->id}")->assertRedirect(route('health.conditions.index'));
+    expect(HealthCondition::find($condition->id))->toBeNull();
+});
+
+it('lists and filters conditions of the authenticated user', function () {
+    HealthCondition::factory()->create(['user_id' => $this->user->id, 'name' => 'Miopatía', 'status' => 'suspected']);
+    HealthCondition::factory()->create(['name' => 'Ajena']);
+
+    $this->get('/health/conditions?search=mio')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('health/conditions/Index')
+            ->where('conditions.data', fn ($rows) => collect($rows)->pluck('name')->all() === ['Miopatía']));
+});
+
+it('forbids editing another user condition', function () {
+    $condition = HealthCondition::factory()->create();
+
+    $this->put("/health/conditions/{$condition->id}", ['name' => 'hack'])->assertForbidden();
+
+    expect($condition->fresh()->name)->not->toBe('hack');
+});
