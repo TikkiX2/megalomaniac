@@ -74,6 +74,10 @@ test('advertises the matching write tool when write groups are enabled', functio
     [['tasks'], 'TaskActionTool'],
     [['workout'], 'GymActionTool'],
     [['health'], 'HealthActionTool'],
+    [['memory'], 'RememberMemoryTool'],
+    [['agents'], 'ManageAgentsTool'],
+    [['integrations'], 'IntegrationCallTool'],
+    [['web', 'memory'], 'RememberMemoryTool'],
     [['*'], 'TaskActionTool'],
 ]);
 

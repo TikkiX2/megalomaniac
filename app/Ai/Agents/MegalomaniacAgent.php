@@ -7,6 +7,11 @@ use App\Ai\Middleware\InjectThreadDocumentContext;
 use App\Ai\Middleware\InjectWebSearchContext;
 use App\Ai\Skills\SkillCatalog;
 use App\Ai\Tools\AskUserTool;
+use App\Ai\Tools\ForgetMemoryTool;
+use App\Ai\Tools\IntegrationCallTool;
+use App\Ai\Tools\ManageAgentsTool;
+use App\Ai\Tools\PromoteMemoryTool;
+use App\Ai\Tools\RememberMemoryTool;
 use App\Ai\Tools\ToolCatalog;
 use App\Models\ChatThread;
 use App\Models\User;
@@ -28,6 +33,20 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
     use Promptable, RemembersConversations {
         messages as conversationMessages;
     }
+
+    /**
+     * Mutating tools that do not implement the Approvable contract and would
+     * otherwise be mistaken for read-only.
+     *
+     * @var array<int, class-string<Tool>>
+     */
+    private const WRITE_TOOLS = [
+        RememberMemoryTool::class,
+        ForgetMemoryTool::class,
+        PromoteMemoryTool::class,
+        ManageAgentsTool::class,
+        IntegrationCallTool::class,
+    ];
 
     protected ?string $documentQuery = null;
 
@@ -267,9 +286,10 @@ EOF;
     }
 
     /**
-     * Approvable (write) tool classes advertised by the selected groups. The
-     * module groups ship their own action tool, so a turn is only read-only
-     * when none of the selected groups exposes an Approvable tool.
+     * Write tool classes advertised by the selected groups: Approvable tools
+     * (which pause for approval) plus the explicit non-Approvable mutators.
+     * The module groups ship their own action tool, so a turn is only
+     * read-only when none of the selected groups exposes a write tool.
      *
      * @return array<int, class-string<Tool>>
      */
@@ -282,7 +302,7 @@ EOF;
 
         foreach ($selected as $group) {
             foreach ($catalog[$group]['tools'] ?? [] as $class) {
-                if (is_a($class, Approvable::class, true)) {
+                if (in_array($class, self::WRITE_TOOLS, true) || is_subclass_of($class, Approvable::class)) {
                     $writeTools[$class] ??= $class;
                 }
             }
