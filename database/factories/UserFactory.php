@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Ai\Support\ByoProviderMigrator;
+use App\Models\AiProvider;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -68,6 +70,13 @@ class UserFactory extends Factory
             'ai_provider_url' => 'https://api.example.com/v1',
             'ai_provider_key' => 'sk-test',
             'ai_model' => $model,
-        ]);
+        ])->afterCreating(function (User $user) use ($model): void {
+            AiProvider::factory()->for($user)->create([
+                'name' => ByoProviderMigrator::PROVIDER_NAME,
+                'url' => 'https://api.example.com/v1',
+                'key' => 'sk-test',
+                'model' => $model,
+            ]);
+        });
     }
 }
