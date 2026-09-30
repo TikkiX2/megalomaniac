@@ -24,6 +24,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call(PeopleSeeder::class);
 
+        $this->call(HealthSeeder::class);
+
         $this->call(ExerciseSeeder::class);
     }
 }
