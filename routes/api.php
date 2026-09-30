@@ -10,6 +10,13 @@ use App\Http\Controllers\Api\V1\ExchangeRateController;
 use App\Http\Controllers\Api\V1\ExerciseController;
 use App\Http\Controllers\Api\V1\FinanceStatisticsController;
 use App\Http\Controllers\Api\V1\GroceryController;
+use App\Http\Controllers\Api\V1\HealthConditionController;
+use App\Http\Controllers\Api\V1\HealthDashboardController;
+use App\Http\Controllers\Api\V1\HealthMeasurementController;
+use App\Http\Controllers\Api\V1\HealthMedicationController;
+use App\Http\Controllers\Api\V1\HealthMedicationIntakeController;
+use App\Http\Controllers\Api\V1\HealthProfessionalController;
+use App\Http\Controllers\Api\V1\HealthSymptomController;
 use App\Http\Controllers\Api\V1\IncomeController;
 use App\Http\Controllers\Api\V1\IncomeSourceController;
 use App\Http\Controllers\Api\V1\NutritionController;
@@ -233,6 +240,19 @@ Route::prefix('v1')->group(function () {
             Route::post('people/{person}/socials', [PersonSocialController::class, 'store'])->name('people.socials.store');
             Route::patch('socials/{social}', [PersonSocialController::class, 'update'])->name('people.socials.update');
             Route::delete('socials/{social}', [PersonSocialController::class, 'destroy'])->name('people.socials.destroy');
+        });
+
+        // Health
+        Route::name('api.')->group(function () {
+            Route::get('health/summary', [HealthDashboardController::class, 'summary'])->name('health.summary');
+            Route::apiResource('health/conditions', HealthConditionController::class)->except(['create', 'edit'])->names('health.conditions');
+            Route::apiResource('health/professionals', HealthProfessionalController::class)->except(['create', 'edit'])->names('health.professionals');
+            Route::apiResource('health/medications', HealthMedicationController::class)->except(['create', 'edit'])->names('health.medications');
+            Route::get('health/medications/{medication}/intakes', [HealthMedicationIntakeController::class, 'index'])->name('health.medications.intakes.index');
+            Route::post('health/medications/{medication}/intakes', [HealthMedicationIntakeController::class, 'store'])->name('health.medications.intakes.store');
+            Route::delete('health/medications/{medication}/intakes/{intake}', [HealthMedicationIntakeController::class, 'destroy'])->name('health.medications.intakes.destroy');
+            Route::apiResource('health/measurements', HealthMeasurementController::class)->except(['create', 'edit'])->names('health.measurements');
+            Route::apiResource('health/symptoms', HealthSymptomController::class)->except(['create', 'edit'])->names('health.symptoms');
         });
     });
 });
