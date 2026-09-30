@@ -44,8 +44,8 @@ class HealthChatController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'context_type' => ['nullable', 'in:health_condition,person'],
-            'context_id' => ['nullable', 'integer'],
+            'context_type' => ['nullable', 'in:health_condition,person', 'required_with:context_id'],
+            'context_id' => ['nullable', 'integer', 'required_with:context_type'],
         ]);
 
         $context = match ($validated['context_type'] ?? null) {

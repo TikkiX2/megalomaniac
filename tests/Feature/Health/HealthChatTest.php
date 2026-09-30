@@ -61,3 +61,48 @@ it('rejects a context owned by another user', function () {
         'context_id' => $condition->id,
     ])->assertNotFound();
 });
+
+it('rejects a context type without an id', function () {
+    $this->postJson('/health/chats', ['context_type' => 'health_condition'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('context_id');
+});
+
+it('rejects a context id without a type', function () {
+    $this->postJson('/health/chats', ['context_id' => 1])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('context_type');
+});
+
+it('renders the condition label for a contextualised health chat', function () {
+    $condition = HealthCondition::factory()->create(['user_id' => $this->user->id, 'name' => 'Asma']);
+
+    $this->post('/health/chats', [
+        'context_type' => 'health_condition',
+        'context_id' => $condition->id,
+    ])->assertRedirect();
+
+    $this->get('/health/chats')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('health/chats/Index')
+            ->where('threads', fn ($rows) => collect($rows)->pluck('context_label')->all() === ['Asma']));
+});
+
+it('does not list another user health chats', function () {
+    $other = User::factory()->create();
+
+    $thread = ChatThread::create([
+        'id' => (string) Str::uuid7(),
+        'participant_type' => $other->getMorphClass(),
+        'participant_id' => $other->id,
+        'title' => 'Hilo ajeno',
+    ]);
+    $thread->forceFill(['category' => 'salud'])->save();
+
+    $this->get('/health/chats')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('health/chats/Index')
+            ->where('threads', fn ($rows) => collect($rows)->isEmpty()));
+});
