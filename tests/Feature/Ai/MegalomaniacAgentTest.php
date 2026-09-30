@@ -55,21 +55,25 @@ test('megalomaniac agent has correct instructions', function () {
 });
 
 test('does not advertise write tools when the turn is read only', function () {
-    $agent = new MegalomaniacAgent(User::factory()->create(), ['tasks']);
+    $agent = new MegalomaniacAgent(User::factory()->create(), ['web']);
 
     expect($agent->instructions())
         ->not->toContain('TaskActionTool')
-        ->not->toContain('GymActionTool')
+        ->not->toContain('HealthActionTool')
         ->toContain('Only read tools are available');
 });
 
 test('advertises the matching write tool when write groups are enabled', function (array $groups, string $tool) {
     $agent = new MegalomaniacAgent(User::factory()->create(), $groups);
 
-    expect($agent->instructions())->toContain($tool);
+    expect($agent->instructions())
+        ->toContain($tool)
+        ->not->toContain('Only read tools are available');
 })->with([
     [['actions'], 'TaskActionTool'],
+    [['tasks'], 'TaskActionTool'],
     [['workout'], 'GymActionTool'],
+    [['health'], 'HealthActionTool'],
     [['*'], 'TaskActionTool'],
 ]);
 

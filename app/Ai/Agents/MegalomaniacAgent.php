@@ -13,9 +13,11 @@ use App\Models\User;
 use Laravel\Ai\Attributes\RepairToolCalls;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\Approvable;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\HasTools;
+use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Files\Image;
 use Laravel\Ai\Messages\UserMessage;
 use Laravel\Ai\Promptable;
@@ -255,11 +257,49 @@ EOF;
             return "\n\nWhen the user asks to perform an action, use the matching write tool: TaskActionTool for tasks, ProjectActionTool for projects, GymActionTool for training, FinanceActionTool for money, NutritionActionTool for meals, GroceryActionTool for groceries, SupplementActionTool for supplements. Confirm what you did after.";
         }
 
-        if ($this->workoutEnabled()) {
-            return "\n\nWhen the user asks to record or update training data, use the GymActionTool. Confirm what you did after.";
+        $writeTools = $this->writeTools();
+
+        if ($writeTools === []) {
+            return "\n\nOnly read tools are available for this turn. If the user asks to modify data, explain that you can only read in this turn and suggest enabling the write tools.";
         }
 
-        return "\n\nOnly read tools are available for this turn. If the user asks to modify data, explain that you can only read in this turn and suggest enabling the write tools.";
+        return "\n\nWhen the user asks to perform an action, use the matching write tool: ".$this->writeToolNames($writeTools).'. Confirm what you did after.';
+    }
+
+    /**
+     * Approvable (write) tool classes advertised by the selected groups. The
+     * module groups ship their own action tool, so a turn is only read-only
+     * when none of the selected groups exposes an Approvable tool.
+     *
+     * @return array<int, class-string<Tool>>
+     */
+    protected function writeTools(): array
+    {
+        $catalog = ToolCatalog::groups();
+        $selected = in_array('*', $this->toolGroups, true) ? array_keys($catalog) : $this->toolGroups;
+
+        $writeTools = [];
+
+        foreach ($selected as $group) {
+            foreach ($catalog[$group]['tools'] ?? [] as $class) {
+                if (is_a($class, Approvable::class, true)) {
+                    $writeTools[$class] ??= $class;
+                }
+            }
+        }
+
+        return array_values($writeTools);
+    }
+
+    /**
+     * @param  array<int, class-string<Tool>>  $writeTools
+     */
+    protected function writeToolNames(array $writeTools): string
+    {
+        return implode(', ', array_map(
+            fn (string $class): string => class_basename($class),
+            $writeTools,
+        ));
     }
 
     protected function skillsToolEnabled(): bool
