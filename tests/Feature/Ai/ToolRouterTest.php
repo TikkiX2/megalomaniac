@@ -38,7 +38,7 @@ it('routes colloquial write verbs to the action tools', function () {
 
 it('falls back to data groups for ambiguous messages', function () {
     expect(ToolRouter::route('Hola, ¿cómo estás?'))
-        ->toBe(['tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'people', 'integrations', 'skills'])
+        ->toBe(['tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'people', 'health', 'integrations', 'skills'])
         ->and(ToolRouter::route('Contame algo interesante'))->not->toContain('actions', 'agents');
 });
 
@@ -89,4 +89,11 @@ it('routes gym messages to the workout group with its own write tool', function 
         ->and(ToolRouter::route('Escribí mi entrenamiento de pecho'))->toContain('workout')
         ->and(ToolRouter::route('Anadí press banca a mi rutina'))->toContain('workout')
         ->and(ToolRouter::route('Hazme una rutina de piernas'))->toContain('workout');
+});
+
+it('routes health messages to the health group', function () {
+    expect(ToolRouter::route('¿Qué medicamentos tomo para la tiroides?'))->toContain('health')
+        ->and(ToolRouter::route('Tengo dolor de espalda'))->toContain('health')
+        ->and(ToolRouter::route('¿Cuándo es mi turno con el doctor?'))->toContain('health')
+        ->and(ToolRouter::route('Registrá que me tomé la pastilla'))->toContain('health', 'actions');
 });

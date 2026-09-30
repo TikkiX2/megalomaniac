@@ -13,6 +13,7 @@ use App\Services\Freelance\FreelanceService;
 use App\Services\Grocery\GroceryService;
 use App\Services\Gym\RoutineService;
 use App\Services\Gym\WorkoutSessionService;
+use App\Services\Health\HealthService;
 use App\Services\Nutrition\NutritionService;
 use App\Services\People\PeopleService;
 use App\Services\Projects\ProjectService;
@@ -36,6 +37,7 @@ final class ToolCatalog
             'supplements' => ['label' => 'Suplementos', 'tools' => [SupplementQueryTool::class, SupplementActionTool::class]],
             'freelance' => ['label' => 'Freelance', 'tools' => [FreelanceQueryTool::class, FreelanceActionTool::class]],
             'people' => ['label' => 'Personas', 'tools' => [PeopleQueryTool::class, PeopleActionTool::class]],
+            'health' => ['label' => 'Salud', 'tools' => [HealthQueryTool::class, HealthActionTool::class]],
             'actions' => ['label' => 'Todas las acciones', 'tools' => self::actionTools()],
             'integrations' => ['label' => 'Integraciones', 'tools' => [IntegrationCatalogTool::class, IntegrationCallTool::class]],
             'agents' => ['label' => 'Agentes', 'tools' => [ManageAgentsTool::class]],
@@ -64,6 +66,7 @@ final class ToolCatalog
             SupplementActionTool::class,
             FreelanceActionTool::class,
             PeopleActionTool::class,
+            HealthActionTool::class,
         ];
     }
 
@@ -129,6 +132,8 @@ final class ToolCatalog
             FreelanceActionTool::class => new FreelanceActionTool($user, app(FreelanceService::class)),
             PeopleQueryTool::class => new PeopleQueryTool($user, app(PeopleService::class)),
             PeopleActionTool::class => new PeopleActionTool($user, app(PeopleService::class)),
+            HealthQueryTool::class => new HealthQueryTool($user, app(HealthService::class)),
+            HealthActionTool::class => new HealthActionTool($user, app(HealthService::class)),
             default => new $class($user),
         };
     }

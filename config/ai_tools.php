@@ -59,6 +59,12 @@ return [
             'cumple', 'cumpleanos', 'vinculo', 'interaccion', 'hable', 'llam',
             'escribi', 'conoci', 'regalo', 'aniversario',
         ],
+        'health' => [
+            'salud', 'médic', 'medic', 'remedio', 'pastilla', 'síntoma', 'sintoma',
+            'dolor', 'presión', 'presion', 'glucosa', 'análisis', 'analisis',
+            'estudio', 'laboratorio', 'doctor', 'doctora', 'turno', 'consulta',
+            'tsh', 'tiroides', 'peso', 'orina', 'calambre', 'cansancio',
+        ],
         'integrations' => [
             'github', 'docker', 'proxmox', 'servidor', 'contenedor', 'reddit',
             'telegram', 'notion', 'youtube', 'feed', 'drive', 's3', 'storage',
@@ -123,6 +129,6 @@ return [
     |
     */
 
-    'fallback' => ['tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'people', 'integrations', 'skills'],
+    'fallback' => ['tasks', 'workout', 'finance', 'nutrition', 'grocery', 'supplements', 'freelance', 'people', 'health', 'integrations', 'skills'],
 
 ];
