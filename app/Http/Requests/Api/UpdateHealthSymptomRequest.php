@@ -11,7 +11,7 @@ class UpdateHealthSymptomRequest extends StoreHealthSymptomRequest
     {
         return array_merge(parent::rules(), [
             'symptom' => ['sometimes', 'string', 'max:255'],
-            'severity' => ['sometimes', Rule::enum(Severity::class)],
+            'severity' => ['sometimes', 'nullable', Rule::enum(Severity::class)],
             'occurred_at' => ['sometimes', 'date'],
         ]);
     }

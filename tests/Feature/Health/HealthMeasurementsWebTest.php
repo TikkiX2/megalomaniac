@@ -108,6 +108,15 @@ it('stores measurement timestamps as utc instants from offset input', function (
     expect($measurement->measured_at->utc()->toDateTimeString())->toBe('2026-09-30 15:00:00');
 });
 
+it('defaults symptom severity to mild when it is omitted', function () {
+    $this->post('/health/symptoms', [
+        'symptom' => 'mareo',
+        'occurred_at' => now()->toDateTimeString(),
+    ])->assertRedirect(route('health.symptoms.index'));
+
+    expect(HealthSymptom::where('user_id', $this->user->id)->firstOrFail()->severity->value)->toBe('mild');
+});
+
 it('stores symptom timestamps as utc instants from offset input', function () {
     $this->post('/health/symptoms', [
         'symptom' => 'mareo',

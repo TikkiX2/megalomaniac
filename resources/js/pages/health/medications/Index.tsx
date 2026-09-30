@@ -118,7 +118,7 @@ export default function MedicationsIndex({ medications: paginator, filters, stat
                             onKeyDown={(e) => e.key === 'Enter' && applyFilter({})}
                         />
                     </div>
-                    <Select value={filters.active ?? 'all'} onValueChange={(value) => applyFilter({ active: value === 'all' ? '' : value })}>
+                    <Select value={filters.active || 'all'} onValueChange={(value) => applyFilter({ active: value === 'all' ? '' : value })}>
                         <SelectTrigger className="md:w-44 bg-card border-border"><SelectValue placeholder="Estado" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Todo estado</SelectItem>

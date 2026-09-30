@@ -273,7 +273,7 @@ EOF;
     protected function writeInstructions(): string
     {
         if ($this->actionsEnabled()) {
-            return "\n\nWhen the user asks to perform an action, use the matching write tool: TaskActionTool for tasks, ProjectActionTool for projects, GymActionTool for training, FinanceActionTool for money, NutritionActionTool for meals, GroceryActionTool for groceries, SupplementActionTool for supplements. Confirm what you did after.";
+            return "\n\nWhen the user asks to perform an action, use the matching write tool: ".$this->writeToolNames($this->writeTools()).'. Confirm what you did after.';
         }
 
         $writeTools = $this->writeTools();

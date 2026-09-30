@@ -17,7 +17,7 @@ class StoreHealthSymptomRequest extends FormRequest
     {
         return [
             'symptom' => ['required', 'string', 'max:255'],
-            'severity' => ['required', Rule::enum(Severity::class)],
+            'severity' => ['nullable', Rule::enum(Severity::class)],
             'occurred_at' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
             'person_id' => ['nullable', Rule::exists('people', 'id')->where('user_id', $this->user()->id)],

@@ -146,9 +146,15 @@ class HealthWriteTool extends Tool
             'notes' => ['nullable', 'string'],
         ]);
 
-        $condition = $this->health->updateCondition($user, $condition, array_filter($request->all([
+        $data = array_filter($request->all([
             'kind', 'name', 'status', 'severity', 'diagnosed_at', 'provider_id', 'person_id', 'notes',
-        ]), fn ($value) => $value !== null));
+        ]), fn ($value) => $value !== null);
+
+        if ($data === []) {
+            return Response::error('No fields to update.');
+        }
+
+        $condition = $this->health->updateCondition($user, $condition, $data);
 
         return Response::structured([
             'condition' => $condition->toArray(),
@@ -226,6 +232,10 @@ class HealthWriteTool extends Tool
             $data['is_active'] = (bool) $request->get('is_active');
         }
 
+        if ($data === []) {
+            return Response::error('No fields to update.');
+        }
+
         $medication = $this->health->updateMedication($user, $medication, $data);
 
         return Response::structured([
@@ -299,6 +309,10 @@ class HealthWriteTool extends Tool
             $data['is_active'] = (bool) $request->get('is_active');
         }
 
+        if ($data === []) {
+            return Response::error('No fields to update.');
+        }
+
         $professional = $this->health->updateProfessional($user, $professional, $data);
 
         return Response::structured([
@@ -351,16 +365,17 @@ class HealthWriteTool extends Tool
     {
         $request->validate([
             'symptom' => ['required', 'string', 'max:255'],
-            'severity' => ['required', Rule::enum(Severity::class)],
+            'severity' => ['nullable', Rule::enum(Severity::class)],
             'occurred_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string'],
             'person_id' => ['nullable', Rule::exists('people', 'id')->where('user_id', $user->id)],
         ]);
 
         $data = array_filter($request->all([
-            'symptom', 'severity', 'notes', 'person_id',
+            'symptom', 'notes', 'person_id',
         ]), fn ($value) => $value !== null);
 
+        $data['severity'] = $request->get('severity') ?? Severity::Mild->value;
         $data['occurred_at'] = Carbon::parse($request->get('occurred_at') ?? now())->utc()->toDateTimeString();
 
         $symptom = $this->health->logSymptom($user, $data);

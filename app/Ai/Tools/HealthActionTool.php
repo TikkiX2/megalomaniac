@@ -126,7 +126,13 @@ class HealthActionTool implements Approvable, Tool
             'notes' => ['nullable', 'string'],
         ]);
 
-        $condition = $this->health->updateCondition($this->user, $condition, $this->withoutNulls($data));
+        $data = $this->withoutNulls($data);
+
+        if ($data === []) {
+            return $this->error('No fields to update.');
+        }
+
+        $condition = $this->health->updateCondition($this->user, $condition, $data);
 
         return $this->success('Condition updated.', ['condition' => $condition->toArray()]);
     }
@@ -180,7 +186,13 @@ class HealthActionTool implements Approvable, Tool
             'notes' => ['nullable', 'string'],
         ]);
 
-        $medication = $this->health->updateMedication($this->user, $medication, $this->withoutNulls($data));
+        $data = $this->withoutNulls($data);
+
+        if ($data === []) {
+            return $this->error('No fields to update.');
+        }
+
+        $medication = $this->health->updateMedication($this->user, $medication, $data);
 
         return $this->success('Medication updated.', ['medication' => $medication->toArray()]);
     }
@@ -232,7 +244,13 @@ class HealthActionTool implements Approvable, Tool
             'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $professional = $this->health->updateProfessional($this->user, $professional, $this->withoutNulls($data));
+        $data = $this->withoutNulls($data);
+
+        if ($data === []) {
+            return $this->error('No fields to update.');
+        }
+
+        $professional = $this->health->updateProfessional($this->user, $professional, $data);
 
         return $this->success('Professional updated.', ['professional' => $professional->toArray()]);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Health\Enums\Severity;
 use App\Http\Requests\Api\StoreHealthSymptomRequest;
 use App\Http\Requests\Api\UpdateHealthSymptomRequest;
 use App\Http\Resources\HealthSymptomResource;
@@ -33,6 +34,7 @@ class HealthSymptomController extends Controller
     public function store(StoreHealthSymptomRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $data['severity'] ??= Severity::Mild->value;
         $data['occurred_at'] = Carbon::parse($data['occurred_at'])->utc();
 
         $symptom = $this->health->logSymptom($request->user(), $data);

@@ -50,6 +50,28 @@ it('creates conditions, medications and logs events', function () {
         ->and(HealthCondition::where('user_id', $user->id)->exists())->toBeTrue();
 });
 
+it('rejects updates with no fields to apply', function () {
+    $user = User::factory()->create();
+    $condition = HealthCondition::factory()->create(['user_id' => $user->id]);
+
+    $empty = json_decode(healthTool($user)->handle(new Request([
+        'action' => 'update_condition',
+        'condition_id' => $condition->id,
+    ])), true);
+
+    expect($empty['success'])->toBeFalse()
+        ->and($empty['error'])->toContain('No fields to update.');
+
+    $updated = json_decode(healthTool($user)->handle(new Request([
+        'action' => 'update_condition',
+        'condition_id' => $condition->id,
+        'name' => 'Nombre actualizado',
+    ])), true);
+
+    expect($updated['success'])->toBeTrue()
+        ->and($updated['condition']['name'])->toBe('Nombre actualizado');
+});
+
 it('returns domain errors instead of throwing', function () {
     $user = User::factory()->create();
 

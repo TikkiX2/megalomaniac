@@ -40,6 +40,24 @@ it('creates, reads, updates and deletes conditions', function () {
     expect(HealthCondition::find($condition->id))->toBeNull();
 });
 
+it('defaults symptom severity to mild through the write tool', function () {
+    $user = User::factory()->create();
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(HealthWriteTool::class, ['action' => 'log_symptom', 'symptom' => 'mareo'])
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('symptom.severity', 'mild')->etc());
+});
+
+it('rejects updates with no fields to apply', function () {
+    $user = User::factory()->create();
+    $condition = HealthCondition::factory()->create(['user_id' => $user->id]);
+
+    MegalomaniacServer::actingAs($user)
+        ->tool(HealthWriteTool::class, ['action' => 'update_condition', 'condition_id' => $condition->id])
+        ->assertHasErrors(['No fields to update.']);
+});
+
 it('logs measurements through the log tool and syncs weight', function () {
     $user = User::factory()->create();
 

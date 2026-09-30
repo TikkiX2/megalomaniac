@@ -41,6 +41,7 @@ class SymptomController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate($this->rules($request));
+        $data['severity'] ??= Severity::Mild->value;
         $data['occurred_at'] = Carbon::parse($data['occurred_at'])->utc();
 
         $this->health->logSymptom($request->user(), $data);
@@ -53,6 +54,7 @@ class SymptomController extends Controller
         $this->authorize('update', $symptom);
 
         $data = $request->validate($this->rules($request, partial: true));
+        $data['severity'] ??= Severity::Mild->value;
 
         if (array_key_exists('occurred_at', $data)) {
             $data['occurred_at'] = Carbon::parse($data['occurred_at'])->utc();
@@ -79,7 +81,7 @@ class SymptomController extends Controller
     {
         return [
             'symptom' => [$partial ? 'sometimes' : 'required', 'string', 'max:255'],
-            'severity' => [$partial ? 'sometimes' : 'required', Rule::enum(Severity::class)],
+            'severity' => ['nullable', Rule::enum(Severity::class)],
             'occurred_at' => [$partial ? 'sometimes' : 'required', 'date'],
             'notes' => ['nullable', 'string'],
             'person_id' => ['nullable', Rule::exists('people', 'id')->where('user_id', $request->user()->id)],

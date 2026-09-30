@@ -81,6 +81,8 @@ class HealthSeeder extends Seeder
             ]);
         }
 
+        $user->forceFill(['weight' => 62.5])->saveQuietly();
+
         HealthMeasurement::create([
             'user_id' => $user->id,
             'type' => MeasurementType::BloodPressure,

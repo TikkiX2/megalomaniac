@@ -76,10 +76,10 @@ it('logs medications, intakes, measurements and symptoms', function () {
     $this->withHeaders($this->headers)
         ->postJson('/api/v1/health/symptoms', [
             'symptom' => 'calambre',
-            'severity' => 'moderate',
             'occurred_at' => now()->toDateTimeString(),
         ])
-        ->assertCreated();
+        ->assertCreated()
+        ->assertJsonPath('data.severity', 'mild');
 });
 
 it('protects ownership and exposes the summary', function () {
