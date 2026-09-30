@@ -108,6 +108,18 @@ it('stores measurement timestamps as utc instants from offset input', function (
     expect($measurement->measured_at->utc()->toDateTimeString())->toBe('2026-09-30 15:00:00');
 });
 
+it('stores symptom timestamps as utc instants from offset input', function () {
+    $this->post('/health/symptoms', [
+        'symptom' => 'mareo',
+        'severity' => 'mild',
+        'occurred_at' => '2026-09-30T12:00:00-03:00',
+    ])->assertRedirect();
+
+    $symptom = HealthSymptom::where('user_id', $this->user->id)->firstOrFail();
+
+    expect($symptom->occurred_at->utc()->toDateTimeString())->toBe('2026-09-30 15:00:00');
+});
+
 it('charts the selected measurement type', function () {
     HealthMeasurement::factory()->create([
         'user_id' => $this->user->id,

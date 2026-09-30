@@ -11,6 +11,7 @@ use App\Models\Person;
 use App\Services\Health\HealthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,7 +40,10 @@ class SymptomController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->health->logSymptom($request->user(), $request->validate($this->rules($request)));
+        $data = $request->validate($this->rules($request));
+        $data['occurred_at'] = Carbon::parse($data['occurred_at'])->utc();
+
+        $this->health->logSymptom($request->user(), $data);
 
         return redirect()->route('health.symptoms.index')->with('success', 'Síntoma registrado.');
     }
@@ -48,7 +52,13 @@ class SymptomController extends Controller
     {
         $this->authorize('update', $symptom);
 
-        $this->health->updateSymptom($request->user(), $symptom, $request->validate($this->rules($request, partial: true)));
+        $data = $request->validate($this->rules($request, partial: true));
+
+        if (array_key_exists('occurred_at', $data)) {
+            $data['occurred_at'] = Carbon::parse($data['occurred_at'])->utc();
+        }
+
+        $this->health->updateSymptom($request->user(), $symptom, $data);
 
         return redirect()->route('health.symptoms.index')->with('success', 'Síntoma actualizado.');
     }

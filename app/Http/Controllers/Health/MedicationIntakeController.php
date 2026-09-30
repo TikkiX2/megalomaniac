@@ -11,6 +11,7 @@ use App\Models\HealthMedicationIntake;
 use App\Services\Health\HealthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class MedicationIntakeController extends Controller
@@ -21,11 +22,14 @@ class MedicationIntakeController extends Controller
     {
         $this->authorize('update', $medication);
 
-        $this->health->logIntake($request->user(), $medication, $request->validate([
+        $data = $request->validate([
             'taken_at' => ['required', 'date'],
             'status' => ['required', Rule::enum(IntakeStatus::class)],
             'notes' => ['nullable', 'string'],
-        ]));
+        ]);
+        $data['taken_at'] = Carbon::parse($data['taken_at'])->utc();
+
+        $this->health->logIntake($request->user(), $medication, $data);
 
         return back()->with('success', 'Toma registrada.');
     }

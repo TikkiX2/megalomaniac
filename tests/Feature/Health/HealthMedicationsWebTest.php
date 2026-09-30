@@ -44,6 +44,19 @@ it('logs and deletes intakes from the list', function () {
     expect(HealthMedicationIntake::find($intake->id))->toBeNull();
 });
 
+it('stores intake timestamps as utc instants from offset input', function () {
+    $medication = HealthMedication::factory()->create(['user_id' => $this->user->id]);
+
+    $this->post("/health/medications/{$medication->id}/intakes", [
+        'taken_at' => '2026-09-30T12:00:00-03:00',
+        'status' => 'taken',
+    ])->assertRedirect();
+
+    $intake = HealthMedicationIntake::where('medication_id', $medication->id)->firstOrFail();
+
+    expect($intake->taken_at->utc()->toDateTimeString())->toBe('2026-09-30 15:00:00');
+});
+
 it('lists and filters medications of the authenticated user', function () {
     $own = HealthMedication::factory()->create(['user_id' => $this->user->id, 'name' => 'Levotiroxina']);
     HealthMedication::factory()->create(['name' => 'Levotiroxina ajena']);
