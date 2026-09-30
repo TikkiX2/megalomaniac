@@ -1,5 +1,6 @@
 <?php
 
+use App\Health\Enums\Severity;
 use App\Models\HealthCondition;
 use App\Models\HealthMeasurement;
 use App\Models\HealthMedication;
@@ -285,4 +286,23 @@ it('allows partial updates without the store-required fields', function () {
         ->patchJson("/api/v1/health/professionals/{$professional->id}", ['name' => 'Dra. Actualizada'])
         ->assertOk()
         ->assertJsonPath('data.name', 'Dra. Actualizada');
+});
+
+it('rejects explicit null severity and preserves it on partial symptom updates', function () {
+    $symptom = HealthSymptom::factory()->create([
+        'user_id' => $this->user->id,
+        'severity' => Severity::Severe,
+    ]);
+
+    $this->withHeaders($this->headers)
+        ->patchJson("/api/v1/health/symptoms/{$symptom->id}", ['severity' => null])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['severity']);
+
+    $this->withHeaders($this->headers)
+        ->patchJson("/api/v1/health/symptoms/{$symptom->id}", ['notes' => 'solo notas'])
+        ->assertOk()
+        ->assertJsonPath('data.severity', 'severe');
+
+    expect($symptom->fresh()->severity->value)->toBe('severe');
 });

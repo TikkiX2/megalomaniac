@@ -220,6 +220,12 @@ it('creates updates and deletes a symptom from the web', function () {
     expect($symptom->fresh()->severity->value)->toBe('severe')
         ->and($symptom->fresh()->symptom)->toBe('mareo');
 
+    $this->put("/health/symptoms/{$symptom->id}", ['notes' => 'solo notas'])
+        ->assertRedirect(route('health.symptoms.index'));
+
+    expect($symptom->fresh()->severity->value)->toBe('severe')
+        ->and($symptom->fresh()->notes)->toBe('solo notas');
+
     $this->delete("/health/symptoms/{$symptom->id}")->assertRedirect(route('health.symptoms.index'));
 
     expect(HealthSymptom::find($symptom->id))->toBeNull();
