@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Health;
 
+use App\Health\Enums\ConditionStatus;
 use App\Health\Enums\MeasurementType;
 use App\Models\HealthCondition;
 use App\Models\HealthMeasurement;
@@ -89,7 +90,10 @@ class HealthService
     {
         return DB::transaction(function () use ($user, $data): HealthMeasurement {
             $measurement = $user->healthMeasurements()->create($data);
-            $this->syncProfileWeight($user, $measurement);
+
+            if ($this->shouldSyncProfileWeight($measurement)) {
+                $this->syncProfileWeight($user, $measurement);
+            }
 
             return $measurement;
         });
@@ -100,10 +104,10 @@ class HealthService
         $this->assertOwner($user, $measurement);
 
         return DB::transaction(function () use ($measurement, $data, $user): HealthMeasurement {
-            $wasWeight = $measurement->type === MeasurementType::Weight;
+            $wasPersonalWeight = $this->shouldSyncProfileWeight($measurement);
             $measurement->update($data);
 
-            if ($wasWeight || $measurement->type === MeasurementType::Weight) {
+            if ($wasPersonalWeight || $this->shouldSyncProfileWeight($measurement)) {
                 $this->syncProfileWeight($user, $measurement);
             }
 
@@ -116,10 +120,10 @@ class HealthService
         $this->assertOwner($user, $measurement);
 
         DB::transaction(function () use ($measurement, $user): void {
-            $isWeight = $measurement->type === MeasurementType::Weight;
+            $wasPersonalWeight = $this->shouldSyncProfileWeight($measurement);
             $measurement->delete();
 
-            if ($isWeight) {
+            if ($wasPersonalWeight) {
                 $this->syncProfileWeight($user);
             }
         });
@@ -172,7 +176,11 @@ class HealthService
     {
         return [
             'active_conditions' => HealthCondition::where('user_id', $user->id)
-                ->whereIn('status', ['suspected', 'active', 'in_remission'])
+                ->whereIn('status', [
+                    ConditionStatus::Suspected->value,
+                    ConditionStatus::Active->value,
+                    ConditionStatus::InRemission->value,
+                ])
                 ->orderBy('name')
                 ->get()
                 ->toArray(),
@@ -192,6 +200,11 @@ class HealthService
                 ->get()
                 ->toArray(),
         ];
+    }
+
+    private function shouldSyncProfileWeight(HealthMeasurement $measurement): bool
+    {
+        return $measurement->type === MeasurementType::Weight && $measurement->person_id === null;
     }
 
     private function syncProfileWeight(User $user, ?HealthMeasurement $measurement = null): void
@@ -215,7 +228,7 @@ class HealthService
      * @param  Builder<Model>  $query
      * @return Builder<Model>
      */
-    private function owned($query, User $user)
+    private function owned($query, User $user): Builder
     {
         return $query->where('user_id', $user->id);
     }

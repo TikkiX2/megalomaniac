@@ -74,6 +74,10 @@ it('syncs the profile weight when logging, updating and deleting a weight measur
 
     expect((float) $this->user->fresh()->weight)->toBe(62.5);
 
+    $this->service->updateMeasurement($this->user, $latest, ['value' => 63.5]);
+
+    expect((float) $this->user->fresh()->weight)->toBe(63.5);
+
     $this->service->deleteMeasurement($this->user, $latest);
 
     expect((float) $this->user->fresh()->weight)->toBe(61.5);
@@ -81,6 +85,59 @@ it('syncs the profile weight when logging, updating and deleting a weight measur
     $this->service->deleteMeasurement($this->user, $first);
 
     expect($this->user->fresh()->weight)->toBeNull();
+});
+
+it('keeps the latest personal weight when an older weight is updated', function () {
+    $older = $this->service->logMeasurement($this->user, [
+        'type' => MeasurementType::Weight->value,
+        'value' => 61.5,
+        'unit' => 'kg',
+        'measured_at' => now()->subDays(10)->toDateTimeString(),
+    ]);
+    $recent = $this->service->logMeasurement($this->user, [
+        'type' => MeasurementType::Weight->value,
+        'value' => 62.5,
+        'unit' => 'kg',
+        'measured_at' => now()->subDay()->toDateTimeString(),
+    ]);
+
+    $this->service->updateMeasurement($this->user, $older, ['value' => 63.0]);
+
+    expect((float) $this->user->fresh()->weight)->toBe(62.5);
+
+    $this->service->deleteMeasurement($this->user, $recent);
+
+    expect((float) $this->user->fresh()->weight)->toBe(63.0);
+});
+
+it('does not touch the profile weight when logging a non-weight measurement', function () {
+    $this->user->forceFill(['weight' => 62.0])->save();
+
+    $this->service->logMeasurement($this->user, [
+        'type' => MeasurementType::Temperature->value,
+        'value' => 36.8,
+        'unit' => '°C',
+        'measured_at' => now()->toDateTimeString(),
+    ]);
+
+    expect((float) $this->user->fresh()->weight)->toBe(62.0);
+});
+
+it('does not touch the profile weight when deleting a family weight measurement', function () {
+    $person = Person::factory()->create(['user_id' => $this->user->id]);
+    $this->user->forceFill(['weight' => 62.0])->save();
+
+    $measurement = $this->service->logMeasurement($this->user, [
+        'person_id' => $person->id,
+        'type' => MeasurementType::Weight->value,
+        'value' => 70.0,
+        'unit' => 'kg',
+        'measured_at' => now()->toDateTimeString(),
+    ]);
+
+    $this->service->deleteMeasurement($this->user, $measurement);
+
+    expect((float) $this->user->fresh()->weight)->toBe(62.0);
 });
 
 it('does not sync weight for family members', function () {
