@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bot, Brain, BrainCircuit, Briefcase, Cake, CalendarClock, CheckSquare, Contact, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, LayoutGrid, Library, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Users, Utensils, Wallet } from 'lucide-react';
+import { Activity, Bot, Brain, BrainCircuit, Briefcase, BriefcaseMedical, Cake, CalendarClock, CheckSquare, Contact, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, HeartPulse, LayoutGrid, Library, MessagesSquare, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Stethoscope, Tablets, Thermometer, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -52,6 +52,16 @@ const peopleNavItems: NavItem[] = [
     { title: 'Personas', href: '/people', icon: Contact },
     { title: 'Historial', href: '/people/timeline', icon: CalendarClock },
     { title: 'Calendario', href: '/people/calendar', icon: Cake },
+];
+
+const healthNavItems: NavItem[] = [
+    { title: 'Panel', href: '/health', icon: HeartPulse },
+    { title: 'Condiciones', href: '/health/conditions', icon: Stethoscope },
+    { title: 'Medicación', href: '/health/medications', icon: Tablets },
+    { title: 'Mediciones', href: '/health/measurements', icon: Activity },
+    { title: 'Síntomas', href: '/health/symptoms', icon: Thermometer },
+    { title: 'Profesionales', href: '/health/professionals', icon: BriefcaseMedical },
+    { title: 'Chats', href: '/health/chats', icon: MessagesSquare },
 ];
 
 function SidebarPinToggle() {
@@ -220,6 +230,27 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Salud</SidebarGroupLabel>
+                    <SidebarMenu>
+                        {healthNavItems.map((item) => {
+                            const href = String(item.href);
+                            const isActive = window.location.pathname.startsWith('/health') && (href === '/health' ? window.location.pathname === '/health' : window.location.pathname.startsWith(href));
+
+                            return (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton asChild tooltip={item.title} isActive={isActive}>
+                                    <Link href={item.href} prefetch>
+                                        {item.icon && <item.icon className="h-4 w-4" />}
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                            );
+                        })}
                     </SidebarMenu>
                 </SidebarGroup>
 
