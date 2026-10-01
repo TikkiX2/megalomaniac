@@ -11,7 +11,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { edit as aiSettingsEdit } from '@/routes/ai-settings';
+import { edit as aiSettingsEdit } from '@/routes/settings/ai';
 import type { SourceMode } from '@/types/chat';
 
 const MODE_LABELS: Record<SourceMode, string> = {

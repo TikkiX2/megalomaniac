@@ -16,8 +16,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    Route::get('settings/ai', [AiSettingsController::class, 'edit'])->name('ai-settings.edit');
-    Route::put('settings/ai', [AiSettingsController::class, 'update'])->name('ai-settings.update');
+    Route::get('settings/ai', [AiSettingsController::class, 'edit'])->name('settings.ai.edit');
+    Route::put('settings/ai', [AiSettingsController::class, 'update'])->name('settings.ai.update');
+
+    Route::post('settings/ai/providers', [AiSettingsController::class, 'storeProvider'])->name('settings.ai.providers.store');
+    Route::patch('settings/ai/providers/{provider}', [AiSettingsController::class, 'updateProvider'])->name('settings.ai.providers.update');
+    Route::delete('settings/ai/providers/{provider}', [AiSettingsController::class, 'destroyProvider'])->name('settings.ai.providers.destroy');
+    Route::post('settings/ai/providers/{provider}/test', [AiSettingsController::class, 'testConnection'])
+        ->middleware('throttle:30,1')
+        ->name('settings.ai.providers.test');
+
+    Route::patch('settings/ai/scopes/{scope}', [AiSettingsController::class, 'updateScope'])->name('settings.ai.scopes.update');
+    Route::post('settings/ai/prompts/preview', [AiSettingsController::class, 'previewPrompt'])->name('settings.ai.prompts.preview');
 
     Route::get('settings/skills', [SkillController::class, 'index'])->name('skills.index');
     Route::post('settings/skills', [SkillController::class, 'store'])->name('skills.store');

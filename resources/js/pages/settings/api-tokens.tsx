@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MainLayout from '@/layouts/main-layout';
 import SettingsLayout from '@/layouts/settings/layout';
-import { edit } from '@/routes/ai-settings';
+import { edit } from '@/routes/settings/ai';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
