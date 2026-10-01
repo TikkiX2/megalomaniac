@@ -1,5 +1,6 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useState, useMemo } from 'react';
+import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -238,6 +239,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                         <p className="text-[#e8b4b4] text-sm">Keep pushing, you're doing great.</p>
                     </div>
                     <div className="flex items-center gap-4">
+                        <ModuleAiButton module="gym" />
                         <div className="flex items-center gap-2 text-[#e8b4b4] bg-[#3e2121]/50 px-3 py-1.5 rounded-lg border border-[#3e2121]">
                             <span className="material-symbols-outlined text-lg">timer</span>
                             <span className="text-sm font-mono font-medium">{time}</span>

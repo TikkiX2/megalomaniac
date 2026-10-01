@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { streamChatRequest } from '@/lib/chat-sse';
-import type { ApprovalPayload, Citation, PendingApproval, ToolActivity, ToolPolicy } from '@/types/chat';
+import type {
+    ApprovalPayload,
+    Citation,
+    ChatTurnMeta,
+    PendingApproval,
+    ToolActivity,
+    ToolPolicy,
+} from '@/types/chat';
 
 export type ChatStreamStatus = 'idle' | 'streaming' | 'awaiting_approval' | 'error';
 
@@ -29,6 +36,12 @@ export interface UseChatStreamResult {
     toolPolicy: ToolPolicy | null;
     pendingApprovals: PendingApproval[];
     error: string | null;
+    /**
+     * Proveedor del último turno emitido en vivo (`type:meta`). Vive en el
+     * hook para que el badge aparezca durante el streaming, sin esperar al
+     * `router.reload` que persiste el mensaje.
+     */
+    meta: ChatTurnMeta | null;
     start: (url: string, body: Record<string, unknown>) => Promise<void>;
     stop: () => void;
     reset: () => void;
@@ -45,6 +58,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
     const [toolPolicy, setToolPolicy] = useState<ToolPolicy | null>(null);
     const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [meta, setMeta] = useState<ChatTurnMeta | null>(null);
 
     const abortRef = useRef<AbortController | null>(null);
     const erroredRef = useRef(false);
@@ -95,6 +109,8 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         setPendingApprovals([]);
         setError(null);
         setStatus('idle');
+        // `meta` sobrevive al reset: identifica el turno que acaba de terminar
+        // y evita que el badge parpadee mientras llegan los mensajes persistidos.
     }, []);
 
     const clearError = useCallback(() => setError(null), []);
@@ -121,6 +137,9 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         setPendingApprovals([]);
         setError(null);
         setStatus('streaming');
+        // El turno nuevo arranca sin proveedor conocido: el evento `meta`
+        // lo publica cuando el backend sabe cuál respondió.
+        setMeta(null);
 
         try {
             await streamChatRequest(
@@ -163,6 +182,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
                         setPendingApprovals(approvals.map(normalizeApproval));
                         setStatus('awaiting_approval');
                     },
+                    onMeta: (turnMeta) => setMeta(turnMeta),
                     onError: (message, recoverable) => {
                         setError(message);
 
@@ -229,6 +249,7 @@ export function useChatStream(options: UseChatStreamOptions = {}): UseChatStream
         toolPolicy,
         pendingApprovals,
         error,
+        meta,
         start,
         stop,
         reset,

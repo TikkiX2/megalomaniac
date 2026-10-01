@@ -9,6 +9,11 @@ export interface ChatThread {
     id: string;
     title: string;
     model: string | null;
+    /**
+     * Módulo al que pertenece el hilo (`chat_threads.module`). Opcional porque
+     * solo lo exponen los hilos creados desde `/ai/{module}`.
+     */
+    module?: string | null;
     mode: SourceMode;
     tools_policy: ToolPolicy | null;
     is_pinned: boolean;
@@ -72,6 +77,21 @@ export type DecideApproval = (
     payload?: { result?: string; arguments?: Record<string, unknown> },
 ) => void;
 
+/**
+ * Qué proveedor respondió el turno. El backend lo persiste en `meta.ai` del
+ * mensaje del asistente y lo emite en vivo como evento SSE `type:meta`, así
+ * que la UI puede mostrarlo sin esperar al guardado.
+ */
+export interface ChatTurnMeta {
+    provider: string | null;
+    model?: string | null;
+    fallback: boolean;
+}
+
+export interface ChatMessageMeta {
+    ai?: ChatTurnMeta | null;
+}
+
 export interface ChatMessage {
     id: string;
     role: 'user' | 'assistant';
@@ -80,6 +100,7 @@ export interface ChatMessage {
     reasoning: ChatReasoning | null;
     pending_approvals: PendingApproval[];
     attachments: ChatAttachment[];
+    meta?: ChatMessageMeta | null;
     created_at: string | null;
 }
 

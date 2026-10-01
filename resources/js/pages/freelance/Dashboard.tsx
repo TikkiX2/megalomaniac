@@ -12,6 +12,7 @@ import {
     Settings
 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +56,7 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
                         <h1 className="text-2xl font-bold tracking-tight">Panel de Control Freelance</h1>
                         <p className="text-muted-foreground">Resumen de tu actividad y proyectos.</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Button asChild variant="outline">
                             <Link href={freelance.clients.create().url}>
                                 <Users className="mr-2 h-4 w-4" /> Cliente
@@ -71,6 +72,7 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
                                 <FileText className="mr-2 h-4 w-4" /> Cotización
                             </Link>
                         </Button>
+                        <ModuleAiButton module="freelance" />
                     </div>
                 </div>
 

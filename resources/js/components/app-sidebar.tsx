@@ -54,6 +54,21 @@ const peopleNavItems: NavItem[] = [
     { title: 'Calendario', href: '/people/calendar', icon: Cake },
 ];
 
+/**
+ * Los siete asistentes por módulo. Reutilizan los íconos de su sección
+ * (Dumbbell/Utensils/ShoppingCart/Wallet/Briefcase/HeartPulse/Contact) para que
+ * el módulo se reconozca sin aprender un mapa nuevo.
+ */
+const aiModuleNavItems: NavItem[] = [
+    { title: 'Gimnasio', href: '/ai/gym', icon: Dumbbell },
+    { title: 'Nutrición', href: '/ai/nutrition', icon: Utensils },
+    { title: 'Grocery', href: '/ai/grocery', icon: ShoppingCart },
+    { title: 'Finanzas', href: '/ai/finance', icon: Wallet },
+    { title: 'Freelance', href: '/ai/freelance', icon: Briefcase },
+    { title: 'Salud', href: '/ai/health', icon: HeartPulse },
+    { title: 'Personas', href: '/ai/people', icon: Contact },
+];
+
 const healthNavItems: NavItem[] = [
     { title: 'Panel', href: '/health', icon: HeartPulse },
     { title: 'Condiciones', href: '/health/conditions', icon: Stethoscope },
@@ -265,6 +280,20 @@ export function AppSidebar() {
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
+                        {aiModuleNavItems.map((item) => (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton
+                                    asChild
+                                    tooltip={item.title}
+                                    isActive={window.location.pathname === item.href}
+                                >
+                                    <Link href={item.href} prefetch>
+                                        {item.icon && <item.icon className="h-4 w-4" />}
+                                        <span>{item.title}</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        ))}
                         <SidebarMenuItem>
                             <SidebarMenuButton asChild tooltip="Fuentes" isActive={window.location.pathname.startsWith('/ai/sources')}>
                                 <Link href="/ai/sources" prefetch>

@@ -3,11 +3,13 @@ import { Bot, RotateCcw } from 'lucide-react';
 import { useRef, useState } from 'react';
 import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
 import { Composer } from '@/components/ai/chat/Composer';
+import { ProviderBadge } from '@/components/ai/chat/ProviderBadge';
 import { ProviderNotice } from '@/components/ai/chat/ProviderNotice';
 import { Button } from '@/components/ui/button';
 import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
+import { aiModuleLabel } from '@/lib/ai-modules';
 import type { AiChatState, ChatThread, ToolPolicy } from '@/types/chat';
 
 export interface ChatIndexProps {
@@ -19,6 +21,8 @@ export interface ChatIndexProps {
     ai: AiChatState;
     /** Module this surface is scoped to; null on the general chat. */
     module?: string | null;
+    /** Empty-state prompts; the general chat receives an empty list. */
+    suggestions?: string[];
 }
 
 const SUGGESTIONS = [
@@ -28,7 +32,7 @@ const SUGGESTIONS = [
     '¿Qué tareas tengo pendientes con fecha límite próxima?',
 ];
 
-export default function ChatIndex({ threads, models, agents, toolGroups, skills, ai, module }: ChatIndexProps) {
+export default function ChatIndex({ threads, models, agents, toolGroups, skills, ai, module, suggestions = [] }: ChatIndexProps) {
     const [model, setModel] = useState<string | null>(ai.defaultModel ?? models[0] ?? null);
     const [agent, setAgent] = useState('megalomaniac');
     const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>({ mode: 'auto', groups: [] });
@@ -80,6 +84,16 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
 
     const paused = stream.status === 'awaiting_approval';
 
+    const moduleTitle = aiModuleLabel(module);
+
+    // The module chips fill the composer instead of sending: they open a
+    // conversation about that module, and the prompt usually needs a tweak
+    // (a date, a food, a person) before it is worth asking.
+    const fillComposer = (text: string) => {
+        setComposerSeed(text);
+        setDraftToken((token) => token + 1);
+    };
+
     const startSend = (message: string) => {
         const attachmentIds = upload.readyIds();
 
@@ -118,19 +132,41 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
 
     return (
         <ChatLayout threads={threads} activeThreadId={null}>
-            <Head title="Chat IA" />
+            <Head
+                title={
+                    moduleTitle !== null
+                        ? `Asistente · ${moduleTitle}`
+                        : 'Chat IA'
+                }
+            />
 
             <div className="min-h-0 flex-1 overflow-y-auto">
                 <div className="mx-auto flex w-full max-w-2xl flex-col px-4 pb-10 pt-10 sm:pt-16">
+                    {moduleTitle !== null && (
+                        <div className="mb-4">
+                            <Link
+                                href={ChatController.index.url()}
+                                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+                                data-test="module-back-to-chat"
+                            >
+                                ← Volver al chat general
+                            </Link>
+                        </div>
+                    )}
+
                     <div className="mb-6 flex flex-col items-center text-center">
                         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15">
                             <Bot className="h-6 w-6 text-primary" />
                         </div>
                         <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-                            ¿Qué quieres saber?
+                            {moduleTitle !== null
+                                ? `Asistente · ${moduleTitle}`
+                                : '¿Qué quieres saber?'}
                         </h1>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            Tu asistente con acceso a entrenamientos, finanzas, nutrición y freelance.
+                            {moduleTitle !== null
+                                ? `Pregunta sobre ${moduleTitle.toLowerCase()}: el asistente lee tus datos de ese módulo y responde con lo que tiene.`
+                                : 'Tu asistente con acceso a entrenamientos, finanzas, nutrición y freelance.'}
                         </p>
                     </div>
 
@@ -145,6 +181,11 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                         large
                         autoFocus
                         initialValue={composerSeed}
+                        placeholder={
+                            moduleTitle !== null
+                                ? `Preguntá sobre ${moduleTitle.toLowerCase()}…`
+                                : undefined
+                        }
                         models={models}
                         model={model}
                         onModelChange={setModel}
@@ -196,19 +237,35 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                         </div>
                     )}
 
-                    <div className="mt-4 flex flex-wrap justify-center gap-2">
-                        {SUGGESTIONS.map((suggestion) => (
-                            <button
-                                key={suggestion}
-                                type="button"
-                                disabled={!ai.configured || stream.status === 'streaming' || paused}
-                                onClick={() => submit(suggestion)}
-                                className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-40"
-                            >
-                                {suggestion}
-                            </button>
-                        ))}
-                    </div>
+                    {suggestions.length > 0 ? (
+                        <div className="mt-4 flex flex-wrap justify-center gap-2" data-test="module-suggestions">
+                            {suggestions.map((suggestion) => (
+                                <button
+                                    key={suggestion}
+                                    type="button"
+                                    disabled={!ai.configured || stream.status === 'streaming' || paused}
+                                    onClick={() => fillComposer(suggestion)}
+                                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-40"
+                                >
+                                    {suggestion}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="mt-4 flex flex-wrap justify-center gap-2">
+                            {SUGGESTIONS.map((suggestion) => (
+                                <button
+                                    key={suggestion}
+                                    type="button"
+                                    disabled={!ai.configured || stream.status === 'streaming' || paused}
+                                    onClick={() => submit(suggestion)}
+                                    className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-40"
+                                >
+                                    {suggestion}
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {pendingMessage !== null && stream.status !== 'idle' && (
                         <div className="mt-6 flex justify-end">
@@ -221,6 +278,12 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                     {stream.status === 'streaming' && stream.text !== '' && (
                         <div className="mt-3 rounded-2xl border border-border bg-card p-4">
                             <p className="whitespace-pre-wrap text-sm text-foreground">{stream.text}</p>
+
+                            {stream.meta !== null && (
+                                <div className="mt-3 flex justify-end">
+                                    <ProviderBadge meta={stream.meta} />
+                                </div>
+                            )}
                         </div>
                     )}
 

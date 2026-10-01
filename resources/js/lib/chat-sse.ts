@@ -1,4 +1,4 @@
-import type { ApprovalPayload, Citation } from '@/types/chat';
+import type { ApprovalPayload, Citation, ChatTurnMeta } from '@/types/chat';
 
 export interface ChatStreamHandlers {
     onThread?: (threadId: string) => void;
@@ -9,6 +9,8 @@ export interface ChatStreamHandlers {
     onToolResult?: (tool: { id: string; name: string; successful: boolean }) => void;
     onTools?: (groups: string[], mode: string) => void;
     onApprovalRequest?: (approvals: ApprovalPayload[]) => void;
+    /** Qué proveedor respondió el turno, y si hubo que saltar al de respaldo. */
+    onMeta?: (meta: ChatTurnMeta) => void;
     onError?: (message: string, recoverable: boolean) => void;
 }
 
@@ -24,6 +26,8 @@ interface StreamEvent {
     groups?: string[];
     mode?: string;
     approvals?: ApprovalPayload[];
+    provider?: string | null;
+    fallback?: boolean;
     message?: string;
     recoverable?: boolean;
 }
@@ -79,6 +83,14 @@ function dispatch(event: StreamEvent, handlers: ChatStreamHandlers): void {
             break;
         case 'tool_approval_request':
             if (Array.isArray(event.approvals)) handlers.onApprovalRequest?.(event.approvals);
+            break;
+        case 'meta':
+            // Se emite al cerrar el turno, antes del [DONE]: permite pintar el
+            // proveedor sin recargar los mensajes ya persistidos.
+            handlers.onMeta?.({
+                provider: event.provider ?? null,
+                fallback: event.fallback === true,
+            });
             break;
         default:
             break;

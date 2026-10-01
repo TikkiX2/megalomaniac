@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
+import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { Currency, Debt } from '@/types/finance';
@@ -91,6 +92,7 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                         </p>
                     </div>
                     <div className="flex gap-3">
+                        <ModuleAiButton module="finance" />
                         <Link
                             href={finance.currencyExchanges.create().url}
                             className="flex items-center gap-2 rounded-lg bg-[#1c0f0f] border border-[#3e2121] px-4 py-2 text-sm font-bold text-[#e8b4b4] transition hover:bg-white/10 active:scale-95">

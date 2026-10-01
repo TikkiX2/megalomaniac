@@ -13,6 +13,7 @@ import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
 import SourcesController from '@/actions/App/Http/Controllers/Ai/SourcesController';
 import { Composer } from '@/components/ai/chat/Composer';
 import { MessageList } from '@/components/ai/chat/MessageList';
+import { ProviderBadge } from '@/components/ai/chat/ProviderBadge';
 import { ThreadSourcesPanel } from '@/components/ai/chat/ThreadSourcesPanel';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,6 +38,7 @@ import {
 } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
+import { aiModuleLabel, aiModuleUrl } from '@/lib/ai-modules';
 import { csrfHeaders } from '@/lib/csrf';
 import { index as memoryIndex } from '@/routes/ai/memory';
 import type {
@@ -44,6 +46,7 @@ import type {
     ChatAttachment,
     ChatMessage,
     ChatThread,
+    ChatTurnMeta,
     DecideApproval,
     SourceMode,
     ToolPolicy,
@@ -337,6 +340,21 @@ export default function ChatThread({
                 message.pending_approvals.length > 0,
         );
 
+    // `moduleTitle` is only set for a known module key, so the back link always
+// points at a real `/ai/{module}` page.
+const threadModule = thread.module ?? null;
+const moduleTitle = aiModuleLabel(threadModule);
+
+    // The live event wins while a turn streams: the persisted `meta.ai` of the
+    // last assistant message only arrives after the reload that saves it.
+    const persistedMeta = messages.reduce<ChatTurnMeta | null>((found, message) => {
+        if (message.role !== 'assistant') return found;
+
+        return message.meta?.ai ?? found;
+    }, null);
+
+    const turnMeta = stream.meta ?? persistedMeta;
+
     return (
         <ChatLayout
             threads={threads}
@@ -386,6 +404,18 @@ export default function ChatThread({
                             ? ` · ${thread.memories_count}`
                             : ''}
                     </Link>
+
+                    {threadModule !== null && moduleTitle !== null && (
+                        <Link
+                            href={aiModuleUrl(threadModule)}
+                            className="shrink-0 text-xs text-muted-foreground hover:text-primary"
+                            data-test="thread-module-back"
+                        >
+                            ← Asistente de {moduleTitle}
+                        </Link>
+                    )}
+
+                    {turnMeta !== null && <ProviderBadge meta={turnMeta} />}
 
                     <div className="ml-auto flex items-center gap-1">
                         <DropdownMenu>

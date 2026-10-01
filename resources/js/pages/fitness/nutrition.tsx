@@ -1,5 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -282,7 +283,9 @@ export default function Nutrition({ logs, currentDate }: Props) {
                             Registra tus macros y comidas
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 p-2 bg-card rounded-xl border border-border shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <ModuleAiButton module="nutrition" />
+                        <div className="flex items-center gap-2 p-2 bg-card rounded-xl border border-border shadow-sm">
                         <button
                             type="button"
                             onClick={() => changeDate(-1)}
@@ -313,6 +316,7 @@ export default function Nutrition({ logs, currentDate }: Props) {
                         >
                             Hoy
                         </Button>
+                        </div>
                     </div>
                 </header>
 

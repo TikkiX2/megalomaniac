@@ -1,6 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
+import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -179,6 +180,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                         </div>
                     </div>
                     <div className="flex gap-3">
+                        <ModuleAiButton module="grocery" />
                         <button
                             onClick={() => {
                                 fetch('/ai/insights/grocery')

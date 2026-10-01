@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Archive, Cake, MoreHorizontal, Pencil, Plus, Search, Star, Trash } from 'lucide-react';
 import React, { useState } from 'react';
+import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,7 @@ export default function PeopleIndex({ people: paginator, filters, closenessOptio
                         <Button asChild className="bg-primary text-white font-bold">
                             <Link href={people.create().url}><Plus className="mr-2 h-4 w-4" /> Nueva Persona</Link>
                         </Button>
+                        <ModuleAiButton module="people" />
                     </div>
                 </div>
 

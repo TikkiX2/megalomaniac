@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { Activity, HeartPulse, Stethoscope, Tablets, Thermometer } from 'lucide-react';
 import React from 'react';
+import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import HealthLayout from '@/layouts/health-layout';
@@ -83,8 +84,9 @@ export default function HealthDashboard({ summary }: { summary: HealthSummary })
                         <h1 className="text-2xl font-bold tracking-tight text-white">Salud</h1>
                         <p className="text-muted-foreground">Tu expediente: condiciones, medicación, mediciones y síntomas.</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Link href={health.chats.index().url} className="text-sm font-bold text-primary hover:underline">Chats de salud</Link>
+                        <ModuleAiButton module="health" />
                     </div>
                 </div>
 
