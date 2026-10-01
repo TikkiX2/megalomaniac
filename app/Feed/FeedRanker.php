@@ -48,7 +48,7 @@ class FeedRanker
             && filled($preferences->embedding);
 
         if ($useEmbeddings) {
-            $this->ensureEmbeddings($user, $items, $embeddings);
+            $this->ensureEmbeddings($user, $items);
         } else {
             $this->scoreWithLlm($user, $preferences, $items);
         }
@@ -81,12 +81,12 @@ class FeedRanker
      *
      * The chain is resolved once here; each attempt re-wires its own provider
      * and asks for that provider's embeddings model, falling back to the
-     * resolved one. Any failure (including an exhausted chain) is swallowed so
-     * ranking continues on the lexical score.
+     * resolved one. Any failure (including an exhausted chain) is reported and
+     * swallowed so ranking continues on the lexical score.
      *
      * @param  Collection<int, FeedItem>  $items
      */
-    protected function ensureEmbeddings(User $user, Collection $items, AiProvider $primary): void
+    protected function ensureEmbeddings(User $user, Collection $items): void
     {
         $missing = $items->filter(fn (FeedItem $item): bool => empty($item->embedding))->take(100);
 
@@ -121,7 +121,9 @@ class FeedRanker
                     }
                 },
             );
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            report($e);
+
             // Sin embeddings se cae al scoring léxico.
         }
     }
@@ -169,7 +171,9 @@ class FeedRanker
                     $item->forceFill(['score' => $scores[$item->id], 'scored_at' => now()])->save();
                 }
             }
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            report($e);
+
             // Sin scoring LLM queda el léxico.
         }
     }

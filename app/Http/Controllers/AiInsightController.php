@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Agents\TaskDescriptionAgent;
-use App\Ai\Enums\AiScope;
 use App\Ai\Services\InsightService;
-use App\Ai\Support\AiRequestExecutor;
-use App\Ai\Support\AiScopeResolver;
+use App\Ai\Support\AiInsightOutcome;
+use App\Ai\Support\AiInsightRunner;
 use App\Ai\Support\MarkdownToYoopta;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -23,29 +22,15 @@ class AiInsightController extends Controller
      * Resolve the `surface:insights` chain for a module and run one prompt on it.
      *
      * These endpoints answered 200 with an honest message when the user had no
-     * provider, so an empty chain returns `null` here instead of letting the
-     * executor throw. An exhausted chain still propagates, as a failing provider
-     * always did.
+     * provider, so an empty chain keeps returning "nothing to show" here. An
+     * exhausted chain is reported once by the runner and comes back flagged as
+     * exhausted, so the copy tells the truth without turning into a 500.
      *
      * @param  callable(string $providerKey, string $model, string|null $promptBlock): mixed  $prompt
      */
-    protected function onInsightScope(User $user, string $moduleKey, callable $prompt): mixed
+    protected function onInsightScope(User $user, string $moduleKey, callable $prompt): AiInsightOutcome
     {
-        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceInsights, $moduleKey);
-
-        if ($resolution->isEmpty()) {
-            return null;
-        }
-
-        return app(AiRequestExecutor::class)->execute(
-            $user,
-            $resolution,
-            fn (string $key, string $model, $provider): mixed => $prompt(
-                $key,
-                $model ?: $provider->model,
-                $resolution->promptBlock,
-            ),
-        );
+        return app(AiInsightRunner::class)->run($user, $moduleKey, $prompt);
     }
 
     public function workout(Request $request): JsonResponse
@@ -109,8 +94,8 @@ class AiInsightController extends Controller
         );
 
         return response()->json([
-            'insight' => $response?->text,
-            'message' => $response === null ? 'AI not configured.' : null,
+            'insight' => $response->text(),
+            'message' => $response->isEmpty() ? $response->message('AI not configured.') : null,
         ]);
     }
 
@@ -173,15 +158,15 @@ class AiInsightController extends Controller
                 ->prompt($prompt, provider: $key, model: $model),
         );
 
-        if ($response === null) {
+        if ($response->isEmpty()) {
             return response()->json([
                 'suggestion' => null,
-                'message' => 'AI not configured.',
+                'message' => $response->message('AI not configured.'),
             ]);
         }
 
         try {
-            $json = json_decode($response->text, true);
+            $json = json_decode($response->text(), true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return response()->json([
                     'suggestion' => null,
@@ -234,14 +219,14 @@ class AiInsightController extends Controller
                 ->prompt($prompt, provider: $key, model: $model),
         );
 
-        if ($response === null) {
+        if ($response->isEmpty()) {
             return response()->json([
                 'description' => null,
-                'message' => 'AI not configured.',
+                'message' => $response->message('AI not configured.'),
             ]);
         }
 
-        $blocks = MarkdownToYoopta::convert($response->text);
+        $blocks = MarkdownToYoopta::convert((string) $response->text());
 
         if ($blocks === []) {
             return response()->json([

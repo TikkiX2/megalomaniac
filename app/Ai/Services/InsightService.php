@@ -3,9 +3,7 @@
 namespace App\Ai\Services;
 
 use App\Ai\Agents\MegalomaniacAgent;
-use App\Ai\Enums\AiScope;
-use App\Ai\Support\AiRequestExecutor;
-use App\Ai\Support\AiScopeResolver;
+use App\Ai\Support\AiInsightRunner;
 use App\Models\User;
 
 class InsightService
@@ -15,29 +13,22 @@ class InsightService
      *
      * A user without a usable provider keeps the existing contract: `null`, which
      * the controllers already surface as "AI not configured or no data
-     * available." An exhausted chain propagates, as a provider failure always did.
+     * available." An exhausted chain is reported once by the runner and comes
+     * back as the honest failure copy, so these endpoints stay 200.
      *
      * @param  callable(MegalomaniacAgent, string, string): mixed  $prompt
      */
-    protected function generate(User $user, string $moduleKey, callable $prompt): mixed
+    protected function generate(User $user, string $moduleKey, callable $prompt): ?string
     {
-        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceInsights, $moduleKey);
-
-        if ($resolution->isEmpty()) {
-            return null;
-        }
-
-        $agent = (new MegalomaniacAgent($user))->withPersonalization($resolution->promptBlock);
-
-        return app(AiRequestExecutor::class)->execute(
+        return app(AiInsightRunner::class)->run(
             $user,
-            $resolution,
-            fn (string $key, string $model, $provider): mixed => $prompt(
-                $agent,
+            $moduleKey,
+            fn (string $key, string $model, ?string $promptBlock): mixed => $prompt(
+                (new MegalomaniacAgent($user))->withPersonalization($promptBlock),
                 $key,
-                $model ?: $provider->model,
+                $model,
             ),
-        );
+        )->honestText();
     }
 
     public function generateWorkoutInsights(User $user): ?string
@@ -70,7 +61,7 @@ class InsightService
             fn (MegalomaniacAgent $agent, string $key, string $model): mixed => $agent
                 ->forUser($user)
                 ->prompt($prompt, provider: $key, model: $model),
-        )?->text;
+        );
     }
 
     public function generateFinanceInsights(User $user): ?string
@@ -107,7 +98,7 @@ class InsightService
             fn (MegalomaniacAgent $agent, string $key, string $model): mixed => $agent
                 ->forUser($user)
                 ->prompt($prompt, provider: $key, model: $model),
-        )?->text;
+        );
     }
 
     public function generateGroceryInsights(User $user): ?string
@@ -142,7 +133,7 @@ class InsightService
             fn (MegalomaniacAgent $agent, string $key, string $model): mixed => $agent
                 ->forUser($user)
                 ->prompt($prompt, provider: $key, model: $model),
-        )?->text;
+        );
     }
 
     public function generateTaskInsights(User $user): ?string
@@ -171,6 +162,6 @@ class InsightService
             fn (MegalomaniacAgent $agent, string $key, string $model): mixed => $agent
                 ->forUser($user)
                 ->prompt($prompt, provider: $key, model: $model),
-        )?->text;
+        );
     }
 }

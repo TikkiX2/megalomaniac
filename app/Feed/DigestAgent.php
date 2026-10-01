@@ -104,7 +104,9 @@ class DigestAgent
                 if ($text !== '') {
                     return $text;
                 }
-            } catch (Throwable) {
+            } catch (Throwable $e) {
+                report($e);
+
                 // Cae al digest determinístico.
             }
         }

@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Ai\Agents\MegalomaniacAgent;
-use App\Ai\Enums\AiScope;
-use App\Ai\Support\AiRequestExecutor;
-use App\Ai\Support\AiScopeResolver;
+use App\Ai\Support\AiInsightOutcome;
+use App\Ai\Support\AiInsightRunner;
 use App\Http\Controllers\Controller;
 use App\Models\MealLog;
 use App\Models\Routine;
@@ -21,27 +20,14 @@ class AiFitnessController extends Controller
      *
      * These endpoints already answer 200 with an honest "not configured" message
      * when AI is off, so an empty chain mirrors that instead of throwing from
-     * the executor.
+     * the executor. An exhausted chain is reported once by the runner and comes
+     * back flagged as exhausted, so the copy tells the truth without a 500.
      *
      * @param  callable(string $providerKey, string $model, string|null $promptBlock): mixed  $prompt
      */
-    private function onInsightScope(User $user, string $moduleKey, callable $prompt): mixed
+    private function onInsightScope(User $user, string $moduleKey, callable $prompt): AiInsightOutcome
     {
-        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceInsights, $moduleKey);
-
-        if ($resolution->isEmpty()) {
-            return null;
-        }
-
-        return app(AiRequestExecutor::class)->execute(
-            $user,
-            $resolution,
-            fn (string $key, string $model, $provider): mixed => $prompt(
-                $key,
-                $model ?: $provider->model,
-                $resolution->promptBlock,
-            ),
-        );
+        return app(AiInsightRunner::class)->run($user, $moduleKey, $prompt);
     }
 
     private function extractJson(string $text): ?array
@@ -161,14 +147,14 @@ class AiFitnessController extends Controller
                 ->prompt($prompt, provider: $key, model: $model),
         );
 
-        if ($response === null) {
+        if ($response->isEmpty()) {
             return response()->json([
                 'suggestion' => null,
-                'message' => 'AI not configured. Please enable AI in Settings.',
+                'message' => $response->message('AI not configured. Please enable AI in Settings.'),
             ]);
         }
 
-        $text = trim($response->text);
+        $text = trim((string) $response->text());
 
         $json = $this->extractJson($text);
 
@@ -225,14 +211,14 @@ class AiFitnessController extends Controller
                 ->prompt($prompt, provider: $key, model: $model),
         );
 
-        if ($response === null) {
+        if ($response->isEmpty()) {
             return response()->json([
                 'routine' => null,
-                'message' => 'AI not configured. Please enable AI in Settings.',
+                'message' => $response->message('AI not configured. Please enable AI in Settings.'),
             ]);
         }
 
-        $text = trim($response->text);
+        $text = trim((string) $response->text());
 
         $json = $this->extractJson($text);
 
