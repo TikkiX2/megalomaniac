@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Agents\TaskDescriptionAgent;
+use App\Ai\Enums\AiScope;
 use App\Ai\Services\InsightService;
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Support\AiRequestExecutor;
+use App\Ai\Support\AiScopeResolver;
 use App\Ai\Support\MarkdownToYoopta;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,6 +18,35 @@ class AiInsightController extends Controller
     public function __construct(
         protected InsightService $insightService,
     ) {}
+
+    /**
+     * Resolve the `surface:insights` chain for a module and run one prompt on it.
+     *
+     * These endpoints answered 200 with an honest message when the user had no
+     * provider, so an empty chain returns `null` here instead of letting the
+     * executor throw. An exhausted chain still propagates, as a failing provider
+     * always did.
+     *
+     * @param  callable(string $providerKey, string $model, string|null $promptBlock): mixed  $prompt
+     */
+    protected function onInsightScope(User $user, string $moduleKey, callable $prompt): mixed
+    {
+        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceInsights, $moduleKey);
+
+        if ($resolution->isEmpty()) {
+            return null;
+        }
+
+        return app(AiRequestExecutor::class)->execute(
+            $user,
+            $resolution,
+            fn (string $key, string $model, $provider): mixed => $prompt(
+                $key,
+                $model ?: $provider->model,
+                $resolution->promptBlock,
+            ),
+        );
+    }
 
     public function workout(Request $request): JsonResponse
     {
@@ -60,7 +92,6 @@ class AiInsightController extends Controller
             ]);
         }
 
-        $agent = new MegalomaniacAgent($user);
         $prompt = "Analyze the user's nutrition for the last 7 days and provide concise insights on:\n";
         $prompt .= "- Calorie intake trends\n";
         $prompt .= "- Macro balance (protein, carbs, fats)\n";
@@ -68,13 +99,18 @@ class AiInsightController extends Controller
         $prompt .= "- Recommendations to reach goals\n\n";
         $prompt .= "Meal data (JSON):\n".$recentMeals->toJson();
 
-        [$provider, $model] = AiProviderResolver::for($user);
-
-        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
+        $response = $this->onInsightScope(
+            $user,
+            'nutrition',
+            fn (string $key, string $model, ?string $promptBlock): mixed => (new MegalomaniacAgent($user))
+                ->withPersonalization($promptBlock)
+                ->forUser($user)
+                ->prompt($prompt, provider: $key, model: $model),
+        );
 
         return response()->json([
-            'insight' => $response->text,
-            'message' => null,
+            'insight' => $response?->text,
+            'message' => $response === null ? 'AI not configured.' : null,
         ]);
     }
 
@@ -115,7 +151,6 @@ class AiInsightController extends Controller
             ]);
         }
 
-        $agent = new MegalomaniacAgent($user);
         $prompt = "Generate a professional quote/proposal for a freelance project.\n\n";
         $prompt .= "Client: {$validated['client_name']}\n";
         $prompt .= "Project Description: {$validated['project_description']}\n";
@@ -129,9 +164,21 @@ class AiInsightController extends Controller
         $prompt .= "Return as JSON with this structure:\n";
         $prompt .= '{"items": [{"description": "...", "hours": N, "hourly_rate": N}], "summary": "...", "timeline": "..."}';
 
-        [$provider, $model] = AiProviderResolver::for($user);
+        $response = $this->onInsightScope(
+            $user,
+            'freelance',
+            fn (string $key, string $model, ?string $promptBlock): mixed => (new MegalomaniacAgent($user))
+                ->withPersonalization($promptBlock)
+                ->forUser($user)
+                ->prompt($prompt, provider: $key, model: $model),
+        );
 
-        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
+        if ($response === null) {
+            return response()->json([
+                'suggestion' => null,
+                'message' => 'AI not configured.',
+            ]);
+        }
 
         try {
             $json = json_decode($response->text, true);
@@ -180,9 +227,19 @@ class AiInsightController extends Controller
         }
         $prompt .= "Escribe la descripción con este pedido: {$validated['prompt']}";
 
-        [$provider, $model] = AiProviderResolver::for($user);
+        $response = $this->onInsightScope(
+            $user,
+            'freelance',
+            fn (string $key, string $model): mixed => (new TaskDescriptionAgent)
+                ->prompt($prompt, provider: $key, model: $model),
+        );
 
-        $response = (new TaskDescriptionAgent)->prompt($prompt, provider: $provider, model: $model);
+        if ($response === null) {
+            return response()->json([
+                'description' => null,
+                'message' => 'AI not configured.',
+            ]);
+        }
 
         $blocks = MarkdownToYoopta::convert($response->text);
 

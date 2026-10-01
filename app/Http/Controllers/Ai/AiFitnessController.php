@@ -3,16 +3,47 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Ai\Agents\MegalomaniacAgent;
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Enums\AiScope;
+use App\Ai\Support\AiRequestExecutor;
+use App\Ai\Support\AiScopeResolver;
 use App\Http\Controllers\Controller;
 use App\Models\MealLog;
 use App\Models\Routine;
+use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AiFitnessController extends Controller
 {
+    /**
+     * Resolve the `surface:insights` chain for a module and run one prompt on it.
+     *
+     * These endpoints already answer 200 with an honest "not configured" message
+     * when AI is off, so an empty chain mirrors that instead of throwing from
+     * the executor.
+     *
+     * @param  callable(string $providerKey, string $model, string|null $promptBlock): mixed  $prompt
+     */
+    private function onInsightScope(User $user, string $moduleKey, callable $prompt): mixed
+    {
+        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceInsights, $moduleKey);
+
+        if ($resolution->isEmpty()) {
+            return null;
+        }
+
+        return app(AiRequestExecutor::class)->execute(
+            $user,
+            $resolution,
+            fn (string $key, string $model, $provider): mixed => $prompt(
+                $key,
+                $model ?: $provider->model,
+                $resolution->promptBlock,
+            ),
+        );
+    }
+
     private function extractJson(string $text): ?array
     {
         $start = strpos($text, '{');
@@ -106,7 +137,6 @@ class AiFitnessController extends Controller
             'fats' => max(0, $goals['fats'] - $currentFats),
         ];
 
-        $agent = new MegalomaniacAgent($user);
         $prompt = "Suggest a single meal that would help the user reach their remaining macro goals for today.\n\n";
         $prompt .= "Current macros consumed:\n";
         $prompt .= "- Calories: {$currentCalories} / {$goals['calories']}\n";
@@ -122,9 +152,22 @@ class AiFitnessController extends Controller
         $prompt .= '{"name": "Meal Name", "calories": 500, "protein": 40, "carbs": 50, "fats": 15, "reason": "Why this meal fits your remaining macros"}\n';
         $prompt .= 'Only return the JSON object, no other text.';
 
-        [$provider, $model] = AiProviderResolver::for($user);
+        $response = $this->onInsightScope(
+            $user,
+            'nutrition',
+            fn (string $key, string $model, ?string $promptBlock): mixed => (new MegalomaniacAgent($user))
+                ->withPersonalization($promptBlock)
+                ->forUser($user)
+                ->prompt($prompt, provider: $key, model: $model),
+        );
 
-        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
+        if ($response === null) {
+            return response()->json([
+                'suggestion' => null,
+                'message' => 'AI not configured. Please enable AI in Settings.',
+            ]);
+        }
+
         $text = trim($response->text);
 
         $json = $this->extractJson($text);
@@ -164,7 +207,6 @@ class AiFitnessController extends Controller
             ->where('user_id', $user->id)
             ->get();
 
-        $agent = new MegalomaniacAgent($user);
         $prompt = "Generate a weekly workout routine based on the user's recent training history.\n\n";
         $prompt .= "Recent workouts (JSON):\n";
         $prompt .= $recentWorkouts->toJson()."\n\n";
@@ -174,9 +216,22 @@ class AiFitnessController extends Controller
         $prompt .= '{"name": "Routine Name", "focus": "Strength/Hypertrophy/etc", "exercises": [{"name": "Exercise Name", "sets": 3, "reps": "8-12", "notes": "Optional notes"}]}\n';
         $prompt .= 'Create a balanced routine that complements their recent training. Only return the JSON object, no other text.';
 
-        [$provider, $model] = AiProviderResolver::for($user);
+        $response = $this->onInsightScope(
+            $user,
+            'gym',
+            fn (string $key, string $model, ?string $promptBlock): mixed => (new MegalomaniacAgent($user))
+                ->withPersonalization($promptBlock)
+                ->forUser($user)
+                ->prompt($prompt, provider: $key, model: $model),
+        );
 
-        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
+        if ($response === null) {
+            return response()->json([
+                'routine' => null,
+                'message' => 'AI not configured. Please enable AI in Settings.',
+            ]);
+        }
+
         $text = trim($response->text);
 
         $json = $this->extractJson($text);

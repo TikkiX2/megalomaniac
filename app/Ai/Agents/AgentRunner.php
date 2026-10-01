@@ -2,7 +2,9 @@
 
 namespace App\Ai\Agents;
 
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Enums\AiScope;
+use App\Ai\Support\AiRequestExecutor;
+use App\Ai\Support\AiScopeResolver;
 use App\Integrations\Support\SecretRedactor;
 use App\Models\AgentDefinition;
 use App\Models\AgentRun;
@@ -34,9 +36,9 @@ class AgentRunner
             return $this->skip($definition, 'Presupuesto diario de ejecuciones alcanzado.', $triggeredBy);
         }
 
-        [$provider, $model] = AiProviderResolver::for($user);
+        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceAgents);
 
-        if ($provider === null) {
+        if (! $user->ai_enabled || $resolution->isEmpty()) {
             return $this->skip($definition, 'IA no configurada en Settings → IA.', $triggeredBy);
         }
 
@@ -53,11 +55,15 @@ class AgentRunner
         ]);
 
         try {
-            $response = (new RuntimeAgent($definition, $context))->prompt(
-                'Generá el informe ahora.',
-                provider: $provider,
-                model: $model,
-                timeout: 120,
+            $response = app(AiRequestExecutor::class)->execute(
+                $user,
+                $resolution,
+                fn (string $key, string $model): mixed => (new RuntimeAgent($definition, $context))->prompt(
+                    'Generá el informe ahora.',
+                    provider: $key,
+                    model: $model,
+                    timeout: 120,
+                ),
             );
 
             $output = $this->structured($response);

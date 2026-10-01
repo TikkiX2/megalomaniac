@@ -3,7 +3,10 @@
 namespace App\Feed;
 
 use App\Ai\Agents\TelegramNotifier;
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Enums\AiScope;
+use App\Ai\Support\AiRequestExecutor;
+use App\Ai\Support\AiScopeResolver;
+use App\Models\AiProvider;
 use App\Models\FeedDigest;
 use App\Models\FeedItem;
 use App\Models\FeedSource;
@@ -81,20 +84,22 @@ class DigestAgent
      */
     protected function summarize(User $user, Collection $items): string
     {
-        [$provider, $model] = AiProviderResolver::for($user);
+        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceFeed);
 
-        if ($provider !== null) {
+        if (! $resolution->isEmpty()) {
             try {
-                $response = (new FeedDigestAgent(
-                    $items->map(fn (FeedItem $item): array => [
-                        'title' => $item->title,
-                        'url' => $item->url,
-                        'source' => (string) $item->source?->name,
-                        'summary' => Str::limit((string) $item->summary, 300),
-                    ])->all(),
-                ))->prompt('Generá el digest de hoy.', provider: $provider, model: $model, timeout: 90);
-
-                $text = trim((string) $response);
+                $text = trim((string) app(AiRequestExecutor::class)->execute(
+                    $user,
+                    $resolution,
+                    fn (string $key, string $model, AiProvider $provider): mixed => (new FeedDigestAgent(
+                        $items->map(fn (FeedItem $item): array => [
+                            'title' => $item->title,
+                            'url' => $item->url,
+                            'source' => (string) $item->source?->name,
+                            'summary' => Str::limit((string) $item->summary, 300),
+                        ])->all(),
+                    ))->prompt('Generá el digest de hoy.', provider: $key, model: $model ?: $provider->model, timeout: 90),
+                ));
 
                 if ($text !== '') {
                     return $text;

@@ -17,12 +17,9 @@ use Illuminate\Support\Facades\Http;
 
 function aiUser(): User
 {
-    return User::factory()->create([
-        'ai_enabled' => true,
-        'ai_provider_url' => 'http://ai.test/v1',
-        'ai_provider_key' => 'test-key',
-        'ai_model' => 'test-model',
-    ]);
+    // Agents resolve providers through the `surface:agents` scope, so the user
+    // needs a real registry row (the implicit chain), not just BYO columns.
+    return User::factory()->withAiProvider('test-model')->create();
 }
 
 it('runs successfully and stores report, suggestions and notification', function () {

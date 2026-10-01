@@ -2,7 +2,10 @@
 
 namespace App\Feed;
 
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Enums\AiScope;
+use App\Ai\Support\AiRequestExecutor;
+use App\Ai\Support\AiScopeResolver;
+use App\Models\AiProvider;
 use App\Models\FeedItem;
 use App\Models\FeedPreference;
 use App\Models\User;
@@ -34,12 +37,18 @@ class FeedRanker
         }
 
         $preferences = FeedPreference::forUser($user);
-        [$embeddingsProvider, $embeddingsModel] = AiProviderResolver::embeddingsFor($user);
 
-        $useEmbeddings = $embeddingsProvider !== null && filled($preferences->embedding);
+        // Embeddings come from the `surface:embeddings` chain, using the
+        // resolved provider's own embeddings model. No model → lexical ranking,
+        // exactly as before.
+        $embeddings = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceEmbeddings)->primary();
+
+        $useEmbeddings = $embeddings !== null
+            && filled($embeddings->embeddings_model)
+            && filled($preferences->embedding);
 
         if ($useEmbeddings) {
-            $this->ensureEmbeddings($items, $embeddingsProvider, $embeddingsModel);
+            $this->ensureEmbeddings($user, $items, $embeddings);
         } else {
             $this->scoreWithLlm($user, $preferences, $items);
         }
@@ -68,9 +77,16 @@ class FeedRanker
     }
 
     /**
+     * Generate and persist the missing vectors, trying the embeddings chain.
+     *
+     * The chain is resolved once here; each attempt re-wires its own provider
+     * and asks for that provider's embeddings model, falling back to the
+     * resolved one. Any failure (including an exhausted chain) is swallowed so
+     * ranking continues on the lexical score.
+     *
      * @param  Collection<int, FeedItem>  $items
      */
-    protected function ensureEmbeddings(Collection $items, string $provider, ?string $model): void
+    protected function ensureEmbeddings(User $user, Collection $items, AiProvider $primary): void
     {
         $missing = $items->filter(fn (FeedItem $item): bool => empty($item->embedding))->take(100);
 
@@ -78,18 +94,33 @@ class FeedRanker
             return;
         }
 
+        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceEmbeddings);
+
+        if ($resolution->isEmpty()) {
+            return;
+        }
+
         try {
-            $response = Embeddings::for(
-                $missing->map(fn (FeedItem $item): string => $item->title.' '.($item->summary ?? ''))->all(),
-            )->cache()->generate(provider: $provider, model: $model);
+            app(AiRequestExecutor::class)->execute(
+                $user,
+                $resolution,
+                function (string $key, string $model, AiProvider $provider) use ($missing): void {
+                    $response = Embeddings::for(
+                        $missing->map(fn (FeedItem $item): string => $item->title.' '.($item->summary ?? ''))->all(),
+                    )->cache()->generate(
+                        provider: $key,
+                        model: $provider->embeddings_model ?: $model,
+                    );
 
-            foreach ($missing->values() as $index => $item) {
-                $vector = $response->embeddings[$index] ?? null;
+                    foreach ($missing->values() as $index => $item) {
+                        $vector = $response->embeddings[$index] ?? null;
 
-                if (is_array($vector)) {
-                    $item->forceFill(['embedding' => $vector])->save();
-                }
-            }
+                        if (is_array($vector)) {
+                            $item->forceFill(['embedding' => $vector])->save();
+                        }
+                    }
+                },
+            );
         } catch (Throwable) {
             // Sin embeddings se cae al scoring léxico.
         }
@@ -100,9 +131,10 @@ class FeedRanker
      */
     protected function scoreWithLlm(User $user, FeedPreference $preferences, Collection $items): void
     {
-        [$provider, $model] = AiProviderResolver::for($user);
+        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceFeed);
 
-        if ($provider === null) {
+        // Sin proveedor de scoring el léximo ya está disponible en `lexical()`.
+        if ($resolution->isEmpty()) {
             return;
         }
 
@@ -121,10 +153,16 @@ class FeedRanker
         }
 
         try {
-            $response = (new FeedScoringAgent($candidates->all(), $preferences->topic_weights ?? []))
-                ->prompt('Puntuá estos items.', provider: $provider, model: $model, timeout: 60);
+            $scores = app(AiRequestExecutor::class)->execute(
+                $user,
+                $resolution,
+                function (string $key, string $model, AiProvider $provider) use ($candidates, $preferences): array {
+                    $response = (new FeedScoringAgent($candidates->all(), $preferences->topic_weights ?? []))
+                        ->prompt('Puntuá estos items.', provider: $key, model: $model ?: $provider->model, timeout: 60);
 
-            $scores = $this->parseScores((string) $response);
+                    return $this->parseScores((string) $response);
+                },
+            );
 
             foreach ($items as $item) {
                 if (array_key_exists($item->id, $scores)) {

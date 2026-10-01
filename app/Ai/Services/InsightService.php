@@ -3,18 +3,49 @@
 namespace App\Ai\Services;
 
 use App\Ai\Agents\MegalomaniacAgent;
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Enums\AiScope;
+use App\Ai\Support\AiRequestExecutor;
+use App\Ai\Support\AiScopeResolver;
 use App\Models\User;
 
 class InsightService
 {
+    /**
+     * Resolve the `surface:insights` chain for a module and run the prompt on it.
+     *
+     * A user without a usable provider keeps the existing contract: `null`, which
+     * the controllers already surface as "AI not configured or no data
+     * available." An exhausted chain propagates, as a provider failure always did.
+     *
+     * @param  callable(MegalomaniacAgent, string, string): mixed  $prompt
+     */
+    protected function generate(User $user, string $moduleKey, callable $prompt): mixed
+    {
+        $resolution = app(AiScopeResolver::class)->resolve($user, AiScope::SurfaceInsights, $moduleKey);
+
+        if ($resolution->isEmpty()) {
+            return null;
+        }
+
+        $agent = (new MegalomaniacAgent($user))->withPersonalization($resolution->promptBlock);
+
+        return app(AiRequestExecutor::class)->execute(
+            $user,
+            $resolution,
+            fn (string $key, string $model, $provider): mixed => $prompt(
+                $agent,
+                $key,
+                $model ?: $provider->model,
+            ),
+        );
+    }
+
     public function generateWorkoutInsights(User $user): ?string
     {
         if (! $user->ai_enabled) {
             return null;
         }
 
-        $agent = new MegalomaniacAgent($user);
         $recentWorkouts = $user->workouts()
             ->with(['exercises.sets', 'routine'])
             ->where('started_at', '>=', now()->subDays(30))
@@ -33,11 +64,13 @@ class InsightService
         $prompt .= "Workout data (JSON):\n";
         $prompt .= $recentWorkouts->toJson();
 
-        [$provider, $model] = AiProviderResolver::for($user);
-
-        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
-
-        return $response->text;
+        return $this->generate(
+            $user,
+            'gym',
+            fn (MegalomaniacAgent $agent, string $key, string $model): mixed => $agent
+                ->forUser($user)
+                ->prompt($prompt, provider: $key, model: $model),
+        )?->text;
     }
 
     public function generateFinanceInsights(User $user): ?string
@@ -46,7 +79,6 @@ class InsightService
             return null;
         }
 
-        $agent = new MegalomaniacAgent($user);
         $recentPurchases = $user->purchases()
             ->with('category')
             ->where('purchase_date', '>=', now()->subDays(30))
@@ -69,11 +101,13 @@ class InsightService
         $prompt .= "Incomes (JSON):\n".$recentIncomes->toJson()."\n";
         $prompt .= "Debts (JSON):\n".$debts->toJson();
 
-        [$provider, $model] = AiProviderResolver::for($user);
-
-        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
-
-        return $response->text;
+        return $this->generate(
+            $user,
+            'finance',
+            fn (MegalomaniacAgent $agent, string $key, string $model): mixed => $agent
+                ->forUser($user)
+                ->prompt($prompt, provider: $key, model: $model),
+        )?->text;
     }
 
     public function generateGroceryInsights(User $user): ?string
@@ -82,7 +116,6 @@ class InsightService
             return null;
         }
 
-        $agent = new MegalomaniacAgent($user);
         $items = $user->groceryItems()->get();
         $recentHistory = $user->groceryItems()
             ->with('priceHistory')
@@ -103,11 +136,13 @@ class InsightService
             $prompt .= "Price history (JSON):\n".$recentHistory->toJson();
         }
 
-        [$provider, $model] = AiProviderResolver::for($user);
-
-        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
-
-        return $response->text;
+        return $this->generate(
+            $user,
+            'grocery',
+            fn (MegalomaniacAgent $agent, string $key, string $model): mixed => $agent
+                ->forUser($user)
+                ->prompt($prompt, provider: $key, model: $model),
+        )?->text;
     }
 
     public function generateTaskInsights(User $user): ?string
@@ -116,7 +151,6 @@ class InsightService
             return null;
         }
 
-        $agent = new MegalomaniacAgent($user);
         $tasks = $user->personalTasks()
             ->where('is_done', false)
             ->orderBy('due_date', 'asc')
@@ -131,10 +165,12 @@ class InsightService
         $prompt .= "Provide a concise ranked list with brief reasoning for each task's priority.\n\n";
         $prompt .= "Pending tasks (JSON):\n".$tasks->toJson();
 
-        [$provider, $model] = AiProviderResolver::for($user);
-
-        $response = $agent->forUser($user)->prompt($prompt, provider: $provider, model: $model);
-
-        return $response->text;
+        return $this->generate(
+            $user,
+            'freelance',
+            fn (MegalomaniacAgent $agent, string $key, string $model): mixed => $agent
+                ->forUser($user)
+                ->prompt($prompt, provider: $key, model: $model),
+        )?->text;
     }
 }

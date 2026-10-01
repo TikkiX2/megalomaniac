@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Feed;
 
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Enums\AiScope;
+use App\Ai\Support\AiScopeResolver;
 use App\Feed\DigestAgent;
 use App\Feed\FeedLearner;
 use App\Feed\FeedRanker;
@@ -66,7 +67,10 @@ class FeedController extends Controller
                 'last_fetched_at' => $source->last_fetched_at?->toIso8601String(),
             ])->values(),
             'tab' => $tab,
-            'hasEmbeddings' => AiProviderResolver::embeddingsFor($user)[0] !== null,
+            'hasEmbeddings' => app(AiScopeResolver::class)
+                ->resolve($user, AiScope::SurfaceEmbeddings)
+                ->primary()
+                ?->embeddings_model !== null,
         ]);
     }
 

@@ -49,12 +49,9 @@ it('updates the embedding centroid on positive signals', function () {
 it('generates a digest with the agent and notifies telegram', function () {
     FeedDigestAgent::fake(['## Digest de prueba']);
 
-    $user = User::factory()->create([
-        'ai_enabled' => true,
-        'ai_provider_url' => 'http://ai.test/v1',
-        'ai_provider_key' => 'k',
-        'ai_model' => 'm',
-    ]);
+    // The digest resolves through the `surface:feed` scope, which needs a real
+    // provider row (the implicit chain) rather than BYO columns.
+    $user = User::factory()->withAiProvider()->create();
     Connection::factory()->for($user)->create([
         'kind' => 'telegram',
         'base_url' => 'https://api.telegram.org',
@@ -88,12 +85,7 @@ it('generates due digests only after the configured hour', function () {
     FeedDigestAgent::fake(['## Due']);
     config(['feed.digest_hour' => 8]);
 
-    $user = User::factory()->create([
-        'ai_enabled' => true,
-        'ai_provider_url' => 'http://ai.test/v1',
-        'ai_provider_key' => 'k',
-        'ai_model' => 'm',
-    ]);
+    $user = User::factory()->withAiProvider()->create();
     FeedSource::factory()->for($user)->create();
     FeedItem::factory()->for($user)->create();
 

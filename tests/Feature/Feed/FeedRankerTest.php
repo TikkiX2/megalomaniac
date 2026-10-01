@@ -1,35 +1,42 @@
 <?php
 
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Enums\AiScope;
+use App\Ai\Support\AiScopeResolver;
 use App\Feed\FeedRanker;
 use App\Feed\FeedScoringAgent;
+use App\Models\AiProvider;
 use App\Models\FeedItem;
 use App\Models\FeedPreference;
 use App\Models\User;
 use Laravel\Ai\Embeddings;
 
-function feedUser(array $attributes = []): User
+/**
+ * The feed resolves providers through the registry, so a user that should be
+ * able to embed needs a real `ai_providers` row.
+ */
+function feedUser(?string $embeddingsModel = null): User
 {
-    return User::factory()->create(array_merge([
-        'ai_enabled' => true,
-        'ai_provider_url' => 'http://ai.test/v1',
-        'ai_provider_key' => 'k',
-        'ai_model' => 'm',
-    ], $attributes));
+    $user = User::factory()->create(['ai_enabled' => true]);
+
+    AiProvider::factory()->for($user)->create(['embeddings_model' => $embeddingsModel]);
+
+    return $user;
 }
 
-it('resolves embeddings providers', function () {
-    expect(AiProviderResolver::embeddingsFor(feedUser(['ai_embeddings_model' => 'emb-1'])))->toBe(['user', 'emb-1'])
-        ->and(AiProviderResolver::embeddingsFor(User::factory()->create()))->toBe([null, null]);
+it('resolves the embeddings provider of the scope', function () {
+    $without = feedUser();
+    expect(app(AiScopeResolver::class)->resolve($without, AiScope::SurfaceEmbeddings)->primary()?->embeddings_model)->toBeNull();
 
-    config(['ai.providers.openai.key' => 'server-key']);
-    expect(AiProviderResolver::embeddingsFor(User::factory()->create()))->toBe(['openai', null]);
+    $with = feedUser('emb-1');
+    expect(app(AiScopeResolver::class)->resolve($with, AiScope::SurfaceEmbeddings)->primary()?->embeddings_model)->toBe('emb-1');
+
+    expect(app(AiScopeResolver::class)->resolve(User::factory()->create(), AiScope::SurfaceEmbeddings)->isEmpty())->toBeTrue();
 });
 
 it('ranks by embedding similarity when available', function () {
     Embeddings::fake();
 
-    $user = feedUser(['ai_embeddings_model' => 'emb-1']);
+    $user = feedUser('emb-1');
     FeedPreference::forUser($user)->update(['embedding' => [1.0, 0.0]]);
 
     $near = FeedItem::factory()->for($user)->create(['title' => 'Cercano', 'embedding' => [1.0, 0.0]]);

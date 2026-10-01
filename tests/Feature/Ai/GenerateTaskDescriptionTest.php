@@ -1,7 +1,9 @@
 <?php
 
 use App\Ai\Agents\TaskDescriptionAgent;
+use App\Models\AiProvider;
 use App\Models\User;
+use App\Models\UserAiScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -9,7 +11,7 @@ uses(RefreshDatabase::class);
 it('generates a description as yoopta blocks', function () {
     TaskDescriptionAgent::fake(["# Objetivo\nImplementar el login."]);
 
-    $user = User::factory()->create(['ai_enabled' => true]);
+    $user = User::factory()->withAiProvider()->create();
 
     $response = $this->actingAs($user)->postJson('/ai/generate-task-description', [
         'prompt' => 'Login con email y password',
@@ -30,14 +32,19 @@ it('generates a description as yoopta blocks', function () {
         ->and($blocks[1]['value'][0]['children'][0]['text'])->toBe('Implementar el login.');
 });
 
-it('uses the user provider when configured', function () {
+it('uses the provider of the resolved freelance scope', function () {
     TaskDescriptionAgent::fake(['Descripción generada.']);
 
-    $user = User::factory()->create([
-        'ai_enabled' => true,
-        'ai_provider_url' => 'https://api.deepseek.com/v1',
-        'ai_provider_key' => 'sk-test',
-        'ai_model' => 'deepseek-chat',
+    $user = User::factory()->withAiProvider()->create();
+    $provider = AiProvider::factory()->for($user)->create([
+        'name' => 'Freelance',
+        'url' => 'https://api.deepseek.com/v1',
+        'key' => 'sk-deepseek',
+        'model' => 'deepseek-chat',
+    ]);
+    UserAiScope::factory()->for($user)->create([
+        'scope' => 'module:freelance',
+        'provider_chain' => [$provider->id],
     ]);
 
     $response = $this->actingAs($user)
@@ -49,8 +56,9 @@ it('uses the user provider when configured', function () {
     expect($block['type'])->toBe('Paragraph')
         ->and($block['value'][0]['children'][0]['text'])->toBe('Descripción generada.');
 
-    expect(config('ai.providers.user.url'))->toBe('https://api.deepseek.com/v1')
-        ->and(config('ai.providers.user.key'))->toBe('sk-test');
+    // The scope's provider is wired under its own registry key, not `user`.
+    expect(config('ai.providers.pm'.$provider->id.'.url'))->toBe('https://api.deepseek.com/v1')
+        ->and(config('ai.providers.pm'.$provider->id.'.key'))->toBe('sk-deepseek');
 });
 
 it('returns message when ai is disabled', function () {
@@ -73,7 +81,7 @@ it('validates prompt', function () {
 it('returns message when the model output is empty', function () {
     TaskDescriptionAgent::fake(['   ']);
 
-    $user = User::factory()->create(['ai_enabled' => true]);
+    $user = User::factory()->withAiProvider()->create();
 
     $this->actingAs($user)
         ->postJson('/ai/generate-task-description', ['prompt' => 'algo'])
