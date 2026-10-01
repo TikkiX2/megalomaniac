@@ -1,5 +1,6 @@
 <?php
 
+use App\Ai\Enums\AiScope;
 use App\Http\Controllers\AgentSuggestionController;
 use App\Http\Controllers\Ai\AiFitnessController;
 use App\Http\Controllers\Ai\ChatAttachmentController;
@@ -225,6 +226,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // AI Freelance Routes
     Route::post('ai/generate-quote', [AiInsightController::class, 'generateQuote'])->name('ai.generate-quote');
     Route::post('ai/generate-task-description', [AiInsightController::class, 'generateTaskDescription'])->name('ai.generate-task-description');
+
+    // AI Module Assistants: a thin wrapper of the chat surface per module.
+    // Declared after every literal `ai/*` route (and constrained to the known
+    // module keys) so none of them can be captured as a module.
+    Route::get('ai/{module}', [ChatController::class, 'module'])
+        ->where('module', implode('|', AiScope::moduleKeys()))
+        ->name('ai.module');
 
     // Task board columns
     Route::post('task-board-columns', [TaskBoardColumnController::class, 'store'])->name('task-board-columns.store');

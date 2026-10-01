@@ -22,6 +22,7 @@ use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
@@ -53,16 +54,39 @@ class ChatController extends Controller
 
     public function index(Request $request): Response
     {
+        return Inertia::render('ai/chat', $this->chatPageProps($request, null));
+    }
+
+    /**
+     * The per-module assistant (`/ai/{module}`): the same chat surface with its
+     * rail narrowed to the module and the new thread tagged with it. The
+     * module also drives the thread's scope, so its prompt layer and provider
+     * chain apply from the first turn on.
+     */
+    public function module(Request $request, string $module): Response
+    {
+        return Inertia::render('ai/module', $this->chatPageProps($request, $module));
+    }
+
+    /**
+     * Props shared by the general chat home and the module wrappers, so both
+     * surfaces stay in sync. `module` is null on the general chat.
+     *
+     * @return array<string, mixed>
+     */
+    protected function chatPageProps(Request $request, ?string $module): array
+    {
         $user = $request->user();
 
-        return Inertia::render('ai/chat', [
-            'threads' => ChatThreadResource::collection($this->threadsFor($user))->resolve($request),
+        return [
+            'threads' => ChatThreadResource::collection($this->threadsFor($user, $module))->resolve($request),
             'models' => $this->service->availableModels($user),
             'agents' => $this->agentsFor($user),
             'toolGroups' => $this->toolGroups(),
             'skills' => $this->skillCatalog->summariesFor($user),
             'ai' => $this->aiState($user),
-        ]);
+            'module' => $module,
+        ];
     }
 
     public function show(Request $request, ChatThread $thread): Response
@@ -172,7 +196,15 @@ class ChatController extends Controller
 
             $this->authorize('update', $thread);
         } else {
-            $thread = $this->service->createThread($user, $request->validated('message'), $model, (string) ($request->validated('agent') ?? 'megalomaniac'));
+            // The module only tags a new thread; an existing one keeps the
+            // module it was born in (its scope follows the thread).
+            $thread = $this->service->createThread(
+                $user,
+                $request->validated('message'),
+                $model,
+                (string) ($request->validated('agent') ?? 'megalomaniac'),
+                $request->validated('module'),
+            );
 
             // Documents uploaded from the chat home become sources of the
             // freshly created thread (pivot) so their context is injected.
@@ -615,13 +647,28 @@ class ChatController extends Controller
     }
 
     /**
+     * The thread rail: the user's active threads that have messages, pinned
+     * first and then most recent. A module narrows it to that module's own
+     * threads; a null module is the general chat with every thread.
+     *
      * @return Collection<int, ChatThread>
      */
-    protected function threadsFor(User $user): Collection
+    protected function threadsFor(User $user, ?string $module = null): Collection
     {
-        return ChatThread::query()
-            ->forUser($user)
-            ->active()
+        $query = ChatThread::query()->forUser($user)->active();
+
+        if ($module === ChatThread::MODULE_HEALTH) {
+            // Health predates the `module` column, so its history lives in
+            // `category = 'salud'`. Both spellings belong to the same rail:
+            // filtering on one of them alone would split the history.
+            $query->where(fn (Builder $query): Builder => $query
+                ->category(ChatThread::CATEGORY_HEALTH)
+                ->orWhere('module', ChatThread::MODULE_HEALTH));
+        } elseif ($module !== null) {
+            $query->where('module', $module);
+        }
+
+        return $query
             ->withMessages()
             ->ordered()
             ->limit(100)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Ai;
 
+use App\Ai\Enums\AiScope;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,6 +23,9 @@ class SendChatMessageRequest extends FormRequest
             'thread_id' => ['nullable', 'string', 'size:36'],
             'model' => ['nullable', 'string', 'max:100'],
             'agent' => ['nullable', 'string', 'max:50'],
+            // The module a new thread is born in. Ignored for an existing
+            // thread: that one stays in the module it was created in.
+            'module' => ['nullable', 'string', Rule::in(AiScope::moduleKeys())],
             'tools_policy' => ['nullable', 'array'],
             'tools_policy.mode' => ['required_with:tools_policy', 'string', 'in:auto,manual'],
             'tools_policy.groups' => ['nullable', 'array'],

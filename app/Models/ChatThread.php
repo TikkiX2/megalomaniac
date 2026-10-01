@@ -20,6 +20,13 @@ class ChatThread extends Conversation
 
     public const CATEGORY_HEALTH = 'salud';
 
+    /**
+     * Module key of the health assistant. Health threads were born before the
+     * `module` column and are still identified by `category = 'salud'`, so this
+     * constant is only the key they resolve to as a module.
+     */
+    public const MODULE_HEALTH = 'health';
+
     public $incrementing = false;
 
     protected function casts(): array

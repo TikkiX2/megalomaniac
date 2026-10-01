@@ -144,8 +144,18 @@ class ChatService
         }
     }
 
-    public function createThread(User $user, string $firstMessage, ?string $model = null, string $agent = 'megalomaniac'): ChatThread
-    {
+    /**
+     * A thread is born in the module its first message was sent from, and stays
+     * there: the module decides its prompt layer and provider chain for every
+     * later turn. A null (or unknown) module means the general chat.
+     */
+    public function createThread(
+        User $user,
+        string $firstMessage,
+        ?string $model = null,
+        string $agent = 'megalomaniac',
+        ?string $module = null,
+    ): ChatThread {
         return ChatThread::create([
             'id' => (string) Str::uuid7(),
             'participant_type' => $user->getMorphClass(),
@@ -153,6 +163,7 @@ class ChatService
             'title' => Str::limit(trim(strip_tags($firstMessage)), 60, preserveWords: true),
             'agent' => $agent,
             'model' => $model,
+            'module' => $this->normalizeModuleKey($module),
         ]);
     }
 
@@ -371,18 +382,24 @@ class ChatService
      * null when the thread has none.
      *
      * Health threads predate the `module` column and carry `category = 'salud'`
-     * instead. Any other value is not a module key we know, and resolving it
-     * would make `AiScope::fromModuleKey()` throw, so it degrades to "no module".
+     * instead; an unknown value degrades to "no module".
      */
     protected function moduleKeyFor(ChatThread $thread): ?string
     {
-        $module = $thread->module;
+        return $this->normalizeModuleKey($thread->module)
+            ?? ($thread->category === ChatThread::CATEGORY_HEALTH ? 'health' : null);
+    }
 
-        if (is_string($module) && AiScope::tryFrom('module:'.$module) !== null) {
-            return $module;
-        }
-
-        return $thread->category === ChatThread::CATEGORY_HEALTH ? 'health' : null;
+    /**
+     * The given key when it names a module we know, null otherwise. Anything
+     * else degrades to "no module": resolving it would make
+     * `AiScope::fromModuleKey()` throw mid-turn.
+     */
+    protected function normalizeModuleKey(mixed $module): ?string
+    {
+        return is_string($module) && AiScope::tryFrom('module:'.$module) !== null
+            ? $module
+            : null;
     }
 
     /**

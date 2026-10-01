@@ -10,13 +10,15 @@ import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
 import type { AiChatState, ChatThread, ToolPolicy } from '@/types/chat';
 
-interface ChatIndexProps {
+export interface ChatIndexProps {
     threads: ChatThread[];
     models: string[];
     agents: { key: string; name: string }[];
     toolGroups: { key: string; label: string }[];
     skills: { key: string; name: string }[];
     ai: AiChatState;
+    /** Module this surface is scoped to; null on the general chat. */
+    module?: string | null;
 }
 
 const SUGGESTIONS = [
@@ -26,7 +28,7 @@ const SUGGESTIONS = [
     '¿Qué tareas tengo pendientes con fecha límite próxima?',
 ];
 
-export default function ChatIndex({ threads, models, agents, toolGroups, skills, ai }: ChatIndexProps) {
+export default function ChatIndex({ threads, models, agents, toolGroups, skills, ai, module }: ChatIndexProps) {
     const [model, setModel] = useState<string | null>(ai.defaultModel ?? models[0] ?? null);
     const [agent, setAgent] = useState('megalomaniac');
     const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>({ mode: 'auto', groups: [] });
@@ -89,6 +91,8 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
             message,
             model: model ?? undefined,
             agent: agent !== 'megalomaniac' ? agent : undefined,
+            // Tags the new thread with the module this surface lives in.
+            module: module ?? undefined,
             tools_policy:
                 toolsPolicy.mode === 'auto'
                     ? { mode: 'auto', groups: [] }

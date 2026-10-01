@@ -62,6 +62,24 @@ enum AiScope: string
         return self::from('module:'.$key);
     }
 
+    /**
+     * Los keys de módulo (`gym`, `nutrition`, …) en orden de declaración.
+     *
+     * @return array<int, string>
+     */
+    public static function moduleKeys(): array
+    {
+        $keys = [];
+
+        foreach (self::cases() as $case) {
+            if ($case->moduleKey() !== null) {
+                $keys[] = $case->moduleKey();
+            }
+        }
+
+        return $keys;
+    }
+
     /** @return array<int, string> */
     public static function values(): array
     {
