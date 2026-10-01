@@ -80,6 +80,32 @@ enum AiScope: string
         return $keys;
     }
 
+    /**
+     * Los tres chips de sugerencia del empty state del asistente de cada
+     * módulo, en el orden en que se muestran. Un módulo desconocido (o una
+     * superficie que no es módulo) devuelve `[]` y el frontend no dibuja
+     * chips en vez de inventar textos.
+     *
+     * `people` usa el chip genérico de contactos: el nombre de una persona
+     * concreta depende del usuario, y este mapa es estático por módulo (no
+     * recibe ni el usuario ni su agenda).
+     *
+     * @return array<int, string>
+     */
+    public static function moduleSuggestions(string $module): array
+    {
+        return match ($module) {
+            'gym' => ['¿Cómo va mi semana?', 'Sugerí un ejercicio para pecho', 'Compará mi último PR'],
+            'nutrition' => ['¿Cómo voy en proteína?', 'Armame un menú para mañana', '¿Qué comí esta semana?'],
+            'grocery' => ['¿Qué me falta comprar?', 'Armame la lista del súper', '¿Venció algo?'],
+            'finance' => ['¿Cómo voy este mes?', '¿Cuánto gasté en ocio?', '¿Qué deudas tengo?'],
+            'freelance' => ['¿Qué proyectos tengo activos?', 'Redactá una cotización', '¿Qué tareas vencen?'],
+            'health' => ['¿Cómo están mis mediciones?', '¿Qué medicamento me queda?', 'Resumí mis síntomas'],
+            'people' => ['¿Con quién hablé hace días?', '¿Qué fechas tengo próximas?', '¿Quiénes son mis contactos frecuentes?'],
+            default => [],
+        };
+    }
+
     /** @return array<int, string> */
     public static function values(): array
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Ai;
 
+use App\Ai\Enums\AiScope;
 use App\Ai\Services\ChatService;
 use App\Ai\Skills\SkillCatalog;
 use App\Ai\Support\AiAllProvidersFailedException;
@@ -86,6 +87,9 @@ class ChatController extends Controller
             'skills' => $this->skillCatalog->summariesFor($user),
             'ai' => $this->aiState($user),
             'module' => $module,
+            // The empty state offers three module-specific prompts; on the
+            // general chat (null module) that is an empty list.
+            'suggestions' => $module === null ? [] : AiScope::moduleSuggestions($module),
         ];
     }
 

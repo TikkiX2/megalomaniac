@@ -129,6 +129,37 @@ test('a module thread streams its turn on the module chain', function () {
         ->toContain('"provider":"Gym provider"');
 });
 
+test('module page passes its key and module-specific suggestions', function () {
+    $user = User::factory()->withAiProvider()->create();
+
+    $this->actingAs($user)
+        ->get('/ai/gym')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('ai/module')
+            ->where('module', 'gym')
+            ->has('suggestions', 3)
+            ->where('suggestions.0', '¿Cómo va mi semana?')
+            ->where('suggestions.1', 'Sugerí un ejercicio para pecho')
+            ->where('suggestions.2', 'Compará mi último PR')
+        );
+});
+
+test('each module carries its own suggestions', function () {
+    $user = User::factory()->withAiProvider()->create();
+
+    $this->actingAs($user)
+        ->get('/ai/finance')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('module', 'finance')
+            ->has('suggestions', 3)
+            ->where('suggestions.0', '¿Cómo voy este mes?')
+            ->where('suggestions.1', '¿Cuánto gasté en ocio?')
+            ->where('suggestions.2', '¿Qué deudas tengo?')
+        );
+});
+
 test('a salud thread without a module column still resolves the health scope', function () {
     MegalomaniacAgent::fake(['OK']);
 
