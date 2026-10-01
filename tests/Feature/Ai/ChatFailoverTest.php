@@ -98,3 +98,33 @@ test('a successful turn announces which provider answered and records it on the 
         'fallback' => true,
     ]);
 });
+
+// Regresión de QA (Task 15): el chip «Fallback» del `ProviderBadge` se pintaba
+// sólo con el evento SSE en vivo. Al recargar, `thread.tsx` lee
+// `message.meta.ai`, pero `ChatMessageResource` no serializaba `meta`: el badge
+// desaparecía y el usuario perdía la trazabilidad de qué proveedor respondió.
+test('the thread page exposes the persisted turn meta so the badge survives a reload', function () {
+    $user = User::factory()->withAiProvider()->create();
+    AiProvider::factory()->for($user)->create([
+        'name' => 'Backup',
+        'url' => 'https://backup.example.com/v1',
+        'sort_order' => 1,
+    ]);
+
+    Http::fake([
+        'api.example.com/*' => Http::response(['error' => ['message' => 'Unauthorized']], 401),
+        'backup.example.com/*' => Http::response(backupSse(), 200, ['Content-Type' => 'text/event-stream']),
+    ]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), ['message' => 'Hola'])->streamedContent();
+
+    $thread = ChatThread::query()->sole();
+
+    $this->actingAs($user)->get(route('ai.chat.show', $thread))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('ai/thread')
+            ->where('messages.1.meta.ai.provider', 'Backup')
+            ->where('messages.1.meta.ai.model', 'test-model')
+            ->where('messages.1.meta.ai.fallback', true));
+});

@@ -18,6 +18,13 @@ class ChatMessageResource extends JsonResource
             'content' => $this->content,
             'citations' => $this->citations(),
             'reasoning' => $this->meta['reasoning'] ?? null,
+            // Turn metadata (provider/model/fallback) so the thread page can
+            // render `ProviderBadge` from the persisted turn after a reload,
+            // not only from the live SSE `type:meta` event. Only the `ai` key is
+            // exposed: the rest of `meta` holds tool internals.
+            'meta' => [
+                'ai' => $this->meta['ai'] ?? null,
+            ],
             'pending_approvals' => collect($this->approval_state['pending'] ?? [])
                 ->map(function (string $reason, string $toolCallId): array {
                     $call = collect($this->tool_calls ?? [])->firstWhere('id', $toolCallId);

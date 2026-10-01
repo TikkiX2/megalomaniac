@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
     SelectLabel,
     SelectTrigger,
@@ -862,14 +863,14 @@ function PromptsTab({ scopes }: { scopes: ScopeRow[] }) {
                                     const rows = editable.filter((candidate) => candidate.section === section.key);
 
                                     return rows.length === 0 ? null : (
-                                        <Fragment key={section.key}>
+                                        <SelectGroup key={section.key}>
                                             <SelectLabel>{section.title}</SelectLabel>
                                             {rows.map((candidate) => (
                                                 <SelectItem key={candidate.scope} value={candidate.scope}>
                                                     {candidate.label}
                                                 </SelectItem>
                                             ))}
-                                        </Fragment>
+                                        </SelectGroup>
                                     );
                                 })}
                             </SelectContent>

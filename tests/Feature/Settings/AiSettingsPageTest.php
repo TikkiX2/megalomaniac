@@ -43,3 +43,36 @@ test('assignments tab data lists global, surfaces and modules', function () {
             ->where('module_labels.gym', 'Gimnasio')
             ->where('scopes.0.effective', fn ($ids) => count($ids) === 1));
 });
+
+// Regresión de QA (Task 15): el selector de scope de la pestaña «Prompts» agrupaba
+// sus opciones con un `SelectLabel` desnudo. Radix lee ese label del contexto de
+// `SelectGroup`, así que abrir la pestaña tiraba
+// «`SelectLabel` must be used within `SelectGroup`» y React desmontaba la página
+// entera (pantalla en blanco). El repo no tiene runner de tests JS, así que la
+// guarda es estructural sobre el componente.
+test('every SelectLabel of the settings ai page lives inside a SelectGroup', function () {
+    $source = file_get_contents(resource_path('js/pages/settings/ai.tsx'));
+
+    // Cada apertura de `SelectLabel` debe caer dentro de un `SelectGroup`: se
+    // recorre el archivo y, para cada label, se exige que el último `SelectGroup`
+    // sin cerrar esté abierto.
+    preg_match_all('/<(\/?)Select(Group|Label)\b/', $source, $matches, PREG_OFFSET_CAPTURE);
+
+    $depth = 0;
+    $labelsOutsideGroup = [];
+
+    foreach ($matches[0] as [$tag, $offset]) {
+        if ($tag === '<SelectGroup') {
+            $depth++;
+        } elseif ($tag === '</SelectGroup') {
+            $depth--;
+        } elseif ($depth < 1) {
+            $labelsOutsideGroup[] = $offset;
+        }
+    }
+
+    expect($depth)->toBe(0, 'SelectGroup openings and closings must balance')
+        ->and($labelsOutsideGroup)->toBe([], 'SelectLabel must be wrapped in SelectGroup');
+
+    expect($source)->toContain('SelectGroup,');
+});
