@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head, router, useForm, usePage } from '@inertiajs/react';
-import { useState, type FormEvent } from 'react';
+import { Fragment, useState, type FormEvent } from 'react';
 import AiSettingsController from '@/actions/App/Http/Controllers/Settings/AiSettingsController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -9,6 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Sheet,
     SheetContent,
@@ -30,6 +37,7 @@ import MainLayout from '@/layouts/main-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { csrfHeaders } from '@/lib/csrf';
 import { destroy, store, test as testRoute, update } from '@/routes/settings/ai/providers';
+import { update as updateScope } from '@/routes/settings/ai/scopes';
 import type { SharedData } from '@/types';
 
 export interface ProviderHealth {
@@ -259,7 +267,383 @@ function ProviderSheetForm({
     );
 }
 
-export default function AiSettings({ ai, providers }: AiSettingsPageProps) {
+/**
+ * Valor centinela de la opción «hereda» del `Select` de primario.
+ *
+ * Radix no admite `value=""` en un `SelectItem`, así que la cadena vacía se
+ * representa con esta clave y se traduce a `[]` al patchear.
+ */
+const INHERIT_OPTION = '__inherit__';
+
+/** Centinela que deja el `Select` «…respaldo» en su placeholder tras elegir. */
+const ADD_BACKUP_OPTION = '__add__';
+
+/** Tope de `provider_chain` en `UpdateAiScopeRequest::rules()` (`max:20`). */
+const MAX_CHAIN = 20;
+
+/** Nombre legible de un id de proveedor; los ids huérfanos se muestran como `#id`. */
+function providerLabel(providers: ProviderRow[], id: number): string {
+    return providers.find((provider) => provider.id === id)?.name ?? `#${id}`;
+}
+
+/**
+ * Texto de la columna «Estado»: la cadena que el resolver usaría hoy para esa
+ * fila, con el filtro de salud ya aplicado. Los ids que ya no existen (proveedor
+ * borrado en otra pestaña) se omiten en vez de romper la celda.
+ */
+function effectiveLabel(row: ScopeRow, providers: ProviderRow[]): string {
+    const names = row.effective
+        .map((id) => providers.find((provider) => provider.id === id)?.name)
+        .filter((name): name is string => Boolean(name));
+
+    return names.length > 0 ? `Activo: ${names.join(' → ')}` : 'Sin proveedor';
+}
+
+/**
+ * Control de cadena de una fila: `Select` de primario + chips de respaldos.
+ *
+ * El primario NO es un chip: se cambia desde el `Select` y se quita volviendo a
+ * la opción de herencia (que deja la fila en `[]`, es decir «hereda de ↑»).
+ * Elegir otro proveedor como primario lo mueve al frente y lo saca de donde
+ * estuviera entre los respaldos, sin duplicar ids ni perder el resto del orden.
+ * Cada cambio emite la cadena completa por `PATCH settings.ai.scopes.update`.
+ */
+function ScopeChainEditor({
+    row,
+    providers,
+    chain,
+    saving,
+    error,
+    onChange,
+}: {
+    row: ScopeRow;
+    providers: ProviderRow[];
+    chain: number[];
+    saving: boolean;
+    error?: string;
+    onChange: (chain: number[]) => void;
+}) {
+    const primary = chain[0];
+    const backups = chain.slice(1);
+    const isGlobal = row.section === 'global';
+
+    // El primario lista todos los proveedores (aunque estén deshabilitados) para
+    // que un valor ya persistido siempre tenga una opción que lo represente;
+    // el de respaldos sólo ofrece habilitados que todavía no están en la cadena.
+    const primaryOptions = providers;
+    const backupCandidates = providers.filter(
+        (provider) => provider.enabled && !chain.includes(provider.id),
+    );
+
+    const setPrimary = (value: string) => {
+        if (value === INHERIT_OPTION) {
+            onChange([]);
+
+            return;
+        }
+
+        const id = Number(value);
+
+        onChange([id, ...chain.filter((current) => current !== id)]);
+    };
+
+    const addBackup = (value: string) => {
+        if (value === ADD_BACKUP_OPTION || chain.includes(Number(value))) {
+            return;
+        }
+
+        onChange([...chain, Number(value)]);
+    };
+
+    const moveBackup = (index: number, delta: number) => {
+        const target = index + delta;
+
+        if (target < 0 || target >= backups.length) {
+            return;
+        }
+
+        const next = [...backups];
+
+        [next[index], next[target]] = [next[target], next[index]];
+
+        onChange([primary, ...next]);
+    };
+
+    const removeBackup = (index: number) => {
+        onChange([primary, ...backups.filter((_, current) => current !== index)]);
+    };
+
+    return (
+        <div className="flex flex-col items-start gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+                <Select
+                    value={primary === undefined ? INHERIT_OPTION : String(primary)}
+                    onValueChange={setPrimary}
+                    disabled={saving}
+                >
+                    <SelectTrigger
+                        className="h-8 w-[220px] border-border bg-background text-xs"
+                        aria-label={`Proveedor principal de ${row.label}`}
+                        data-test={`scope-primary-${row.scope}`}
+                    >
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={INHERIT_OPTION}>
+                            {isGlobal ? 'Todos los habilitados (sort_order)' : 'Hereda de ↑'}
+                        </SelectItem>
+                        {primaryOptions.map((provider) => (
+                            <SelectItem key={provider.id} value={String(provider.id)}>
+                                {provider.name}
+                                {provider.enabled ? '' : ' (desactivado)'}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                {primary !== undefined && (
+                    <Select
+                        value={ADD_BACKUP_OPTION}
+                        onValueChange={addBackup}
+                        disabled={saving || chain.length >= MAX_CHAIN || backupCandidates.length === 0}
+                    >
+                        <SelectTrigger
+                            className="h-8 w-[150px] border-border bg-background text-xs text-muted-foreground"
+                            aria-label={`Agregar respaldo a ${row.label}`}
+                            data-test={`scope-add-backup-${row.scope}`}
+                        >
+                            <SelectValue placeholder="…respaldo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {backupCandidates.map((provider) => (
+                                <SelectItem key={provider.id} value={String(provider.id)}>
+                                    {provider.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+
+                {saving && <Spinner className="size-3.5 text-muted-foreground" />}
+            </div>
+
+            {backups.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                    {backups.map((id, index) => {
+                        const name = providerLabel(providers, id);
+
+                        return (
+                            <span
+                                key={id}
+                                className="inline-flex items-center gap-0.5 rounded-md border border-border bg-background px-1.5 py-0.5 text-xs text-foreground"
+                            >
+                                {name}
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+                                    disabled={saving || index === 0}
+                                    onClick={() => moveBackup(index, -1)}
+                                    aria-label={`Subir ${name}`}
+                                >
+                                    <span className="material-symbols-outlined text-[13px]">
+                                        arrow_upward
+                                    </span>
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+                                    disabled={saving || index === backups.length - 1}
+                                    onClick={() => moveBackup(index, 1)}
+                                    aria-label={`Bajar ${name}`}
+                                >
+                                    <span className="material-symbols-outlined text-[13px]">
+                                        arrow_downward
+                                    </span>
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                                    disabled={saving}
+                                    onClick={() => removeBackup(index)}
+                                    aria-label={`Quitar ${name}`}
+                                    data-test={`scope-remove-backup-${row.scope}-${id}`}
+                                >
+                                    <span className="material-symbols-outlined text-[13px]">
+                                        close
+                                    </span>
+                                </Button>
+                            </span>
+                        );
+                    })}
+                </div>
+            )}
+
+            {error && <InputError className="text-xs" message={error} />}
+        </div>
+    );
+}
+
+/**
+ * Pestaña «Asignaciones»: matriz jerárquica de scopes (global → superficies →
+ * módulos) con la cadena persistida y la cadena que el resolver usaría hoy.
+ *
+ * El estado local es un mapa `scope → chain[]` sembrado desde la prop `scopes`
+ * y re-sincronizado en render cuando Inertia trae props nuevas (tras cada PATCH
+ * o si otra pestaña cambió algo). Cada edición hace un PATCH optimista y, si el
+ * backend rechaza la cadena, el error de `provider_chain` queda en la fila y el
+ * re-seed de las props la revierte al valor del servidor.
+ */
+function AssignmentsTab({
+    providers,
+    scopes,
+}: {
+    providers: ProviderRow[];
+    scopes: ScopeRow[];
+}) {
+    const chainsFrom = (rows: ScopeRow[]) =>
+        Object.fromEntries(rows.map((row) => [row.scope, row.chain]));
+
+    const [synced, setSynced] = useState<ScopeRow[]>(scopes);
+    const [chains, setChains] = useState<Record<string, number[]>>(() => chainsFrom(scopes));
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [savingScope, setSavingScope] = useState<string | null>(null);
+
+    // Las props cambiaron (respuesta del PATCH o recarga): la fila vuelve al
+    // valor del servidor, que es la única fuente de verdad de la cadena.
+    if (synced !== scopes) {
+        setSynced(scopes);
+        setChains(chainsFrom(scopes));
+    }
+
+    const persist = (scope: string, next: number[]) => {
+        setChains((current) => ({ ...current, [scope]: next }));
+        setErrors((current) => {
+            const rest = { ...current };
+
+            delete rest[scope];
+
+            return rest;
+        });
+        setSavingScope(scope);
+
+        router.patch(
+            updateScope.url({ scope }),
+            { provider_chain: next },
+            {
+                preserveScroll: true,
+                onSuccess: () => setSavingScope(null),
+                onError: (validationErrors) => {
+                    setSavingScope(null);
+                    setErrors((current) => ({
+                        ...current,
+                        [scope]:
+                            validationErrors.provider_chain ??
+                            'No se pudo guardar la cadena de este scope.',
+                    }));
+                },
+            },
+        );
+    };
+
+    const groups: { key: ScopeRow['section']; title: string; rows: ScopeRow[] }[] = [
+        { key: 'global', title: 'Global', rows: [] },
+        { key: 'surface', title: 'Superficies', rows: [] },
+        { key: 'module', title: 'Módulos', rows: [] },
+    ];
+
+    for (const row of scopes) {
+        groups.find((group) => group.key === row.section)?.rows.push(row);
+    }
+
+    return (
+        <div className="rounded-xl bg-card border border-border p-4 space-y-4">
+            <div>
+                <h3 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-[18px]">
+                        account_tree
+                    </span>
+                    Asignaciones
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                    Cada fila define la cadena completa de su contexto: gana la primera
+                    fila con cadena (superficie → módulo → global) y nunca se mezclan.
+                    Sin cadena, la fila hereda la de arriba.
+                </p>
+            </div>
+
+            {providers.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 py-10 text-center">
+                    <span className="material-symbols-outlined text-primary text-[40px]">
+                        account_tree
+                    </span>
+                    <p className="text-sm text-muted-foreground">
+                        Agregá un proveedor en «Proveedores» para poder asignarlo.
+                    </p>
+                </div>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Scope</TableHead>
+                            <TableHead>Cadena</TableHead>
+                            <TableHead>Estado</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {groups.map((group) =>
+                            group.rows.length === 0 ? null : (
+                                <Fragment key={group.key}>
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableCell colSpan={3} className="bg-background/60 py-1.5">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                                {group.title}
+                                            </span>
+                                        </TableCell>
+                                    </TableRow>
+                                    {group.rows.map((row) => (
+                                        <TableRow key={row.scope}>
+                                            <TableCell className="align-top">
+                                                <span className="block font-medium text-foreground">
+                                                    {row.label}
+                                                </span>
+                                                <span className="block font-mono text-[10px] text-muted-foreground">
+                                                    {row.scope}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="align-top">
+                                                <ScopeChainEditor
+                                                    row={row}
+                                                    providers={providers}
+                                                    chain={chains[row.scope] ?? row.chain}
+                                                    saving={savingScope === row.scope}
+                                                    error={errors[row.scope]}
+                                                    onChange={(next) => persist(row.scope, next)}
+                                                />
+                                            </TableCell>
+                                            <TableCell className="align-top">
+                                                <span className="text-xs text-muted-foreground">
+                                                    {effectiveLabel(row, providers)}
+                                                </span>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </Fragment>
+                            ),
+                        )}
+                    </TableBody>
+                </Table>
+            )}
+        </div>
+    );
+}
+
+export default function AiSettings({ ai, providers, scopes }: AiSettingsPageProps) {
     const { flash } = usePage<SharedData & AiSettingsPageProps>().props;
 
     // `provider: null` + `open: true` = modo create.
@@ -648,14 +1032,8 @@ export default function AiSettings({ ai, providers }: AiSettingsPageProps) {
                             </div>
                         </TabsContent>
 
-                        {/* Task 12 — «Asignaciones»: tabla jerárquica de scopes
-                            (global → superficies → módulos) que persiste en
-                            `settings.ai.scopes.update` con la prop `scopes` y
-                            `module_labels`. */}
                         <TabsContent value="assignments" className="space-y-3">
-                            <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
-                                Próximamente: asigná un proveedor principal y backups por módulo y superficie.
-                            </div>
+                            <AssignmentsTab providers={providers} scopes={scopes} />
                         </TabsContent>
 
                         {/* Task 13 — «Prompts»: textarea con contador por capa y
