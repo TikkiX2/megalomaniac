@@ -4,16 +4,25 @@ namespace App\Ai\Services;
 
 use App\Ai\Agents\MegalomaniacAgent;
 use App\Ai\Agents\RuntimeAgent;
-use App\Ai\Support\AiProviderResolver;
+use App\Ai\Enums\AiScope;
+use App\Ai\Support\AiHealthService;
+use App\Ai\Support\AiProviderConfigurator;
+use App\Ai\Support\AiProviderErrors;
+use App\Ai\Support\AiResolution;
+use App\Ai\Support\AiScopeResolver;
+use App\Ai\Support\AiStreamFailover;
+use App\Ai\Support\ByoProviderMigrator;
 use App\Ai\Tools\ToolCatalog;
 use App\Ai\Tools\ToolRouter;
 use App\Ai\Web\TavilyClient;
 use App\Models\AgentDefinition;
+use App\Models\AiProvider;
 use App\Models\ChatAttachment;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\Skill;
 use App\Models\User;
+use Closure;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -48,6 +57,24 @@ class ChatService
     public ?string $lastWebWarning = null;
 
     /**
+     * Stream failover of the last built turn, or null when no turn was built
+     * (or the turn predates the scope cutover). The controller drives it while
+     * iterating the stream: `retry()` either hands back a stream rebuilt on the
+     * next provider of the chain or declines, and `lastError()` then holds the
+     * exhausted-chain diagnosis.
+     */
+    public ?AiStreamFailover $lastFailover = null;
+
+    /** Registry provider the last built attempt is running on. */
+    public ?string $lastProviderName = null;
+
+    /** Model the last built attempt is running with. */
+    public ?string $lastProviderModel = null;
+
+    /** True when the last built attempt is running on a backup provider. */
+    public bool $lastFallbackUsed = false;
+
+    /**
      * Source modes that include the web tool group.
      *
      * @var array<int, string>
@@ -69,9 +96,33 @@ class ChatService
 
     public const MAX_SINGLE_IMAGE_BYTES = 8 * 1024 * 1024;
 
+    /**
+     * Both dependencies are optional so `new ChatService` keeps working in
+     * tests; they are resolved from the container (and therefore shared with
+     * the resolver's own singleton state) on first use.
+     */
+    public function __construct(
+        private ?AiScopeResolver $resolver = null,
+        private ?AiHealthService $health = null,
+        private readonly AiProviderErrors $errors = new AiProviderErrors,
+    ) {}
+
+    /** The shared scope resolver, resolved lazily from the container. */
+    protected function resolver(): AiScopeResolver
+    {
+        return $this->resolver ??= app(AiScopeResolver::class);
+    }
+
+    /** The shared health service, resolved lazily from the container. */
+    protected function health(): AiHealthService
+    {
+        return $this->health ??= app(AiHealthService::class);
+    }
+
     public function isConfigured(User $user): bool
     {
-        return (bool) ($user->ai_enabled && $user->ai_provider_url && $user->ai_provider_key);
+        return (bool) $user->ai_enabled
+            && AiProvider::query()->where('user_id', $user->getKey())->where('enabled', true)->exists();
     }
 
     /**
@@ -106,17 +157,30 @@ class ChatService
     }
 
     /**
-     * Resolve the user's BYO provider credentials into the runtime config.
+     * Wire the chat-scope primary provider into the runtime config.
+     *
+     * No-op when the user has no usable provider: every caller of this method
+     * already guarded on {@see self::isConfigured()}, and a silent no-op keeps
+     * it usable as a "make the provider available" helper.
      */
     public function configureUserProvider(User $user, ?string $sessionId = null): void
     {
-        AiProviderResolver::configureUserProvider($user, $sessionId);
+        $provider = $this->resolver()->resolve($user, AiScope::SurfaceChat)->primary();
+
+        if ($provider === null) {
+            return;
+        }
+
+        AiProviderConfigurator::wire($provider, $sessionId);
     }
 
     /**
      * @param  array<string, mixed>|null  $toolsPolicy
      * @param  array<int, string>|null  $attachmentIds
      * @param  array<int, string>  $skillKeys  Skills explicitly selected for this turn
+     * @param  array<int, int>  $skipProviderIds  Provider ids the failover has
+     *                                            already burned through; they are
+     *                                            excluded from the resolved chain.
      */
     public function streamTurn(
         User $user,
@@ -127,6 +191,7 @@ class ChatService
         ?array $attachmentIds = null,
         bool $forceWeb = false,
         array $skillKeys = [],
+        array $skipProviderIds = [],
     ): StreamableAgentResponse {
         $this->lastWebSources = [];
         $this->lastWebWarning = null;
@@ -141,7 +206,11 @@ class ChatService
         // midway through the stream, which would leave the UI stuck waiting.
         $this->guardImagePayload($user, $thread, $attachmentIds);
 
-        [$provider, $defaultModel] = AiProviderResolver::for($user, $thread->id);
+        $resolution = $this->chatResolution($user, $thread, $skipProviderIds);
+
+        if ($resolution->isEmpty()) {
+            throw new RuntimeException('El proveedor de IA no está configurado.');
+        }
 
         $policy = $this->prepareToolPolicy($thread, $message, $toolsPolicy);
         $this->lastToolPolicy = $policy;
@@ -156,6 +225,10 @@ class ChatService
             ->all();
 
         $agent = $this->agentFor($user, $thread, $policy['groups']);
+
+        if ($agent instanceof MegalomaniacAgent) {
+            $agent->withPersonalization($resolution->promptBlock);
+        }
 
         if ($agent instanceof MegalomaniacAgent && $skillKeys !== []) {
             $agent->withSkills($this->resolveSkills($user, $skillKeys));
@@ -173,9 +246,143 @@ class ChatService
             }
         }
 
+        $build = fn (AiProvider $provider): StreamableAgentResponse => $this->buildStreamAttempt(
+            $user,
+            $thread,
+            $agent,
+            $message,
+            $attachments,
+            $provider,
+            $model,
+        );
+
+        return $this->streamWithFailover($user, $thread, $resolution, $build);
+    }
+
+    /**
+     * Wire one provider into the runtime config and start its stream.
+     *
+     * @param  array<int, StoredImage>  $attachments
+     */
+    protected function buildStreamAttempt(
+        User $user,
+        ChatThread $thread,
+        MegalomaniacAgent|RuntimeAgent $agent,
+        string|Decisions $message,
+        array $attachments,
+        AiProvider $provider,
+        ?string $model = null,
+    ): StreamableAgentResponse {
+        $model = $model ?: $provider->model ?: ByoProviderMigrator::DEFAULT_MODEL;
+
+        $this->lastProviderName = $provider->name;
+        $this->lastProviderModel = $model;
+
         return $agent
             ->continue($thread->id, as: $user)
-            ->stream($message, attachments: $attachments, provider: $provider, model: $model ?: $defaultModel);
+            ->stream(
+                $message,
+                attachments: $attachments,
+                provider: AiProviderConfigurator::wire($provider, $thread->id),
+                model: $model,
+            );
+    }
+
+    /**
+     * Install the failover guard on the already-resolved chain and build its
+     * first attempt.
+     *
+     * @param  callable(AiProvider): StreamableAgentResponse  $build
+     */
+    protected function streamWithFailover(User $user, ChatThread $thread, AiResolution $resolution, Closure $build): StreamableAgentResponse
+    {
+        $primary = $resolution->primary();
+
+        if ($primary === null) {
+            throw new RuntimeException('El proveedor de IA no está configurado.');
+        }
+
+        $this->lastFailover = new AiStreamFailover(
+            $primary,
+            $resolution,
+            $this->health(),
+            $this->errors,
+            fn (array $tried): StreamableAgentResponse => $this->rebuildStreamAttempt($user, $thread, $tried, $build),
+        );
+        $this->lastProviderName = $primary->name;
+        $this->lastProviderModel = $primary->model;
+        $this->lastFallbackUsed = false;
+
+        return $build($primary);
+    }
+
+    /**
+     * Re-resolve the chain without the burned provider ids and rebuild the turn
+     * on the new primary. A null primary would mean the failover handed us a
+     * chain it had already exhausted, i.e. an application bug.
+     *
+     * @param  array<int, int>  $tried
+     * @param  callable(AiProvider): StreamableAgentResponse  $build
+     */
+    protected function rebuildStreamAttempt(User $user, ChatThread $thread, array $tried, Closure $build): StreamableAgentResponse
+    {
+        $next = $this->chatResolution($user, $thread, $tried)->primary();
+
+        if ($next === null) {
+            throw new RuntimeException('El proveedor de IA no está configurado.');
+        }
+
+        $this->lastProviderName = $next->name;
+        $this->lastProviderModel = $next->model;
+        $this->lastFallbackUsed = true;
+
+        return $build($next);
+    }
+
+    /**
+     * The ordered provider chain for a chat turn in this thread's context,
+     * minus the providers the failover already burned through.
+     *
+     * @param  array<int, int>  $skipProviderIds
+     */
+    protected function chatResolution(User $user, ChatThread $thread, array $skipProviderIds = []): AiResolution
+    {
+        $resolution = $this->resolver()->resolve(
+            $user,
+            AiScope::SurfaceChat,
+            $this->moduleKeyFor($thread),
+            $thread->id,
+        );
+
+        if ($skipProviderIds === []) {
+            return $resolution;
+        }
+
+        return new AiResolution(
+            chain: $resolution->chain
+                ->reject(fn (AiProvider $provider): bool => in_array($provider->getKey(), $skipProviderIds, true))
+                ->values(),
+            promptBlock: $resolution->promptBlock,
+        );
+    }
+
+    /**
+     * The module whose prompt layer and provider scope apply to this thread, or
+     * null when the thread has none.
+     *
+     * Health threads predate the `module` column and carry `category = 'salud'`
+     * instead. Any other value is not a module key we know, and resolving it
+     * would make `AiScope::fromModuleKey()` throw, so it degrades to "no module".
+     */
+    protected function moduleKeyFor(ChatThread $thread): ?string
+    {
+        $module = $thread->module;
+
+        if (is_string($module) && AiScope::tryFrom('module:'.$module) !== null) {
+            return $module;
+        }
+
+        return $thread->category === ChatThread::CATEGORY_HEALTH ? 'health' : null;
     }
 
     /**
@@ -242,9 +449,12 @@ class ChatService
         $this->lastWebWarning = null;
 
         $this->ensureConfigured($user);
-        $this->configureUserProvider($user, $thread->id);
 
-        [$provider, $defaultModel] = AiProviderResolver::for($user, $thread->id);
+        $resolution = $this->chatResolution($user, $thread);
+
+        if ($resolution->isEmpty()) {
+            throw new RuntimeException('El proveedor de IA no está configurado.');
+        }
 
         $lastUserMessage = $thread->messages()
             ->where('role', 'user')
@@ -262,6 +472,10 @@ class ChatService
 
         $agent = $this->agentFor($user, $thread, $policy['groups']);
 
+        if ($agent instanceof MegalomaniacAgent) {
+            $agent->withPersonalization($resolution->promptBlock);
+        }
+
         if (
             $agent instanceof MegalomaniacAgent
             && $lastUserMessage instanceof ChatMessage
@@ -270,9 +484,17 @@ class ChatService
             $agent->withResumeDocumentContext($thread->documentContext($lastUserMessage->content));
         }
 
-        return $agent
-            ->continue($thread->id, as: $user)
-            ->stream($decisions, provider: $provider, model: $thread->model ?: $defaultModel);
+        $build = fn (AiProvider $provider): StreamableAgentResponse => $this->buildStreamAttempt(
+            $user,
+            $thread,
+            $agent,
+            $decisions,
+            [],
+            $provider,
+            $thread->model,
+        );
+
+        return $this->streamWithFailover($user, $thread, $resolution, $build);
     }
 
     /**

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Ai;
 
 use App\Ai\Services\ChatService;
 use App\Ai\Skills\SkillCatalog;
+use App\Ai\Support\AiAllProvidersFailedException;
+use App\Ai\Support\AiStreamFailover;
 use App\Ai\Support\WebCitations;
 use App\Ai\Tools\ToolCatalog;
 use App\Http\Controllers\Ai\Concerns\ProvidesAiState;
@@ -310,7 +312,14 @@ class ChatController extends Controller
         // (like $webWarning) so it never reads ChatService mutable state.
         $preSearchSources = $this->service->lastWebSources;
 
-        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds, $webWarning, $preSearchSources): void {
+        // The failover guard is snapshotted too: the controller drives it while
+        // iterating, and it owns the per-attempt decisions from there on.
+        $failover = $this->service->lastFailover;
+        $providerName = $this->service->lastProviderName;
+        $providerModel = $this->service->lastProviderModel;
+        $fallbackUsed = $this->service->lastFallbackUsed;
+
+        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds, $webWarning, $preSearchSources, $failover, $providerName, $providerModel, $fallbackUsed): void {
             if (function_exists('set_time_limit')) {
                 set_time_limit(0);
             }
@@ -371,43 +380,67 @@ class ChatController extends Controller
             $webCitations = [];
             $seenCitationUrls = [];
 
-            try {
-                foreach ($stream as $event) {
-                    $eventArray = $event->toArray();
-                    $eventType = $eventArray['type'] ?? null;
+            $failed = false;
 
-                    if ($eventType === 'reasoning_delta') {
-                        $reasoningStartedAt ??= microtime(true);
-                        $reasoning .= (string) ($eventArray['delta'] ?? '');
-                    }
+            // The provider chain is walked here because laravel/ai streams lazily:
+            // a failure only surfaces while iterating. `retry()` hands back a
+            // stream rebuilt on the next provider while nothing has reached the
+            // browser yet, and returns null as soon as it declines, so the copy
+            // below still comes from the original failure.
+            while (true) {
+                try {
+                    foreach ($stream as $event) {
+                        $eventArray = $event->toArray();
+                        $eventType = $eventArray['type'] ?? null;
 
-                    echo 'data: '.((string) $event)."\n\n";
-                    flush();
-
-                    foreach (WebCitations::fromToolResult($eventArray) as $citation) {
-                        if (isset($seenCitationUrls[$citation['url']])) {
-                            continue;
+                        if ($eventType === 'reasoning_delta') {
+                            $reasoningStartedAt ??= microtime(true);
+                            $reasoning .= (string) ($eventArray['delta'] ?? '');
                         }
 
-                        $seenCitationUrls[$citation['url']] = true;
-                        $webCitations[] = $citation;
-
-                        echo 'data: '.json_encode([
-                            'type' => 'citation',
-                            'citation' => ['title' => $citation['title'], 'url' => $citation['url']],
-                        ])."\n\n";
+                        echo 'data: '.((string) $event)."\n\n";
                         flush();
-                    }
-                }
-            } catch (Throwable $exception) {
-                report($exception);
 
-                echo 'data: '.json_encode([
-                    'type' => 'error',
-                    'message' => $this->errorMessageFor($exception),
-                    'recoverable' => false,
-                ])."\n\n";
-                flush();
+                        foreach (WebCitations::fromToolResult($eventArray) as $citation) {
+                            if (isset($seenCitationUrls[$citation['url']])) {
+                                continue;
+                            }
+
+                            $seenCitationUrls[$citation['url']] = true;
+                            $webCitations[] = $citation;
+
+                            echo 'data: '.json_encode([
+                                'type' => 'citation',
+                                'citation' => ['title' => $citation['title'], 'url' => $citation['url']],
+                            ])."\n\n";
+                            flush();
+                        }
+                    }
+
+                    break;
+                } catch (Throwable $exception) {
+                    $retry = $failover?->retry($exception, $stream);
+
+                    if ($retry !== null) {
+                        $stream = $retry;
+
+                        continue;
+                    }
+
+                    $failed = true;
+
+                    report($failover?->lastError() ?? $exception);
+
+                    echo 'data: '.json_encode([
+                        'type' => 'error',
+                        'message' => $this->errorMessageFor($failover?->lastError()?->lastException() ?? $exception)
+                            .$this->exhaustedChainSuffix($failover),
+                        'recoverable' => false,
+                    ])."\n\n";
+                    flush();
+
+                    break;
+                }
             }
 
             if ($attachmentIds !== null && $attachmentIds !== []) {
@@ -431,6 +464,25 @@ class ChatController extends Controller
 
             if ($webCitations !== [] || $preSearchSources !== []) {
                 $this->storeCitations($thread, $webCitations, $preSearchSources, $assistantIdBefore);
+            }
+
+            // A failed turn stored no new assistant message, so there is nothing
+            // honest to announce and nothing to record it on.
+            if (! $failed) {
+                // The failover knows which attempt actually produced the stream,
+                // the service snapshot covers a turn built without a guard.
+                $providerName = $failover?->current()->name ?? $providerName;
+                $providerModel = $failover?->current()->model ?? $providerModel;
+                $fallbackUsed = $failover?->usedFallback() ?? $fallbackUsed;
+
+                $this->storeTurnProvider($thread, $providerName, $providerModel, $fallbackUsed, $assistantIdBefore);
+
+                echo 'data: '.json_encode([
+                    'type' => 'meta',
+                    'provider' => $providerName,
+                    'fallback' => $fallbackUsed,
+                ])."\n\n";
+                flush();
             }
 
             echo "data: [DONE]\n\n";
@@ -498,6 +550,49 @@ class ChatController extends Controller
         $message->update(['meta' => $meta]);
     }
 
+    /**
+     * Record which provider answered the turn on the new assistant message.
+     *
+     * Guarded like storeReasoning: only a new assistant message stored by this
+     * turn may receive it, and the other meta keys are preserved.
+     *
+     * @param  array{provider: ?string, model: ?string, fallback: bool}  $ai
+     */
+    protected function storeTurnProvider(
+        ChatThread $thread,
+        ?string $provider,
+        ?string $model,
+        bool $fallback,
+        ?string $assistantIdBefore = null,
+    ): void {
+        $message = $thread->messages()->orderByDesc('id')->first();
+
+        if (! $message instanceof ChatMessage || $message->role !== 'assistant' || $message->id === $assistantIdBefore) {
+            return;
+        }
+
+        $meta = $message->meta ?? [];
+        $meta['ai'] = ['provider' => $provider, 'model' => $model, 'fallback' => $fallback];
+
+        $message->update(['meta' => $meta]);
+    }
+
+    /**
+     * Honest note when the whole chain burned through: with a single provider
+     * the message stays byte-identical to what it always was, because one
+     * failing provider is not a chain worth reporting.
+     */
+    protected function exhaustedChainSuffix(?AiStreamFailover $failover): string
+    {
+        $lastError = $failover?->lastError();
+
+        if ($lastError === null || count($lastError->errors()) < 2) {
+            return '';
+        }
+
+        return sprintf(' (Fallaron %d proveedores.)', count($lastError->errors()));
+    }
+
     protected function errorMessageFor(Throwable $exception): string
     {
         $status = $exception instanceof RequestException
@@ -505,6 +600,9 @@ class ChatController extends Controller
             : null;
 
         return match (true) {
+            // The chain carries the last real failure as `previous`, so the copy
+            // for each status is exactly the one this method always produced.
+            $exception instanceof AiAllProvidersFailedException => $this->errorMessageFor($exception->lastException()),
             $exception instanceof InsufficientCreditsException => 'Tu proveedor de IA no tiene saldo o cuota suficiente. Recarga tu cuenta o cambia la API key en Settings → IA.',
             $exception instanceof RateLimitedException => 'Tu proveedor está limitando las peticiones. Espera unos segundos e inténtalo de nuevo.',
             $exception instanceof ProviderOverloadedException => 'El proveedor de IA está sobrecargado. Inténtalo de nuevo en unos momentos.',
