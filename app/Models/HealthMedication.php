@@ -53,4 +53,9 @@ class HealthMedication extends Model
     {
         return $this->hasMany(HealthMedicationIntake::class, 'medication_id');
     }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(HealthMedicationSchedule::class, 'medication_id');
+    }
 }

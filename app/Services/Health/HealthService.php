@@ -10,6 +10,7 @@ use App\Models\HealthCondition;
 use App\Models\HealthMeasurement;
 use App\Models\HealthMedication;
 use App\Models\HealthMedicationIntake;
+use App\Models\HealthMedicationSchedule;
 use App\Models\HealthProfessional;
 use App\Models\HealthSymptom;
 use App\Models\User;
@@ -68,6 +69,31 @@ class HealthService
     {
         $this->assertOwner($user, $medication);
         $medication->delete();
+    }
+
+    public function findSchedule(User $user, int $id): HealthMedicationSchedule
+    {
+        return $this->owned(HealthMedicationSchedule::query(), $user)
+            ->find($id) ?? throw new ModelNotFoundException('HealthMedicationSchedule not found.');
+    }
+
+    public function createSchedule(User $user, array $data): HealthMedicationSchedule
+    {
+        return $user->healthMedicationSchedules()->create($data);
+    }
+
+    public function updateSchedule(User $user, HealthMedicationSchedule $schedule, array $data): HealthMedicationSchedule
+    {
+        $this->assertOwner($user, $schedule);
+        $schedule->update($data);
+
+        return $schedule->refresh();
+    }
+
+    public function deleteSchedule(User $user, HealthMedicationSchedule $schedule): void
+    {
+        $this->assertOwner($user, $schedule);
+        $schedule->delete();
     }
 
     public function logIntake(User $user, HealthMedication $medication, array $data): HealthMedicationIntake
