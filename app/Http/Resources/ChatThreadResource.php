@@ -4,7 +4,9 @@ namespace App\Http\Resources;
 
 use App\Ai\Services\ChatService;
 use App\Models\ChatThread;
+use App\Models\HealthAppointment;
 use App\Models\HealthCondition;
+use App\Models\HealthStudy;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -29,6 +31,8 @@ class ChatThreadResource extends JsonResource
             'context_id' => $this->context_id,
             'context_label' => $this->whenLoaded('context', fn (): ?string => match (true) {
                 $this->context instanceof HealthCondition => $this->context->name,
+                $this->context instanceof HealthStudy => $this->context->title,
+                $this->context instanceof HealthAppointment => $this->context->title,
                 $this->context instanceof Person => $this->context->full_name,
                 default => null,
             }),

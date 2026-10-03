@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Ai\Tools;
 
 use App\Health\Enums\MeasurementType;
+use App\Models\HealthAppointment;
 use App\Models\HealthCondition;
 use App\Models\HealthMeasurement;
 use App\Models\HealthMedication;
 use App\Models\HealthMedicationIntake;
 use App\Models\HealthProfessional;
+use App\Models\HealthStudy;
+use App\Models\HealthStudyResult;
 use App\Models\HealthSymptom;
 use App\Models\User;
 use App\Services\Health\HealthService;
@@ -28,6 +31,9 @@ class HealthQueryTool implements Tool
         'measurements',
         'symptoms',
         'professionals',
+        'studies',
+        'study_results',
+        'appointments',
         'summary',
     ];
 
@@ -41,7 +47,7 @@ class HealthQueryTool implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Query the user\'s health record: conditions, medications and intakes, measurements, symptoms, professionals, or a summary of the active record. Read-only; it only reports what the user has recorded and never diagnoses.';
+        return 'Query the user\'s health record: conditions, medications and intakes, measurements, symptoms, professionals, studies and results, appointments, or a summary of the active record. Read-only; it only reports what the user has recorded and never diagnoses.';
     }
 
     public function handle(Request $request): Stringable|string
@@ -69,6 +75,16 @@ class HealthQueryTool implements Tool
                 ->where('user_id', $this->user->id)
                 ->with('person:id,first_name,last_name'),
             'professionals' => HealthProfessional::query()->where('user_id', $this->user->id),
+            'studies' => HealthStudy::query()
+                ->where('user_id', $this->user->id)
+                ->with(['person:id,first_name,last_name', 'provider:id,name', 'condition:id,name'])
+                ->withCount('results'),
+            'study_results' => HealthStudyResult::query()
+                ->whereHas('study', fn ($q) => $q->where('user_id', $this->user->id))
+                ->with('study:id,user_id,title,performed_at'),
+            'appointments' => HealthAppointment::query()
+                ->where('user_id', $this->user->id)
+                ->with(['person:id,first_name,last_name', 'provider:id,name']),
             default => null,
         };
 
@@ -80,6 +96,9 @@ class HealthQueryTool implements Tool
             $column = match ($resource) {
                 'conditions', 'medications', 'professionals' => 'name',
                 'symptoms' => 'symptom',
+                'studies' => 'title',
+                'study_results' => 'analyte',
+                'appointments' => 'title',
                 default => null,
             };
 
@@ -105,6 +124,8 @@ class HealthQueryTool implements Tool
                 'measurements' => 'measured_at',
                 'symptoms' => 'occurred_at',
                 'intakes' => 'taken_at',
+                'study_results' => 'created_at',
+                'appointments' => 'scheduled_at',
                 default => null,
             };
 
@@ -117,6 +138,8 @@ class HealthQueryTool implements Tool
             'measurements' => $query->latest('measured_at')->latest('id'),
             'symptoms' => $query->latest('occurred_at')->latest('id'),
             'intakes' => $query->latest('taken_at')->latest('id'),
+            'studies' => $query->latest('performed_at')->latest('id'),
+            'appointments' => $query->latest('scheduled_at')->latest('id'),
             default => $query->latest('id'),
         };
 

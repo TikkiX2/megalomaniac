@@ -8,7 +8,9 @@ use App\Ai\Services\ChatService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChatThreadResource;
 use App\Models\ChatThread;
+use App\Models\HealthAppointment;
 use App\Models\HealthCondition;
+use App\Models\HealthStudy;
 use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,6 +37,8 @@ class HealthChatController extends Controller
             'contextOptions' => [
                 'conditions' => HealthCondition::where('user_id', $request->user()->id)
                     ->orderBy('name')->get(['id', 'name']),
+                'studies' => HealthStudy::where('user_id', $request->user()->id)
+                    ->orderBy('title')->get(['id', 'title']),
                 'people' => Person::where('user_id', $request->user()->id)->visible()
                     ->orderBy('first_name')->get(['id', 'first_name', 'last_name']),
             ],
@@ -44,12 +48,16 @@ class HealthChatController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'context_type' => ['nullable', 'in:health_condition,person', 'required_with:context_id'],
+            'context_type' => ['nullable', 'in:health_condition,health_study,health_appointment,person', 'required_with:context_id'],
             'context_id' => ['nullable', 'integer', 'required_with:context_type'],
         ]);
 
         $context = match ($validated['context_type'] ?? null) {
             'health_condition' => HealthCondition::where('user_id', $request->user()->id)
+                ->findOrFail($validated['context_id']),
+            'health_study' => HealthStudy::where('user_id', $request->user()->id)
+                ->findOrFail($validated['context_id']),
+            'health_appointment' => HealthAppointment::where('user_id', $request->user()->id)
                 ->findOrFail($validated['context_id']),
             'person' => Person::where('user_id', $request->user()->id)
                 ->findOrFail($validated['context_id']),

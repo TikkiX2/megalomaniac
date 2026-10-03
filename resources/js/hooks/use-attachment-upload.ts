@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ChatAttachmentController from '@/actions/App/Http/Controllers/Ai/ChatAttachmentController';
 import type { ChatAttachment } from '@/types/chat';
 
-const MAX_FILES = 5;
+const MAX_FILES = 50;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 const POLL_INTERVAL_MS = 3000;

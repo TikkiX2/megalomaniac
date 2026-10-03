@@ -75,6 +75,8 @@ const healthNavItems: NavItem[] = [
     { title: 'Medicación', href: '/health/medications', icon: Tablets },
     { title: 'Mediciones', href: '/health/measurements', icon: Activity },
     { title: 'Síntomas', href: '/health/symptoms', icon: Thermometer },
+    { title: 'Estudios', href: '/health/studies', icon: FileText },
+    { title: 'Citas', href: '/health/appointments', icon: CalendarClock },
     { title: 'Profesionales', href: '/health/professionals', icon: BriefcaseMedical },
     { title: 'Chats', href: '/health/chats', icon: MessagesSquare },
 ];

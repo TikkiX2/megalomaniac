@@ -22,6 +22,7 @@ interface HealthChatIndexProps {
     threads: ChatThread[];
     contextOptions: {
         conditions: { id: number; name: string }[];
+        studies: { id: number; title: string }[];
         people: { id: number; first_name: string; last_name: string | null }[];
     };
 }
@@ -40,6 +41,8 @@ function contextLabel(thread: ChatThread): string {
     if (thread.context_label) return thread.context_label;
     if (thread.context_type?.includes('Person')) return 'Persona';
     if (thread.context_type?.includes('HealthCondition')) return 'Condición';
+    if (thread.context_type?.includes('HealthStudy')) return 'Estudio';
+    if (thread.context_type?.includes('HealthAppointment')) return 'Cita';
     return 'General';
 }
 
@@ -50,7 +53,7 @@ export default function HealthChatsIndex({
     const [context, setContext] = useState('none');
     const [creating, setCreating] = useState(false);
 
-    const { conditions, people } = contextOptions;
+    const { conditions, studies, people } = contextOptions;
 
     const createChat = () => {
         const payload: { context_type?: string; context_id?: number } = {};
@@ -99,6 +102,19 @@ export default function HealthChatsIndex({
                                                 value={`health_condition:${condition.id}`}
                                             >
                                                 {condition.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                )}
+                                {studies.length > 0 && (
+                                    <SelectGroup>
+                                        <SelectLabel>Estudios</SelectLabel>
+                                        {studies.map((study) => (
+                                            <SelectItem
+                                                key={`health_study:${study.id}`}
+                                                value={`health_study:${study.id}`}
+                                            >
+                                                {study.title}
                                             </SelectItem>
                                         ))}
                                     </SelectGroup>

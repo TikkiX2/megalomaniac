@@ -1,5 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { StudyResultChart } from '@/components/health/StudyResultChart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import HealthLayout from '@/layouts/health-layout';
@@ -12,12 +14,37 @@ const TYPE_LABELS: Record<string, string> = {
     other: 'Otro',
 };
 
+const FLAG_LABELS: Record<string, string> = {
+    low: 'Bajo',
+    normal: 'Normal',
+    high: 'Alto',
+    unknown: 'Desconocido',
+};
+
 function fullName(person: { first_name?: string; last_name?: string } | null): string {
     if (!person) return '—';
     return `${person.first_name ?? ''} ${person.last_name ?? ''}`.trim() || '—';
 }
 
-export default function StudyShow({ study }: any) {
+export default function StudyShow({ study: studyProp, evolution }: any) {
+    // Normalización del prop (requisito React Compiler del proyecto).
+    const study = studyProp ?? {};
+    const evolutions: Record<string, Array<{ date: string; value: number; unit?: string; flag?: string | null }>> =
+        evolution ?? {};
+
+    const analytes = useMemo(() => {
+        const seen = new Set<string>();
+        const list = Object.keys(evolutions).filter((a) => evolutions[a]?.length > 0);
+        for (const r of study.results ?? []) {
+            if (r.analyte && !list.includes(r.analyte)) list.push(r.analyte);
+        }
+        return list.filter((a) => !seen.has(a) && seen.add(a));
+    }, [study.results, evolutions]);
+
+    const [selected, setSelected] = useState<string | null>(null);
+    const analyte = selected ?? analytes[0] ?? null;
+    const chartPoints = analyte ? evolutions[analyte] ?? [] : [];
+
     return (
         <HealthLayout>
             <Head title={study.title} />
@@ -32,15 +59,23 @@ export default function StudyShow({ study }: any) {
                 </div>
 
                 <Card className="bg-card border-border">
-                    <CardHeader><CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">Detalles</CardTitle></CardHeader>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                            Detalles
+                        </CardTitle>
+                    </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2">
                         <div>
                             <p className="text-xs uppercase text-muted-foreground">Tipo</p>
-                            <p className="font-semibold text-white">{TYPE_LABELS[study.type] ?? study.type}</p>
+                            <p className="font-semibold text-white">
+                                {TYPE_LABELS[study.type] ?? study.type}
+                            </p>
                         </div>
                         <div>
                             <p className="text-xs uppercase text-muted-foreground">Fecha de realización</p>
-                            <p className="font-semibold text-white">{study.performed_at ? new Date(study.performed_at).toLocaleDateString() : '—'}</p>
+                            <p className="font-semibold text-white">
+                                {study.performed_at ? new Date(study.performed_at).toLocaleDateString() : '—'}
+                            </p>
                         </div>
                         <div>
                             <p className="text-xs uppercase text-muted-foreground">Persona</p>
@@ -61,13 +96,46 @@ export default function StudyShow({ study }: any) {
                     </CardContent>
                 </Card>
 
+                {analytes.length > 0 && (
+                    <Card className="bg-card border-border">
+                        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                                Evolución
+                            </CardTitle>
+                            {analytes.length > 1 && (
+                                <select
+                                    value={analyte ?? ''}
+                                    onChange={(e) => setSelected(e.target.value)}
+                                    className="rounded-md border border-border bg-background px-2 py-1 text-sm text-white"
+                                >
+                                    {analytes.map((a) => (
+                                        <option key={a} value={a}>
+                                            {a}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </CardHeader>
+                        <CardContent>
+                            <StudyResultChart points={chartPoints} analyte={analyte ?? ''} />
+                        </CardContent>
+                    </Card>
+                )}
+
                 {study.results && study.results.length > 0 && (
                     <Card className="bg-card border-border">
-                        <CardHeader><CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">Resultados</CardTitle></CardHeader>
+                        <CardHeader>
+                            <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                                Resultados
+                            </CardTitle>
+                        </CardHeader>
                         <CardContent>
                             <ul className="list-disc pl-5 space-y-1 text-white/80">
                                 {study.results.map((r: any) => (
-                                    <li key={r.id}>{r.analyte ?? 'Resultado'}: {r.value} {r.unit ?? ''} {r.flag ? `(${r.flag})` : ''}</li>
+                                    <li key={r.id}>
+                                        {r.analyte ?? 'Resultado'}: {r.value} {r.unit ?? ''}{' '}
+                                        {r.flag ? `(${FLAG_LABELS[r.flag] ?? r.flag})` : ''}
+                                    </li>
                                 ))}
                             </ul>
                         </CardContent>

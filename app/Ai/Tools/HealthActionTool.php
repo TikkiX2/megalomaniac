@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Health\Enums\AppointmentStatus;
 use App\Health\Enums\ConditionKind;
 use App\Health\Enums\ConditionStatus;
 use App\Health\Enums\IntakeStatus;
 use App\Health\Enums\MeasurementType;
 use App\Health\Enums\ProfessionalType;
+use App\Health\Enums\ResultFlag;
 use App\Health\Enums\Severity;
+use App\Health\Enums\StudyType;
 use App\Models\HealthProfessional;
 use App\Models\User;
 use App\Services\Health\HealthService;
@@ -39,7 +42,7 @@ class HealthActionTool implements Approvable, Tool
 
     public function description(): Stringable|string
     {
-        return 'Create, update or delete health conditions, medications and professionals, and log measurements, symptoms and medication intakes on behalf of the user. Use this when the user asks to record or update health data. It only records what the user reports; it never diagnoses, interprets results or recommends treatments.';
+        return 'Create, update or delete health conditions, medications, professionals, studies and appointments, and log measurements, symptoms and medication intakes on behalf of the user. Use this when the user asks to record or update health data. It only records what the user reports; it never diagnoses, interprets results or recommends treatments.';
     }
 
     public function needsApproval(Request $request): Approval|bool
@@ -65,6 +68,14 @@ class HealthActionTool implements Approvable, Tool
             'log_measurement' => 'registrar una medición',
             'log_symptom' => 'registrar un síntoma',
             'log_intake' => 'registrar una toma',
+            'create_study' => 'crear un estudio',
+            'update_study' => 'actualizar un estudio',
+            'delete_study' => 'eliminar un estudio',
+            'add_study_result' => 'añadir un resultado de estudio',
+            'delete_study_result' => 'eliminar un resultado de estudio',
+            'create_appointment' => 'crear una cita médica',
+            'update_appointment' => 'actualizar una cita médica',
+            'delete_appointment' => 'eliminar una cita médica',
         ];
     }
 
@@ -84,7 +95,15 @@ class HealthActionTool implements Approvable, Tool
                 'log_measurement' => $this->logMeasurement($request),
                 'log_symptom' => $this->logSymptom($request),
                 'log_intake' => $this->logIntake($request),
-                default => $this->error('Invalid action. Use: create_condition, update_condition, delete_condition, create_medication, update_medication, delete_medication, create_professional, update_professional, delete_professional, log_measurement, log_symptom, log_intake'),
+                'create_study' => $this->createStudy($request),
+                'update_study' => $this->updateStudy($request),
+                'delete_study' => $this->deleteStudy($request),
+                'add_study_result' => $this->addStudyResult($request),
+                'delete_study_result' => $this->deleteStudyResult($request),
+                'create_appointment' => $this->createAppointment($request),
+                'update_appointment' => $this->updateAppointment($request),
+                'delete_appointment' => $this->deleteAppointment($request),
+                default => $this->error('Invalid action. Use: create_condition, update_condition, delete_condition, create_medication, update_medication, delete_medication, create_professional, update_professional, delete_professional, log_measurement, log_symptom, log_intake, create_study, update_study, delete_study, add_study_result, delete_study_result, create_appointment, update_appointment, delete_appointment'),
             };
         } catch (ValidationException $exception) {
             return $this->error(implode(' ', array_merge(...array_values($exception->errors()))));
@@ -329,6 +348,145 @@ class HealthActionTool implements Approvable, Tool
         return $this->success('Intake logged.', ['intake' => $intake->toArray()]);
     }
 
+    private function createStudy(Request $request): string
+    {
+        $data = $this->validated($request, [
+            'type' => ['required', Rule::enum(StudyType::class)],
+            'title' => ['required', 'string', 'max:255'],
+            'performed_at' => ['nullable', 'date'],
+            'provider_id' => ['nullable', Rule::exists('health_professionals', 'id')->where('user_id', $this->user->id)],
+            'condition_id' => ['nullable', Rule::exists('health_conditions', 'id')->where('user_id', $this->user->id)],
+            'person_id' => ['nullable', Rule::exists('people', 'id')->where('user_id', $this->user->id)],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $study = $this->health->createStudy($this->user, $this->withoutNulls($data));
+
+        return $this->success('Study created.', ['study' => $study->toArray()]);
+    }
+
+    private function updateStudy(Request $request): string
+    {
+        $study = $this->health->findStudy($this->user, (int) ($request['study_id'] ?? 0));
+
+        $data = $this->validated($request, [
+            'type' => ['sometimes', Rule::enum(StudyType::class)],
+            'title' => ['sometimes', 'string', 'max:255'],
+            'performed_at' => ['nullable', 'date'],
+            'provider_id' => ['nullable', Rule::exists('health_professionals', 'id')->where('user_id', $this->user->id)],
+            'condition_id' => ['nullable', Rule::exists('health_conditions', 'id')->where('user_id', $this->user->id)],
+            'person_id' => ['nullable', Rule::exists('people', 'id')->where('user_id', $this->user->id)],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $data = $this->withoutNulls($data);
+
+        if ($data === []) {
+            return $this->error('No fields to update.');
+        }
+
+        $study = $this->health->updateStudy($this->user, $study, $data);
+
+        return $this->success('Study updated.', ['study' => $study->toArray()]);
+    }
+
+    private function deleteStudy(Request $request): string
+    {
+        $study = $this->health->findStudy($this->user, (int) ($request['study_id'] ?? 0));
+        $this->health->deleteStudy($this->user, $study);
+
+        return $this->success('Study deleted.');
+    }
+
+    private function addStudyResult(Request $request): string
+    {
+        $study = $this->health->findStudy($this->user, (int) ($request['study_id'] ?? 0));
+
+        $data = $this->validated($request, [
+            'analyte' => ['required', 'string', 'max:255'],
+            'value' => ['required', 'string', 'max:255'],
+            'unit' => ['nullable', 'string', 'max:50'],
+            'reference_range' => ['nullable', 'string', 'max:255'],
+            'flag' => ['nullable', Rule::enum(ResultFlag::class)],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $result = $this->health->createStudyResult($this->user, $study, $this->withoutNulls($data));
+
+        return $this->success('Study result added.', ['result' => $result->toArray()]);
+    }
+
+    private function deleteStudyResult(Request $request): string
+    {
+        $study = $this->health->findStudy($this->user, (int) ($request['study_id'] ?? 0));
+        $result = $study->results()
+            ->find((int) ($request['result_id'] ?? 0));
+
+        if (! $result) {
+            return $this->error('HealthStudyResult not found.');
+        }
+
+        $this->health->deleteStudyResult($this->user, $result);
+
+        return $this->success('Study result deleted.');
+    }
+
+    private function createAppointment(Request $request): string
+    {
+        $data = $this->validated($request, [
+            'title' => ['required', 'string', 'max:255'],
+            'status' => ['nullable', Rule::enum(AppointmentStatus::class)],
+            'scheduled_at' => ['required', 'date'],
+            'provider_id' => ['nullable', Rule::exists('health_professionals', 'id')->where('user_id', $this->user->id)],
+            'person_id' => ['nullable', Rule::exists('people', 'id')->where('user_id', $this->user->id)],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $data = $this->withoutNulls($data);
+        $data['status'] = $data['status'] ?? AppointmentStatus::Scheduled->value;
+        $data['scheduled_at'] = Carbon::parse($data['scheduled_at'])->utc()->toDateTimeString();
+
+        $appointment = $this->health->createAppointment($this->user, $data);
+
+        return $this->success('Appointment created.', ['appointment' => $appointment->toArray()]);
+    }
+
+    private function updateAppointment(Request $request): string
+    {
+        $appointment = $this->health->findAppointment($this->user, (int) ($request['appointment_id'] ?? 0));
+
+        $data = $this->validated($request, [
+            'title' => ['sometimes', 'string', 'max:255'],
+            'status' => ['sometimes', Rule::enum(AppointmentStatus::class)],
+            'scheduled_at' => ['sometimes', 'date'],
+            'provider_id' => ['nullable', Rule::exists('health_professionals', 'id')->where('user_id', $this->user->id)],
+            'person_id' => ['nullable', Rule::exists('people', 'id')->where('user_id', $this->user->id)],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $data = $this->withoutNulls($data);
+
+        if (isset($data['scheduled_at'])) {
+            $data['scheduled_at'] = Carbon::parse($data['scheduled_at'])->utc()->toDateTimeString();
+        }
+
+        if ($data === []) {
+            return $this->error('No fields to update.');
+        }
+
+        $appointment = $this->health->updateAppointment($this->user, $appointment, $data);
+
+        return $this->success('Appointment updated.', ['appointment' => $appointment->toArray()]);
+    }
+
+    private function deleteAppointment(Request $request): string
+    {
+        $appointment = $this->health->findAppointment($this->user, (int) ($request['appointment_id'] ?? 0));
+        $this->health->deleteAppointment($this->user, $appointment);
+
+        return $this->success('Appointment deleted.');
+    }
+
     /**
      * @param  array<string, mixed>  $rules
      * @return array<string, mixed>
@@ -371,15 +529,22 @@ class HealthActionTool implements Approvable, Tool
                 'create_medication', 'update_medication', 'delete_medication',
                 'create_professional', 'update_professional', 'delete_professional',
                 'log_measurement', 'log_symptom', 'log_intake',
+                'create_study', 'update_study', 'delete_study',
+                'add_study_result', 'delete_study_result',
+                'create_appointment', 'update_appointment', 'delete_appointment',
             ])->required(),
             'condition_id' => $schema->integer()->description('Condition ID (update_condition, delete_condition, create_medication, update_medication)'),
             'medication_id' => $schema->integer()->description('Medication ID (update_medication, delete_medication, log_intake)'),
             'professional_id' => $schema->integer()->description('Professional ID (update_professional, delete_professional)'),
+            'study_id' => $schema->integer()->description('Study ID (update_study, delete_study, add_study_result, delete_study_result)'),
+            'result_id' => $schema->integer()->description('Study result ID (delete_study_result)'),
+            'appointment_id' => $schema->integer()->description('Appointment ID (update_appointment, delete_appointment)'),
             'kind' => $schema->string()->description('Condition kind (create_condition, update_condition)')->enum(ConditionKind::values()),
             'name' => $schema->string()->description('Condition, medication or professional name')->max(255),
-            'status' => $schema->string()->description('Condition status (condition actions) or intake status (log_intake)')->enum([
+            'status' => $schema->string()->description('Condition status (condition actions), intake status (log_intake) or appointment status (appointment actions)')->enum([
                 ...ConditionStatus::values(),
                 ...IntakeStatus::values(),
+                ...AppointmentStatus::values(),
             ]),
             'severity' => $schema->string()->description('Condition or symptom severity')->enum(Severity::values()),
             'diagnosed_at' => $schema->string()->description('Diagnosis date (YYYY-MM-DD)'),
@@ -393,10 +558,17 @@ class HealthActionTool implements Approvable, Tool
             'ended_at' => $schema->string()->description('Medication end date (YYYY-MM-DD)'),
             'is_active' => $schema->boolean()->description('Active flag (medications and professionals)'),
             'prescriber_id' => $schema->integer()->description('Health professional ID as prescriber'),
-            'type' => $schema->string()->description('Measurement type (log_measurement) or professional type (create_professional, update_professional)')->enum([
+            'type' => $schema->string()->description('Measurement type (log_measurement), professional type (create_professional, update_professional) or study type (create_study, update_study)')->enum([
                 ...ProfessionalType::values(),
                 ...MeasurementType::values(),
+                ...StudyType::values(),
             ]),
+            'title' => $schema->string()->description('Study or appointment title (study and appointment actions)')->max(255),
+            'performed_at' => $schema->string()->description('Study performed date (YYYY-MM-DD)'),
+            'scheduled_at' => $schema->string()->description('Appointment datetime (create_appointment, update_appointment)'),
+            'analyte' => $schema->string()->description('Analyte/test name (add_study_result)')->max(255),
+            'reference_range' => $schema->string()->description('Reference range text (add_study_result)')->max(255),
+            'flag' => $schema->string()->description('Result flag (add_study_result)')->enum(ResultFlag::values()),
             'specialty' => $schema->string()->description('Professional specialty')->max(255),
             'phone' => $schema->string()->description('Professional phone')->max(50),
             'email' => $schema->string()->description('Professional email')->max(255),

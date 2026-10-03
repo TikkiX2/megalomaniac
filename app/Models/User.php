@@ -256,4 +256,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(HealthGymCrossover::class);
     }
+
+    public function healthStudies(): HasMany
+    {
+        return $this->hasMany(HealthStudy::class);
+    }
+
+    public function healthAppointments(): HasMany
+    {
+        return $this->hasMany(HealthAppointment::class);
+    }
 }

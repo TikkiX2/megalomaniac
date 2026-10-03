@@ -2,6 +2,7 @@
 
 use App\Models\ChatThread;
 use App\Models\HealthCondition;
+use App\Models\HealthStudy;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -72,6 +73,35 @@ it('rejects a context id without a type', function () {
     $this->postJson('/health/chats', ['context_id' => 1])
         ->assertStatus(422)
         ->assertJsonValidationErrors('context_type');
+});
+
+it('creates a health chat linked to a study context', function () {
+    $study = HealthStudy::factory()->create(['user_id' => $this->user->id, 'title' => 'Laboratorio TSH']);
+
+    $this->post('/health/chats', [
+        'context_type' => 'health_study',
+        'context_id' => $study->id,
+    ])->assertRedirect();
+
+    $thread = ChatThread::where('category', 'salud')->latest('id')->firstOrFail();
+
+    expect($thread->context_type)->toBe(HealthStudy::class)
+        ->and($thread->context_id)->toBe($study->id);
+
+    $this->get('/health/chats')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('health/chats/Index')
+            ->where('threads', fn ($rows) => collect($rows)->pluck('context_label')->contains('Laboratorio TSH')));
+});
+
+it('rejects a study context owned by another user', function () {
+    $study = HealthStudy::factory()->create();
+
+    $this->post('/health/chats', [
+        'context_type' => 'health_study',
+        'context_id' => $study->id,
+    ])->assertNotFound();
 });
 
 it('renders the condition label for a contextualised health chat', function () {

@@ -119,3 +119,51 @@ it('requires approval with a readable label and never diagnoses', function () {
         ->and($approval->reason)->toContain('crear')
         ->and((string) healthTool($user)->description())->toContain('never diagnose');
 });
+
+it('creates studies, adds results and manages appointments', function () {
+    $user = User::factory()->create();
+
+    $study = json_decode(healthTool($user)->handle(new Request([
+        'action' => 'create_study',
+        'type' => 'lab',
+        'title' => 'Laboratorio TSH',
+        'performed_at' => '2026-09-25',
+    ])), true);
+
+    expect($study['success'])->toBeTrue()
+        ->and($study['study']['title'])->toBe('Laboratorio TSH');
+
+    $studyId = $study['study']['id'];
+
+    $result = json_decode(healthTool($user)->handle(new Request([
+        'action' => 'add_study_result',
+        'study_id' => $studyId,
+        'analyte' => 'TSH',
+        'value' => '2.5',
+        'unit' => 'uUI/mL',
+        'flag' => 'normal',
+    ])), true);
+
+    expect($result['success'])->toBeTrue()
+        ->and($result['result']['analyte'])->toBe('TSH');
+
+    $appointment = json_decode(healthTool($user)->handle(new Request([
+        'action' => 'create_appointment',
+        'title' => 'Control neurólogo',
+        'scheduled_at' => '2026-10-10T10:00:00',
+    ])), true);
+
+    expect($appointment['success'])->toBeTrue()
+        ->and($appointment['appointment']['status'])->toBe('scheduled');
+
+    $appointmentId = $appointment['appointment']['id'];
+
+    $updated = json_decode(healthTool($user)->handle(new Request([
+        'action' => 'update_appointment',
+        'appointment_id' => $appointmentId,
+        'status' => 'completed',
+    ])), true);
+
+    expect($updated['success'])->toBeTrue()
+        ->and($updated['appointment']['status'])->toBe('completed');
+});

@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HealthCondition;
 use App\Models\HealthProfessional;
 use App\Models\HealthStudy;
+use App\Models\HealthStudyResult;
 use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,8 +58,38 @@ class StudyController extends Controller
 
         $study->load(['person:id,first_name,last_name', 'provider:id,name', 'condition:id,name', 'results']);
 
+        // Historial de cada analito presente en este estudio, a lo largo de los
+        // estudios del usuario (para el gráfico de evolución).
+        $analytes = $study->results->pluck('analyte')->filter()->unique()->values();
+
+        $evolution = [];
+        if ($analytes->isNotEmpty()) {
+            $rows = HealthStudyResult::query()
+                ->whereIn('analyte', $analytes)
+                ->with('study:id,user_id,performed_at')
+                ->whereHas('study', fn ($q) => $q->where('user_id', $request->user()->id))
+                ->orderBy('study_id')
+                ->orderBy('sort_order')
+                ->get()
+                ->filter(fn ($r) => $r->study !== null);
+
+            foreach ($rows->groupBy('analyte') as $analyte => $group) {
+                $evolution[$analyte] = $group
+                    ->map(fn ($r) => [
+                        'date' => $r->study->performed_at?->toDateString() ?? $r->study->created_at->toDateString(),
+                        'value' => (float) $r->value,
+                        'unit' => $r->unit ?? '',
+                        'flag' => $r->flag?->value,
+                    ])
+                    ->sortBy('date')
+                    ->values()
+                    ->all();
+            }
+        }
+
         return Inertia::render('health/studies/Show', [
             'study' => $study,
+            'evolution' => $evolution,
         ]);
     }
 

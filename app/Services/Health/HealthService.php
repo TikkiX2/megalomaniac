@@ -6,12 +6,15 @@ namespace App\Services\Health;
 
 use App\Health\Enums\ConditionStatus;
 use App\Health\Enums\MeasurementType;
+use App\Models\HealthAppointment;
 use App\Models\HealthCondition;
 use App\Models\HealthMeasurement;
 use App\Models\HealthMedication;
 use App\Models\HealthMedicationIntake;
 use App\Models\HealthMedicationSchedule;
 use App\Models\HealthProfessional;
+use App\Models\HealthStudy;
+use App\Models\HealthStudyResult;
 use App\Models\HealthSymptom;
 use App\Models\HealthSymptomCatalog;
 use App\Models\HealthSymptomEpisode;
@@ -249,6 +252,72 @@ class HealthService
     {
         $this->assertOwner($user, $episode);
         $episode->delete();
+    }
+
+    public function findStudy(User $user, int $id): HealthStudy
+    {
+        return $this->owned(HealthStudy::query(), $user)
+            ->find($id) ?? throw new ModelNotFoundException('HealthStudy not found.');
+    }
+
+    public function createStudy(User $user, array $data): HealthStudy
+    {
+        return $user->healthStudies()->create($data);
+    }
+
+    public function updateStudy(User $user, HealthStudy $study, array $data): HealthStudy
+    {
+        $this->assertOwner($user, $study);
+        $study->update($data);
+
+        return $study->refresh();
+    }
+
+    public function deleteStudy(User $user, HealthStudy $study): void
+    {
+        $this->assertOwner($user, $study);
+        $study->delete();
+    }
+
+    public function createStudyResult(User $user, HealthStudy $study, array $data): HealthStudyResult
+    {
+        $this->assertOwner($user, $study);
+
+        return $study->results()->create([
+            ...$data,
+            'sort_order' => (int) ($data['sort_order'] ?? $study->results()->count()),
+        ]);
+    }
+
+    public function deleteStudyResult(User $user, HealthStudyResult $result): void
+    {
+        $this->assertOwner($user, $result->study);
+        $result->delete();
+    }
+
+    public function findAppointment(User $user, int $id): HealthAppointment
+    {
+        return $this->owned(HealthAppointment::query(), $user)
+            ->find($id) ?? throw new ModelNotFoundException('HealthAppointment not found.');
+    }
+
+    public function createAppointment(User $user, array $data): HealthAppointment
+    {
+        return $user->healthAppointments()->create($data);
+    }
+
+    public function updateAppointment(User $user, HealthAppointment $appointment, array $data): HealthAppointment
+    {
+        $this->assertOwner($user, $appointment);
+        $appointment->update($data);
+
+        return $appointment->refresh();
+    }
+
+    public function deleteAppointment(User $user, HealthAppointment $appointment): void
+    {
+        $this->assertOwner($user, $appointment);
+        $appointment->delete();
     }
 
     /**
