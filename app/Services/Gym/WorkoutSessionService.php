@@ -3,6 +3,7 @@
 namespace App\Services\Gym;
 
 use App\Exceptions\WorkoutAlreadyActiveException;
+use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
@@ -10,6 +11,8 @@ use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class WorkoutSessionService
 {
@@ -195,6 +198,71 @@ class WorkoutSessionService
         $this->assertOwnsWorkout($user, $workout);
 
         $workout->delete();
+    }
+
+    /**
+     * Build a per-session progression summary for an exercise, one entry per
+     * finished workout (workouts still open are ignored), ordered by started_at.
+     *
+     * @return Collection<int, array{
+     *     workout_id: int,
+     *     date: string,
+     *     best_weight: float,
+     *     best_1rm: float,
+     *     volume: float,
+     *     total_reps: int,
+     *     completed_sets: int,
+     * }>
+     */
+    public function progressionFor(User $user, Exercise $exercise): Collection
+    {
+        $sets = WorkoutSet::query()
+            ->join('workout_exercises', 'workout_sets.workout_exercise_id', '=', 'workout_exercises.id')
+            ->join('workouts', 'workout_exercises.workout_id', '=', 'workouts.id')
+            ->where('workout_exercises.exercise_id', $exercise->id)
+            ->where('workouts.user_id', $user->id)
+            ->whereNotNull('workouts.ended_at')
+            ->orderBy('workouts.started_at')
+            ->get([
+                'workouts.id as workout_id',
+                'workouts.started_at',
+                'workout_sets.weight',
+                'workout_sets.reps',
+                'workout_sets.completed',
+            ]);
+
+        return $sets
+            ->groupBy('workout_id')
+            ->map(function (Collection $workoutSets, int $workoutId): array {
+                return [
+                    'workout_id' => (int) $workoutId,
+                    'date' => Carbon::parse($workoutSets->first()->started_at)->toDateString(),
+                    'best_weight' => (float) ($workoutSets->max(
+                        fn (WorkoutSet $set) => is_numeric($set->weight) && (float) $set->weight > 0
+                            ? (float) $set->weight
+                            : null,
+                    ) ?? 0),
+                    'best_1rm' => (float) ($workoutSets->max(
+                        fn (WorkoutSet $set) => is_numeric($set->weight) && (float) $set->weight > 0
+                            && is_numeric($set->reps) && (int) $set->reps > 0
+                            ? round((float) $set->weight * (1 + (int) $set->reps / 30), 2)
+                            : null,
+                    ) ?? 0),
+                    'volume' => (float) $workoutSets->sum(
+                        fn (WorkoutSet $set) => is_numeric($set->weight) && (float) $set->weight > 0
+                            && is_numeric($set->reps) && (int) $set->reps > 0
+                            ? (float) $set->weight * (int) $set->reps
+                            : 0,
+                    ),
+                    'total_reps' => (int) $workoutSets->sum(
+                        fn (WorkoutSet $set) => is_numeric($set->reps) && (int) $set->reps > 0
+                            ? (int) $set->reps
+                            : 0,
+                    ),
+                    'completed_sets' => (int) $workoutSets->where('completed')->count(),
+                ];
+            })
+            ->values();
     }
 
     private function copyRoutineTemplate(User $user, Workout $workout, Routine $routine): void

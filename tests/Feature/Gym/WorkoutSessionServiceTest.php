@@ -257,3 +257,31 @@ it('rejects logging a past workout with another users routine', function () {
     expect(fn () => sessions()->logPast($user, $routine->id, now()->toIso8601String()))
         ->toThrow(ModelNotFoundException::class);
 });
+
+it('builds per-session progression for an exercise', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+
+    $finished = Workout::factory()->create([
+        'user_id' => $user->id,
+        'started_at' => now()->subDays(2),
+        'ended_at' => now()->subDays(2)->addHour(),
+    ]);
+    $we = $finished->exercises()->create(['exercise_id' => $exercise->id]);
+    $we->sets()->create(['set_number' => 1, 'weight' => 100, 'reps' => 5, 'completed' => true]);
+    $we->sets()->create(['set_number' => 2, 'weight' => 80, 'reps' => 12, 'completed' => true]);
+
+    $open = Workout::factory()->create(['user_id' => $user->id, 'started_at' => now()]);
+    $openWe = $open->exercises()->create(['exercise_id' => $exercise->id]);
+    $openWe->sets()->create(['set_number' => 1, 'weight' => 999, 'reps' => 5, 'completed' => true]);
+
+    $rows = sessions()->progressionFor($user, $exercise);
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]['workout_id'])->toBe($finished->id)
+        ->and($rows[0]['best_weight'])->toBe(100.0)
+        ->and($rows[0]['best_1rm'])->toBe(116.67)
+        ->and($rows[0]['volume'])->toBe(1460.0)
+        ->and($rows[0]['total_reps'])->toBe(17)
+        ->and($rows[0]['completed_sets'])->toBe(2);
+});
