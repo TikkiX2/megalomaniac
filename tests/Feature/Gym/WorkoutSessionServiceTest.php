@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\WorkoutAlreadyActiveException;
 use App\Models\Exercise;
 use App\Models\Routine;
 use App\Models\User;
@@ -25,6 +26,21 @@ it('starts a workout and returns the active one afterwards', function () {
         ->and($workout->ended_at)->toBeNull()
         ->and(sessions()->activeFor($user)->id)->toBe($workout->id)
         ->and(sessions()->start($user)->id)->toBe($workout->id);
+});
+
+it('throws with the active workout when starting a routine while one is active', function () {
+    $user = User::factory()->create();
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+    $active = Workout::factory()->create(['user_id' => $user->id]);
+
+    try {
+        sessions()->start($user, $routine->id);
+        $this->fail('Expected WorkoutAlreadyActiveException');
+    } catch (WorkoutAlreadyActiveException $e) {
+        expect($e->workout->id)->toBe($active->id);
+    }
+
+    expect($active->refresh()->routine_id)->toBeNull();
 });
 
 it('copies the routine template and prefills sets from previous workouts', function () {

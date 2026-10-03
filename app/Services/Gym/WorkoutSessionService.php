@@ -2,6 +2,7 @@
 
 namespace App\Services\Gym;
 
+use App\Exceptions\WorkoutAlreadyActiveException;
 use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
@@ -28,6 +29,10 @@ class WorkoutSessionService
     public function start(User $user, ?int $routineId = null, ?string $startedAt = null, ?string $notes = null): Workout
     {
         if ($active = $this->activeFor($user)) {
+            if ($routineId !== null) {
+                throw new WorkoutAlreadyActiveException($active);
+            }
+
             return $active;
         }
 
