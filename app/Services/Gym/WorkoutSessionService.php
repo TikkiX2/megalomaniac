@@ -57,6 +57,36 @@ class WorkoutSessionService
         return $workout;
     }
 
+    public function repeat(User $user, Workout $source): Workout
+    {
+        $this->assertOwnsWorkout($user, $source);
+
+        $workout = $user->workouts()->create([
+            'routine_id' => $source->routine_id,
+            'started_at' => now(),
+            'notes' => $source->notes,
+        ]);
+
+        foreach ($source->exercises()->with('sets')->get() as $sourceExercise) {
+            $workoutExercise = $workout->exercises()->create([
+                'exercise_id' => $sourceExercise->exercise_id,
+                'order' => $sourceExercise->order,
+            ]);
+
+            foreach ($sourceExercise->sets as $sourceSet) {
+                $workoutExercise->sets()->create([
+                    'set_number' => $sourceSet->set_number,
+                    'weight' => $sourceSet->weight,
+                    'reps' => $sourceSet->reps,
+                    'rpe' => $sourceSet->rpe,
+                    'completed' => false,
+                ]);
+            }
+        }
+
+        return $workout;
+    }
+
     public function addExercise(User $user, Workout $workout, ?int $exerciseId = null, ?string $exerciseName = null): WorkoutExercise
     {
         $this->assertOwnsWorkout($user, $workout);

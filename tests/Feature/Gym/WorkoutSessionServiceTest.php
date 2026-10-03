@@ -172,3 +172,54 @@ it('finishes, removes and deletes workout parts', function () {
     sessions()->delete($user, $workout);
     expect($workout->exists)->toBeFalse();
 });
+
+it('repeats a previous workout copying exercises and sets', function () {
+    $user = User::factory()->create();
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+    $exercise = Exercise::factory()->create();
+    $source = Workout::factory()->create([
+        'user_id' => $user->id, 'routine_id' => $routine->id,
+        'ended_at' => now(), 'notes' => 'dia de pierna',
+    ]);
+    $we = $source->exercises()->create(['exercise_id' => $exercise->id, 'order' => 2]);
+    $we->sets()->create(['set_number' => 1, 'weight' => 60, 'reps' => 10, 'rpe' => 8, 'completed' => true]);
+    $we->sets()->create(['set_number' => 2, 'weight' => 65, 'reps' => 8, 'rpe' => 9, 'completed' => true]);
+
+    $copy = sessions()->repeat($user, $source);
+
+    expect($copy->id)->not->toBe($source->id)
+        ->and($copy->routine_id)->toBe($routine->id)
+        ->and($copy->notes)->toBe('dia de pierna')
+        ->and($copy->ended_at)->toBeNull();
+
+    $newWe = $copy->exercises()->first();
+    expect($newWe->exercise_id)->toBe($exercise->id)
+        ->and($newWe->order)->toBe(2);
+
+    $sets = $newWe->sets()->orderBy('set_number')->get();
+    expect($sets)->toHaveCount(2)
+        ->and($sets[0]->set_number)->toBe(1)
+        ->and((float) $sets[0]->weight)->toBe(60.0)
+        ->and($sets[0]->reps)->toBe(10)
+        ->and((float) $sets[0]->rpe)->toBe(8.0)
+        ->and($sets[0]->completed)->toBeFalse()
+        ->and($sets[1]->set_number)->toBe(2)
+        ->and((float) $sets[1]->weight)->toBe(65.0);
+});
+
+it('repeats an empty quick session without errors', function () {
+    $user = User::factory()->create();
+    $source = Workout::factory()->create(['user_id' => $user->id, 'ended_at' => now()]);
+
+    $copy = sessions()->repeat($user, $source);
+
+    expect($copy->exercises)->toHaveCount(0);
+});
+
+it('rejects repeating another users workout', function () {
+    $user = User::factory()->create();
+    $other = Workout::factory()->create();
+
+    expect(fn () => sessions()->repeat($user, $other))
+        ->toThrow(AuthorizationException::class);
+});
