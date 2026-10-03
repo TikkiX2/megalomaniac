@@ -87,6 +87,30 @@ class WorkoutSessionService
         return $workout;
     }
 
+    public function logPast(User $user, ?int $routineId, string $startedAt, ?string $notes = null): Workout
+    {
+        $routine = null;
+
+        if ($routineId) {
+            $routine = Routine::with('exercises')
+                ->where('user_id', $user->id)
+                ->findOrFail($routineId);
+        }
+
+        $workout = $user->workouts()->create([
+            'routine_id' => $routineId,
+            'started_at' => $startedAt,
+            'ended_at' => $startedAt,
+            'notes' => $notes,
+        ]);
+
+        if ($routine) {
+            $this->copyRoutineTemplate($user, $workout, $routine);
+        }
+
+        return $workout;
+    }
+
     public function addExercise(User $user, Workout $workout, ?int $exerciseId = null, ?string $exerciseName = null): WorkoutExercise
     {
         $this->assertOwnsWorkout($user, $workout);

@@ -2,6 +2,7 @@
 
 use App\Exceptions\WorkoutAlreadyActiveException;
 use App\Models\Exercise;
+use App\Models\PersonalRecord;
 use App\Models\Routine;
 use App\Models\User;
 use App\Models\Workout;
@@ -222,4 +223,37 @@ it('rejects repeating another users workout', function () {
 
     expect(fn () => sessions()->repeat($user, $other))
         ->toThrow(AuthorizationException::class);
+});
+
+it('logs a past workout already finished at the chosen date', function () {
+    $user = User::factory()->create();
+    $date = now()->subDays(3)->setTime(18, 30);
+
+    $workout = sessions()->logPast($user, null, $date->toIso8601String(), 'fue duro');
+
+    expect($workout->started_at->toDateTimeString())->toBe($date->toDateTimeString())
+        ->and($workout->ended_at->toDateTimeString())->toBe($date->toDateTimeString())
+        ->and($workout->notes)->toBe('fue duro')
+        ->and(PersonalRecord::count())->toBe(0);
+});
+
+it('logs a past workout copying the routine template', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+    $routine->exercises()->attach($exercise->id, ['order' => 1, 'target_sets' => 2, 'target_weight' => 60, 'target_reps' => '8']);
+
+    $workout = sessions()->logPast($user, $routine->id, now()->subDays(2)->toIso8601String());
+
+    expect($workout->exercises)->toHaveCount(1)
+        ->and($workout->exercises->first()->sets()->count())->toBe(2)
+        ->and($workout->ended_at)->not->toBeNull();
+});
+
+it('rejects logging a past workout with another users routine', function () {
+    $user = User::factory()->create();
+    $routine = Routine::factory()->create();
+
+    expect(fn () => sessions()->logPast($user, $routine->id, now()->toIso8601String()))
+        ->toThrow(ModelNotFoundException::class);
 });
