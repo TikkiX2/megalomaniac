@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from 'lucide-react';
+import { HeartPulse, MoreHorizontal, Pencil, Pin, PinOff, Stethoscope, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,14 @@ export function ThreadItem({ thread, active }: ThreadItemProps) {
         router.patch(
             ChatController.update.url(thread.id),
             { pinned: !thread.is_pinned },
+            { preserveScroll: true, preserveState: true },
+        );
+    };
+
+    const toggleCategory = () => {
+        router.patch(
+            ChatController.update.url(thread.id),
+            { category: thread.category === 'salud' ? 'general' : 'salud' },
             { preserveScroll: true, preserveState: true },
         );
     };
@@ -120,6 +128,10 @@ export function ThreadItem({ thread, active }: ThreadItemProps) {
                     <DropdownMenuItem onSelect={togglePinned}>
                         {thread.is_pinned ? <PinOff className="mr-2 h-3.5 w-3.5" /> : <Pin className="mr-2 h-3.5 w-3.5" />}
                         {thread.is_pinned ? 'Desfijar' : 'Fijar'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={toggleCategory}>
+                        {thread.category === 'salud' ? <Stethoscope className="mr-2 h-3.5 w-3.5" /> : <HeartPulse className="mr-2 h-3.5 w-3.5" />}
+                        {thread.category === 'salud' ? 'Mover a general' : 'Mover a Salud'}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={() => setConfirmOpen(true)} className="text-destructive focus:text-destructive">

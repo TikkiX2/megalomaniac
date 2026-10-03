@@ -35,6 +35,7 @@ class ChatThread extends Conversation
             'pinned_at' => 'datetime',
             'archived_at' => 'datetime',
             'tools_policy' => 'array',
+            'tools_policy_backup' => 'array',
         ];
     }
 

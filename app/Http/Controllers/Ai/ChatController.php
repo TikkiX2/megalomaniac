@@ -148,7 +148,24 @@ class ChatController extends Controller
             $thread->mode = $data['mode'];
         }
 
-        if (array_key_exists('tools_policy', $data)) {
+        if (array_key_exists('category', $data)) {
+            $thread->category = $data['category'];
+
+            if ($data['category'] === ChatThread::CATEGORY_HEALTH) {
+                // Al entrar en salud: respaldar la policy anterior y fijar el
+                // grupo health (paridad con HealthChatController::store).
+                $thread->tools_policy_backup = $thread->tools_policy ?? null;
+                $thread->tools_policy = ['mode' => 'manual', 'groups' => ['health']];
+            } else {
+                // Al salir de salud: restaurar la policy respaldada; si no
+                // había backup (chat creado directamente como salud), volver
+                // al default del agente (null).
+                $thread->tools_policy = $thread->tools_policy_backup ?? null;
+                $thread->tools_policy_backup = null;
+            }
+        }
+
+        if (array_key_exists('tools_policy', $data) && ! array_key_exists('category', $data)) {
             $thread->tools_policy = $data['tools_policy'];
         }
 
