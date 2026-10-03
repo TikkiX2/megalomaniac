@@ -5,7 +5,7 @@ FROM php:8.4-fpm AS php-base
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpq-dev libzip-dev libpng-dev libonig-dev \
         libxml2-dev libicu-dev libsqlite3-dev libfreetype6-dev libjpeg62-turbo-dev \
-        libssl-dev \
+        libssl-dev poppler-utils \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         pdo pdo_pgsql pdo_sqlite mbstring zip gd bcmath pcntl exif intl opcache ftp \
