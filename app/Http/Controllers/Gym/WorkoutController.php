@@ -35,7 +35,7 @@ class WorkoutController extends Controller
 
     public function history(Request $request): Response
     {
-        $workouts = Workout::with(['exercises.sets', 'routine'])
+        $workouts = Workout::with(['exercises.exercise', 'exercises.sets', 'routine'])
             ->where('user_id', $request->user()->id)
             ->whereNotNull('ended_at')
             ->orderByDesc('ended_at')
