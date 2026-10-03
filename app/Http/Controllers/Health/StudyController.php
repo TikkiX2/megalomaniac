@@ -16,6 +16,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudyController extends Controller
 {
@@ -47,7 +49,8 @@ class StudyController extends Controller
         $data = $request->validate($this->rules($request));
         $data['user_id'] = $request->user()->id;
 
-        HealthStudy::create($data);
+        $study = HealthStudy::create($data);
+        $this->storeAttachments($request, $study);
 
         return redirect()->route('health.studies.index')->with('success', 'Estudio creado.');
     }
@@ -57,6 +60,7 @@ class StudyController extends Controller
         $this->authorize('view', $study);
 
         $study->load(['person:id,first_name,last_name', 'provider:id,name', 'condition:id,name', 'results']);
+        $study->loadMedia('attachments');
 
         // Historial de cada analito presente en este estudio, a lo largo de los
         // estudios del usuario (para el gráfico de evolución).
@@ -108,6 +112,7 @@ class StudyController extends Controller
         $this->authorize('update', $study);
 
         $study->update($request->validate($this->rules($request, partial: true)));
+        $this->storeAttachments($request, $study);
 
         return redirect()->route('health.studies.index')->with('success', 'Estudio actualizado.');
     }
@@ -119,6 +124,48 @@ class StudyController extends Controller
         $study->delete();
 
         return redirect()->route('health.studies.index')->with('success', 'Estudio eliminado.');
+    }
+
+    public function uploadFile(Request $request, HealthStudy $study): RedirectResponse
+    {
+        $this->authorize('update', $study);
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:10240'], // 10MB
+        ]);
+
+        $study->addMediaFromRequest('file')->toMediaCollection('attachments');
+
+        return back()->with('success', 'Archivo subido.');
+    }
+
+    public function downloadFile(Request $request, HealthStudy $study, Media $media): StreamedResponse
+    {
+        $this->authorize('view', $study);
+        abort_unless($media->model_id === $study->id && $media->model_type === HealthStudy::class, 404);
+
+        return response()->streamDownload(fn () => readfile($media->getPath()), $media->file_name);
+    }
+
+    public function deleteFile(Request $request, HealthStudy $study, Media $media): RedirectResponse
+    {
+        $this->authorize('update', $study);
+        abort_unless($media->model_id === $study->id && $media->model_type === HealthStudy::class, 404);
+
+        $media->delete();
+
+        return back()->with('success', 'Archivo eliminado.');
+    }
+
+    private function storeAttachments(Request $request, HealthStudy $study): void
+    {
+        if (! $request->hasFile('attachments')) {
+            return;
+        }
+
+        foreach ($request->file('attachments') as $file) {
+            $study->addMedia($file)->toMediaCollection('attachments');
+        }
     }
 
     /**
@@ -150,6 +197,8 @@ class StudyController extends Controller
             'condition_id' => ['nullable', Rule::exists('health_conditions', 'id')->where('user_id', $request->user()->id)],
             'person_id' => ['nullable', Rule::exists('people', 'id')->where('user_id', $request->user()->id)],
             'notes' => ['nullable', 'string'],
+            'attachments' => ['nullable', 'array'],
+            'attachments.*' => ['file', 'max:10240'],
         ];
     }
 }

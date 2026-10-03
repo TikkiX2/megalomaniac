@@ -28,14 +28,16 @@ export default function AppointmentForm({ appointment: appointmentProp, people, 
         person_id: appointment.person_id ?? '',
         provider_id: appointment.provider_id ?? '',
         notes: appointment.notes || '',
+        attachments: [] as File[],
     });
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
+        const options = { forceFormData: true as const };
         if (isEditing) {
-            put(health.appointments.update(appointment.id).url);
+            put(health.appointments.update(appointment.id).url, options);
         } else {
-            post(health.appointments.store().url);
+            post(health.appointments.store().url, options);
         }
     };
 
@@ -140,6 +142,26 @@ export default function AppointmentForm({ appointment: appointmentProp, people, 
                         <CardContent>
                             <Textarea value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
                             {errors.notes && <p className="text-xs text-destructive">{errors.notes}</p>}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-card border-border">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">Archivos</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Input
+                                id="attachments"
+                                type="file"
+                                multiple
+                                onChange={(e) => setData('attachments', Array.from(e.target.files ?? []))}
+                            />
+                            {data.attachments.length > 0 && (
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                    {data.attachments.length} archivo(s) seleccionado(s).
+                                </p>
+                            )}
+                            {errors.attachments && <p className="text-xs text-destructive">{errors.attachments}</p>}
                         </CardContent>
                     </Card>
 

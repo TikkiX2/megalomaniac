@@ -53,4 +53,10 @@ class HealthStudy extends Model implements HasMedia
     {
         return $this->hasMany(HealthStudyResult::class, 'study_id')->orderBy('sort_order');
     }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('attachments');
+        $this->addMediaCollection('pages');
+    }
 }

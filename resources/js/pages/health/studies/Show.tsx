@@ -1,5 +1,5 @@
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Download, Paperclip, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { StudyResultChart } from '@/components/health/StudyResultChart';
 import { Button } from '@/components/ui/button';
@@ -135,6 +135,45 @@ export default function StudyShow({ study: studyProp, evolution }: any) {
                                     <li key={r.id}>
                                         {r.analyte ?? 'Resultado'}: {r.value} {r.unit ?? ''}{' '}
                                         {r.flag ? `(${FLAG_LABELS[r.flag] ?? r.flag})` : ''}
+                                    </li>
+                                ))}
+                            </ul>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {(study.media ?? []).length > 0 && (
+                    <Card className="bg-card border-border">
+                        <CardHeader>
+                            <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">
+                                Adjuntos
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ul className="flex flex-col gap-2">
+                                {study.media.map((m: any) => (
+                                    <li key={m.id} className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
+                                        <Paperclip className="h-4 w-4 shrink-0 text-primary" />
+                                        <span className="min-w-0 flex-1 truncate text-sm text-white/90">{m.file_name}</span>
+                                        <a
+                                            href={health.studies.attachments.download([study.id, m.id]).url}
+                                            className="text-primary hover:underline"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            <Download className="h-4 w-4" />
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (confirm('¿Eliminar este adjunto?')) {
+                                                    router.delete(health.studies.attachments.destroy([study.id, m.id]).url);
+                                                }
+                                            }}
+                                            className="text-destructive hover:underline"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
                                     </li>
                                 ))}
                             </ul>

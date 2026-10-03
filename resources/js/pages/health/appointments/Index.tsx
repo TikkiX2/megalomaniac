@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { MoreHorizontal, Pencil, Plus, Search, Trash } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash } from 'lucide-react';
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -141,6 +141,11 @@ export default function AppointmentsIndex({ appointments: paginator, filters, st
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end" className="bg-card border-border text-white">
                                                 <DropdownMenuLabel className="text-muted-foreground text-[10px] uppercase font-black">Acciones</DropdownMenuLabel>
+                                                <DropdownMenuItem asChild className="focus:bg-secondary focus:text-white">
+                                                    <Link href={health.appointments.show(appointment.id).url}>
+                                                        <Eye className="mr-2 h-4 w-4" /> Ver
+                                                    </Link>
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem asChild className="focus:bg-secondary focus:text-white">
                                                     <Link href={health.appointments.edit(appointment.id).url}>
                                                         <Pencil className="mr-2 h-4 w-4" /> Editar
