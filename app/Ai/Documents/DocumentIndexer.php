@@ -29,6 +29,14 @@ class DocumentIndexer
                 $text = trim($extractor->extract($attachment->disk, $attachment->path));
 
                 if ($text === '') {
+                    // Los PDFs escaneados no tienen capa de texto: se dejan como
+                    // adjunto descargable sin indexar (no es un error del job).
+                    if (mb_strtolower(pathinfo($attachment->path, PATHINFO_EXTENSION)) === 'pdf') {
+                        $attachment->forceFill(['status' => 'indexed', 'error' => 'PDF sin texto extraíble: adjuntado pero no indexado.'])->save();
+
+                        return;
+                    }
+
                     throw new RuntimeException('El documento no contiene texto extraíble.');
                 }
 

@@ -7,7 +7,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 const POLL_INTERVAL_MS = 3000;
 const LOCAL_ID_PREFIX = 'local-';
-const DOCUMENT_EXTENSIONS = ['.txt', '.md', '.docx'];
+const DOCUMENT_EXTENSIONS = ['.txt', '.md', '.docx', '.pdf'];
 const NO_DOCUMENTS: ChatAttachment[] = [];
 
 export interface UseAttachmentUploadResult {

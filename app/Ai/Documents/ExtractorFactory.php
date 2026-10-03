@@ -4,7 +4,7 @@ namespace App\Ai\Documents;
 
 class ExtractorFactory
 {
-    public static function for(string $mime, string $extension): TextExtractor|DocxExtractor|null
+    public static function for(string $mime, string $extension): TextExtractor|DocxExtractor|PdfTextExtractor|null
     {
         $mime = mb_strtolower(trim($mime));
         $extension = mb_strtolower(trim($extension));
@@ -15,6 +15,10 @@ class ExtractorFactory
 
         if ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $extension === 'docx') {
             return new DocxExtractor;
+        }
+
+        if ($mime === 'application/pdf' || $extension === 'pdf') {
+            return new PdfTextExtractor;
         }
 
         return null;

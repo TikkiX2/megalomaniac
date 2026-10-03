@@ -130,11 +130,12 @@ export function ThreadSourcesPanel({
         onDrop: (files) => {
             void upload(files);
         },
-        onDropRejected: () => setError('Solo se admiten documentos .txt, .md o .docx.'),
+        onDropRejected: () => setError('Solo se admiten documentos .txt, .md, .docx o .pdf.'),
         accept: {
             'text/plain': ['.txt'],
             'text/markdown': ['.md'],
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+            'application/pdf': ['.pdf'],
         },
         multiple: false,
         noClick: true,
@@ -257,7 +258,7 @@ export function ThreadSourcesPanel({
                             ref={fileInputRef}
                             type="file"
                             hidden
-                            accept=".txt,.md,.docx"
+                            accept=".txt,.md,.docx,.pdf"
                             onChange={(event) => {
                                 const file = event.target.files?.[0];
 
