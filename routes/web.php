@@ -242,6 +242,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Gym Routes
     Route::prefix('gym')->group(function () {
+        Route::post('workouts/{workout}/repeat', [WorkoutController::class, 'repeat']);
+        Route::post('workouts/log-past', [WorkoutController::class, 'logPast']);
+        Route::get('exercises/{exercise}/progression', [WorkoutController::class, 'progression']);
         Route::apiResource('exercises', ExerciseController::class);
         Route::apiResource('routines', RoutineController::class);
         Route::apiResource('workouts', WorkoutController::class);

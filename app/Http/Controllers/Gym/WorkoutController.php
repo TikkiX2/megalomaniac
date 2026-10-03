@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Gym;
 
+use App\Exceptions\WorkoutAlreadyActiveException;
 use App\Http\Controllers\Controller;
+use App\Models\Exercise;
 use App\Models\Workout;
 use App\Models\WorkoutExercise;
 use App\Models\WorkoutSet;
@@ -43,6 +45,7 @@ class WorkoutController extends Controller
         return Inertia::render('fitness/history', [
             'workouts' => $workouts,
             'personalRecords' => $this->records->timeline($request->user(), 20),
+            'routines' => $request->user()->routines()->withCount('exercises')->get(),
         ]);
     }
 
@@ -57,18 +60,59 @@ class WorkoutController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        if ($activeWorkout = $this->sessions->activeFor($request->user())) {
+        try {
+            $workout = $this->sessions->start(
+                $request->user(),
+                $validated['routine_id'] ?? null,
+                $validated['started_at'] ?? null,
+                $validated['notes'] ?? null,
+            );
+        } catch (WorkoutAlreadyActiveException $e) {
             if ($this->wantsJson($request)) {
-                return response()->json($this->loadWorkoutWithHistory($activeWorkout));
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'active_workout' => $this->loadWorkoutWithHistory($e->workout),
+                ], 409);
             }
 
-            return redirect()->back();
+            return back()->withErrors(['workout' => 'Ya tienes un entrenamiento activo.']);
         }
 
-        $workout = $this->sessions->start(
+        if ($this->wantsJson($request)) {
+            return response()->json($this->loadWorkoutWithHistory($workout), 201);
+        }
+
+        return redirect()->back();
+    }
+
+    public function repeat(Request $request, Workout $workout)
+    {
+        $this->authorize('view', $workout);
+
+        $workout = $this->sessions->repeat($request->user(), $workout);
+
+        if ($this->wantsJson($request)) {
+            return response()->json($this->loadWorkoutWithHistory($workout), 201);
+        }
+
+        return redirect()->back();
+    }
+
+    public function logPast(Request $request)
+    {
+        $validated = $request->validate([
+            'routine_id' => [
+                'nullable',
+                Rule::exists('routines', 'id')->where('user_id', $request->user()->id),
+            ],
+            'started_at' => 'required|date|before_or_equal:now',
+            'notes' => 'nullable|string',
+        ]);
+
+        $workout = $this->sessions->logPast(
             $request->user(),
             $validated['routine_id'] ?? null,
-            $validated['started_at'] ?? null,
+            $validated['started_at'],
             $validated['notes'] ?? null,
         );
 
@@ -77,6 +121,11 @@ class WorkoutController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    public function progression(Request $request, Exercise $exercise)
+    {
+        return response()->json($this->sessions->progressionFor($request->user(), $exercise));
     }
 
     public function loadWorkoutWithHistory(Workout $workout)

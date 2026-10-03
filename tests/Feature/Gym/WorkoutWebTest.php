@@ -102,3 +102,76 @@ it('rejects a routine from another user when starting a workout', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['routine_id']);
 });
+
+it('repeats a workout via web and blocks foreign ones', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $source = Workout::factory()->create(['user_id' => $user->id, 'ended_at' => now()]);
+    $we = $source->exercises()->create(['exercise_id' => $exercise->id]);
+    $we->sets()->create(['set_number' => 1, 'weight' => 50, 'reps' => 10, 'completed' => true]);
+    $other = Workout::factory()->create();
+
+    $this->actingAs($user)->postJson("/gym/workouts/{$source->id}/repeat")
+        ->assertCreated()
+        ->assertJsonPath('exercises.0.sets.0.weight', '50.00');
+
+    $this->actingAs($user)->postJson("/gym/workouts/{$other->id}/repeat")->assertForbidden();
+});
+
+it('logs a past workout via web with validation', function () {
+    $user = User::factory()->create();
+    $fecha = now()->subDay();
+
+    $response = $this->actingAs($user)->postJson('/gym/workouts/log-past', ['started_at' => $fecha->toIso8601String()])
+        ->assertCreated()
+        ->assertJsonStructure(['id', 'started_at', 'ended_at']);
+
+    $this->assertDatabaseHas('workouts', [
+        'id' => $response->json('id'),
+        'started_at' => $fecha,
+        'ended_at' => $fecha,
+    ]);
+
+    $this->actingAs($user)->postJson('/gym/workouts/log-past', ['started_at' => now()->addDay()->toIso8601String()])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['started_at']);
+
+    $this->actingAs($user)->postJson('/gym/workouts/log-past', ['started_at' => $fecha->toIso8601String(), 'routine_id' => Routine::factory()->create()->id])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['routine_id']);
+});
+
+it('returns 409 when starting a routine with an active workout', function () {
+    $user = User::factory()->create();
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+    $active = Workout::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)->postJson('/gym/workouts', ['routine_id' => $routine->id])
+        ->assertStatus(409)
+        ->assertJsonPath('active_workout.id', $active->id);
+});
+
+it('exposes a routines list on the history page', function () {
+    $user = User::factory()->create();
+    Routine::factory()->create(['user_id' => $user->id, 'name' => 'Pecho']);
+
+    $this->actingAs($user)->get('/fitness/history')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('fitness/history')
+            ->has('routines', 1)
+            ->where('routines.0.name', 'Pecho'));
+});
+
+it('serves the progression payload for an exercise', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $workout = Workout::factory()->create(['user_id' => $user->id, 'ended_at' => now()]);
+    $we = $workout->exercises()->create(['exercise_id' => $exercise->id]);
+    $we->sets()->create(['set_number' => 1, 'weight' => 100, 'reps' => 5, 'completed' => true]);
+
+    $this->actingAs($user)->getJson("/gym/exercises/{$exercise->id}/progression")
+        ->assertOk()
+        ->assertJsonCount(1)
+        ->assertJsonPath('0.best_weight', 100);
+});
