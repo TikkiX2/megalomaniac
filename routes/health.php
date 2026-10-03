@@ -7,6 +7,7 @@ use App\Http\Controllers\Health\MeasurementController;
 use App\Http\Controllers\Health\MedicationController;
 use App\Http\Controllers\Health\MedicationIntakeController;
 use App\Http\Controllers\Health\ProfessionalController;
+use App\Http\Controllers\Health\StudyController;
 use App\Http\Controllers\Health\SymptomController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +26,5 @@ Route::middleware(['auth', 'verified'])->prefix('health')->name('health.')->grou
     Route::resource('measurements', MeasurementController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('symptoms', SymptomController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('professionals', ProfessionalController::class)->except(['show']);
+    Route::resource('studies', StudyController::class);
 });
