@@ -1,5 +1,11 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Fragment, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 
@@ -9,12 +15,17 @@ interface AiEnabled {
 
 interface Set {
     id: number;
+    set_number?: number;
     weight: string | number | null;
     reps: string | number | null;
+    rpe?: string | number | null;
+    completed?: boolean;
 }
 
 interface WorkoutExercise {
     id: number;
+    exercise_id: number;
+    exercise?: { name: string } | null;
     sets: Set[];
 }
 
@@ -44,10 +55,22 @@ interface PaginatedWorkouts {
     total: number;
 }
 
+interface RoutineOption {
+    id: number;
+    name: string;
+    focus?: string | null;
+    scheduled_date?: string | null;
+    exercises_count?: number;
+}
+
 interface Props {
     workouts: PaginatedWorkouts;
     personalRecords?: PersonalRecordItem[];
+    routines?: RoutineOption[];
 }
+
+/** Radix forbids `value=""` on a SelectItem; sentinel for «Sesión rápida». */
+const QUICK_SESSION = '__quick__';
 
 function calcVolume(w: Workout): number {
     let vol = 0;
@@ -82,12 +105,90 @@ function prLabel(type: string): string {
     return 'Peso';
 }
 
-export default function History({ workouts, personalRecords }: Props) {
+/** Valor local `YYYY-MM-DDTHH:mm` para un `<input type="datetime-local">`. */
+function toLocalInputValue(d: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Peso/reps/RPE legible (los decimales de Eloquent llegan como string). */
+function fmtNumber(v: string | number | null | undefined): string {
+    if (v === null || v === undefined || v === '') return '—';
+    const n = typeof v === 'number' ? v : parseFloat(String(v));
+    if (isNaN(n)) return '—';
+    return Number.isInteger(n) ? String(n) : String(parseFloat(n.toFixed(2)));
+}
+
+/** Etiqueta de una fila de set expandida: `N · weight kg × reps · rpe`. */
+function setLabel(s: Set, idx: number): string {
+    const weight = fmtNumber(s.weight);
+    const parts = [`${s.set_number ?? idx + 1} · ${weight === '—' ? '—' : `${weight} kg`} × ${fmtNumber(s.reps)}`];
+    const rpe = fmtNumber(s.rpe);
+    if (rpe !== '—') {
+        parts.push(`· ${rpe}`);
+    }
+    return parts.join(' ');
+}
+
+export default function History({ workouts, personalRecords, routines = [] }: Props) {
     const { auth } = usePage<SharedData>().props;
     const user = auth.user as unknown as AiEnabled;
     const aiEnabled = user?.ai_enabled ?? false;
 
     const data = workouts?.data ?? [];
+
+    // Expandable rows: chevron estado local por id
+    const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+    const toggleExpand = (id: number) => {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
+    // Modal «Agregar entrenamiento anterior»
+    const [logPastOpen, setLogPastOpen] = useState(false);
+    const { data: logForm, setData: setLogForm, post, transform, processing, errors, clearErrors } = useForm({
+        routine_id: QUICK_SESSION,
+        started_at: toLocalInputValue(new Date()),
+        notes: '',
+    });
+
+    const openLogPast = () => {
+        clearErrors();
+        setLogForm('routine_id', QUICK_SESSION);
+        setLogForm('started_at', toLocalInputValue(new Date()));
+        setLogForm('notes', '');
+        setLogPastOpen(true);
+    };
+
+    const submitLogPast = (e: React.FormEvent) => {
+        e.preventDefault();
+        transform((data) => ({
+            routine_id: data.routine_id === QUICK_SESSION ? null : Number(data.routine_id),
+            started_at: data.started_at,
+            notes: data.notes,
+        }));
+        post('/gym/workouts/log-past', {
+            onSuccess: () => {
+                setLogPastOpen(false);
+                router.reload({ only: ['workouts'] });
+            },
+        });
+    };
+
+    const handleRepeat = (w: Workout) => {
+        if (confirm('¿Repetir este entrenamiento? Se creará una nueva sesión activa con los mismos ejercicios.')) {
+            router.post(`/gym/workouts/${w.id}/repeat`, {}, {
+                onSuccess: () => router.visit('/fitness/gym'),
+            });
+        }
+    };
 
     // AI Analysis state
     const [aiInsight, setAiInsight] = useState<string | null>(null);
@@ -140,7 +241,15 @@ export default function History({ workouts, personalRecords }: Props) {
                             {workouts.total} entrenamientos completados · paginado 10 por página
                         </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={openLogPast}
+                            className="inline-flex items-center gap-2 rounded-xl border border-[#3e2121] bg-[#2b1a1a] px-5 py-2.5 text-sm font-black text-white transition hover:bg-[#3e2121]"
+                        >
+                            <span className="material-symbols-outlined text-lg">history_edu</span>
+                            Agregar entrenamiento anterior
+                        </button>
                         <Link href="/fitness/gym" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-white shadow-[0_0_15px_rgba(239,68,68,0.25)] hover:bg-primary/90 transition">
                             <span className="material-symbols-outlined text-lg">arrow_back</span>
                             Volver a Entrenamiento
@@ -239,12 +348,13 @@ export default function History({ workouts, personalRecords }: Props) {
                                     <th className="px-5 py-4 whitespace-nowrap text-right">Volumen</th>
                                     <th className="px-5 py-4 whitespace-nowrap text-center">Sets</th>
                                     <th className="px-5 py-4 whitespace-nowrap text-center">Ejercicios</th>
+                                    <th className="px-5 py-4 whitespace-nowrap text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#3e2121]/60">
                                 {data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-16 text-center">
+                                        <td colSpan={6} className="px-6 py-16 text-center">
                                             <div className="flex flex-col items-center gap-3">
                                                 <span className="material-symbols-outlined text-4xl text-[#3e2121]">fitness_center</span>
                                                 <p className="text-sm font-bold text-white">Aún sin entrenamientos finalizados</p>
@@ -259,30 +369,85 @@ export default function History({ workouts, personalRecords }: Props) {
                                     data.map((w) => {
                                         const vol = calcVolume(w);
                                         const sets = calcSets(w);
+                                        const expanded = expandedIds.has(w.id);
                                         return (
-                                            <tr key={w.id} className="hover:bg-white/[0.04] transition">
-                                                <td className="px-5 py-4 whitespace-nowrap">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-white text-[13px]">{formatDate(w.ended_at || w.started_at)}</span>
-                                                        <span className="text-[11px] font-medium text-[#e8b4b4]">ID #{w.id}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-5 py-4 whitespace-nowrap">
-                                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1c0f0f] border border-[#3e2121] px-3 py-1 text-xs font-bold text-white">
-                                                        <span className="material-symbols-outlined text-sm text-primary">exercise</span>
-                                                        {w.routine?.name ?? 'Quick Session'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-5 py-4 whitespace-nowrap text-right">
-                                                    <span className="font-black text-white tabular-nums">{vol.toLocaleString()} <span className="text-xs font-bold text-[#e8b4b4]">kg</span></span>
-                                                </td>
-                                                <td className="px-5 py-4 whitespace-nowrap text-center">
-                                                    <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary/15 border border-primary/20 px-2 text-xs font-black text-primary">{sets}</span>
-                                                </td>
-                                                <td className="px-5 py-4 whitespace-nowrap text-center">
-                                                    <span className="text-xs font-bold text-[#e8b4b4]">{w.exercises.length}</span>
-                                                </td>
-                                            </tr>
+                                            <Fragment key={w.id}>
+                                                <tr className="hover:bg-white/[0.04] transition">
+                                                    <td className="px-5 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center gap-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleExpand(w.id)}
+                                                                title={expanded ? 'Ocultar detalle' : 'Ver detalle'}
+                                                                aria-expanded={expanded}
+                                                                className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition ${expanded ? 'border-primary/40 bg-primary/15 text-primary' : 'border-[#3e2121] bg-[#1c0f0f] text-[#e8b4b4] hover:text-white'}`}
+                                                            >
+                                                                <span className={`material-symbols-outlined text-base transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}>expand_more</span>
+                                                            </button>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-white text-[13px]">{formatDate(w.ended_at || w.started_at)}</span>
+                                                                <span className="text-[11px] font-medium text-[#e8b4b4]">ID #{w.id}</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 py-4 whitespace-nowrap">
+                                                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1c0f0f] border border-[#3e2121] px-3 py-1 text-xs font-bold text-white">
+                                                            <span className="material-symbols-outlined text-sm text-primary">exercise</span>
+                                                            {w.routine?.name ?? 'Quick Session'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-5 py-4 whitespace-nowrap text-right">
+                                                        <span className="font-black text-white tabular-nums">{vol.toLocaleString()} <span className="text-xs font-bold text-[#e8b4b4]">kg</span></span>
+                                                    </td>
+                                                    <td className="px-5 py-4 whitespace-nowrap text-center">
+                                                        <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary/15 border border-primary/20 px-2 text-xs font-black text-primary">{sets}</span>
+                                                    </td>
+                                                    <td className="px-5 py-4 whitespace-nowrap text-center">
+                                                        <span className="text-xs font-bold text-[#e8b4b4]">{w.exercises.length}</span>
+                                                    </td>
+                                                    <td className="px-5 py-4 whitespace-nowrap text-right">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRepeat(w)}
+                                                            title="Repetir este entrenamiento"
+                                                            aria-label="Repetir este entrenamiento"
+                                                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#3e2121] bg-[#1c0f0f] text-[#e8b4b4] transition hover:border-primary/40 hover:bg-primary/15 hover:text-primary"
+                                                        >
+                                                            <span className="material-symbols-outlined text-base">refresh</span>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {expanded && (
+                                                    <tr className="bg-[#1c0f0f]/60">
+                                                        <td colSpan={6} className="px-5 pt-1 pb-5">
+                                                            <div className="grid gap-3 rounded-xl border border-[#3e2121] bg-[#2b1a1a] p-4 lg:grid-cols-2 xl:grid-cols-3">
+                                                                {(w.exercises ?? []).length === 0 ? (
+                                                                    <p className="text-sm font-medium text-[#e8b4b4]">Sin ejercicios registrados.</p>
+                                                                ) : (
+                                                                    (w.exercises ?? []).map((ex) => (
+                                                                        <div key={ex.id} className="rounded-lg border border-[#3e2121]/70 bg-[#1c0f0f] p-3">
+                                                                            <p className="flex items-center gap-2 text-sm font-black text-white">
+                                                                                <span className="material-symbols-outlined text-base text-primary">exercise</span>
+                                                                                {ex.exercise?.name ?? `Ejercicio #${ex.exercise_id}`}
+                                                                            </p>
+                                                                            <ul className="mt-2 space-y-1">
+                                                                                {ex.sets.map((s, idx) => (
+                                                                                    <li key={s.id} className="flex items-center justify-between gap-2 text-xs font-medium text-[#e8b4b4]">
+                                                                                        <span className="tabular-nums">{setLabel(s, idx)}</span>
+                                                                                        {s.completed && (
+                                                                                            <span className="rounded-full bg-primary/15 border border-primary/30 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-primary">completado</span>
+                                                                                        )}
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        </div>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </Fragment>
                                         );
                                     })
                                 )}
@@ -319,6 +484,68 @@ export default function History({ workouts, personalRecords }: Props) {
                     Historial vía WorkoutController@history · Inertia paginate(10) · Ember palette #EF4444
                 </p>
             </div>
+
+            {/* Modal Agregar entrenamiento anterior */}
+            <Dialog open={logPastOpen} onOpenChange={setLogPastOpen}>
+                <DialogContent className="bg-[#2b1a1a] border-[#3e2121] text-white sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-white">
+                            <span className="material-symbols-outlined text-primary">history_edu</span>
+                            Agregar entrenamiento anterior
+                        </DialogTitle>
+                        <DialogDescription className="text-[#e8b4b4]">
+                            Registrá una sesión que ya completaste en una fecha pasada.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={submitLogPast} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label className="text-[#e8b4b4]">Rutina</Label>
+                            <Select value={logForm.routine_id} onValueChange={(v) => setLogForm('routine_id', v)}>
+                                <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121] text-white">
+                                    <SelectValue placeholder="Sesión rápida" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#1c0f0f] border-[#3e2121] text-white">
+                                    <SelectItem value={QUICK_SESSION} className="focus:bg-[#3e2121] focus:text-white">Sesión rápida</SelectItem>
+                                    {routines.map((r) => (
+                                        <SelectItem key={r.id} value={String(r.id)} className="focus:bg-[#3e2121] focus:text-white">{r.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {errors.routine_id && <p className="text-xs text-primary">{errors.routine_id}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[#e8b4b4]">Fecha y hora</Label>
+                            <Input
+                                type="datetime-local"
+                                value={logForm.started_at}
+                                max={toLocalInputValue(new Date())}
+                                onChange={(e) => setLogForm('started_at', e.target.value)}
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white [color-scheme:dark]"
+                                required
+                            />
+                            {errors.started_at && <p className="text-xs text-primary">{errors.started_at}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[#e8b4b4]">Notas</Label>
+                            <Textarea
+                                value={logForm.notes}
+                                onChange={(e) => setLogForm('notes', e.target.value)}
+                                placeholder="Opcional"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white placeholder:text-[#e8b4b4]/60"
+                            />
+                            {errors.notes && <p className="text-xs text-primary">{errors.notes}</p>}
+                        </div>
+                        <DialogFooter className="gap-2">
+                            <Button type="button" variant="outline" onClick={() => setLogPastOpen(false)} className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white">
+                                Cancelar
+                            </Button>
+                            <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary/90 text-white font-black">
+                                {processing ? 'Guardando…' : 'Agregar'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </MainLayout>
     );
 }
