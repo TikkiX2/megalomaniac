@@ -13,6 +13,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 
 class WorkoutSessionService
 {
@@ -63,6 +64,14 @@ class WorkoutSessionService
     public function repeat(User $user, Workout $source): Workout
     {
         $this->assertOwnsWorkout($user, $source);
+
+        if ($source->ended_at === null) {
+            throw new InvalidArgumentException('Cannot repeat an active workout.');
+        }
+
+        if ($active = $this->activeFor($user)) {
+            throw new WorkoutAlreadyActiveException($active);
+        }
 
         $workout = $user->workouts()->create([
             'routine_id' => $source->routine_id,

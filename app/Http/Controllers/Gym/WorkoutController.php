@@ -17,6 +17,7 @@ use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use InvalidArgumentException;
 
 class WorkoutController extends Controller
 {
@@ -89,7 +90,24 @@ class WorkoutController extends Controller
     {
         $this->authorize('view', $workout);
 
-        $workout = $this->sessions->repeat($request->user(), $workout);
+        try {
+            $workout = $this->sessions->repeat($request->user(), $workout);
+        } catch (WorkoutAlreadyActiveException $e) {
+            if ($this->wantsJson($request)) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'active_workout' => $this->loadWorkoutWithHistory($e->workout),
+                ], 409);
+            }
+
+            return back()->withErrors(['workout' => 'Ya tenés un entrenamiento activo.']);
+        } catch (InvalidArgumentException $e) {
+            if ($this->wantsJson($request)) {
+                return response()->json(['message' => $e->getMessage()], 409);
+            }
+
+            return back()->withErrors(['workout' => 'Ya tenés un entrenamiento activo.']);
+        }
 
         if ($this->wantsJson($request)) {
             return response()->json($this->loadWorkoutWithHistory($workout), 201);

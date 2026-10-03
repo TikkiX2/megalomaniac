@@ -225,6 +225,29 @@ it('rejects repeating another users workout', function () {
         ->toThrow(AuthorizationException::class);
 });
 
+it('rejects repeating an active workout as the source', function () {
+    $user = User::factory()->create();
+    $active = Workout::factory()->create(['user_id' => $user->id]);
+
+    expect(fn () => sessions()->repeat($user, $active))
+        ->toThrow(InvalidArgumentException::class, 'Cannot repeat an active workout.');
+});
+
+it('rejects repeating a finished workout while another is active', function () {
+    $user = User::factory()->create();
+    $finished = Workout::factory()->create(['user_id' => $user->id, 'ended_at' => now()]);
+    $active = Workout::factory()->create(['user_id' => $user->id]);
+
+    try {
+        sessions()->repeat($user, $finished);
+        $this->fail('Expected WorkoutAlreadyActiveException');
+    } catch (WorkoutAlreadyActiveException $e) {
+        expect($e->workout->id)->toBe($active->id);
+    }
+
+    expect(Workout::where('user_id', $user->id)->count())->toBe(2);
+});
+
 it('logs a past workout already finished at the chosen date', function () {
     $user = User::factory()->create();
     $date = now()->subDays(3)->setTime(18, 30);
@@ -262,6 +285,14 @@ it('builds per-session progression for an exercise', function () {
     $user = User::factory()->create();
     $exercise = Exercise::factory()->create();
 
+    $older = Workout::factory()->create([
+        'user_id' => $user->id,
+        'started_at' => now()->subDays(10),
+        'ended_at' => now()->subDays(10)->addHour(),
+    ]);
+    $olderWe = $older->exercises()->create(['exercise_id' => $exercise->id]);
+    $olderWe->sets()->create(['set_number' => 1, 'weight' => 60, 'reps' => 10, 'completed' => true]);
+
     $finished = Workout::factory()->create([
         'user_id' => $user->id,
         'started_at' => now()->subDays(2),
@@ -277,11 +308,15 @@ it('builds per-session progression for an exercise', function () {
 
     $rows = sessions()->progressionFor($user, $exercise);
 
-    expect($rows)->toHaveCount(1)
-        ->and($rows[0]['workout_id'])->toBe($finished->id)
-        ->and($rows[0]['best_weight'])->toBe(100.0)
-        ->and($rows[0]['best_1rm'])->toBe(116.67)
-        ->and($rows[0]['volume'])->toBe(1460.0)
-        ->and($rows[0]['total_reps'])->toBe(17)
-        ->and($rows[0]['completed_sets'])->toBe(2);
+    expect($rows)->toHaveCount(2)
+        ->and($rows[0]['workout_id'])->toBe($older->id)
+        ->and($rows[0]['date'])->toBe($older->started_at->toDateString())
+        ->and($rows[0]['best_weight'])->toBe(60.0)
+        ->and($rows[1]['workout_id'])->toBe($finished->id)
+        ->and($rows[1]['date'])->toBe($finished->started_at->toDateString())
+        ->and($rows[1]['best_weight'])->toBe(100.0)
+        ->and($rows[1]['best_1rm'])->toBe(116.67)
+        ->and($rows[1]['volume'])->toBe(1460.0)
+        ->and($rows[1]['total_reps'])->toBe(17)
+        ->and($rows[1]['completed_sets'])->toBe(2);
 });

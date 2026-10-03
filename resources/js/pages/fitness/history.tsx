@@ -13,7 +13,7 @@ interface AiEnabled {
     ai_enabled?: boolean;
 }
 
-interface Set {
+interface WorkoutSet {
     id: number;
     set_number?: number;
     weight: string | number | null;
@@ -26,7 +26,7 @@ interface WorkoutExercise {
     id: number;
     exercise_id: number;
     exercise?: { name: string } | null;
-    sets: Set[];
+    sets: WorkoutSet[];
 }
 
 interface Workout {
@@ -120,7 +120,7 @@ function fmtNumber(v: string | number | null | undefined): string {
 }
 
 /** Etiqueta de una fila de set expandida: `N · weight kg × reps · rpe`. */
-function setLabel(s: Set, idx: number): string {
+function setLabel(s: WorkoutSet, idx: number): string {
     const weight = fmtNumber(s.weight);
     const parts = [`${s.set_number ?? idx + 1} · ${weight === '—' ? '—' : `${weight} kg`} × ${fmtNumber(s.reps)}`];
     const rpe = fmtNumber(s.rpe);
@@ -150,6 +150,11 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
             return next;
         });
     };
+
+    // Error de «Repetir»: conflict con workout activo, fuente activa, etc.
+    const [repeatError, setRepeatError] = useState('');
+
+    const clearRepeatError = () => setRepeatError('');
 
     // Modal «Agregar entrenamiento anterior»
     const [logPastOpen, setLogPastOpen] = useState(false);
@@ -184,8 +189,16 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
 
     const handleRepeat = (w: Workout) => {
         if (confirm('¿Repetir este entrenamiento? Se creará una nueva sesión activa con los mismos ejercicios.')) {
+            setRepeatError('');
             router.post(`/gym/workouts/${w.id}/repeat`, {}, {
                 onSuccess: () => router.visit('/fitness/gym'),
+                onError: (errors) => {
+                    const workoutErr = errors?.workout;
+                    const message = typeof workoutErr === 'string' && workoutErr
+                        ? workoutErr
+                        : 'No se pudo repetir el entrenamiento. Ya tenés un entrenamiento activo.';
+                    setRepeatError(message);
+                },
             });
         }
     };
@@ -335,6 +348,21 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                                 </div>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {repeatError && (
+                    <div role="alert" className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-bold text-white">
+                        <span className="material-symbols-outlined text-primary shrink-0">error</span>
+                        <span className="flex-1">{repeatError}</span>
+                        <button
+                            type="button"
+                            onClick={clearRepeatError}
+                            aria-label="Cerrar aviso"
+                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-[#3e2121] bg-[#1c0f0f] text-[#e8b4b4] transition hover:text-white"
+                        >
+                            close
+                        </button>
                     </div>
                 )}
 

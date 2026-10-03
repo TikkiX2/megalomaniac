@@ -155,6 +155,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
     const [routinePickerOpen, setRoutinePickerOpen] = useState(false);
     const [conflictWorkout, setConflictWorkout] = useState<Workout | null>(null);
     const [pendingRoutineId, setPendingRoutineId] = useState<number | null>(null);
+    const [conflictError, setConflictError] = useState('');
     const [expandedRoutineId, setExpandedRoutineId] = useState<number | null>(null);
     const [progressionFor, setProgressionFor] = useState<{
         exerciseId: number;
@@ -309,6 +310,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
         router.post('/gym/workouts', { routine_id: routineId }, {
             onSuccess: () => {
                 setRoutinePickerOpen(false);
+                setConflictError('');
                 router.visit('/fitness/gym', { preserveScroll: false });
             },
             onError: (visitErrors) => {
@@ -322,17 +324,22 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                     void resolveActiveWorkout();
                 } else {
                     setPendingRoutineId(null);
+                    setConflictError('');
                 }
             },
         });
     };
 
     const resolveActiveWorkout = async () => {
+        setConflictError('');
+
         try {
             const res = await fetch('/gym/workouts', {
                 headers: { Accept: 'application/json' },
             });
-            if (!res.ok) return;
+            if (!res.ok) {
+                throw new Error('Request failed');
+            }
 
             const workouts = (await res.json()) as Record<string, unknown>[];
             const active = Array.isArray(workouts)
@@ -341,15 +348,30 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
 
             if (active) {
                 setConflictWorkout(active as unknown as Workout);
+                return;
             }
+
+            // Hay conflicto pero no se localizó la sesión activa: feedback con reintento.
+            setConflictWorkout(null);
+            setConflictError(
+                typeof pageProps.errors?.workout === 'string' && pageProps.errors.workout
+                    ? pageProps.errors.workout
+                    : 'Ya tenés un entrenamiento activo, pero no se pudo cargar la sesión. Reintentá.',
+            );
         } catch {
-            // Si no se puede resolver el workout activo, el diálogo de conflicto no se abre.
+            setConflictWorkout(null);
+            setConflictError(
+                typeof pageProps.errors?.workout === 'string' && pageProps.errors.workout
+                    ? pageProps.errors.workout
+                    : 'No se pudo consultar tu sesión activa. Reintentá.',
+            );
         }
     };
 
     const handleContinueActive = () => {
         setConflictWorkout(null);
         setPendingRoutineId(null);
+        setConflictError('');
         router.visit('/fitness/gym');
     };
 
@@ -378,6 +400,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                     onError: () => {
                         setConflictWorkout(null);
                         setPendingRoutineId(null);
+                        setConflictError('');
                     },
                 });
             },
@@ -397,13 +420,13 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
 
             const rows = (await res.json()) as ProgressionRow[];
             setProgressionFor((prev) =>
-                prev && prev.exerciseName === exerciseName
+                prev && prev.exerciseId === exerciseId
                     ? { ...prev, rows, loading: false }
                     : prev,
             );
         } catch {
             setProgressionFor((prev) =>
-                prev && prev.exerciseName === exerciseName
+                prev && prev.exerciseId === exerciseId
                     ? { ...prev, loading: false, error: 'No se pudo cargar la progresión del ejercicio.' }
                     : prev,
             );
@@ -897,7 +920,13 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
             </Dialog>
 
             {/* Picker de rutina */}
-            <Dialog open={routinePickerOpen} onOpenChange={setRoutinePickerOpen}>
+            <Dialog
+                open={routinePickerOpen}
+                onOpenChange={(open) => {
+                    setRoutinePickerOpen(open);
+                    if (!open) setConflictError('');
+                }}
+            >
                 <DialogContent className="bg-[#2b1a1a] border-[#3e2121] text-white sm:max-w-md max-h-[85vh] overflow-y-auto custom-scrollbar">
                     <DialogHeader>
                         <DialogTitle className="text-white flex items-center gap-2">
@@ -908,6 +937,22 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                             Empezá la sesión de hoy con una rutina programada.
                         </DialogDescription>
                     </DialogHeader>
+                    {conflictError && (
+                        <div role="alert" className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-bold text-white">
+                            <span className="material-symbols-outlined text-primary shrink-0 text-base">error</span>
+                            <div className="min-w-0 flex-1">
+                                <p>{conflictError}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => void resolveActiveWorkout()}
+                                    className="mt-1 inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-primary hover:underline"
+                                >
+                                    <span className="material-symbols-outlined text-xs">refresh</span>
+                                    Reintentar
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     <div className="space-y-3">
                         {routines.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-10 text-center">
@@ -998,6 +1043,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                     if (!open) {
                         setConflictWorkout(null);
                         setPendingRoutineId(null);
+                        setConflictError('');
                     }
                 }}
             >

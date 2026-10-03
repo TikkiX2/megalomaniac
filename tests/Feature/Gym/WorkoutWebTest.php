@@ -118,6 +118,55 @@ it('repeats a workout via web and blocks foreign ones', function () {
     $this->actingAs($user)->postJson("/gym/workouts/{$other->id}/repeat")->assertForbidden();
 });
 
+it('returns 409 when repeating with an active workout already open', function () {
+    $user = User::factory()->create();
+    $source = Workout::factory()->create(['user_id' => $user->id, 'ended_at' => now()]);
+    $active = Workout::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)->postJson("/gym/workouts/{$source->id}/repeat")
+        ->assertStatus(409)
+        ->assertJsonPath('active_workout.id', $active->id);
+});
+
+it('returns 409 when repeating an active workout as the source', function () {
+    $user = User::factory()->create();
+    $active = Workout::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)->postJson("/gym/workouts/{$active->id}/repeat")
+        ->assertStatus(409)
+        ->assertJsonPath('message', 'Cannot repeat an active workout.');
+});
+
+it('flashes the active-workout error on Inertia requests', function () {
+    $user = User::factory()->create();
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+    $active = Workout::factory()->create(['user_id' => $user->id]);
+
+    // X-Inertia presente + Accept json: wantsJson() da true pero el header lo
+    // excluye y el flujo cae en back()->withErrors() en vez de devolver 409 JSON.
+    $this->actingAs($user)
+        ->withHeader('X-Inertia', 'true')
+        ->withHeader('Accept', 'application/json')
+        ->post('/gym/workouts', ['routine_id' => $routine->id])
+        ->assertRedirect()
+        ->assertSessionHasErrors('workout');
+
+    expect($active->refresh()->ended_at)->toBeNull();
+});
+
+it('flashes the active-workout error when repeating via Inertia', function () {
+    $user = User::factory()->create();
+    $source = Workout::factory()->create(['user_id' => $user->id, 'ended_at' => now()]);
+    Workout::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->withHeader('X-Inertia', 'true')
+        ->withHeader('Accept', 'application/json')
+        ->post("/gym/workouts/{$source->id}/repeat")
+        ->assertRedirect()
+        ->assertSessionHasErrors(['workout']);
+});
+
 it('logs a past workout via web with validation', function () {
     $user = User::factory()->create();
     $fecha = now()->subDay();
