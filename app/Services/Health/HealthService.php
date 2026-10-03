@@ -13,6 +13,8 @@ use App\Models\HealthMedicationIntake;
 use App\Models\HealthMedicationSchedule;
 use App\Models\HealthProfessional;
 use App\Models\HealthSymptom;
+use App\Models\HealthSymptomCatalog;
+use App\Models\HealthSymptomEpisode;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -121,6 +123,8 @@ class HealthService
                 $this->syncProfileWeight($user);
             }
 
+            HealthAlertService::checkForAlerts($user);
+
             return $measurement;
         });
     }
@@ -157,7 +161,11 @@ class HealthService
 
     public function logSymptom(User $user, array $data): HealthSymptom
     {
-        return $user->healthSymptoms()->create($data);
+        $symptom = $user->healthSymptoms()->create($data);
+
+        HealthAlertService::checkForAlerts($user);
+
+        return $symptom;
     }
 
     public function updateSymptom(User $user, HealthSymptom $symptom, array $data): HealthSymptom
@@ -191,6 +199,56 @@ class HealthService
     {
         $this->assertOwner($user, $professional);
         $professional->delete();
+    }
+
+    public function createSymptomCatalog(User $user, array $data): HealthSymptomCatalog
+    {
+        return $user->healthSymptomCatalogs()->create($data);
+    }
+
+    public function findSymptomCatalog(User $user, int $id): HealthSymptomCatalog
+    {
+        return $this->owned(HealthSymptomCatalog::query(), $user)
+            ->find($id) ?? throw new ModelNotFoundException('HealthSymptomCatalog not found.');
+    }
+
+    public function updateSymptomCatalog(User $user, HealthSymptomCatalog $catalog, array $data): HealthSymptomCatalog
+    {
+        $this->assertOwner($user, $catalog);
+        $catalog->update($data);
+
+        return $catalog->refresh();
+    }
+
+    public function deleteSymptomCatalog(User $user, HealthSymptomCatalog $catalog): void
+    {
+        $this->assertOwner($user, $catalog);
+        $catalog->delete();
+    }
+
+    public function createSymptomEpisode(User $user, array $data): HealthSymptomEpisode
+    {
+        return $user->healthSymptomEpisodes()->create($data);
+    }
+
+    public function findSymptomEpisode(User $user, int $id): HealthSymptomEpisode
+    {
+        return $this->owned(HealthSymptomEpisode::query(), $user)
+            ->find($id) ?? throw new ModelNotFoundException('HealthSymptomEpisode not found.');
+    }
+
+    public function updateSymptomEpisode(User $user, HealthSymptomEpisode $episode, array $data): HealthSymptomEpisode
+    {
+        $this->assertOwner($user, $episode);
+        $episode->update($data);
+
+        return $episode->refresh();
+    }
+
+    public function deleteSymptomEpisode(User $user, HealthSymptomEpisode $episode): void
+    {
+        $this->assertOwner($user, $episode);
+        $episode->delete();
     }
 
     /**

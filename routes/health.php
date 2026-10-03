@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Health\AppointmentController;
 use App\Http\Controllers\Health\ConditionController;
 use App\Http\Controllers\Health\DashboardController;
 use App\Http\Controllers\Health\HealthChatController;
@@ -27,4 +28,5 @@ Route::middleware(['auth', 'verified'])->prefix('health')->name('health.')->grou
     Route::resource('symptoms', SymptomController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('professionals', ProfessionalController::class)->except(['show']);
     Route::resource('studies', StudyController::class);
+    Route::resource('appointments', AppointmentController::class)->except(['show']);
 });

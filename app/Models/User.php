@@ -237,8 +237,23 @@ class User extends Authenticatable
         return $this->hasMany(HealthSymptom::class);
     }
 
+    public function healthSymptomCatalogs(): HasMany
+    {
+        return $this->hasMany(HealthSymptomCatalog::class);
+    }
+
+    public function healthSymptomEpisodes(): HasMany
+    {
+        return $this->hasMany(HealthSymptomEpisode::class);
+    }
+
     public function healthProfessionals(): HasMany
     {
         return $this->hasMany(HealthProfessional::class);
+    }
+
+    public function healthGymCrossovers(): HasMany
+    {
+        return $this->hasMany(HealthGymCrossover::class);
     }
 }
