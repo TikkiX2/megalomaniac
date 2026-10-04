@@ -10,6 +10,7 @@ use App\Ai\Support\AiRequestExecutor;
 use App\Ai\Support\AiScopeResolver;
 use App\Models\ChatAttachment;
 use App\Models\ChatDocumentChunk;
+use App\Models\User;
 use App\Services\Health\PdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Ai\Files\StoredImage;
 use Throwable;
 
@@ -69,11 +71,10 @@ class OcrPdfDocument implements ShouldQueue
             return;
         }
 
-        try {
-            $disk = $attachment->disk;
-            $path = $attachment->path;
+        $outDir = sys_get_temp_dir().'/ocr_'.uniqid('', true);
 
-            $raw = Storage::disk($disk)->get($path);
+        try {
+            $raw = Storage::disk($attachment->disk)->get($attachment->path);
 
             if ($raw === null || $raw === '') {
                 return;
@@ -81,7 +82,6 @@ class OcrPdfDocument implements ShouldQueue
 
             file_put_contents($temp, $raw);
 
-            $outDir = sys_get_temp_dir().'/ocr_'.uniqid('', true);
             mkdir($outDir, 0755, true);
 
             $images = $pdfService->rasterizePages($temp, $outDir, dpi: 150);
@@ -92,62 +92,91 @@ class OcrPdfDocument implements ShouldQueue
                 return;
             }
 
-            $storedImages = array_map(
-                fn (string $imagePath): StoredImage => new StoredImage($imagePath, 'local'),
-                $images,
-            );
+            // StoredImage lee con Storage::disk(), que resuelve rutas relativas
+            // al disco local; las páginas temporales de /tmp no existen ahí.
+            // Se copian al disco local bajo una carpeta efímera del usuario.
+            $workPrefix = 'ocr-work/'.Str::uuid7();
+            $storedImages = [];
 
-            // Los archivos (PDFs escaneados) se transcriben con el provider
-            // multimodal configurado en el scope surface:files, que el usuario
-            // asigna en Ajustes → IA → Alcances. No se usa module:health para
-            // no forzar modelos de visión en los chats de texto.
-            $resolution = $resolver->resolve($user, AiScope::SurfaceFiles);
+            foreach (array_values($images) as $index => $imagePath) {
+                $relative = $workPrefix.'/'.sprintf('page-%02d.jpg', $index + 1);
+                Storage::disk('local')->put($relative, (string) file_get_contents($imagePath));
+                $storedImages[] = new StoredImage($relative, 'local');
+            }
 
-            if ($resolution->chain->isEmpty()) {
-                $attachment->forceFill([
-                    'status' => 'failed',
-                    'error' => 'No hay un proveedor multimodal configurado para leer archivos (scope "surface:files").',
-                ])->save();
+            if ($storedImages === []) {
+                $attachment->forceFill(['status' => 'indexed', 'error' => 'PDF sin páginas rasterizables.', 'meta' => $meta])->save();
 
                 return;
             }
 
-            $raw = $executor->execute($user, $resolution, function (string $key, string $model, $provider) use ($storedImages, $attachment): string {
-                $agent = new PdfOcrAgent(fileName: $attachment->original_name);
-
-                return (string) $agent->prompt(
-                    'Transcribí el texto de las páginas adjuntas.',
-                    attachments: $storedImages,
-                    provider: $key,
-                    model: $model ?: $provider->model,
-                    timeout: 240,
-                );
-            });
-
-            $ocrText = trim((string) $raw);
-
-            if ($ocrText === '') {
-                $attachment->forceFill(['status' => 'indexed', 'error' => 'OCR sin texto legible.', 'meta' => $meta])->save();
-
-                return;
-            }
-
-            $meta['ocr_text'] = $ocrText;
-            $meta['ocr_at'] = now()->toIso8601String();
-
-            $this->indexOcrText($attachment, $ocrText);
-
-            $attachment->forceFill(['status' => 'indexed', 'error' => null, 'meta' => $meta])->save();
+            $this->transcribe($attachment, $user, $storedImages, $meta, $resolver, $executor);
         } catch (Throwable $exception) {
             report($exception);
             $attachment->forceFill(['status' => 'failed', 'error' => mb_substr($exception->getMessage(), 0, 500)])->save();
         } finally {
+            Storage::disk('local')->deleteDirectory(($workPrefix ?? ''));
             @unlink($temp);
-            if (isset($outDir)) {
-                array_map('unlink', glob($outDir.'/*') ?: []);
-                @rmdir($outDir);
-            }
+            array_map('unlink', glob($outDir.'/*') ?: []);
+            @rmdir($outDir);
         }
+    }
+
+    /**
+     * @param  array<int, StoredImage>  $storedImages
+     * @param  array<string, mixed>  $meta
+     */
+    private function transcribe(
+        ChatAttachment $attachment,
+        User $user,
+        array $storedImages,
+        array $meta,
+        AiScopeResolver $resolver,
+        AiRequestExecutor $executor,
+    ): void {
+        // Los archivos (PDFs escaneados) se transcriben con el provider
+        // multimodal configurado en el scope surface:files, que el usuario
+        // asigna en Ajustes → IA → Alcances. No se usa module:health para
+        // no forzar modelos de visión en los chats de texto.
+        $resolution = $resolver->resolve($user, AiScope::SurfaceFiles);
+
+        if ($resolution->chain->isEmpty()) {
+            $attachment->forceFill([
+                'status' => 'failed',
+                'error' => 'No hay un proveedor multimodal configurado para leer archivos (scope "surface:files").',
+            ])->save();
+
+            return;
+        }
+
+        $raw = $executor->execute($user, $resolution, function (string $key, string $model, $provider) use ($storedImages, $attachment): string {
+            $agent = new PdfOcrAgent(fileName: $attachment->original_name);
+
+            return (string) $agent->prompt(
+                'Transcribí el texto de las páginas adjuntas.',
+                attachments: $storedImages,
+                provider: $key,
+                model: $model ?: $provider->model,
+                timeout: 240,
+            );
+        });
+
+        $ocrText = trim((string) $raw);
+
+        if ($ocrText === '') {
+            $attachment->forceFill(['status' => 'indexed', 'error' => 'OCR sin texto legible.', 'meta' => $meta])->save();
+
+            return;
+        }
+
+        // 41 páginas de un PDF superan cualquier contexto; el OCR puede
+        // devolver una transcripción parcial. Se corta el texto excesivo.
+        $meta['ocr_text'] = $ocrText;
+        $meta['ocr_at'] = now()->toIso8601String();
+
+        $this->indexOcrText($attachment, $ocrText);
+
+        $attachment->forceFill(['status' => 'indexed', 'error' => null, 'meta' => $meta])->save();
     }
 
     private function indexOcrText(ChatAttachment $attachment, string $text): void
