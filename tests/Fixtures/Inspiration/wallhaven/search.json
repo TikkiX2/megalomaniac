@@ -1,0 +1,48 @@
+{
+    "data": [
+        {
+            "id": "94xr3x",
+            "url": "https://wallhaven.cc/w/94xr3x",
+            "short_url": "https://whvn.cc/94xr3x",
+            "category": "anime",
+            "purity": "sfw",
+            "dimension_x": 1920,
+            "dimension_y": 1080,
+            "resolution": "1920x1080",
+            "ratio": "1.78",
+            "file_size": 123456,
+            "file_type": "image/jpeg",
+            "colors": ["#0b0b0b", "#ef4444"],
+            "path": "https://w.wallhaven.cc/full/94/wallhaven-94xr3x.jpg",
+            "thumbs": {
+                "large": "https://th.wallhaven.cc/lg/94/wallhaven-94xr3x.jpg",
+                "original": "https://th.wallhaven.cc/orig/94/wallhaven-94xr3x.jpg",
+                "small": "https://th.wallhaven.cc/small/94/wallhaven-94xr3x.jpg"
+            }
+        },
+        {
+            "id": "12ab34",
+            "url": "https://wallhaven.cc/w/12ab34",
+            "short_url": "https://whvn.cc/12ab34",
+            "category": "people",
+            "purity": "sfw",
+            "dimension_x": 2560,
+            "dimension_y": 1440,
+            "file_type": "image/png",
+            "colors": ["#101010"],
+            "path": "https://w.wallhaven.cc/full/12/wallhaven-12ab34.png",
+            "thumbs": {
+                "large": "https://th.wallhaven.cc/lg/12/wallhaven-12ab34.png",
+                "small": "https://th.wallhaven.cc/small/12/wallhaven-12ab34.png"
+            }
+        }
+    ],
+    "meta": {
+        "current_page": 1,
+        "last_page": 3,
+        "per_page": 24,
+        "total": 60,
+        "query": "portrait",
+        "seed": null
+    }
+}

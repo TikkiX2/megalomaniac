@@ -1,0 +1,43 @@
+{
+    "result_count": 2,
+    "page_count": 2,
+    "page_size": 20,
+    "page": 1,
+    "results": [
+        {
+            "id": "8b1e0f5c-2a3d-4c6e-9f10-abcdef123456",
+            "title": "Portrait of a Woman",
+            "foreign_landing_url": "https://www.flickr.com/photos/example/123456",
+            "url": "https://live.staticflickr.com/65535/123456_b.jpg",
+            "creator": "Example Photographer",
+            "creator_url": "https://www.flickr.com/photos/example",
+            "license": "by-sa",
+            "license_version": "2.0",
+            "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+            "source": "flickr",
+            "thumbnail": "https://api.openverse.org/v1/images/8b1e0f5c/thumb/",
+            "width": 1024,
+            "height": 768,
+            "tags": [
+                { "name": "portrait", "accuracy": 0.98 },
+                { "name": "woman", "accuracy": 0.9 }
+            ],
+            "maturity": false
+        },
+        {
+            "id": "9c2f1a6d-3b4e-5d7f-0a21-bcdefa654321",
+            "title": "Portrait Sketch",
+            "foreign_landing_url": "https://www.flickr.com/photos/example/654321",
+            "url": "https://live.staticflickr.com/65535/654321_b.jpg",
+            "creator": "Another Artist",
+            "creator_url": "https://www.flickr.com/photos/another",
+            "license": "cc0",
+            "source": "flickr",
+            "thumbnail": "https://api.openverse.org/v1/images/9c2f1a6d/thumb/",
+            "width": null,
+            "height": null,
+            "tags": [{ "name": "sketch" }],
+            "maturity": false
+        }
+    ]
+}

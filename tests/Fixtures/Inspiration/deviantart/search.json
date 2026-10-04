@@ -1,0 +1,55 @@
+{
+    "results": [
+        {
+            "deviationid": "DEVIATION-1",
+            "url": "https://www.deviantart.com/artist-one/art/Portrait-Study-123456",
+            "title": "Portrait Study",
+            "published_time": 1700000000,
+            "author": {
+                "userid": "user-1",
+                "username": "artist-one",
+                "usericon": "https://a.deviantart.net/avatars/a/r/artist-one.png"
+            },
+            "category": "digitalart/paintings/portraits",
+            "is_mature": false,
+            "preview": {
+                "src": "https://images-wixmp.example.com/preview-1.jpg",
+                "width": 348,
+                "height": 414
+            },
+            "content": {
+                "src": "https://images-wixmp.example.com/image-1.jpg",
+                "width": 1280,
+                "height": 1523
+            },
+            "thumbs": [
+                {
+                    "src": "https://images-wixmp.example.com/thumb-1.jpg",
+                    "width": 200,
+                    "height": 238
+                }
+            ],
+            "tags": ["portrait", "digital painting"]
+        },
+        {
+            "deviationid": "DEVIATION-2",
+            "url": "https://www.deviantart.com/artist-two/art/Portrait-Two-654321",
+            "title": "Portrait Two",
+            "author": {
+                "username": "artist-two"
+            },
+            "is_mature": false,
+            "preview": {
+                "src": "https://images-wixmp.example.com/preview-2.jpg"
+            },
+            "content": {
+                "src": "https://images-wixmp.example.com/image-2.jpg",
+                "width": 900,
+                "height": 1200
+            },
+            "tags": ["portrait"]
+        }
+    ],
+    "has_more": true,
+    "next_offset": 24
+}

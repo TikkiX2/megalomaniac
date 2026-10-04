@@ -1,0 +1,56 @@
+{
+    "data": [
+        {
+            "id": 101,
+            "hash_id": "abc123",
+            "title": "Sci-fi Portrait",
+            "permalink": "https://www.artstation.com/artwork/abc123",
+            "user": {
+                "username": "artist-one",
+                "full_name": "Artist One",
+                "permalink": "https://www.artstation.com/artist-one"
+            },
+            "cover": {
+                "id": 9001,
+                "small_image_url": "https://cdna.artstation.com/p/assets/images/small-1.jpg",
+                "medium_image_url": "https://cdna.artstation.com/p/assets/images/medium-1.jpg",
+                "image_url": "https://cdna.artstation.com/p/assets/images/image-1.jpg",
+                "width": 1280,
+                "height": 720
+            },
+            "assets": [
+                {
+                    "id": 9002,
+                    "image_url": "https://cdna.artstation.com/p/assets/images/asset-1.jpg",
+                    "width": 1920,
+                    "height": 1080
+                }
+            ],
+            "tags": ["sci-fi", "portrait"],
+            "likes_count": 42,
+            "created_at": "2024-01-01T10:00:00.000-05:00"
+        },
+        {
+            "id": 102,
+            "hash_id": "def456",
+            "title": "Fantasy Landscape",
+            "permalink": "https://www.artstation.com/artwork/def456",
+            "user": {
+                "username": "artist-two",
+                "full_name": "Artist Two",
+                "permalink": "https://www.artstation.com/artist-two"
+            },
+            "cover": {
+                "id": 9003,
+                "small_image_url": "https://cdna.artstation.com/p/assets/images/small-2.jpg",
+                "medium_image_url": "https://cdna.artstation.com/p/assets/images/medium-2.jpg",
+                "image_url": "https://cdna.artstation.com/p/assets/images/image-2.jpg"
+            },
+            "tags": ["fantasy"],
+            "likes_count": 7,
+            "created_at": "2024-02-02T10:00:00.000-05:00"
+        }
+    ],
+    "total_count": 2,
+    "page": 1
+}

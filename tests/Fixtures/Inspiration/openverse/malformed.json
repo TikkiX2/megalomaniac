@@ -1,0 +1,12 @@
+{
+    "results": [
+        null,
+        "not-an-image",
+        {
+            "id": "missing-urls",
+            "title": "No image"
+        }
+    ],
+    "page_count": "many",
+    "page": 1
+}
