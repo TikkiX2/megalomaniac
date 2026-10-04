@@ -1,0 +1,105 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Support;
+
+use App\Inspiration\Concerns\UsesCredentials;
+use App\Inspiration\Contracts\Source;
+use App\Inspiration\Dtos\InspirationItem;
+use App\Inspiration\Dtos\Page;
+use App\Inspiration\Dtos\SourceCapabilities;
+use App\Inspiration\Dtos\SourceQuery;
+use App\Inspiration\Exceptions\SourceException;
+use Closure;
+
+/**
+ * Configurable in-memory source used to exercise SourceManager without HTTP.
+ */
+class FakeInspirationSource implements Source
+{
+    use UsesCredentials;
+
+    public int $searchCalls = 0;
+
+    public int $exploreCalls = 0;
+
+    /**
+     * @param  Closure(int, string, SourceQuery): Page|null  $searchCallback
+     */
+    public function __construct(
+        private readonly string $key,
+        private readonly bool $fails = false,
+        private readonly bool $needsKey = false,
+        private readonly ?int $ratePerMinute = null,
+        private readonly ?Closure $searchCallback = null,
+    ) {}
+
+    public function key(): string
+    {
+        return $this->key;
+    }
+
+    public function label(): string
+    {
+        return ucfirst($this->key);
+    }
+
+    public function capabilities(): SourceCapabilities
+    {
+        return new SourceCapabilities(
+            supportsSearch: true,
+            supportsExplore: true,
+            needsKey: $this->needsKey,
+            hasMaturityLevels: true,
+            ratePerMinute: $this->ratePerMinute,
+        );
+    }
+
+    public function isConfigured(): bool
+    {
+        return ! $this->needsKey || isset($this->credentials['key']);
+    }
+
+    public function search(string $query, int $page, SourceQuery $queryOptions): Page
+    {
+        $this->searchCalls++;
+
+        if ($this->fails) {
+            throw new SourceException('Fake source is down.');
+        }
+
+        if ($this->searchCallback !== null) {
+            return ($this->searchCallback)($page, $query, $queryOptions);
+        }
+
+        return Page::fromItems([$this->item($this->key.'-1')], false, null);
+    }
+
+    public function explore(int $page, SourceQuery $queryOptions): Page
+    {
+        $this->exploreCalls++;
+
+        if ($this->fails) {
+            throw new SourceException('Fake source is down.');
+        }
+
+        return Page::fromItems([$this->item($this->key.'-explore-'.$page)], false, null);
+    }
+
+    public function test(): bool
+    {
+        return ! $this->fails;
+    }
+
+    public function item(string $sourceId): InspirationItem
+    {
+        return new InspirationItem(
+            source: $this->key,
+            sourceId: $sourceId,
+            pageUrl: 'https://example.com/'.$sourceId,
+            imageUrl: 'https://cdn.example.com/'.$sourceId.'.jpg',
+            title: $sourceId,
+        );
+    }
+}
