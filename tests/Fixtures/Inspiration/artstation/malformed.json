@@ -5,6 +5,23 @@
         {
             "id": 103,
             "title": "Missing urls"
+        },
+        {
+            "id": 104,
+            "hash_id": "valid789",
+            "title": "Valid survivor",
+            "permalink": "https://www.artstation.com/artwork/valid789",
+            "user": {
+                "username": "artist-valid",
+                "full_name": "Artist Valid",
+                "permalink": "https://www.artstation.com/artist-valid"
+            },
+            "cover": {
+                "id": 9010,
+                "small_image_url": "https://cdna.artstation.com/p/assets/images/small-valid.jpg",
+                "image_url": "https://cdna.artstation.com/p/assets/images/image-valid.jpg"
+            },
+            "tags": ["portrait"]
         }
     ],
     "total_count": "many",

@@ -6,6 +6,21 @@
         {
             "deviationid": "NO-URLS",
             "title": "Missing links"
+        },
+        {
+            "deviationid": "DEVIATION-VALID",
+            "url": "https://www.deviantart.com/artist/art/Valid-Survivor-999999",
+            "title": "Valid survivor",
+            "author": {
+                "username": "artist-valid"
+            },
+            "is_mature": "nope",
+            "content": {
+                "src": "https://images-wixmp.example.com/valid-1.jpg",
+                "width": 800,
+                "height": 600
+            },
+            "tags": ["portrait"]
         }
     ],
     "has_more": "nope",

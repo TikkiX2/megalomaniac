@@ -1,0 +1,19 @@
+[
+    {
+        "id": 201,
+        "hash_id": "list123",
+        "title": "Top level list project",
+        "permalink": "https://www.artstation.com/artwork/list123",
+        "user": {
+            "username": "list-artist",
+            "full_name": "List Artist",
+            "permalink": "https://www.artstation.com/list-artist"
+        },
+        "cover": {
+            "id": 9011,
+            "small_image_url": "https://cdna.artstation.com/p/assets/images/small-list.jpg",
+            "image_url": "https://cdna.artstation.com/p/assets/images/image-list.jpg"
+        },
+        "tags": ["portrait"]
+    }
+]

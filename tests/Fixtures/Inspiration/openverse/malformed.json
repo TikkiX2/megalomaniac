@@ -5,6 +5,18 @@
         {
             "id": "missing-urls",
             "title": "No image"
+        },
+        {
+            "id": "valid-uuid-0000",
+            "title": "Valid survivor",
+            "foreign_landing_url": "https://www.flickr.com/photos/example/999999",
+            "url": "https://live.staticflickr.com/65535/999999_b.jpg",
+            "creator": "Valid Artist",
+            "creator_url": "https://www.flickr.com/photos/valid",
+            "license": "cc0",
+            "source": "flickr",
+            "thumbnail": "https://api.openverse.org/v1/images/valid-uuid-0000/thumb/",
+            "tags": [{ "name": "portrait" }]
         }
     ],
     "page_count": "many",

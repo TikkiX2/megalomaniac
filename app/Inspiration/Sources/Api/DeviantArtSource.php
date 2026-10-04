@@ -208,7 +208,7 @@ class DeviantArtSource extends AbstractApiSource
             'width' => $content['width'] ?? null,
             'height' => $content['height'] ?? null,
             'tags' => $this->tagList($entry['tags'] ?? null),
-            'maturity' => ! empty($entry['is_mature']) ? 'mature' : 'safe',
+            'maturity' => $this->boolValue($entry['is_mature'] ?? false) ? 'mature' : 'safe',
         ];
     }
 }

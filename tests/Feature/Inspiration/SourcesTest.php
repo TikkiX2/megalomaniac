@@ -34,6 +34,25 @@ dataset('tier1ApiSources', [
     'openverse' => ['openverse', OpenverseSource::class],
 ]);
 
+dataset('tier1ApiHttpErrors', function (): array {
+    $sources = [
+        'deviantart' => ['deviantart', DeviantArtSource::class],
+        'artstation' => ['artstation', ArtStationSource::class],
+        'wallhaven' => ['wallhaven', WallhavenSource::class],
+        'openverse' => ['openverse', OpenverseSource::class],
+    ];
+
+    $cases = [];
+
+    foreach ($sources as $key => [$sourceKey, $class]) {
+        foreach ([500, 403, 404] as $status) {
+            $cases[$key.' '.$status] = [$sourceKey, $class, $status];
+        }
+    }
+
+    return $cases;
+});
+
 /**
  * Stub every host the given adapter talks to, serving the fixture body.
  */
@@ -93,20 +112,36 @@ it('returns an empty page for an empty payload from :key', function (string $key
         ->and($page->nextPage)->toBeNull();
 })->with('tier1ApiSources');
 
-it('discards malformed items without throwing for :key', function (string $key, string $class): void {
+it('keeps valid items while discarding malformed ones for :key', function (string $key, string $class): void {
     fakeTier1Http($key, $key.'/malformed.json');
 
     $page = (new $class)->search('portrait', 1, new SourceQuery);
 
-    expect($page->items)->toBe([])
-        ->and($page->hasMore)->toBeFalse();
+    expect($page->items)->toHaveCount(1)
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->items[0]->source)->toBe($key)
+        ->and($page->items[0]->sourceId)->not->toBe('')
+        ->and($page->items[0]->pageUrl)->not->toBe('')
+        ->and($page->items[0]->imageUrl)->not->toBe('');
 })->with('tier1ApiSources');
 
-it('throws a source exception on an http error from :key', function (string $key, string $class): void {
-    fakeTier1Http($key, $key.'/search.json', 500);
+it('accepts a top-level list payload for artstation', function (): void {
+    Http::fake([
+        '*artstation.com/api/v2/feeds/projects.json*' => Http::response(inspirationFixture('artstation/list.json')),
+    ]);
+
+    $page = (new ArtStationSource)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(1)
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->items[0]->sourceId)->toBe('201');
+});
+
+it('throws a source exception on an http error', function (string $key, string $class, int $status): void {
+    fakeTier1Http($key, $key.'/search.json', $status);
 
     (new $class)->search('portrait', 1, new SourceQuery);
-})->with('tier1ApiSources')->throws(SourceException::class);
+})->with('tier1ApiHttpErrors')->throws(SourceException::class);
 
 it('returns an empty page without any request when the query is blank for :key', function (string $key, string $class): void {
     Http::fake();

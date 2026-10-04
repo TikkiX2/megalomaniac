@@ -5,6 +5,19 @@
         {
             "id": "no-urls",
             "category": "general"
+        },
+        {
+            "id": "valid12",
+            "url": "https://wallhaven.cc/w/valid12",
+            "category": "people",
+            "purity": "sfw",
+            "dimension_x": 1600,
+            "dimension_y": 900,
+            "colors": ["#202020"],
+            "path": "https://w.wallhaven.cc/full/va/wallhaven-valid12.jpg",
+            "thumbs": {
+                "large": "https://th.wallhaven.cc/lg/va/wallhaven-valid12.jpg"
+            }
         }
     ],
     "meta": null

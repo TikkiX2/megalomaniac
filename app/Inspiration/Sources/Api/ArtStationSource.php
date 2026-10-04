@@ -10,10 +10,26 @@ use App\Inspiration\Dtos\SourceCapabilities;
 use App\Inspiration\Dtos\SourceQuery;
 
 /**
- * ArtStation public v2 feeds.
+ * ArtStation public v2 feeds — best effort, degraded mode.
  *
- * Search adds `query`; explore is the unfiltered latest feed. ArtStation has no
- * dedicated maturity parameter, so maturity is left null.
+ * STATUS 2026-10-04: ArtStation's anonymous JSON feed is effectively retired.
+ * Live probes returned:
+ *   - `GET https://www.artstation.com/api/v2/feeds/projects.json` → 404
+ *   - `GET https://artstation.com/api/v2/feeds/projects.json` (no www) → 403 bot wall
+ *   - `POST .../api/v2/search/projects/projects.json` (CSRF flow) → 412 Invalid CSRF Token
+ *   - `GET .../api/v2/search/projects/projects.json?query=…` → 500
+ *   - `https://www.artstation.com/explore?sorting=latest` → SPA shell, no `hash_id`
+ *
+ * A session/CSRF token is required for anonymous access, so this source is
+ * considered dormant: every transport failure is normalized into a
+ * SourceException and the SourceManager serving the UI degrades to the cached
+ * payload (chip "caché · hace Xh"). Reconnect this adapter when ArtStation
+ * reopens a public JSON endpoint. The brief's canonical endpoints
+ * (`feeds/projects.json` with and without `query`) are kept for that day.
+ *
+ * The feed envelope is not guaranteed: `mapToPage()` accepts either a
+ * top-level list or a `{ "data": [...] }` object. ArtStation exposes no
+ * maturity parameter, so `maturity` stays null.
  */
 class ArtStationSource extends AbstractApiSource
 {
@@ -70,11 +86,16 @@ class ArtStationSource extends AbstractApiSource
     }
 
     /**
-     * @param  array<string, mixed>  $payload
+     * @param  array<string, mixed>|array<int, mixed>  $payload
      */
     private function mapToPage(array $payload, int $page): Page
     {
-        $raw = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+        if (array_is_list($payload)) {
+            $raw = $payload;
+        } else {
+            $raw = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+        }
+
         $items = [];
 
         foreach ($raw as $entry) {
@@ -92,8 +113,13 @@ class ArtStationSource extends AbstractApiSource
         }
 
         $total = is_numeric($payload['total_count'] ?? null) ? (int) $payload['total_count'] : null;
-        $perPage = $items === [] ? self::PAGE_SIZE : count($items);
-        $hasMore = $total !== null && ($page * $perPage) < $total;
+
+        if ($total !== null) {
+            $perPage = $items === [] ? self::PAGE_SIZE : count($items);
+            $hasMore = ($page * $perPage) < $total;
+        } else {
+            $hasMore = count($items) === self::PAGE_SIZE;
+        }
 
         return Page::fromItems($items, $hasMore, $hasMore ? $page + 1 : null);
     }
