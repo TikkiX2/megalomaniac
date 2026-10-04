@@ -118,7 +118,7 @@ it('persists the complete settings shape and merges defaults for missing keys', 
 
     $settings->update($user, [
         'enabled_sources' => ['deviantart', 'artstation'],
-        'keys' => ['flickr' => 'secret'],
+        'keys' => ['flickr' => ['key' => 'secret']],
         'maturity' => true,
         'zerochan_ua' => 'Megalomaniac-ricky',
         'acknowledged_tier3' => ['pixiv'],
@@ -127,7 +127,7 @@ it('persists the complete settings shape and merges defaults for missing keys', 
     $bag = $settings->for($user);
 
     expect($bag->enabledSources)->toBe(['deviantart', 'artstation'])
-        ->and($bag->keys)->toBe(['flickr' => 'secret'])
+        ->and($bag->keys)->toBe(['flickr' => ['key' => 'secret']])
         ->and($bag->maturity)->toBeTrue()
         ->and($bag->zerochanUa)->toBe('Megalomaniac-ricky')
         ->and($bag->acknowledgedTier3)->toBe(['pixiv'])
@@ -143,4 +143,30 @@ it('persists the complete settings shape and merges defaults for missing keys', 
         ->and($updated->keys)->toBe([])
         ->and($updated->acknowledgedTier3)->toBe([])
         ->and(InspirationSetting::count())->toBe(1);
+});
+
+it('normalizes a legacy flat string key into the canonical credential shape', function () {
+    $bag = SettingsBag::fromArray(['keys' => ['flickr' => 'secret']]);
+
+    expect($bag->keys)->toBe(['flickr' => ['key' => 'secret']])
+        ->and($bag->hasKey('flickr'))->toBeTrue()
+        ->and($bag->hasKey('pixiv'))->toBeFalse();
+});
+
+it('keeps the canonical nested credential shape untouched', function () {
+    $bag = SettingsBag::fromArray(['keys' => ['pixiv' => ['refresh_token' => 'rt']]]);
+
+    expect($bag->keys)->toBe(['pixiv' => ['refresh_token' => 'rt']]);
+});
+
+it('treats any non-empty credential field as a configured key', function () {
+    $bag = SettingsBag::fromArray([
+        'keys' => [
+            'pixiv' => ['refresh_token' => 'rt', 'blank' => ''],
+            'empty' => ['key' => ''],
+        ],
+    ]);
+
+    expect($bag->hasKey('pixiv'))->toBeTrue()
+        ->and($bag->hasKey('empty'))->toBeFalse();
 });

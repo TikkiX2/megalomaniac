@@ -161,7 +161,7 @@ class GelbooruSource extends AbstractApiSource
     private function splitTags(mixed $value): array
     {
         if (is_string($value)) {
-            return array_values(array_filter(array_map('trim', explode(' ', $value))));
+            return array_values(array_filter(array_map('trim', preg_split('/\s+/', $value) ?: [])));
         }
 
         return is_array($value) ? $value : [];

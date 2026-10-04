@@ -61,6 +61,17 @@ class FakeInspirationSource implements Source
         return ! $this->needsKey || isset($this->credentials['key']);
     }
 
+    /**
+     * Expose the credential bag the manager hydrated, so tests can assert the
+     * canonical per-source shape plus the injected user agent.
+     *
+     * @return array<string, mixed>
+     */
+    public function receivedCredentials(): array
+    {
+        return $this->credentials;
+    }
+
     public function search(string $query, int $page, SourceQuery $queryOptions): Page
     {
         $this->searchCalls++;

@@ -114,6 +114,11 @@ class AreNaSource extends AbstractApiSource
             return null;
         }
 
+        // The brief restricts blocks to images; Text/Attachment blocks are not renderable.
+        if (($entry['class'] ?? null) !== 'Image') {
+            return null;
+        }
+
         $id = $entry['id'] ?? null;
 
         if (! is_scalar($id) || trim((string) $id) === '') {

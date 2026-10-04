@@ -298,3 +298,48 @@ it('builds a page from items carrying pagination flags', function () {
         ->and($page->hasMore)->toBeTrue()
         ->and($page->nextPage)->toBe(2);
 });
+
+it('hydrates per-source credentials plus the zerochan user agent', function () {
+    $source = new FakeInspirationSource('fake-cred');
+    registerInspirationFakeSources([$source]);
+
+    $user = User::factory()->create();
+
+    app(InspirationSettings::class)->update($user, [
+        'enabled_sources' => ['fake-cred'],
+        'keys' => ['fake-cred' => ['refresh_token' => 'rt']],
+        'zerochan_ua' => 'Megalomaniac/2.0',
+    ]);
+
+    $manager = app(SourceManager::class);
+
+    $manager->activeConfigured($user);
+
+    expect($source->receivedCredentials())->toBe([
+        'refresh_token' => 'rt',
+        'user_agent' => 'Megalomaniac/2.0',
+    ]);
+
+    $manager->search($user, 'fake-cred', 'portrait');
+
+    expect($source->receivedCredentials())->toBe([
+        'refresh_token' => 'rt',
+        'user_agent' => 'Megalomaniac/2.0',
+    ]);
+});
+
+it('drops the user agent from hydration when the user has not set one', function () {
+    $source = new FakeInspirationSource('fake-no-ua');
+    registerInspirationFakeSources([$source]);
+
+    $user = User::factory()->create();
+
+    app(InspirationSettings::class)->update($user, [
+        'enabled_sources' => ['fake-no-ua'],
+        'keys' => ['fake-no-ua' => ['refresh_token' => 'rt']],
+    ]);
+
+    app(SourceManager::class)->search($user, 'fake-no-ua', 'portrait');
+
+    expect($source->receivedCredentials())->toBe(['refresh_token' => 'rt']);
+});

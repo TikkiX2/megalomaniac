@@ -68,7 +68,7 @@ it('persists inspiration settings body through updateOrCreate', function () {
         ['user_id' => $user->id],
         ['body' => [
             'enabled_sources' => ['deviantart', 'artstation'],
-            'keys' => ['flickr' => 'secret'],
+            'keys' => ['flickr' => ['key' => 'secret']],
             'maturity' => true,
             'zerochan_ua' => 'Megalomaniac-ricky',
             'acknowledged_tier3' => ['pixiv'],

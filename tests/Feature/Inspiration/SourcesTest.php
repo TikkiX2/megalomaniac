@@ -101,7 +101,18 @@ function fakeTier1Http(string $key, string $fixture, int $status = 200): void
         ],
         'met' => [
             '*collectionapi.metmuseum.org/public/collection/v1/search*' => Http::response($body, $status),
-            '*collectionapi.metmuseum.org/public/collection/v1/objects/*' => Http::response(inspirationFixture('met/object.json'), $status),
+            '*collectionapi.metmuseum.org/public/collection/v1/objects/*' => function (Request $request) use ($status) {
+                $id = (int) basename((string) parse_url($request->url(), PHP_URL_PATH));
+                $object = json_decode(inspirationFixture('met/object.json'), true);
+                $object = is_array($object) ? $object : [];
+                $object['objectID'] = $id;
+                $object['objectURL'] = 'https://www.metmuseum.org/art/collection/search/'.$id;
+                $object['primaryImage'] = 'https://images.metmuseum.org/CRDImages/ep/original/DT'.$id.'.jpg';
+                $object['primaryImageSmall'] = 'https://images.metmuseum.org/CRDImages/ep/web-large/DT'.$id.'.jpg';
+                $object['title'] = 'Object '.$id;
+
+                return Http::response($object, $status);
+            },
         ],
         'aic' => [
             '*api.artic.edu/api/v1/artworks/search*' => Http::response($body, $status),
@@ -166,6 +177,18 @@ it('accepts a top-level list payload for artstation', function (): void {
     expect($page->items)->toHaveCount(1)
         ->and($page->hasMore)->toBeFalse()
         ->and($page->items[0]->sourceId)->toBe('201');
+});
+
+it('resolves distinct met objects per id', function (): void {
+    fakeTier1Http('met', 'met/search.json');
+
+    $page = (new MetMuseumSource)->search('portrait', 1, new SourceQuery);
+
+    $ids = array_map(static fn ($item): string => $item->sourceId, $page->items);
+
+    expect($page->items)->toHaveCount(3)
+        ->and($ids)->toBe(['101', '102', '103'])
+        ->and(array_unique($ids))->toHaveCount(3);
 });
 
 it('throws a source exception on an http error', function (string $key, string $class, int $status): void {

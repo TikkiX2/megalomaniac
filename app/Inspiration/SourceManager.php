@@ -275,9 +275,9 @@ class SourceManager
     {
         $key = $source->key();
 
-        $source->setCredentials([
-            'key' => $bag->hasKey($key) ? $bag->keys[$key] : null,
-            'user_agent' => $bag->zerochanUa,
-        ]);
+        $source->setCredentials(array_merge(
+            $bag->keys[$key] ?? [],
+            ['user_agent' => $bag->zerochanUa],
+        ));
     }
 }

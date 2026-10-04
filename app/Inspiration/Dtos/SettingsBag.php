@@ -11,7 +11,8 @@ class SettingsBag
 {
     /**
      * @param  array<int, string>  $enabledSources
-     * @param  array<string, string>  $keys
+     * @param  array<string, array<string, string|null>>  $keys  Per-source credential-field map,
+     *                                                           e.g. `['flickr' => ['key' => 'abc']]`. A flat string is normalized to `['key' => $string]`.
      * @param  array<int, string>  $acknowledgedTier3
      */
     public function __construct(
@@ -29,7 +30,7 @@ class SettingsBag
     {
         return new self(
             enabledSources: array_values((array) ($body['enabled_sources'] ?? [])),
-            keys: (array) ($body['keys'] ?? []),
+            keys: self::normalizeKeys((array) ($body['keys'] ?? [])),
             maturity: (bool) ($body['maturity'] ?? false),
             zerochanUa: isset($body['zerochan_ua']) ? (string) $body['zerochan_ua'] : null,
             acknowledgedTier3: array_values((array) ($body['acknowledged_tier3'] ?? [])),
@@ -37,7 +38,44 @@ class SettingsBag
     }
 
     /**
-     * @return array{enabled_sources: array<int, string>, keys: array<string, string>, maturity: bool, zerochan_ua: ?string, acknowledged_tier3: array<int, string>}
+     * Leniently coerce the persisted keys map into the canonical nested shape.
+     *
+     * The canonical shape is `{source: {field: value}}` (e.g.
+     * `['pixiv' => ['refresh_token' => '…']]`). Legacy fixtures that stored a
+     * flat `{source: string}` are wrapped as `['key' => $string]` so no stored
+     * settings break after this change.
+     *
+     * @param  array<array-key, mixed>  $keys
+     * @return array<string, array<string, string|null>>
+     */
+    private static function normalizeKeys(array $keys): array
+    {
+        $normalized = [];
+
+        foreach ($keys as $source => $credentials) {
+            if (! is_string($source)) {
+                continue;
+            }
+
+            if (is_array($credentials)) {
+                $normalized[$source] = array_map(
+                    static fn (mixed $value): ?string => $value === null ? null : (string) $value,
+                    $credentials,
+                );
+
+                continue;
+            }
+
+            if (is_scalar($credentials)) {
+                $normalized[$source] = ['key' => (string) $credentials];
+            }
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @return array{enabled_sources: array<int, string>, keys: array<string, array<string, string|null>>, maturity: bool, zerochan_ua: ?string, acknowledged_tier3: array<int, string>}
      */
     public function toArray(): array
     {
@@ -50,9 +88,18 @@ class SettingsBag
         ];
     }
 
+    /**
+     * A source counts as keyed when any of its credential fields is non-empty.
+     */
     public function hasKey(string $source): bool
     {
-        return isset($this->keys[$source]) && $this->keys[$source] !== '';
+        foreach ($this->keys[$source] ?? [] as $value) {
+            if (is_string($value) && trim($value) !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isEnabled(string $source): bool
