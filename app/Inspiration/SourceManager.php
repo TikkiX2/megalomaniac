@@ -277,6 +277,7 @@ class SourceManager
 
         $source->setCredentials([
             'key' => $bag->hasKey($key) ? $bag->keys[$key] : null,
+            'user_agent' => $bag->zerochanUa,
         ]);
     }
 }

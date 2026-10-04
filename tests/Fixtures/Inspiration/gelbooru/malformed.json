@@ -1,0 +1,18 @@
+{
+    "post": [
+        null,
+        "not-a-post",
+        {
+            "id": 9003,
+            "preview_url": "https://img3.gelbooru.com/thumbnails/ee/ff/9003.jpg"
+        },
+        {
+            "id": 9004,
+            "file_url": "https://img3.gelbooru.com/images/ee/ff/9004.jpg",
+            "preview_url": "https://img3.gelbooru.com/thumbnails/ee/ff/9004.jpg",
+            "tags": "portrait",
+            "owner": "valid-artist",
+            "rating": "general"
+        }
+    ]
+}

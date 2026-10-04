@@ -1,0 +1,29 @@
+{
+    "@attributes": {
+        "limit": 24,
+        "offset": 0,
+        "count": 2
+    },
+    "post": [
+        {
+            "id": 9001,
+            "file_url": "https://img3.gelbooru.com/images/aa/bb/9001.jpg",
+            "preview_url": "https://img3.gelbooru.com/thumbnails/aa/bb/9001.jpg",
+            "tags": "portrait solo red_eyes",
+            "owner": "artist-one",
+            "rating": "general",
+            "width": 1200,
+            "height": 1600
+        },
+        {
+            "id": 9002,
+            "file_url": "https://img3.gelbooru.com/images/cc/dd/9002.png",
+            "preview_url": "https://img3.gelbooru.com/thumbnails/cc/dd/9002.jpg",
+            "tags": "portrait monochrome",
+            "owner": "artist-two",
+            "rating": "sensitive",
+            "width": 800,
+            "height": 1000
+        }
+    ]
+}

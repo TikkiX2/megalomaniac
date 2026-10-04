@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace App\Inspiration;
 
 use App\Inspiration\Contracts\Source;
+use App\Inspiration\Sources\Api\AreNaSource;
+use App\Inspiration\Sources\Api\ArtInstituteChicagoSource;
 use App\Inspiration\Sources\Api\ArtStationSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
+use App\Inspiration\Sources\Api\GelbooruSource;
+use App\Inspiration\Sources\Api\MetMuseumSource;
 use App\Inspiration\Sources\Api\OpenverseSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
+use App\Inspiration\Sources\Api\ZerochanSource;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -28,6 +33,11 @@ class InspirationServiceProvider extends ServiceProvider
         ArtStationSource::class,
         WallhavenSource::class,
         OpenverseSource::class,
+        ZerochanSource::class,
+        GelbooruSource::class,
+        AreNaSource::class,
+        MetMuseumSource::class,
+        ArtInstituteChicagoSource::class,
     ];
 
     public function register(): void

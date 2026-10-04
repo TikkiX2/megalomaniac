@@ -1,0 +1,25 @@
+{
+    "pagination": {
+        "total": 2,
+        "limit": 24,
+        "offset": 0,
+        "current_page": 1,
+        "total_pages": 3
+    },
+    "data": [
+        {
+            "id": 14556,
+            "title": "Portrait of a Woman",
+            "image_id": "aaa-111-bbb",
+            "artist_title": "Jane Doe",
+            "date_display": "1900"
+        },
+        {
+            "id": 14557,
+            "title": "Study in Red",
+            "image_id": "ccc-222-ddd",
+            "artist_title": "John Roe",
+            "date_display": "1888"
+        }
+    ]
+}

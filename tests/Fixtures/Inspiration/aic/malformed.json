@@ -1,0 +1,21 @@
+{
+    "pagination": {
+        "current_page": 1,
+        "total_pages": 1
+    },
+    "data": [
+        null,
+        "not-an-artwork",
+        {
+            "id": 14558,
+            "title": "No image"
+        },
+        {
+            "id": 14559,
+            "title": "Valid artwork",
+            "image_id": "eee-333-fff",
+            "artist_title": "Valid Artist",
+            "date_display": "1900"
+        }
+    ]
+}

@@ -6,10 +6,15 @@ use App\Inspiration\Dtos\Page;
 use App\Inspiration\Dtos\SourceQuery;
 use App\Inspiration\Exceptions\SourceException;
 use App\Inspiration\SourceManager;
+use App\Inspiration\Sources\Api\AreNaSource;
+use App\Inspiration\Sources\Api\ArtInstituteChicagoSource;
 use App\Inspiration\Sources\Api\ArtStationSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
+use App\Inspiration\Sources\Api\GelbooruSource;
+use App\Inspiration\Sources\Api\MetMuseumSource;
 use App\Inspiration\Sources\Api\OpenverseSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
+use App\Inspiration\Sources\Api\ZerochanSource;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -32,6 +37,11 @@ dataset('tier1ApiSources', [
     'artstation' => ['artstation', ArtStationSource::class],
     'wallhaven' => ['wallhaven', WallhavenSource::class],
     'openverse' => ['openverse', OpenverseSource::class],
+    'zerochan' => ['zerochan', ZerochanSource::class],
+    'gelbooru' => ['gelbooru', GelbooruSource::class],
+    'arena' => ['arena', AreNaSource::class],
+    'met' => ['met', MetMuseumSource::class],
+    'aic' => ['aic', ArtInstituteChicagoSource::class],
 ]);
 
 dataset('tier1ApiHttpErrors', function (): array {
@@ -40,6 +50,11 @@ dataset('tier1ApiHttpErrors', function (): array {
         'artstation' => ['artstation', ArtStationSource::class],
         'wallhaven' => ['wallhaven', WallhavenSource::class],
         'openverse' => ['openverse', OpenverseSource::class],
+        'zerochan' => ['zerochan', ZerochanSource::class],
+        'gelbooru' => ['gelbooru', GelbooruSource::class],
+        'arena' => ['arena', AreNaSource::class],
+        'met' => ['met', MetMuseumSource::class],
+        'aic' => ['aic', ArtInstituteChicagoSource::class],
     ];
 
     $cases = [];
@@ -74,6 +89,22 @@ function fakeTier1Http(string $key, string $fixture, int $status = 200): void
         ],
         'openverse' => [
             '*api.openverse.org/v1/images*' => Http::response($body, $status),
+        ],
+        'zerochan' => [
+            '*zerochan.net*' => Http::response($body, $status),
+        ],
+        'gelbooru' => [
+            '*gelbooru.com/index.php*' => Http::response($body, $status),
+        ],
+        'arena' => [
+            '*api.are.na/v2/search*' => Http::response($body, $status),
+        ],
+        'met' => [
+            '*collectionapi.metmuseum.org/public/collection/v1/search*' => Http::response($body, $status),
+            '*collectionapi.metmuseum.org/public/collection/v1/objects/*' => Http::response(inspirationFixture('met/object.json'), $status),
+        ],
+        'aic' => [
+            '*api.artic.edu/api/v1/artworks/search*' => Http::response($body, $status),
         ],
         default => throw new InvalidArgumentException("Unknown tier 1 source [{$key}]."),
     });
@@ -174,7 +205,7 @@ it('declares the expected capabilities for :key', function (string $key, string 
 
     expect($capabilities->supportsSearch)->toBeTrue()
         ->and($capabilities->needsKey)->toBeFalse()
-        ->and($capabilities->supportsExplore)->toBe(in_array($key, ['deviantart', 'artstation'], true))
+        ->and($capabilities->supportsExplore)->toBe(in_array($key, ['deviantart', 'artstation', 'zerochan'], true))
         ->and((new $class)->isConfigured())->toBeTrue();
 })->with('tier1ApiSources');
 
@@ -210,7 +241,75 @@ it('wraps an unparseable body into a source exception', function (): void {
 it('registers every tier 1 adapter in the source manager', function (): void {
     $keys = app(SourceManager::class)->all()->keys()->all();
 
-    expect($keys)->toContain('deviantart', 'artstation', 'wallhaven', 'openverse');
+    expect($keys)->toContain(
+        'deviantart',
+        'artstation',
+        'wallhaven',
+        'openverse',
+        'zerochan',
+        'gelbooru',
+        'arena',
+        'met',
+        'aic',
+    );
+});
+
+it('sends the configured user agent header to zerochan', function (): void {
+    Http::fake([
+        '*zerochan.net*' => Http::response(inspirationFixture('zerochan/search.json')),
+    ]);
+
+    $source = new ZerochanSource;
+    $source->setCredentials(['user_agent' => 'MegalomaniacTest/9.9']);
+    $source->search('portrait', 1, new SourceQuery);
+
+    Http::assertSent(fn (Request $request): bool => $request->hasHeader('User-Agent', 'MegalomaniacTest/9.9'));
+});
+
+it('falls back to the default user agent when zerochan has no override', function (): void {
+    Http::fake([
+        '*zerochan.net*' => Http::response(inspirationFixture('zerochan/search.json')),
+    ]);
+
+    (new ZerochanSource)->search('portrait', 1, new SourceQuery);
+
+    Http::assertSent(fn (Request $request): bool => $request->hasHeader('User-Agent', 'MegalomaniacInspiration/1.0'));
+});
+
+it('drops the gelbooru explicit filter when maturity is allowed', function (): void {
+    Http::fake([
+        '*gelbooru.com/index.php*' => Http::response(inspirationFixture('gelbooru/search.json')),
+    ]);
+
+    (new GelbooruSource)->search('portrait', 1, new SourceQuery(maturity: 'allowed'));
+
+    Http::assertSent(function (Request $request): bool {
+        if (! str_contains($request->url(), 'gelbooru.com')) {
+            return false;
+        }
+
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['tags'] ?? null) === 'portrait';
+    });
+});
+
+it('applies the gelbooru explicit filter when maturity is safe', function (): void {
+    Http::fake([
+        '*gelbooru.com/index.php*' => Http::response(inspirationFixture('gelbooru/search.json')),
+    ]);
+
+    (new GelbooruSource)->search('portrait', 1, new SourceQuery(maturity: 'safe'));
+
+    Http::assertSent(function (Request $request): bool {
+        if (! str_contains($request->url(), 'gelbooru.com')) {
+            return false;
+        }
+
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['tags'] ?? null) === 'portrait -rating:explicit';
+    });
 });
 
 it('reports connectivity through test() for :key', function (string $key, string $class): void {

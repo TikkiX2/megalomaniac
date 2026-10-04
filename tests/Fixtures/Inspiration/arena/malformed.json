@@ -1,0 +1,26 @@
+{
+    "current_page": 1,
+    "total_pages": 1,
+    "blocks": [
+        null,
+        "not-a-block",
+        {
+            "id": 12347,
+            "class": "Text",
+            "title": "Just a note"
+        },
+        {
+            "id": 12348,
+            "class": "Image",
+            "title": "Valid block",
+            "image": {
+                "display": {
+                    "url": "https://images.are.na/block/12348/display.jpg"
+                },
+                "original": {
+                    "url": "https://images.are.na/block/12348/original.jpg"
+                }
+            }
+        }
+    ]
+}

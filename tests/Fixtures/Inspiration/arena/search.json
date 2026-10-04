@@ -1,0 +1,36 @@
+{
+    "term": "portrait",
+    "total": 2,
+    "current_page": 1,
+    "total_pages": 3,
+    "blocks": [
+        {
+            "id": 12345,
+            "class": "Image",
+            "title": "Ember portrait",
+            "created_at": "2026-01-12T10:00:00.000Z",
+            "image": {
+                "display": {
+                    "url": "https://images.are.na/block/12345/display.jpg"
+                },
+                "original": {
+                    "url": "https://images.are.na/block/12345/original.jpg"
+                }
+            }
+        },
+        {
+            "id": 12346,
+            "class": "Image",
+            "title": "Ash study",
+            "created_at": "2026-01-13T10:00:00.000Z",
+            "original_image": {
+                "display": {
+                    "url": "https://images.are.na/block/12346/display.jpg"
+                },
+                "original": {
+                    "url": "https://images.are.na/block/12346/original.jpg"
+                }
+            }
+        }
+    ]
+}
