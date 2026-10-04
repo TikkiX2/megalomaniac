@@ -281,6 +281,30 @@ it('rejects logging a past workout with another users routine', function () {
         ->toThrow(ModelNotFoundException::class);
 });
 
+it('does not copy non-numeric template values into workout sets', function () {
+    $user = User::factory()->create();
+    $exercise = Exercise::factory()->create();
+    $routine = Routine::factory()->create(['user_id' => $user->id]);
+    // El usuario usa bandas elásticas: "Banda" es texto válido en el card de la
+    // rutina, pero workout_sets.weight/reps son columnas numeric en postgres.
+    $routine->exercises()->attach($exercise->id, [
+        'order' => 1,
+        'target_sets' => 2,
+        'target_weight' => 'Banda',
+        'target_reps' => '15-20',
+    ]);
+
+    $workout = sessions()->logPast($user, $routine->id, now()->subDay()->toIso8601String());
+
+    $sets = $workout->exercises->first()->sets()->orderBy('set_number')->get();
+
+    expect($sets)->toHaveCount(2)
+        ->and($sets[0]->weight)->toBeNull()
+        ->and($sets[0]->reps)->toBeNull()
+        ->and($sets[1]->weight)->toBeNull()
+        ->and($sets[1]->reps)->toBeNull();
+});
+
 it('builds per-session progression for an exercise', function () {
     $user = User::factory()->create();
     $exercise = Exercise::factory()->create();

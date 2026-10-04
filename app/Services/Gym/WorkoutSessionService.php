@@ -88,9 +88,9 @@ class WorkoutSessionService
             foreach ($sourceExercise->sets as $sourceSet) {
                 $workoutExercise->sets()->create([
                     'set_number' => $sourceSet->set_number,
-                    'weight' => $sourceSet->weight,
-                    'reps' => $sourceSet->reps,
-                    'rpe' => $sourceSet->rpe,
+                    'weight' => $this->sanitizeSetValue($sourceSet->weight),
+                    'reps' => $this->sanitizeSetValue($sourceSet->reps),
+                    'rpe' => $this->sanitizeSetValue($sourceSet->rpe),
                     'completed' => false,
                 ]);
             }
@@ -297,8 +297,8 @@ class WorkoutSessionService
 
                 $workoutExercise->sets()->create([
                     'set_number' => $i,
-                    'weight' => $previousSet?->weight ?? $exercise->pivot->target_weight,
-                    'reps' => $previousSet?->reps ?? $exercise->pivot->target_reps,
+                    'weight' => $this->sanitizeSetValue($previousSet?->weight ?? $exercise->pivot->target_weight),
+                    'reps' => $this->sanitizeSetValue($previousSet?->reps ?? $exercise->pivot->target_reps),
                     'completed' => false,
                 ]);
             }
@@ -315,5 +315,19 @@ class WorkoutSessionService
     private function assertOwnsWorkoutExercise(User $user, WorkoutExercise $workoutExercise): void
     {
         $this->assertOwnsWorkout($user, $workoutExercise->workout);
+    }
+
+    /**
+     * workout_sets.weight/reps/rpe are numeric columns (numeric on postgres):
+     * template values like "Banda" or "15-20" are valid for the routine card
+     * but must not be persisted into a set, which would 500 on postgres.
+     */
+    private function sanitizeSetValue(mixed $value): ?float
+    {
+        if ($value === null || $value === '' || ! is_numeric($value)) {
+            return null;
+        }
+
+        return (float) $value;
     }
 }
