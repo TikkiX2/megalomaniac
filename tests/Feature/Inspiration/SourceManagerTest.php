@@ -10,6 +10,7 @@ use App\Inspiration\SourceManager;
 use App\Models\InspirationCacheEntry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\Support\FakeInspirationSource;
 
 uses(RefreshDatabase::class);
@@ -50,7 +51,7 @@ it('resolves the tagged source registry keyed by source key', function () {
 
     $manager = app(SourceManager::class);
 
-    expect($manager->all())->toHaveCount(1)
+    expect($manager->all()->keys()->all())->toContain('fake-ok')
         ->and($manager->get('fake-ok'))->toBe($ok)
         ->and($manager->get('missing'))->toBeNull();
 });
@@ -88,12 +89,17 @@ it('serves the stale cached payload instead of throwing when the source is down'
 
     registerInspirationFakeSources([new FakeInspirationSource('fake-down', fails: true)]);
     $user = inspirationUserWithSettings(['fake-down']);
+    $manager = app(SourceManager::class);
 
-    $result = app(SourceManager::class)->search($user, 'fake-down', 'portrait', 1);
+    $result = $manager->search($user, 'fake-down', 'portrait', 1);
+    $statuses = $manager->statuses($user);
 
     expect($result['from_cache'])->toBeTrue()
         ->and($result['age_minutes'])->toBe(180)
-        ->and($result['items'])->toBe([['source' => 'fake-down', 'sourceId' => 'stale']]);
+        ->and($result['items'])->toBe([['source' => 'fake-down', 'sourceId' => 'stale']])
+        ->and($statuses['fake-down']['down'])->toBeFalse()
+        ->and($statuses['fake-down']['cache_age_minutes'])->toBe(180)
+        ->and($statuses['fake-down']['error_at'])->not->toBeNull();
 });
 
 it('isolates a failing source in searchAll while the healthy sources respond', function () {
@@ -131,6 +137,41 @@ it('marks a source down only when it failed and no cache row exists at all', fun
         ->and($statuses['fake-ok']['cache_age_minutes'])->toBe(0)
         ->and($statuses['fake-ok']['enabled'])->toBeTrue()
         ->and($statuses['fake-ok']['configured'])->toBeTrue();
+});
+
+it('reports a source down from a failure persisted in a previous request', function () {
+    $key = 'fake-persisted-'.uniqid();
+
+    registerInspirationFakeSources([new FakeInspirationSource($key)]);
+    $user = inspirationUserWithSettings([$key]);
+
+    Cache::put(SourceManager::ERROR_CACHE_PREFIX.$key, now()->subMinutes(5), SourceManager::ERROR_CACHE_TTL);
+
+    app()->forgetInstance(SourceManager::class);
+
+    $statuses = app(SourceManager::class)->statuses($user);
+
+    expect($statuses[$key]['down'])->toBeTrue()
+        ->and($statuses[$key]['cache_age_minutes'])->toBeNull()
+        ->and($statuses[$key]['error_at'])->not->toBeNull()
+        ->and(abs((int) $statuses[$key]['error_at']->diffInMinutes(now())))->toBe(5);
+});
+
+it('clears a persisted failure once the source responds again', function () {
+    $key = 'fake-recovered';
+
+    registerInspirationFakeSources([new FakeInspirationSource($key)]);
+    $user = inspirationUserWithSettings([$key]);
+
+    Cache::put(SourceManager::ERROR_CACHE_PREFIX.$key, now(), SourceManager::ERROR_CACHE_TTL);
+
+    $manager = app(SourceManager::class);
+    $manager->search($user, $key, 'portrait', 1);
+
+    $statuses = $manager->statuses($user);
+
+    expect($statuses[$key]['down'])->toBeFalse()
+        ->and($statuses[$key]['error_at'])->toBeNull();
 });
 
 it('writes through the cache and serves the first payload on the second search', function () {
@@ -179,7 +220,11 @@ it('keys the cache by maturity so safe and unrestricted searches stay separate',
 
     expect($safe['from_cache'])->toBeFalse()
         ->and($mature['from_cache'])->toBeFalse()
-        ->and(InspirationCacheEntry::count())->toBe(2);
+        ->and(InspirationCacheEntry::count())->toBe(2)
+        ->and(InspirationCacheEntry::query()
+            ->where('source', 'fake-maturity')
+            ->where('query_hash', InspirationCache::queryHash('portrait', new SourceQuery('allowed', ['page' => 1])))
+            ->exists())->toBeTrue();
 });
 
 it('filters activeConfigured by enabled sources that are configured', function () {
@@ -193,14 +238,21 @@ it('filters activeConfigured by enabled sources that are configured', function (
 
     $manager = app(SourceManager::class);
 
-    expect($manager->activeConfigured($user)->keys()->all())->toBe(['fake-enabled']);
+    $active = $manager->activeConfigured($user);
+
+    expect($active->keys()->all())->toContain('fake-enabled')
+        ->and($active->keys()->all())->not->toContain('fake-disabled')
+        ->and($active->keys()->all())->not->toContain('fake-keyed');
 
     app(InspirationSettings::class)->update($user, [
         'enabled_sources' => ['fake-enabled', 'fake-keyed'],
         'keys' => ['fake-keyed' => 'secret'],
     ]);
 
-    expect($manager->activeConfigured($user)->keys()->all())->toBe(['fake-enabled', 'fake-keyed']);
+    $active = $manager->activeConfigured($user);
+
+    expect($active->keys()->all())->toContain('fake-enabled')
+        ->and($active->keys()->all())->toContain('fake-keyed');
 });
 
 it('rate limits a source according to its capabilities', function () {

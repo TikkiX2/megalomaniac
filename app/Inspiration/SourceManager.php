@@ -8,11 +8,13 @@ use App\Inspiration\Contracts\Source;
 use App\Inspiration\Dtos\SettingsBag;
 use App\Inspiration\Dtos\SourceQuery;
 use App\Inspiration\Exceptions\SourceException;
-use App\Models\InspirationCacheEntry;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Container\Container;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
@@ -24,13 +26,22 @@ use Illuminate\Support\Facades\RateLimiter;
  * as-is, a miss calls the adapter and persists the payload, and an adapter
  * failure falls back to a stale row when one exists or rethrows a
  * SourceException carrying the previous cache age.
+ *
+ * A failure is also persisted as a short-lived cache marker so statuses() can
+ * report a dead source in a later request, even though the in-memory manager
+ * that observed the failure is gone.
  */
 class SourceManager
 {
     /**
-     * @var array<string, bool>
+     * Cache key prefix for the last observed adapter failure per source.
      */
-    private array $failures = [];
+    public const ERROR_CACHE_PREFIX = 'inspiration:error:';
+
+    /**
+     * How long a failure observation stays relevant (6 hours).
+     */
+    public const ERROR_CACHE_TTL = 21600;
 
     public function __construct(
         private readonly Container $app,
@@ -70,7 +81,7 @@ class SourceManager
     }
 
     /**
-     * @return array<string, array{enabled: bool, configured: bool, down: bool, cache_age_minutes: ?int}>
+     * @return array<string, array{enabled: bool, configured: bool, down: bool, cache_age_minutes: ?int, error_at: ?CarbonInterface}>
      */
     public function statuses(User $user): array
     {
@@ -80,12 +91,14 @@ class SourceManager
         foreach ($this->all() as $key => $source) {
             $this->hydrateCredentials($bag, $source);
             $cacheAge = $this->cacheAge($key);
+            $errorAt = $this->lastErrorAt($key);
 
             $statuses[$key] = [
                 'enabled' => $bag->isEnabled($key),
                 'configured' => $source->isConfigured(),
-                'down' => ($this->failures[$key] ?? false) && $cacheAge === null,
+                'down' => $errorAt !== null && $cacheAge === null,
                 'cache_age_minutes' => $cacheAge,
+                'error_at' => $errorAt,
             ];
         }
 
@@ -102,7 +115,7 @@ class SourceManager
         $this->hydrateCredentials($bag, $source);
 
         $options = new SourceQuery(
-            maturity: $bag->maturity ? 'all' : 'safe',
+            maturity: $bag->maturity ? 'allowed' : 'safe',
             extra: ['page' => $page],
         );
 
@@ -125,7 +138,7 @@ class SourceManager
         $this->hydrateCredentials($bag, $source);
 
         $options = new SourceQuery(
-            maturity: $bag->maturity ? 'all' : 'safe',
+            maturity: $bag->maturity ? 'allowed' : 'safe',
             extra: ['page' => $page],
         );
 
@@ -153,7 +166,7 @@ class SourceManager
                 $page['items'] = array_slice($page['items'], 0, $perSource);
                 $results[$key] = $page;
             } catch (SourceException $exception) {
-                $this->failures[$key] = true;
+                $this->recordError($key);
 
                 $results[$key] = [
                     'items' => [],
@@ -199,16 +212,16 @@ class SourceManager
     {
         try {
             $result = $this->cache->remember($key, $kind, $queryHash, $ttl, $adapter);
-            $this->failures[$key] = false;
+            $this->clearError($key);
 
             return $this->present($result['payload'], $result['from_cache'], $result['age_minutes']);
         } catch (SourceException $exception) {
-            $this->failures[$key] = true;
+            $this->recordError($key);
 
-            $stale = $this->stalePayload($key, $kind, $queryHash);
+            $stale = InspirationCache::latestRow($key, $kind, $queryHash);
 
             if ($stale !== null) {
-                return $this->present($stale, true, InspirationCache::ageMinutes($key, $kind, $queryHash));
+                return $this->present($stale->payload, true, InspirationCache::ageOf($stale));
             }
 
             throw new SourceException($exception->getMessage(), null, $exception->getCode(), $exception);
@@ -230,30 +243,32 @@ class SourceManager
         ];
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function stalePayload(string $key, string $kind, string $queryHash): ?array
-    {
-        $entry = InspirationCacheEntry::query()
-            ->where('source', $key)
-            ->where('kind', $kind)
-            ->where('query_hash', $queryHash)
-            ->first();
-
-        return $entry?->payload;
-    }
-
     private function cacheAge(string $key): ?int
     {
-        $entry = InspirationCacheEntry::query()
-            ->where('source', $key)
-            ->latest('fetched_at')
-            ->first();
+        $entry = InspirationCache::latestForSource($key);
 
-        return $entry === null
-            ? null
-            : abs((int) $entry->fetched_at->diffInMinutes(now()));
+        return $entry === null ? null : InspirationCache::ageOf($entry);
+    }
+
+    private function recordError(string $key): void
+    {
+        Cache::put(self::ERROR_CACHE_PREFIX.$key, now(), self::ERROR_CACHE_TTL);
+    }
+
+    private function clearError(string $key): void
+    {
+        Cache::forget(self::ERROR_CACHE_PREFIX.$key);
+    }
+
+    private function lastErrorAt(string $key): ?CarbonInterface
+    {
+        $value = Cache::get(self::ERROR_CACHE_PREFIX.$key);
+
+        if ($value === null) {
+            return null;
+        }
+
+        return $value instanceof CarbonInterface ? $value : Carbon::parse($value);
     }
 
     private function hydrateCredentials(SettingsBag $bag, Source $source): void
