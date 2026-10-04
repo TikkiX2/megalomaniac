@@ -32,6 +32,11 @@ class ChatAttachment extends Model
         return $this->belongsTo(ChatThread::class, 'thread_id');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     /**
      * Threads this document is attached to through the sources library (N:N).
      *
