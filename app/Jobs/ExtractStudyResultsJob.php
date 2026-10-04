@@ -57,15 +57,14 @@ class ExtractStudyResultsJob implements ShouldQueue
             performedAt: $study->performed_at?->toDateString(),
         );
 
-        $raw = $executor->execute($user, $resolution, function (string $key, string $model, AiProvider $provider) use ($agent): string {
-            // El agente Promptable permite recibir adjuntos a través del flujo de prompt.
-            // Para mantener compatibilidad con la API actual, delegamos a prompt y
-            // anexamos las rutas de imágenes en el mensaje, ya que el modelo multimodal
-            // podrá procesarlas.
+        $raw = $executor->execute($user, $resolution, function (string $key, string $model, AiProvider $provider) use ($agent, $images): string {
+            // Se pasan las páginas rasterizadas al modelo multimodal para que
+            // lea el informe (mismo flujo que el OCR de documentos del chat).
             $prompt = 'Extrae los resultados del estudio a partir de las imágenes adjuntas.';
 
             return (string) $agent->prompt(
                 $prompt,
+                attachments: $images,
                 provider: $key,
                 model: $model ?: $provider->model,
                 timeout: 120,

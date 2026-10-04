@@ -23,6 +23,7 @@ class ChatAttachment extends Model
     {
         return [
             'size' => 'integer',
+            'meta' => 'array',
         ];
     }
 

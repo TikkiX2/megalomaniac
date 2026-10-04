@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Health;
 use App\Ai\Services\ChatService;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ChatThreadResource;
+use App\Jobs\IndexChatDocument;
+use App\Models\ChatAttachment;
 use App\Models\ChatThread;
 use App\Models\HealthAppointment;
 use App\Models\HealthCondition;
@@ -14,6 +16,8 @@ use App\Models\HealthStudy;
 use App\Models\Person;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -72,6 +76,51 @@ class HealthChatController extends Controller
             'context_id' => $context?->getKey(),
             'tools_policy' => ['mode' => 'manual', 'groups' => ['health']],
         ])->save();
+
+        // Los PDFs adjuntos al estudio se vinculan como fuentes del hilo para
+        // que el asesor pueda leerlos (texto extraíble o vía OCR).
+        if ($context instanceof HealthStudy) {
+            foreach ($context->getMedia('attachments') as $media) {
+                if (! str_starts_with((string) $media->mime_type, 'application/pdf')) {
+                    continue;
+                }
+
+                try {
+                    $contents = @file_get_contents($media->getPath());
+                } catch (\Throwable) {
+                    $contents = false;
+                }
+
+                if (! is_string($contents) || $contents === '') {
+                    continue;
+                }
+
+                $storedPath = Storage::disk('local')->put(
+                    'ai-attachments/'.$request->user()->id.'/'.Str::uuid7().'-'.$media->file_name,
+                    $contents,
+                );
+
+                if ($storedPath === false) {
+                    continue;
+                }
+
+                $attachment = ChatAttachment::create([
+                    'id' => (string) Str::uuid7(),
+                    'user_id' => $request->user()->id,
+                    'thread_id' => null,
+                    'kind' => 'document',
+                    'disk' => 'local',
+                    'path' => $storedPath,
+                    'original_name' => $media->file_name,
+                    'mime' => 'application/pdf',
+                    'size' => (int) $media->size,
+                    'status' => 'pending',
+                ]);
+
+                $thread->sources()->syncWithoutDetaching([$attachment->id]);
+                IndexChatDocument::dispatch($attachment->id);
+            }
+        }
 
         return redirect()->route('ai.chat.show', $thread);
     }

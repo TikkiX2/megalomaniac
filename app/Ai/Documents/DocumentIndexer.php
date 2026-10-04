@@ -2,6 +2,7 @@
 
 namespace App\Ai\Documents;
 
+use App\Jobs\OcrPdfDocument;
 use App\Models\ChatAttachment;
 use App\Models\ChatDocumentChunk;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +17,10 @@ class DocumentIndexer
 
     public function index(ChatAttachment $attachment): void
     {
+        $indexed = false;
+
         try {
-            DB::transaction(function () use ($attachment): void {
+            DB::transaction(function () use ($attachment, &$indexed): void {
                 $attachment->chunks()->delete();
 
                 $extractor = ExtractorFactory::for($attachment->mime, pathinfo($attachment->path, PATHINFO_EXTENSION));
@@ -29,10 +32,11 @@ class DocumentIndexer
                 $text = trim($extractor->extract($attachment->disk, $attachment->path));
 
                 if ($text === '') {
-                    // Los PDFs escaneados no tienen capa de texto: se dejan como
-                    // adjunto descargable sin indexar (no es un error del job).
+                    // Los PDFs sin capa de texto (escaneados o cifrados) se
+                    // rasterizan y transcriben con el modelo multimodal vía OCR.
                     if (mb_strtolower(pathinfo($attachment->path, PATHINFO_EXTENSION)) === 'pdf') {
-                        $attachment->forceFill(['status' => 'indexed', 'error' => 'PDF sin texto extraíble: adjuntado pero no indexado.'])->save();
+                        $attachment->forceFill(['status' => 'pending'])->save();
+                        OcrPdfDocument::dispatch($attachment->id);
 
                         return;
                     }
@@ -49,9 +53,13 @@ class DocumentIndexer
                         'content' => $content,
                     ]);
                 }
+
+                $indexed = true;
             });
 
-            $attachment->forceFill(['status' => 'indexed', 'error' => null])->save();
+            if ($indexed) {
+                $attachment->forceFill(['status' => 'indexed', 'error' => null])->save();
+            }
         } catch (Throwable $exception) {
             report($exception);
             $attachment->forceFill(['status' => 'failed', 'error' => mb_substr($exception->getMessage(), 0, 500)])->save();

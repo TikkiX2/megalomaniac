@@ -7,11 +7,18 @@ namespace Tests\Feature\Ai;
 use App\Ai\Documents\DocumentIndexer;
 use App\Ai\Documents\ExtractorFactory;
 use App\Ai\Documents\PdfTextExtractor;
+use App\Ai\Support\AiRequestExecutor;
+use App\Ai\Support\AiScopeResolver;
+use App\Jobs\OcrPdfDocument;
 use App\Models\ChatAttachment;
+use App\Models\ChatDocumentChunk;
 use App\Models\ChatThread;
+use App\Models\HealthStudy;
 use App\Models\User;
+use App\Services\Health\PdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -72,10 +79,91 @@ it('indexes a pdf attachment via the document indexer end to end', function () {
         'status' => 'ready',
     ]);
 
-    // Pipelines de indexación: el fixture mínimo puede no tener texto;
-    // el indexador no debe dejar el adjunto en "failed" para PDFs.
+    // PDF sin capa de texto: el indexador no debe dejarlo en "failed";
+    // despacha el job de OCR para transcribirlo con visión.
+    Queue::fake();
     (new DocumentIndexer)->index($attachment);
     $attachment->refresh();
 
-    expect($attachment->status)->toBe('indexed');
+    Queue::assertPushed(OcrPdfDocument::class);
+    expect($attachment->status)->toBe('pending');
+});
+
+it('falls back to indexed document content when the query has no fts match', function () {
+    $user = User::factory()->create();
+    $thread = ChatThread::create([
+        'id' => (string) Str::uuid7(),
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+        'title' => 'Hilo con documento',
+    ]);
+
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'disk' => 'local',
+        'path' => 'documents/analisis.txt',
+        'original_name' => 'analisis.txt',
+        'mime' => 'text/plain',
+        'kind' => 'document',
+        'status' => 'indexed',
+    ]);
+    $thread->sources()->syncWithoutDetaching([$attachment->id]);
+
+    ChatDocumentChunk::create([
+        'attachment_id' => $attachment->id,
+        'position' => 0,
+        'content' => 'TSH 2.5 uUI/mL dentro del rango de referencia 0.4-4.5',
+    ]);
+
+    // La consulta no contiene ningún término del documento, por lo que el FTS
+    // no matchea; el fallback debe inyectar el contenido igual.
+    $context = $thread->documentContext('qué dice el informe', limit: 6);
+
+    expect($context)->not->toBeNull()
+        ->and($context)->toContain('analisis.txt')
+        ->and($context)->toContain('TSH');
+});
+
+it('links study pdf attachments as thread sources when creating a health chat', function () {
+    $user = User::factory()->create();
+    $this->withoutVite();
+    $this->actingAs($user);
+
+    $study = HealthStudy::factory()->create(['user_id' => $user->id, 'title' => 'Historia Clinica']);
+    $study->addMediaFromString('%PDF-1.4 dummy')->usingFileName('historia.pdf')->toMediaCollection('attachments');
+
+    $this->post('/health/chats', [
+        'context_type' => 'health_study',
+        'context_id' => $study->id,
+    ])->assertRedirect();
+
+    $thread = ChatThread::where('category', 'salud')->latest('id')->firstOrFail();
+
+    $sources = $thread->sources()->get()->filter(fn ($a) => $a->original_name === 'historia.pdf');
+
+    expect($sources)->not->toBeEmpty()
+        ->and($sources->first()->kind)->toBe('document');
+});
+
+it('reuses cached ocr text without calling the provider again', function () {
+    $user = User::factory()->create();
+
+    $attachment = ChatAttachment::factory()->create([
+        'user_id' => $user->id,
+        'original_name' => 'escaneo.pdf',
+        'mime' => 'application/pdf',
+        'kind' => 'document',
+        'path' => 'attachments/escaneo.pdf',
+        'status' => 'indexed',
+        'meta' => ['ocr_text' => 'Valores: TSH 2.5, CK 180.', 'ocr_at' => now()->toIso8601String()],
+    ]);
+
+    // El job de OCR con caché NO debe requerir proveedor de IA: solo re-indexa.
+    $job = new OcrPdfDocument($attachment->id);
+    $job->handle(app(AiScopeResolver::class), app(AiRequestExecutor::class), app(PdfService::class));
+
+    $attachment->refresh();
+
+    expect($attachment->chunks()->count())->toBeGreaterThan(0)
+        ->and($attachment->chunks()->first()->content)->toContain('TSH');
 });

@@ -137,7 +137,19 @@ class ChatThread extends Conversation
         }
 
         if ($rows === []) {
-            return null;
+            // Fallback: aunque la pregunta no matchee términos con el FTS,
+            // el asesor debe saber qué documentos adjuntos existen. Se usa la
+            // búsqueda por orden de relevancia general (últimos documentos).
+            $rows = $this->fallbackDocuments($limit);
+
+            if ($rows === []) {
+                return null;
+            }
+
+            return "Documentos del hilo disponibles (sin coincidencia textual con la consulta):\n"
+                .collect($rows)
+                    ->map(fn (object $row): string => '### '.$row->original_name."\n".$row->content)
+                    ->implode("\n\n");
         }
 
         return collect($rows)
@@ -169,6 +181,41 @@ class ChatThread extends Conversation
              limit ?',
             [$match, $this->id, $this->participant_id, 'indexed', $limit],
         );
+    }
+
+    /**
+     * Últimos documentos indexados del hilo para inyectar contexto cuando el
+     * FTS no matchea términos de la consulta.
+     *
+     * @return array<int, object>
+     */
+    private function fallbackDocuments(int $limit): array
+    {
+        return DB::connection()->getDriverName() === 'pgsql'
+            ? DB::select(
+                'select c.content, a.original_name
+                 from chat_document_chunks c
+                 join chat_attachments a on a.id = c.attachment_id
+                 join chat_thread_sources s on s.attachment_id = a.id
+                 where s.thread_id = ?
+                   and a.user_id = ?
+                   and a.status = ?
+                 order by a.created_at desc, c.position asc
+                 limit ?',
+                [$this->id, $this->participant_id, 'indexed', $limit],
+            )
+            : DB::select(
+                'select c.content, a.original_name
+                 from chat_document_chunks c
+                 join chat_attachments a on a.id = c.attachment_id
+                 join chat_thread_sources s on s.attachment_id = a.id
+                 where s.thread_id = ?
+                   and a.user_id = ?
+                   and a.status = ?
+                 order by a.created_at desc, c.position asc
+                 limit ?',
+                [$this->id, $this->participant_id, 'indexed', $limit],
+            );
     }
 
     /**
