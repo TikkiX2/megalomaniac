@@ -18,7 +18,7 @@ test('settings ai page renders the provider tab with health badges data', functi
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/ai')
             ->where('providers.0.has_key', true)
-            ->has('scopes', 13)
+            ->has('scopes', 14)
             ->where('ai.ai_enabled', true));
 });
 
@@ -34,12 +34,14 @@ test('assignments tab data lists global, surfaces and modules', function () {
             ->component('settings/ai')
             ->where('scopes.0.scope', 'global')
             ->where('scopes.1.scope', 'surface:chat')
-            ->where('scopes.6.scope', 'module:gym')
+            ->where('scopes.6.scope', 'surface:files')
+            ->where('scopes.7.scope', 'module:gym')
             ->where('scopes.0.chain', [])
             ->where('scopes.1.section', 'surface')
-            ->where('scopes.6.section', 'module')
+            ->where('scopes.7.section', 'module')
             ->where('scopes.0.label', 'Global')
-            ->where('scopes.6.label', 'Gimnasio')
+            ->where('scopes.6.label', 'Archivos (visión/OCR)')
+            ->where('scopes.7.label', 'Gimnasio')
             ->where('module_labels.gym', 'Gimnasio')
             ->where('scopes.0.effective', fn ($ids) => count($ids) === 1));
 });

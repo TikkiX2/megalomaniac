@@ -97,7 +97,20 @@ class OcrPdfDocument implements ShouldQueue
                 $images,
             );
 
-            $resolution = $resolver->resolve($user, AiScope::ModuleHealth);
+            // Los archivos (PDFs escaneados) se transcriben con el provider
+            // multimodal configurado en el scope surface:files, que el usuario
+            // asigna en Ajustes → IA → Alcances. No se usa module:health para
+            // no forzar modelos de visión en los chats de texto.
+            $resolution = $resolver->resolve($user, AiScope::SurfaceFiles);
+
+            if ($resolution->chain->isEmpty()) {
+                $attachment->forceFill([
+                    'status' => 'failed',
+                    'error' => 'No hay un proveedor multimodal configurado para leer archivos (scope "surface:files").',
+                ])->save();
+
+                return;
+            }
 
             $raw = $executor->execute($user, $resolution, function (string $key, string $model, $provider) use ($storedImages, $attachment): string {
                 $agent = new PdfOcrAgent(fileName: $attachment->original_name);

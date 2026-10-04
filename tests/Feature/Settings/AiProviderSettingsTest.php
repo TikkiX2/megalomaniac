@@ -22,7 +22,7 @@ test('edit exposes providers, health and effective chains scoped to the user', f
             ->has('providers', 1)
             ->where('providers.0.name', 'Principal')
             ->where('providers.0.has_key', true)
-            ->count('scopes', 13)
+            ->count('scopes', 14)
             ->where('scopes.0.scope', 'global')
             ->where('scopes.0.chain', [])
             ->where('scopes.0.effective', [AiProvider::query()->where('user_id', $me->id)->value('id')])

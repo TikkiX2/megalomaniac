@@ -275,7 +275,7 @@ class AiSettingsController extends Controller
     }
 
     /**
-     * The 13 scopes, always materialized, in `AiScope::cases()` order.
+     * The 14 scopes, always materialized, in `AiScope::cases()` order.
      *
      * `chain` is what the user stored (`[]` = inherits) and `effective` is what
      * the resolver would pick today for that context, health filter included.

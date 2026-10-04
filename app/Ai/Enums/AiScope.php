@@ -12,6 +12,7 @@ enum AiScope: string
     case SurfaceInsights = 'surface:insights';
     case SurfaceFeed = 'surface:feed';
     case SurfaceEmbeddings = 'surface:embeddings';
+    case SurfaceFiles = 'surface:files';
     case ModuleGym = 'module:gym';
     case ModuleNutrition = 'module:nutrition';
     case ModuleGrocery = 'module:grocery';
@@ -29,6 +30,7 @@ enum AiScope: string
             self::SurfaceInsights => 'Insights',
             self::SurfaceFeed => 'Feed',
             self::SurfaceEmbeddings => 'Embeddings',
+            self::SurfaceFiles => 'Archivos (visión/OCR)',
             self::ModuleGym => 'Gimnasio',
             self::ModuleNutrition => 'Nutrición',
             self::ModuleGrocery => 'Grocery',
@@ -44,7 +46,7 @@ enum AiScope: string
     {
         return match ($this) {
             self::Global => 'global',
-            self::SurfaceChat, self::SurfaceAgents, self::SurfaceInsights, self::SurfaceFeed, self::SurfaceEmbeddings => 'surface',
+            self::SurfaceChat, self::SurfaceAgents, self::SurfaceInsights, self::SurfaceFeed, self::SurfaceEmbeddings, self::SurfaceFiles => 'surface',
             self::ModuleGym, self::ModuleNutrition, self::ModuleGrocery, self::ModuleFinance, self::ModuleFreelance, self::ModuleHealth, self::ModulePeople => 'module',
         };
     }
