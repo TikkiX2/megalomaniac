@@ -35,6 +35,26 @@ class FakeInspirationSource implements Source
         private readonly ?Closure $searchCallback = null,
     ) {}
 
+    /**
+     * Bind these fakes into the tagged container registry SourceManager reads.
+     *
+     * The production provider already tagged the real adapters; `tag()` appends,
+     * so fakes coexist and only surface when the user enables them.
+     *
+     * @param  array<int, self>  $sources
+     */
+    public static function register(array $sources): void
+    {
+        foreach ($sources as $source) {
+            app()->instance('inspiration.fake.'.$source->key(), $source);
+        }
+
+        app()->tag(
+            array_map(static fn (self $source): string => 'inspiration.fake.'.$source->key(), $sources),
+            'inspiration.sources',
+        );
+    }
+
     public function key(): string
     {
         return $this->key;

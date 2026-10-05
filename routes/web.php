@@ -181,6 +181,7 @@ require __DIR__.'/agents.php';
 require __DIR__.'/feed.php';
 require __DIR__.'/storage.php';
 require __DIR__.'/health.php';
+require __DIR__.'/inspiration.php';
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // AI Chat
