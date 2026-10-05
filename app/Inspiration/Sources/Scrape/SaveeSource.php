@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Inspiration\Sources\Scrape;
 
 /**
- * Savee HTML feed.
+ * Savee feed (best-effort).
  *
- * Cards are `.post` entries: an anchor wrapping the image plus a `.post-title`
- * heading. Explore is the home feed; search is /search/?q={term}.
+ * NOTE (2026): savee.it redirects to savee.com and the app is now a
+ * client-rendered SPA; the public API (`api.savee.it/v1/...`) answers
+ * `401 Missing Bearer token`. The card selectors below are kept as a
+ * best-effort attempt for any server-rendered fragment and degrade to the
+ * cached payload when the shell no longer matches — the source is otherwise
+ * dormant until Savee exposes an anonymous surface again.
  */
 final class SaveeSource extends AbstractScrapeSource
 {
-    private const BASE_URL = 'https://savee.it';
+    private const BASE_URL = 'https://savee.com';
 
     public function key(): string
     {

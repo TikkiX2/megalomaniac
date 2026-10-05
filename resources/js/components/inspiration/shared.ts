@@ -132,6 +132,8 @@ const SOURCE_LABELS: Record<string, string> = {
     godly: 'Godly',
     darkmode: 'Dark Mode Design',
     brutalist: 'Brutalist Websites',
+    archdaily: 'ArchDaily',
+    cosmos: 'Cosmos',
     behance: 'Behance',
     dribbble: 'Dribbble',
     awwwards: 'Awwwards',

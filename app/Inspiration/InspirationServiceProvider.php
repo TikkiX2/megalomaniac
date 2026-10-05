@@ -26,10 +26,12 @@ use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\WikiArtSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
+use App\Inspiration\Sources\Scrape\ArchDailySource;
 use App\Inspiration\Sources\Scrape\AwwwardsSource;
 use App\Inspiration\Sources\Scrape\BehanceSource;
 use App\Inspiration\Sources\Scrape\BrutalistSource;
 use App\Inspiration\Sources\Scrape\CaraSource;
+use App\Inspiration\Sources\Scrape\CosmosSource;
 use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
 use App\Inspiration\Sources\Scrape\DribbbleSource;
@@ -83,6 +85,7 @@ class InspirationServiceProvider extends ServiceProvider
         GodlySource::class,
         DarkModeDesignSource::class,
         BrutalistSource::class,
+        ArchDailySource::class,
         BehanceSource::class,
         DribbbleSource::class,
         AwwwardsSource::class,
@@ -91,6 +94,7 @@ class InspirationServiceProvider extends ServiceProvider
         BandcampSource::class,
         PinterestSource::class,
         CaraSource::class,
+        CosmosSource::class,
         MobbinSource::class,
     ];
 

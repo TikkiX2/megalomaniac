@@ -80,6 +80,15 @@ Cada fila de la tabla de Ajustes tiene un botón **Probar** que hace una conexi�
 
 **Degradación**: si un Tier 3 (o cualquier fuente) falla, `SourceManager` sirve la última caché disponible con badge “caché · hace Xh”; si no hay caché, la fuente se marca caída en los chips y el resto del mazo sigue intacto. Nunca se devuelve un 500 al usuario por una fuente. Un scraper que cambió de estructura lanza `SourceException('estructura cambiada')` y entra por el mismo camino.
 
+## Scrapers — notas de estado (2026-10)
+
+Tier 2 (activados por defecto, sin key): Designspiration, Savee, Trend List, PosterSpy, Lapa Ninja, Godly, Dark Mode Design, Brutalist (+ Brutal Web), ArchDaily, Behance, Dribbble, Awwwards, Cosmos.
+
+- **ArchDaily**: HTML server-rendered (`.afd-post-stream` + `a.afd-title--black-link`); la búsqueda carga client-side, así que `search()` delega al feed con warning.
+- **Cosmos**: `/discover` server-renderiza el cache SSR de Apollo (`window[Symbol.for("ApolloSSRDataTransport")]`); se parsean elementos (`shareUrl` `…/e/{id}` + `source.url`). GraphQL tiene introspección deshabilitada → sin búsqueda nativa.
+- **Savee (dormida)**: `savee.it` redirige a `savee.com` y la app es SPA; la API pública (`api.savee.it/v1/…`) responde `401 Missing Bearer token`. Queda como best-effort: degrada a caché hasta que exista una superficie anónima.
+- **Behance / Dribbble / Newgrounds**: bot-walls (403 / AWS WAF) → degradan a caché; los selectores quedan lockeados por fixtures para cuando abran.
+
 ## Mapeo de madurez por fuente
 
 El toggle global (default **OFF** = SFW estricto) entrega a cada adapter un token abstracto; el adapter lo traduce a su parámetro. Fuentes sin soporte no envían parámetro alguno.

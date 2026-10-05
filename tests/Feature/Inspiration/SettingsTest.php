@@ -64,7 +64,8 @@ it('lists the keyless tier 1 and tier 2 sources as enabled by default', function
             'deviantart', 'artstation', 'wallhaven', 'openverse', 'zerochan',
             'gelbooru', 'arena', 'met', 'aic',
             'designspiration', 'savee', 'trendlist', 'posterspy', 'lapaninja',
-            'brutalist', 'godly', 'darkmode', 'behance', 'dribbble', 'awwwards',
+            'brutalist', 'archdaily', 'godly', 'darkmode', 'behance', 'dribbble',
+            'awwwards', 'cosmos',
         )
         ->and(array_intersect($defaults, config('inspiration.tier3')))->toBe([]);
 });

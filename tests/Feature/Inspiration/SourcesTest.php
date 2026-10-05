@@ -28,10 +28,12 @@ use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\WikiArtSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
+use App\Inspiration\Sources\Scrape\ArchDailySource;
 use App\Inspiration\Sources\Scrape\AwwwardsSource;
 use App\Inspiration\Sources\Scrape\BehanceSource;
 use App\Inspiration\Sources\Scrape\BrutalistSource;
 use App\Inspiration\Sources\Scrape\CaraSource;
+use App\Inspiration\Sources\Scrape\CosmosSource;
 use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
 use App\Inspiration\Sources\Scrape\DribbbleSource;
@@ -146,6 +148,7 @@ dataset('scrapeSources', [
     'godly' => ['godly', GodlySource::class],
     'darkmode' => ['darkmode', DarkModeDesignSource::class],
     'brutalist' => ['brutalist', BrutalistSource::class],
+    'archdaily' => ['archdaily', ArchDailySource::class],
     'behance' => ['behance', BehanceSource::class],
     'dribbble' => ['dribbble', DribbbleSource::class],
     'awwwards' => ['awwwards', AwwwardsSource::class],
@@ -158,6 +161,7 @@ dataset('scrapeSources', [
 dataset('scrapeSourcesWithoutSearch', [
     'darkmode' => ['darkmode', DarkModeDesignSource::class],
     'brutalist' => ['brutalist', BrutalistSource::class],
+    'archdaily' => ['archdaily', ArchDailySource::class],
 ]);
 
 /**
@@ -186,6 +190,7 @@ dataset('tier3ApiSources', [
 dataset('embeddedJsonScrapeSources', [
     'pinterest' => ['pinterest', PinterestSource::class],
     'cara' => ['cara', CaraSource::class],
+    'cosmos' => ['cosmos', CosmosSource::class],
 ]);
 
 /**
@@ -336,13 +341,14 @@ function scrapeHttpPatterns(string $key): array
 {
     return match ($key) {
         'designspiration' => ['*designspiration.net*'],
-        'savee' => ['*savee.it*'],
+        'savee' => ['*savee.com*'],
         'trendlist' => ['*trendlist.org*'],
         'posterspy' => ['*posterspy.com*'],
         'lapaninja' => ['*lapa.ninja*'],
         'godly' => ['*godly.website*'],
         'darkmode' => ['*darkmodedesign.com*'],
         'brutalist' => ['*brutalistwebsites.com*', '*brutalweb.xyz*'],
+        'archdaily' => ['*archdaily.com*'],
         'behance' => ['*behance.net*'],
         'dribbble' => ['*dribbble.com*'],
         'awwwards' => ['*awwwards.com*'],
@@ -399,6 +405,7 @@ function embeddedHttpPatterns(string $key): array
     return match ($key) {
         'pinterest' => ['*pinterest.com*'],
         'cara' => ['*cara.app*'],
+        'cosmos' => ['*cosmos.so*'],
         default => throw new InvalidArgumentException("Unknown embedded-JSON source [{$key}]."),
     };
 }
@@ -1156,7 +1163,7 @@ it('requests the expected search url for :key', function (string $key, string $c
 
     $expected = match ($key) {
         'designspiration' => 'https://www.designspiration.net/search/portrait/',
-        'savee' => 'https://savee.it/search/?q=portrait',
+        'savee' => 'https://savee.com/search/?q=portrait',
         'trendlist' => 'https://trendlist.org/?search=portrait',
         'posterspy' => 'https://posterspy.com/?s=portrait',
         'lapaninja' => 'https://www.lapa.ninja/search?s=portrait',
@@ -1168,6 +1175,7 @@ it('requests the expected search url for :key', function (string $key, string $c
         // No native search box: search() delegates to the explore feed.
         'darkmode' => 'https://www.darkmodedesign.com/',
         'brutalist' => 'https://brutalistwebsites.com/',
+        'archdaily' => 'https://www.archdaily.com/',
     };
 
     Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
@@ -1191,13 +1199,14 @@ it('requests the expected explore url for :key', function (string $key, string $
 
     $expected = match ($key) {
         'designspiration' => 'https://www.designspiration.net/explore/',
-        'savee' => 'https://savee.it/',
+        'savee' => 'https://savee.com/',
         'trendlist' => 'https://trendlist.org/',
         'posterspy' => 'https://posterspy.com/',
         'lapaninja' => 'https://www.lapa.ninja/',
         'godly' => 'https://godly.website/',
         'darkmode' => 'https://www.darkmodedesign.com/',
         'brutalist' => 'https://brutalistwebsites.com/',
+        'archdaily' => 'https://www.archdaily.com/',
         'behance' => 'https://www.behance.net/galleries',
         'dribbble' => 'https://dribbble.com/shots/popular',
         'awwwards' => 'https://www.awwwards.com/websites/',
@@ -1331,10 +1340,12 @@ it('registers every scrape adapter in the source manager', function (): void {
         'godly',
         'darkmode',
         'brutalist',
+        'archdaily',
         'behance',
         'dribbble',
         'awwwards',
         'newgrounds',
+        'cosmos',
     );
 });
 
@@ -1678,6 +1689,7 @@ it('explores the :key embedded feed and requests the curated url', function (str
     $expected = match ($key) {
         'pinterest' => 'https://www.pinterest.com/search/pins/?q=design',
         'cara' => 'https://cara.app/explore',
+        'cosmos' => 'https://www.cosmos.so/discover',
     };
 
     expect($page->items)->not->toBeEmpty()
@@ -1754,6 +1766,28 @@ it('reports a failed connectivity test when the :key feed is blocked', function 
 
     expect((new $class)->test())->toBeFalse();
 })->with('embeddedJsonScrapeSources');
+
+it('maps cosmos elements from the Apollo SSR payload and skips source-less entries', function (): void {
+    fakeEmbeddedHttp('cosmos', 'cosmos/feed.html');
+
+    $page = (new CosmosSource)->explore(1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(2);
+
+    $first = $page->items[0];
+    $second = $page->items[1];
+
+    // The third element in the fixture carries `source: null` and is skipped.
+    expect($first->sourceId)->toBe('1626687329')
+        ->and($first->pageUrl)->toBe('https://www.cosmos.so/e/1626687329')
+        ->and($first->imageUrl)->toBe('https://minimalissimo.com/media/pages/articles/15/eixample/1749bc5586-1680613914/eixample-05-1200x-q60.jpg')
+        ->and($first->author)->toBe('linusrogge')
+        ->and($first->authorUrl)->toBe('https://www.cosmos.so/linusrogge')
+        ->and($first->title)->toBe('Eixample facade study')
+        ->and($second->sourceId)->toBe('987654321')
+        ->and($second->imageUrl)->toBe('https://i.pinimg.com/originals/84/f8/4e/84f84e06db1465074526e65d949015dd.jpg')
+        ->and($second->title)->toBeNull();
+});
 
 it('maps pinterest pins to canonical pin urls and images', function (): void {
     fakeEmbeddedHttp('pinterest', 'pinterest/feed.html');

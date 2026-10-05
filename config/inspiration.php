@@ -140,11 +140,13 @@ return [
         'posterspy',
         'lapaninja',
         'brutalist',
+        'archdaily',
         'godly',
         'darkmode',
         'behance',
         'dribbble',
         'awwwards',
+        'cosmos',
     ],
 
 ];
