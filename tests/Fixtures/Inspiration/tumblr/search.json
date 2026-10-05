@@ -1,0 +1,56 @@
+{
+    "meta": {
+        "status": 200,
+        "msg": "OK"
+    },
+    "response": [
+        {
+            "type": "photo",
+            "id": 710000000000000001,
+            "id_string": "710000000000000001",
+            "post_url": "https://staff.tumblr.com/post/710000000000000001/neon",
+            "blog_name": "staff",
+            "summary": "Neon portrait",
+            "tags": ["portrait", "neon"],
+            "photos": [
+                {
+                    "caption": "",
+                    "original_size": {
+                        "url": "https://64.media.tumblr.com/aaa/original.jpg",
+                        "width": 1280,
+                        "height": 1600
+                    },
+                    "alt_sizes": [
+                        {"url": "https://64.media.tumblr.com/aaa/s100x100.jpg", "width": 100, "height": 100},
+                        {"url": "https://64.media.tumblr.com/aaa/s400x400.jpg", "width": 400, "height": 500}
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "photo",
+            "id": 710000000000000002,
+            "id_string": "710000000000000002",
+            "post_url": "https://example.tumblr.com/post/710000000000000002/studio",
+            "blog_name": "example",
+            "tags": ["portrait", "studio"],
+            "photos": [
+                {
+                    "original_size": {
+                        "url": "https://64.media.tumblr.com/bbb/original.jpg",
+                        "width": 800,
+                        "height": 1000
+                    },
+                    "alt_sizes": [
+                        {"url": "https://64.media.tumblr.com/bbb/s400x400.jpg", "width": 400, "height": 500}
+                    ]
+                }
+            ]
+        }
+    ],
+    "_links": {
+        "next": {
+            "href": "https://api.tumblr.com/v2/tagged?tag=portrait&before=12345"
+        }
+    }
+}

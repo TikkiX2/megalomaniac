@@ -1,0 +1,32 @@
+{
+    "total": 60,
+    "totalHits": 60,
+    "hits": [
+        {
+            "id": 195893,
+            "pageURL": "https://pixabay.com/photos/portrait-neon-195893/",
+            "type": "photo",
+            "tags": "portrait, neon, woman",
+            "previewURL": "https://cdn.pixabay.com/photo/2020/01/01/195893_150.jpg",
+            "webformatURL": "https://pixabay.com/get/195893_640.jpg",
+            "largeImageURL": "https://pixabay.com/get/195893_1280.jpg",
+            "imageWidth": 4000,
+            "imageHeight": 6000,
+            "user": "ArtistOne",
+            "user_id": 12345
+        },
+        {
+            "id": 195894,
+            "pageURL": "https://pixabay.com/photos/studio-195894/",
+            "type": "photo",
+            "tags": "portrait, studio",
+            "previewURL": "https://cdn.pixabay.com/photo/2020/01/01/195894_150.jpg",
+            "webformatURL": "https://pixabay.com/get/195894_640.jpg",
+            "largeImageURL": "https://pixabay.com/get/195894_1280.jpg",
+            "imageWidth": 3000,
+            "imageHeight": 4500,
+            "user": "ArtistTwo",
+            "user_id": 67890
+        }
+    ]
+}

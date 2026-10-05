@@ -132,6 +132,17 @@ abstract class AbstractApiSource implements Source
     }
 
     /**
+     * The canonical single-field user credential (`keys.{source}.key`).
+     *
+     * Returns null for missing, non-string and blank values so an empty string
+     * never counts as a configured key.
+     */
+    protected function configuredKey(): ?string
+    {
+        return $this->stringValue($this->credentials['key'] ?? null);
+    }
+
+    /**
      * Strict boolean coercion: strings like "nope" resolve to false instead of
      * PHP's truthy cast.
      */

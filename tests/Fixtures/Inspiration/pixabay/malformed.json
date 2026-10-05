@@ -1,0 +1,25 @@
+{
+    "total": 1,
+    "totalHits": 1,
+    "hits": [
+        null,
+        "not-a-hit",
+        {
+            "id": 11,
+            "pageURL": "https://pixabay.com/photos/no-image-11/",
+            "tags": "portrait"
+        },
+        {
+            "id": 333333,
+            "pageURL": "https://pixabay.com/photos/valid-333333/",
+            "type": "photo",
+            "tags": "portrait, valid",
+            "previewURL": "https://cdn.pixabay.com/photo/2020/01/01/333333_150.jpg",
+            "webformatURL": "https://pixabay.com/get/333333_640.jpg",
+            "imageWidth": 2000,
+            "imageHeight": 3000,
+            "user": "ValidArtist",
+            "user_id": 999
+        }
+    ]
+}

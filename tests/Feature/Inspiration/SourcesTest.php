@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Inspiration\Contracts\Source;
 use App\Inspiration\Dtos\Page;
 use App\Inspiration\Dtos\SourceQuery;
 use App\Inspiration\Exceptions\SourceException;
@@ -10,9 +11,14 @@ use App\Inspiration\Sources\Api\AreNaSource;
 use App\Inspiration\Sources\Api\ArtInstituteChicagoSource;
 use App\Inspiration\Sources\Api\ArtStationSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
+use App\Inspiration\Sources\Api\FlickrSource;
 use App\Inspiration\Sources\Api\GelbooruSource;
 use App\Inspiration\Sources\Api\MetMuseumSource;
 use App\Inspiration\Sources\Api\OpenverseSource;
+use App\Inspiration\Sources\Api\PexelsSource;
+use App\Inspiration\Sources\Api\PixabaySource;
+use App\Inspiration\Sources\Api\TumblrSource;
+use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
 use Illuminate\Http\Client\Request;
@@ -68,6 +74,49 @@ dataset('tier1ApiHttpErrors', function (): array {
     return $cases;
 });
 
+dataset('keyedApiSources', [
+    'flickr' => ['flickr', FlickrSource::class],
+    'tumblr' => ['tumblr', TumblrSource::class],
+    'unsplash' => ['unsplash', UnsplashSource::class],
+    'pexels' => ['pexels', PexelsSource::class],
+    'pixabay' => ['pixabay', PixabaySource::class],
+]);
+
+dataset('keyedApiHttpErrors', function (): array {
+    $sources = [
+        'flickr' => ['flickr', FlickrSource::class],
+        'tumblr' => ['tumblr', TumblrSource::class],
+        'unsplash' => ['unsplash', UnsplashSource::class],
+        'pexels' => ['pexels', PexelsSource::class],
+        'pixabay' => ['pixabay', PixabaySource::class],
+    ];
+
+    $cases = [];
+
+    foreach ($sources as $key => [$sourceKey, $class]) {
+        // 401 is included on purpose: a rejected key must surface as a
+        // SourceException so the manager can degrade instead of crashing.
+        foreach ([500, 403, 404, 401] as $status) {
+            $cases[$key.' '.$status] = [$sourceKey, $class, $status];
+        }
+    }
+
+    return $cases;
+});
+
+/**
+ * Build a keyed adapter carrying the canonical credential bag.
+ *
+ * @param  class-string<Source>  $class
+ */
+function keyedInspirationSource(string $class): Source
+{
+    $source = new $class;
+    $source->setCredentials(['key' => 'test-key']);
+
+    return $source;
+}
+
 /**
  * Stub every host the given adapter talks to, serving the fixture body.
  */
@@ -116,6 +165,21 @@ function fakeTier1Http(string $key, string $fixture, int $status = 200): void
         ],
         'aic' => [
             '*api.artic.edu/api/v1/artworks/search*' => Http::response($body, $status),
+        ],
+        'flickr' => [
+            '*api.flickr.com/services/rest*' => Http::response($body, $status),
+        ],
+        'tumblr' => [
+            '*api.tumblr.com/v2/tagged*' => Http::response($body, $status),
+        ],
+        'unsplash' => [
+            '*api.unsplash.com/search/photos*' => Http::response($body, $status),
+        ],
+        'pexels' => [
+            '*api.pexels.com/v1/search*' => Http::response($body, $status),
+        ],
+        'pixabay' => [
+            '*pixabay.com/api*' => Http::response($body, $status),
         ],
         default => throw new InvalidArgumentException("Unknown tier 1 source [{$key}]."),
     });
@@ -274,6 +338,11 @@ it('registers every tier 1 adapter in the source manager', function (): void {
         'arena',
         'met',
         'aic',
+        'flickr',
+        'tumblr',
+        'unsplash',
+        'pexels',
+        'pixabay',
     );
 });
 
@@ -346,3 +415,188 @@ it('reports a failed connectivity test through test() for :key', function (strin
 
     expect((new $class)->test())->toBeFalse();
 })->with('tier1ApiSources');
+
+it('maps a happy payload into a non-empty page for keyed :key', function (string $key, string $class): void {
+    fakeTier1Http($key, $key.'/search.json');
+
+    $page = keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+
+    expect($page)->toBeInstanceOf(Page::class)
+        ->and($page->items)->not->toBeEmpty();
+
+    foreach ($page->items as $item) {
+        expect($item->source)->toBe($key)
+            ->and($item->sourceId)->toBeString()->not->toBe('')
+            ->and($item->pageUrl)->not->toBe('')
+            ->and($item->imageUrl)->not->toBe('');
+    }
+})->with('keyedApiSources');
+
+it('returns an empty page for an empty payload from keyed :key', function (string $key, string $class): void {
+    fakeTier1Http($key, $key.'/empty.json');
+
+    $page = keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toBe([])
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+})->with('keyedApiSources');
+
+it('keeps valid items while discarding malformed ones for keyed :key', function (string $key, string $class): void {
+    fakeTier1Http($key, $key.'/malformed.json');
+
+    $page = keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(1)
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->items[0]->source)->toBe($key)
+        ->and($page->items[0]->sourceId)->not->toBe('')
+        ->and($page->items[0]->pageUrl)->not->toBe('')
+        ->and($page->items[0]->imageUrl)->not->toBe('');
+})->with('keyedApiSources');
+
+it('throws a source exception on an http error for keyed :key', function (string $key, string $class, int $status): void {
+    fakeTier1Http($key, $key.'/search.json', $status);
+
+    keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+})->with('keyedApiHttpErrors')->throws(SourceException::class);
+
+it('returns an empty page without any request when the keyed query is blank for :key', function (string $key, string $class): void {
+    Http::fake();
+
+    $page = keyedInspirationSource($class)->search('   ', 1, new SourceQuery);
+
+    expect($page->items)->toBe([])
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+
+    Http::assertNothingSent();
+})->with('keyedApiSources');
+
+it('explores keyed :key without throwing and returns parsed items', function (string $key, string $class): void {
+    fakeTier1Http($key, $key.'/search.json');
+
+    $page = keyedInspirationSource($class)->explore(1, new SourceQuery);
+
+    expect($page)->toBeInstanceOf(Page::class)
+        ->and($page->items)->not->toBeEmpty();
+
+    foreach ($page->items as $item) {
+        expect($item->source)->toBe($key)
+            ->and($item->imageUrl)->not->toBe('');
+    }
+})->with('keyedApiSources');
+
+it('declares the expected capabilities for keyed :key', function (string $key, string $class): void {
+    $source = keyedInspirationSource($class);
+    $capabilities = $source->capabilities();
+
+    expect($capabilities->supportsSearch)->toBeTrue()
+        ->and($capabilities->supportsExplore)->toBe($key === 'flickr')
+        ->and($capabilities->needsKey)->toBeTrue()
+        ->and($capabilities->hasMaturityLevels)->toBe(in_array($key, ['flickr', 'pixabay'], true))
+        ->and($source->isConfigured())->toBeTrue();
+})->with('keyedApiSources');
+
+it('reports keyed :key as unconfigured without credentials', function (string $key, string $class): void {
+    expect((new $class)->isConfigured())->toBeFalse();
+})->with('keyedApiSources');
+
+it('treats an empty credential key as unconfigured for keyed :key', function (string $key, string $class): void {
+    $source = new $class;
+    $source->setCredentials(['key' => '']);
+
+    expect($source->isConfigured())->toBeFalse();
+})->with('keyedApiSources');
+
+it('reports connectivity through test() for keyed :key', function (string $key, string $class): void {
+    fakeTier1Http($key, $key.'/search.json');
+
+    expect(keyedInspirationSource($class)->test())->toBeTrue();
+})->with('keyedApiSources');
+
+it('reports a failed connectivity test through test() for keyed :key', function (string $key, string $class): void {
+    fakeTier1Http($key, $key.'/search.json', 500);
+
+    expect(keyedInspirationSource($class)->test())->toBeFalse();
+})->with('keyedApiSources');
+
+it('sends the unsplash client id header', function (): void {
+    Http::fake([
+        '*api.unsplash.com/search/photos*' => Http::response(inspirationFixture('unsplash/search.json')),
+    ]);
+
+    keyedInspirationSource(UnsplashSource::class)->search('portrait', 1, new SourceQuery);
+
+    Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization', 'Client-ID test-key'));
+});
+
+it('sends the pexels bearer token', function (): void {
+    Http::fake([
+        '*api.pexels.com/v1/search*' => Http::response(inspirationFixture('pexels/search.json')),
+    ]);
+
+    keyedInspirationSource(PexelsSource::class)->search('portrait', 1, new SourceQuery);
+
+    Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization', 'Bearer test-key'));
+});
+
+it('applies the flickr safe search filter when maturity is safe', function (): void {
+    Http::fake([
+        '*api.flickr.com/services/rest*' => Http::response(inspirationFixture('flickr/search.json')),
+    ]);
+
+    keyedInspirationSource(FlickrSource::class)->search('portrait', 1, new SourceQuery(maturity: 'safe'));
+
+    Http::assertSent(function (Request $request): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['api_key'] ?? null) === 'test-key'
+            && ($query['safe_search'] ?? null) === '1'
+            && ($query['format'] ?? null) === 'json'
+            && ($query['nojsoncallback'] ?? null) === '1';
+    });
+});
+
+it('drops the flickr safe search filter when maturity is allowed', function (): void {
+    Http::fake([
+        '*api.flickr.com/services/rest*' => Http::response(inspirationFixture('flickr/search.json')),
+    ]);
+
+    keyedInspirationSource(FlickrSource::class)->search('portrait', 1, new SourceQuery(maturity: 'allowed'));
+
+    Http::assertSent(function (Request $request): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['safe_search'] ?? null) === '3';
+    });
+});
+
+it('applies the pixabay safe search filter when maturity is safe', function (): void {
+    Http::fake([
+        '*pixabay.com/api*' => Http::response(inspirationFixture('pixabay/search.json')),
+    ]);
+
+    keyedInspirationSource(PixabaySource::class)->search('portrait', 1, new SourceQuery(maturity: 'safe'));
+
+    Http::assertSent(function (Request $request): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['key'] ?? null) === 'test-key'
+            && ($query['safesearch'] ?? null) === '1';
+    });
+});
+
+it('drops the pixabay safe search filter when maturity is allowed', function (): void {
+    Http::fake([
+        '*pixabay.com/api*' => Http::response(inspirationFixture('pixabay/search.json')),
+    ]);
+
+    keyedInspirationSource(PixabaySource::class)->search('portrait', 1, new SourceQuery(maturity: 'allowed'));
+
+    Http::assertSent(function (Request $request): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['safesearch'] ?? null) === '0';
+    });
+});

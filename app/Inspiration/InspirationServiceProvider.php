@@ -9,9 +9,14 @@ use App\Inspiration\Sources\Api\AreNaSource;
 use App\Inspiration\Sources\Api\ArtInstituteChicagoSource;
 use App\Inspiration\Sources\Api\ArtStationSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
+use App\Inspiration\Sources\Api\FlickrSource;
 use App\Inspiration\Sources\Api\GelbooruSource;
 use App\Inspiration\Sources\Api\MetMuseumSource;
 use App\Inspiration\Sources\Api\OpenverseSource;
+use App\Inspiration\Sources\Api\PexelsSource;
+use App\Inspiration\Sources\Api\PixabaySource;
+use App\Inspiration\Sources\Api\TumblrSource;
+use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
 use Illuminate\Support\ServiceProvider;
@@ -38,6 +43,11 @@ class InspirationServiceProvider extends ServiceProvider
         AreNaSource::class,
         MetMuseumSource::class,
         ArtInstituteChicagoSource::class,
+        FlickrSource::class,
+        TumblrSource::class,
+        UnsplashSource::class,
+        PexelsSource::class,
+        PixabaySource::class,
     ];
 
     public function register(): void

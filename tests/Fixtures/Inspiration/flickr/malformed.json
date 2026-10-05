@@ -1,0 +1,27 @@
+{
+    "photos": {
+        "page": 1,
+        "pages": 1,
+        "perpage": 24,
+        "total": "1",
+        "photo": [
+            null,
+            "not-a-photo",
+            {
+                "id": "51000000009",
+                "owner": "1@N01",
+                "owner_name": "No Image",
+                "title": "No image"
+            },
+            {
+                "id": "51000000010",
+                "owner": "2@N02",
+                "owner_name": "Valid Artist",
+                "title": "Valid artwork",
+                "tags": "portrait valid",
+                "url_m": "https://live.staticflickr.com/65535/51000000010_fff.jpg"
+            }
+        ]
+    },
+    "stat": "ok"
+}

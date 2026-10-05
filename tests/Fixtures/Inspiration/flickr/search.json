@@ -1,0 +1,34 @@
+{
+    "photos": {
+        "page": 1,
+        "pages": 3,
+        "perpage": 24,
+        "total": "60",
+        "photo": [
+            {
+                "id": "51000000001",
+                "owner": "12345@N01",
+                "secret": "abc",
+                "server": "65535",
+                "farm": 66,
+                "title": "Neon portrait",
+                "owner_name": "Neon Artist",
+                "tags": "portrait neon",
+                "url_m": "https://live.staticflickr.com/65535/51000000001_abc.jpg",
+                "url_l": "https://live.staticflickr.com/65535/51000000001_abc_b.jpg"
+            },
+            {
+                "id": "51000000002",
+                "owner": "67890@N02",
+                "secret": "def",
+                "server": "65535",
+                "farm": 66,
+                "title": "Studio light",
+                "owner_name": "Studio Artist",
+                "tags": "portrait studio monochrome",
+                "url_m": "https://live.staticflickr.com/65535/51000000002_def.jpg"
+            }
+        ]
+    },
+    "stat": "ok"
+}

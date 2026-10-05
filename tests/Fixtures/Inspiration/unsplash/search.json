@@ -1,0 +1,47 @@
+{
+    "total": 60,
+    "total_pages": 3,
+    "results": [
+        {
+            "id": "abc123",
+            "alt_description": "neon portrait of a woman",
+            "description": "Neon portrait",
+            "width": 4000,
+            "height": 6000,
+            "urls": {
+                "small": "https://images.unsplash.com/photo-abc123/small",
+                "regular": "https://images.unsplash.com/photo-abc123/regular",
+                "full": "https://images.unsplash.com/photo-abc123/full"
+            },
+            "links": {
+                "html": "https://unsplash.com/photos/abc123"
+            },
+            "user": {
+                "name": "Jane Doe",
+                "links": {"html": "https://unsplash.com/@janedoe"}
+            },
+            "tags": [
+                {"title": "portrait"},
+                {"title": "neon"}
+            ]
+        },
+        {
+            "id": "def456",
+            "alt_description": "studio portrait",
+            "width": 3000,
+            "height": 4500,
+            "urls": {
+                "small": "https://images.unsplash.com/photo-def456/small",
+                "regular": "https://images.unsplash.com/photo-def456/regular",
+                "full": "https://images.unsplash.com/photo-def456/full"
+            },
+            "links": {
+                "html": "https://unsplash.com/photos/def456"
+            },
+            "user": {
+                "name": "John Roe",
+                "links": {"html": "https://unsplash.com/@johnroe"}
+            }
+        }
+    ]
+}
