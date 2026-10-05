@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, Bot, Brain, BrainCircuit, Briefcase, BriefcaseMedical, Cake, CalendarClock, CheckSquare, Contact, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, HeartPulse, LayoutGrid, Library, MessagesSquare, Newspaper, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Stethoscope, Tablets, Thermometer, Users, Utensils, Wallet } from 'lucide-react';
+import { Activity, Bot, Brain, BrainCircuit, Briefcase, BriefcaseMedical, Cake, CalendarClock, CheckSquare, Contact, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, HeartPulse, LayoutGrid, Library, MessagesSquare, Newspaper, Palette, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Stethoscope, Tablets, Thermometer, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import freelance from '@/routes/freelance';
+import inspiration from '@/routes/inspiration';
 import type { NavItem, SharedData } from '@/types';
 import AppLogo from './app-logo';
 
@@ -173,6 +174,24 @@ export function AppSidebar() {
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
                         ))}
+                    </SidebarMenu>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Inspiración</SidebarGroupLabel>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                tooltip="Inspiración"
+                                isActive={window.location.pathname.startsWith('/inspiration')}
+                            >
+                                <Link href={inspiration.explore()} prefetch>
+                                    <Palette className="h-4 w-4" />
+                                    <span>Inspiración</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarGroup>
 
