@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Inspiration\ExploreController;
+use App\Http\Controllers\Inspiration\MoodboardController;
 use App\Http\Controllers\Inspiration\SavedImageController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,5 +16,7 @@ Route::middleware(['auth', 'verified'])
         Route::delete('saved/{saved_image}', [SavedImageController::class, 'destroy'])->name('saved.destroy');
         Route::post('saved/{saved_image}/download', [SavedImageController::class, 'download'])->name('saved.download');
 
-        // Tasks 8/10 append settings/moodboards here.
+        Route::get('moodboards/{moodboard}', [MoodboardController::class, 'show'])->name('moodboards.show');
+
+        // Tasks 10 appends settings here.
     });
