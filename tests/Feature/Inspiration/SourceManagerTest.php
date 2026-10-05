@@ -298,6 +298,19 @@ it('rate limits a source according to its capabilities', function () {
         ->and($manager->rateLimit($user, $key))->toBeFalse();
 });
 
+it('allows exactly two calls per minute when the source declares rate two', function () {
+    $key = 'fake-rate-two-'.uniqid();
+
+    registerInspirationFakeSources([new FakeInspirationSource($key, ratePerMinute: 2)]);
+    $user = inspirationUserWithSettings([$key]);
+
+    $manager = app(SourceManager::class);
+
+    expect($manager->rateLimit($user, $key))->toBeTrue()
+        ->and($manager->rateLimit($user, $key))->toBeTrue()
+        ->and($manager->rateLimit($user, $key))->toBeFalse();
+});
+
 it('discards items missing a page url or an image url', function () {
     expect(InspirationItem::fromSource('fake', ['pageUrl' => 'https://p']))->toBeNull()
         ->and(InspirationItem::fromSource('fake', ['imageUrl' => 'https://i']))->toBeNull();

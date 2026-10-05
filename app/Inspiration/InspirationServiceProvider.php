@@ -29,12 +29,15 @@ use App\Inspiration\Sources\Api\ZerochanSource;
 use App\Inspiration\Sources\Scrape\AwwwardsSource;
 use App\Inspiration\Sources\Scrape\BehanceSource;
 use App\Inspiration\Sources\Scrape\BrutalistSource;
+use App\Inspiration\Sources\Scrape\CaraSource;
 use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
 use App\Inspiration\Sources\Scrape\DribbbleSource;
 use App\Inspiration\Sources\Scrape\GodlySource;
 use App\Inspiration\Sources\Scrape\LapaNinjaSource;
+use App\Inspiration\Sources\Scrape\MobbinSource;
 use App\Inspiration\Sources\Scrape\NewgroundsSource;
+use App\Inspiration\Sources\Scrape\PinterestSource;
 use App\Inspiration\Sources\Scrape\PosterSpySource;
 use App\Inspiration\Sources\Scrape\SaveeSource;
 use App\Inspiration\Sources\Scrape\TrendListSource;
@@ -86,6 +89,9 @@ class InspirationServiceProvider extends ServiceProvider
         NewgroundsSource::class,
         PixivSource::class,
         BandcampSource::class,
+        PinterestSource::class,
+        CaraSource::class,
+        MobbinSource::class,
     ];
 
     public function register(): void

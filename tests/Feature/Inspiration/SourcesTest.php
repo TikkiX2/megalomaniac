@@ -31,12 +31,15 @@ use App\Inspiration\Sources\Api\ZerochanSource;
 use App\Inspiration\Sources\Scrape\AwwwardsSource;
 use App\Inspiration\Sources\Scrape\BehanceSource;
 use App\Inspiration\Sources\Scrape\BrutalistSource;
+use App\Inspiration\Sources\Scrape\CaraSource;
 use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
 use App\Inspiration\Sources\Scrape\DribbbleSource;
 use App\Inspiration\Sources\Scrape\GodlySource;
 use App\Inspiration\Sources\Scrape\LapaNinjaSource;
+use App\Inspiration\Sources\Scrape\MobbinSource;
 use App\Inspiration\Sources\Scrape\NewgroundsSource;
+use App\Inspiration\Sources\Scrape\PinterestSource;
 use App\Inspiration\Sources\Scrape\PosterSpySource;
 use App\Inspiration\Sources\Scrape\SaveeSource;
 use App\Inspiration\Sources\Scrape\TrendListSource;
@@ -173,6 +176,16 @@ dataset('scrapeSourcesBatchC', [
 dataset('tier3ApiSources', [
     'pixiv' => ['pixiv', PixivSource::class],
     'bandcamp' => ['bandcamp', BandcampSource::class],
+]);
+
+/**
+ * Tier 3 best-effort scrapers that read JSON embedded in the HTML shell. A
+ * shell without decodable JSON (bot-wall / redesign) must raise a
+ * SourceException so the manager can serve the cached payload.
+ */
+dataset('embeddedJsonScrapeSources', [
+    'pinterest' => ['pinterest', PinterestSource::class],
+    'cara' => ['cara', CaraSource::class],
 ]);
 
 /**
@@ -374,6 +387,42 @@ function fakeTier3Http(string $key, string $fixture, int $status = 200): void
         ],
         default => throw new InvalidArgumentException("Unknown tier 3 source [{$key}]."),
     });
+}
+
+/**
+ * The URL patterns that stub every host an embedded-JSON tier 3 adapter talks to.
+ *
+ * @return array<int, string>
+ */
+function embeddedHttpPatterns(string $key): array
+{
+    return match ($key) {
+        'pinterest' => ['*pinterest.com*'],
+        'cara' => ['*cara.app*'],
+        default => throw new InvalidArgumentException("Unknown embedded-JSON source [{$key}]."),
+    };
+}
+
+/**
+ * Stub every host an embedded-JSON adapter talks to, serving the fixture body.
+ */
+function fakeEmbeddedHttp(string $key, string $fixture, int $status = 200): void
+{
+    fakeEmbeddedBody($key, inspirationFixture($fixture), $status);
+}
+
+/**
+ * Stub every host an embedded-JSON adapter talks to with an inline body.
+ */
+function fakeEmbeddedBody(string $key, string $body, int $status = 200): void
+{
+    $stubs = [];
+
+    foreach (embeddedHttpPatterns($key) as $pattern) {
+        $stubs[$pattern] = Http::response($body, $status);
+    }
+
+    Http::fake($stubs);
 }
 
 beforeEach(function (): void {
@@ -1579,4 +1628,181 @@ it('builds bandcamp cover urls and prefers the album title', function (): void {
         ->and($page->items[0]->author)->toBe('Ember Collective')
         ->and($page->items[1]->title)->toBe('Ash Tracks Deluxe')
         ->and($page->items[1]->imageUrl)->toBe('https://f4.bcbits.com/img/a9812736450_10.jpg');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Tier 3 embedded-JSON scrapers (Pinterest, Cara) + Mobbin (account-gated)
+|--------------------------------------------------------------------------
+*/
+
+it('maps the embedded feed into a non-empty page for :key', function (string $key, string $class): void {
+    fakeEmbeddedHttp($key, $key.'/feed.html');
+
+    $page = (new $class)->search('portrait', 1, new SourceQuery);
+
+    expect($page)->toBeInstanceOf(Page::class)
+        ->and($page->items)->not->toBeEmpty()
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+
+    foreach ($page->items as $item) {
+        expect($item->source)->toBe($key)
+            ->and($item->sourceId)->toBeString()->not->toBe('')
+            ->and($item->pageUrl)->not->toBe('')
+            ->and($item->imageUrl)->not->toBe('');
+    }
+})->with('embeddedJsonScrapeSources');
+
+it('explores the :key embedded feed and requests the curated url', function (string $key, string $class): void {
+    fakeEmbeddedHttp($key, $key.'/feed.html');
+
+    $page = (new $class)->explore(1, new SourceQuery);
+
+    $expected = match ($key) {
+        'pinterest' => 'https://www.pinterest.com/search/pins/?q=design',
+        'cara' => 'https://cara.app/explore',
+    };
+
+    expect($page->items)->not->toBeEmpty()
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+
+    Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
+})->with('embeddedJsonScrapeSources');
+
+it('delegates the embedded :key search to explore and logs a warning', function (string $key, string $class): void {
+    Log::spy();
+    fakeEmbeddedHttp($key, $key.'/feed.html');
+
+    $page = (new $class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->not->toBeEmpty();
+
+    Log::shouldHaveReceived('warning')->once();
+})->with('embeddedJsonScrapeSources');
+
+it('raises a source exception when the :key shell carries no embedded json', function (string $key, string $class): void {
+    fakeEmbeddedHttp($key, $key.'/broken.html');
+
+    (new $class)->explore(1, new SourceQuery);
+})->with('embeddedJsonScrapeSources')->throws(SourceException::class);
+
+it('raises a source exception from the delegated :key search', function (string $key, string $class): void {
+    fakeEmbeddedHttp($key, $key.'/broken.html');
+
+    (new $class)->search('portrait', 1, new SourceQuery);
+})->with('embeddedJsonScrapeSources')->throws(SourceException::class);
+
+it('raises a source exception when the :key payload shape is unusable', function (string $key, string $class): void {
+    // Valid JSON, but no pin/post list: a site change must degrade, not blank.
+    fakeEmbeddedBody($key, '<html><body><script type="application/json">{"unexpected":[]}</script></body></html>');
+
+    (new $class)->explore(1, new SourceQuery);
+})->with('embeddedJsonScrapeSources')->throws(SourceException::class);
+
+it('returns an empty page without a request for page two or a blank query for :key', function (string $key, string $class): void {
+    Http::fake();
+
+    $pageTwo = (new $class)->search('portrait', 2, new SourceQuery);
+    $blank = (new $class)->search('   ', 1, new SourceQuery);
+
+    expect($pageTwo->items)->toBe([])
+        ->and($pageTwo->hasMore)->toBeFalse()
+        ->and($pageTwo->nextPage)->toBeNull()
+        ->and($blank->items)->toBe([]);
+
+    Http::assertNothingSent();
+})->with('embeddedJsonScrapeSources');
+
+it('declares the expected capabilities for embedded :key', function (string $key, string $class): void {
+    $capabilities = (new $class)->capabilities();
+
+    expect($capabilities->supportsSearch)->toBeFalse()
+        ->and($capabilities->supportsExplore)->toBeTrue()
+        ->and($capabilities->needsKey)->toBeFalse()
+        ->and($capabilities->hasMaturityLevels)->toBeFalse()
+        ->and($capabilities->maxPageSize)->toBe(24)
+        ->and($capabilities->ratePerMinute)->toBe(2)
+        ->and((new $class)->isConfigured())->toBeTrue();
+})->with('embeddedJsonScrapeSources');
+
+it('reports connectivity through test() for embedded :key', function (string $key, string $class): void {
+    fakeEmbeddedHttp($key, $key.'/feed.html');
+
+    expect((new $class)->test())->toBeTrue();
+})->with('embeddedJsonScrapeSources');
+
+it('reports a failed connectivity test when the :key feed is blocked', function (string $key, string $class): void {
+    fakeEmbeddedHttp($key, $key.'/feed.html', 500);
+
+    expect((new $class)->test())->toBeFalse();
+})->with('embeddedJsonScrapeSources');
+
+it('maps pinterest pins to canonical pin urls and images', function (): void {
+    fakeEmbeddedHttp('pinterest', 'pinterest/feed.html');
+
+    $page = (new PinterestSource)->explore(1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(2);
+
+    $first = $page->items[0];
+    $second = $page->items[1];
+
+    expect($first->sourceId)->toBe('111111111111111111')
+        ->and($first->pageUrl)->toBe('https://www.pinterest.com/pin/111111111111111111/')
+        ->and($first->imageUrl)->toBe('https://i.pinimg.com/originals/aa/bb/cc/aa11.jpg')
+        ->and($first->thumbnailUrl)->toBe('https://i.pinimg.com/236x/aa/bb/cc/aa11.jpg')
+        ->and($first->title)->toBe('Ash gradient study')
+        ->and($first->width)->toBe(1200)
+        ->and($first->height)->toBe(1600)
+        ->and($second->sourceId)->toBe('222222222222222222')
+        ->and($second->pageUrl)->toBe('https://www.pinterest.com/pin/222222222222222222/')
+        // An image variant served as a bare string must be tolerated.
+        ->and($second->imageUrl)->toBe('https://i.pinimg.com/originals/dd/ee/ff/dd22.jpg')
+        ->and($second->title)->toBe('Ember type poster')
+        ->and($second->width)->toBeNull();
+});
+
+it('maps cara posts to canonical post urls and skips videos', function (): void {
+    fakeEmbeddedHttp('cara', 'cara/feed.html');
+
+    $page = (new CaraSource)->explore(1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(2);
+
+    $first = $page->items[0];
+
+    expect($first->sourceId)->toBe('cara-post-1')
+        ->and($first->pageUrl)->toBe('https://cara.app/post/cara-post-1')
+        ->and($first->imageUrl)->toBe('https://cdn.cara.app/media/ember-1.jpg')
+        ->and($first->title)->toBe('Ember poster study')
+        ->and($first->author)->toBe('emberartist')
+        ->and($first->authorUrl)->toBe('https://cara.app/profile/emberartist')
+        ->and($first->width)->toBe(1200)
+        ->and($page->items[1]->sourceId)->toBe('cara-post-2');
+});
+
+it('keeps mobbin unconfigured and never touches the network', function (): void {
+    Http::fake();
+
+    $source = new MobbinSource;
+    $capabilities = $source->capabilities();
+
+    expect($source->isConfigured())->toBeFalse()
+        ->and($capabilities->supportsSearch)->toBeFalse()
+        ->and($capabilities->supportsExplore)->toBeTrue()
+        ->and($capabilities->needsKey)->toBeFalse()
+        ->and($capabilities->ratePerMinute)->toBe(2)
+        ->and($source->explore(1, new SourceQuery)->items)->toBe([])
+        ->and($source->search('portrait', 1, new SourceQuery)->items)->toBe([])
+        ->and($source->test())->toBeFalse();
+
+    Http::assertNothingSent();
+});
+
+it('registers the tier 3 best-effort adapters in the source manager', function (): void {
+    $keys = app(SourceManager::class)->all()->keys()->all();
+
+    expect($keys)->toContain('pinterest', 'cara', 'mobbin');
 });
