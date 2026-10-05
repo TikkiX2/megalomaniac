@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Godly — Design Inspiration</title>
+</head>
+<body>
+    <section class="sites">
+        <!-- Card 1: relative screenshot path resolved through the adapter base. -->
+        <div class="website-card">
+            <a class="website-card__link" href="https://pryzm.studio/">
+                <img src="/images/pryzm.jpg" alt="Pryzm">
+            </a>
+            <h3 class="website-card__title">Pryzm</h3>
+        </div>
+
+        <!-- Card 2: absolute screenshot plus a lazy data-src attribute. -->
+        <div class="website-card">
+            <a class="website-card__link" href="https://arga.design/">
+                <img data-src="//godly.website/images/arga.jpg" alt="Arga">
+            </a>
+            <h3 class="website-card__title">Arga</h3>
+        </div>
+
+        <!-- Card 3: srcset-only screenshot. -->
+        <div class="website-card">
+            <a class="website-card__link" href="https://loaf.website/">
+                <img srcset="https://godly.website/images/loaf-1200.jpg 1200w" alt="Loaf">
+            </a>
+            <h3 class="website-card__title">Loaf</h3>
+        </div>
+    </section>
+</body>
+</html>

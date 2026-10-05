@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Lapa Ninja — Landing page inspiration</title>
+</head>
+<body>
+    <main class="gallery">
+        <!-- Card 1: relative screenshot path resolved through the adapter base. -->
+        <div class="shot">
+            <a class="shot__link" href="https://studionova.io/">
+                <img src="/shots/studio-nova.jpg" alt="Studio Nova">
+            </a>
+            <h3 class="shot__title">Studio Nova</h3>
+        </div>
+
+        <!-- Card 2: srcset-only screenshot, no src attribute. -->
+        <div class="shot">
+            <a class="shot__link" href="https://atlas-portfolio.com/">
+                <img srcset="/shots/atlas-portfolio-800.jpg 800w, /shots/atlas-portfolio-1600.jpg 1600w" alt="Atlas Portfolio">
+            </a>
+            <h3 class="shot__title">Atlas Portfolio</h3>
+        </div>
+
+        <!-- Card 3: lazy data-src screenshot on the CDN host. -->
+        <div class="shot">
+            <a class="shot__link" href="https://emberlabs.dev/">
+                <img data-src="//cdn.lapa.ninja/shots/ember-labs.jpg" alt="Ember Labs">
+            </a>
+            <h3 class="shot__title">Ember Labs</h3>
+        </div>
+    </main>
+</body>
+</html>

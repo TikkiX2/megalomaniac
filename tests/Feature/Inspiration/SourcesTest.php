@@ -25,12 +25,17 @@ use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
+use App\Inspiration\Sources\Scrape\BrutalistSource;
+use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
+use App\Inspiration\Sources\Scrape\GodlySource;
+use App\Inspiration\Sources\Scrape\LapaNinjaSource;
 use App\Inspiration\Sources\Scrape\PosterSpySource;
 use App\Inspiration\Sources\Scrape\SaveeSource;
 use App\Inspiration\Sources\Scrape\TrendListSource;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Read a raw fixture body; adapters never see the files directly.
@@ -125,6 +130,18 @@ dataset('scrapeSources', [
     'savee' => ['savee', SaveeSource::class],
     'trendlist' => ['trendlist', TrendListSource::class],
     'posterspy' => ['posterspy', PosterSpySource::class],
+    'lapaninja' => ['lapaninja', LapaNinjaSource::class],
+    'godly' => ['godly', GodlySource::class],
+    'darkmode' => ['darkmode', DarkModeDesignSource::class],
+    'brutalist' => ['brutalist', BrutalistSource::class],
+]);
+
+/**
+ * Scrape adapters with no native search box: search() delegates to explore().
+ */
+dataset('scrapeSourcesWithoutSearch', [
+    'darkmode' => ['darkmode', DarkModeDesignSource::class],
+    'brutalist' => ['brutalist', BrutalistSource::class],
 ]);
 
 /**
@@ -240,15 +257,24 @@ function fakeTier1Http(string $key, string $fixture, int $status = 200): void
 }
 
 /**
- * The URL pattern that stubs every host a scrape adapter talks to.
+ * The URL patterns that stub every host a scrape adapter talks to.
+ *
+ * Brutalist has two feeds (primary + fallback), so the stub must cover both
+ * hosts; the rest expose a single host.
+ *
+ * @return array<int, string>
  */
-function scrapeHttpPattern(string $key): string
+function scrapeHttpPatterns(string $key): array
 {
     return match ($key) {
-        'designspiration' => '*designspiration.net*',
-        'savee' => '*savee.it*',
-        'trendlist' => '*trendlist.org*',
-        'posterspy' => '*posterspy.com*',
+        'designspiration' => ['*designspiration.net*'],
+        'savee' => ['*savee.it*'],
+        'trendlist' => ['*trendlist.org*'],
+        'posterspy' => ['*posterspy.com*'],
+        'lapaninja' => ['*lapa.ninja*'],
+        'godly' => ['*godly.website*'],
+        'darkmode' => ['*darkmodedesign.com*'],
+        'brutalist' => ['*brutalistwebsites.com*', '*brutalweb.xyz*'],
         default => throw new InvalidArgumentException("Unknown scrape source [{$key}]."),
     };
 }
@@ -258,9 +284,14 @@ function scrapeHttpPattern(string $key): string
  */
 function fakeScrapeHttp(string $key, string $fixture, int $status = 200): void
 {
-    Http::fake([
-        scrapeHttpPattern($key) => Http::response(inspirationFixture($fixture), $status),
-    ]);
+    $body = inspirationFixture($fixture);
+    $stubs = [];
+
+    foreach (scrapeHttpPatterns($key) as $pattern) {
+        $stubs[$pattern] = Http::response($body, $status);
+    }
+
+    Http::fake($stubs);
 }
 
 beforeEach(function (): void {
@@ -945,10 +976,26 @@ it('requests the expected search url for :key', function (string $key, string $c
         'savee' => 'https://savee.it/search/?q=portrait',
         'trendlist' => 'https://trendlist.org/?search=portrait',
         'posterspy' => 'https://posterspy.com/?s=portrait',
+        'lapaninja' => 'https://www.lapa.ninja/search?s=portrait',
+        'godly' => 'https://godly.website/search?q=portrait',
+        // No native search box: search() delegates to the explore feed.
+        'darkmode' => 'https://www.darkmodedesign.com/',
+        'brutalist' => 'https://brutalistwebsites.com/',
     };
 
     Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
 })->with('scrapeSources');
+
+it('delegates search to explore and logs a warning for :key', function (string $key, string $class): void {
+    Log::spy();
+    fakeScrapeHttp($key, $key.'/feed.html');
+
+    $page = (new $class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->not->toBeEmpty();
+
+    Log::shouldHaveReceived('warning')->once();
+})->with('scrapeSourcesWithoutSearch');
 
 it('requests the expected explore url for :key', function (string $key, string $class): void {
     fakeScrapeHttp($key, $key.'/feed.html');
@@ -960,6 +1007,10 @@ it('requests the expected explore url for :key', function (string $key, string $
         'savee' => 'https://savee.it/',
         'trendlist' => 'https://trendlist.org/',
         'posterspy' => 'https://posterspy.com/',
+        'lapaninja' => 'https://www.lapa.ninja/',
+        'godly' => 'https://godly.website/',
+        'darkmode' => 'https://www.darkmodedesign.com/',
+        'brutalist' => 'https://brutalistwebsites.com/',
     };
 
     Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
@@ -1008,7 +1059,13 @@ it('declares the expected capabilities for scrape :key', function (string $key, 
     $source = new $class;
     $capabilities = $source->capabilities();
 
-    expect($capabilities->supportsSearch)->toBeTrue()
+    $supportsSearch = match ($key) {
+        // Lapa Ninja and Godly ship a search box; Dark Mode and Brutalist do not.
+        'lapaninja', 'godly', 'designspiration', 'savee', 'trendlist', 'posterspy' => true,
+        default => false,
+    };
+
+    expect($capabilities->supportsSearch)->toBe($supportsSearch)
         ->and($capabilities->supportsExplore)->toBeTrue()
         ->and($capabilities->needsKey)->toBeFalse()
         ->and($capabilities->hasMaturityLevels)->toBeFalse()
@@ -1028,8 +1085,30 @@ it('reports a failed connectivity test through test() for scrape :key', function
     expect((new $class)->test())->toBeFalse();
 })->with('scrapeSources');
 
+it('falls back to the Brutal Web feed when the primary brutalist feed is empty', function (): void {
+    Http::fake([
+        '*brutalistwebsites.com*' => Http::response(inspirationFixture('brutalist/broken.html')),
+        '*brutalweb.xyz*' => Http::response(inspirationFixture('brutalist/feed.html')),
+    ]);
+
+    $page = (new BrutalistSource)->explore(1, new SourceQuery);
+
+    expect($page->items)->not->toBeEmpty();
+
+    Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'brutalweb.xyz'));
+});
+
 it('registers every scrape adapter in the source manager', function (): void {
     $keys = app(SourceManager::class)->all()->keys()->all();
 
-    expect($keys)->toContain('designspiration', 'savee', 'trendlist', 'posterspy');
+    expect($keys)->toContain(
+        'designspiration',
+        'savee',
+        'trendlist',
+        'posterspy',
+        'lapaninja',
+        'godly',
+        'darkmode',
+        'brutalist',
+    );
 });

@@ -13,6 +13,7 @@ use App\Inspiration\Dtos\SourceQuery;
 use App\Inspiration\Exceptions\SourceException;
 use App\Inspiration\Scraping\HtmlParser;
 use App\Inspiration\Scraping\ScraperClient;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Shared plumbing for the tier 2 HTML scrapers.
@@ -51,18 +52,36 @@ abstract class AbstractScrapeSource implements Source
 
     /**
      * Absolute URL of the site's search results page for a term.
+     *
+     * Only reached when supportsSearch() is true; a site without a native
+     * search never calls it because search() delegates to explore(). The
+     * explore feed is the safe default for adapters that opt out.
      */
-    abstract protected function searchUrl(string $query): string;
+    protected function searchUrl(string $query): string
+    {
+        return $this->exploreUrl();
+    }
 
     /**
      * Absolute URL of the site's public explore feed.
      */
     abstract protected function exploreUrl(): string;
 
+    /**
+     * Whether the site ships a native search box.
+     *
+     * Sites that do not are still searchable by delegating to their explore
+     * feed, with a warning so the degradation is observable in logs.
+     */
+    protected function supportsSearch(): bool
+    {
+        return true;
+    }
+
     public function capabilities(): SourceCapabilities
     {
         return new SourceCapabilities(
-            supportsSearch: true,
+            supportsSearch: $this->supportsSearch(),
             supportsExplore: true,
             needsKey: false,
             hasMaturityLevels: false,
@@ -85,6 +104,15 @@ abstract class AbstractScrapeSource implements Source
             return Page::fromItems([], false, null);
         }
 
+        if (! $this->supportsSearch()) {
+            Log::warning('inspiration: source has no native search, delegating to explore', [
+                'source' => $this->key(),
+                'query' => $query,
+            ]);
+
+            return $this->explore($page, $queryOptions);
+        }
+
         return $this->pageFrom($this->searchUrl($query));
     }
 
@@ -104,7 +132,7 @@ abstract class AbstractScrapeSource implements Source
         }
     }
 
-    private function pageFrom(string $url): Page
+    protected function pageFrom(string $url): Page
     {
         $html = $this->client->get($url);
         $items = [];

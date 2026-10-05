@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Brutalist Websites</title>
+</head>
+<body>
+    <div class="websites">
+        <!-- Card 1: absolute screenshot, link points at the live site. -->
+        <div class="website">
+            <a class="website__link" href="https://anza.example/">
+                <img src="https://brutalistwebsites.com/images/anza.png" alt="Anza">
+            </a>
+            <h3 class="website__title">Anza</h3>
+        </div>
+
+        <!-- Card 2: protocol-relative screenshot. -->
+        <div class="website">
+            <a class="website__link" href="https://gaijin.example/">
+                <img data-src="//brutalistwebsites.com/images/gaijin.png" alt="Gaijin">
+            </a>
+            <h3 class="website__title">Gaijin</h3>
+        </div>
+
+        <!-- Card 3: srcset-only screenshot. -->
+        <div class="website">
+            <a class="website__link" href="https://rawcss.example/">
+                <img srcset="https://brutalistwebsites.com/images/rawcss-1200.png 1200w" alt="Raw CSS">
+            </a>
+            <h3 class="website__title">Raw CSS</h3>
+        </div>
+    </div>
+</body>
+</html>
