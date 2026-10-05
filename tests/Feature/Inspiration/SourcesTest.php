@@ -600,3 +600,31 @@ it('drops the pixabay safe search filter when maturity is allowed', function ():
         return ($query['safesearch'] ?? null) === '0';
     });
 });
+
+it('never advertises pagination for tumblr even with a next link', function (): void {
+    Http::fake([
+        '*api.tumblr.com/v2/tagged*' => Http::response(inspirationFixture('tumblr/search.json')),
+    ]);
+
+    $page = keyedInspirationSource(TumblrSource::class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->not->toBeEmpty()
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+});
+
+it('clamps the pixabay pagination to the 500 hit cap', function (): void {
+    Http::fake([
+        '*pixabay.com/api*' => Http::response(['totalHits' => 1000, 'hits' => []]),
+    ]);
+
+    $source = keyedInspirationSource(PixabaySource::class);
+
+    $withinCap = $source->search('portrait', 20, new SourceQuery);
+    $atCap = $source->search('portrait', 21, new SourceQuery);
+
+    expect($withinCap->hasMore)->toBeTrue()
+        ->and($withinCap->nextPage)->toBe(21)
+        ->and($atCap->hasMore)->toBeFalse()
+        ->and($atCap->nextPage)->toBeNull();
+});

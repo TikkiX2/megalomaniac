@@ -25,6 +25,11 @@ class PixabaySource extends AbstractApiSource
 
     private const EXPLORE_TERM = 'portrait';
 
+    /**
+     * Pixabay only serves the first 500 hits for any query.
+     */
+    private const MAX_HITS = 500;
+
     public function key(): string
     {
         return 'pixabay';
@@ -104,7 +109,9 @@ class PixabaySource extends AbstractApiSource
 
         $current = max(1, $page);
         $total = is_numeric($payload['totalHits'] ?? null) ? (int) $payload['totalHits'] : 0;
-        $hasMore = $total > $current * self::PAGE_SIZE;
+        // Never advertise a page beyond Pixabay's 500-hit window.
+        $hasMore = $current * self::PAGE_SIZE < self::MAX_HITS
+            && $total > $current * self::PAGE_SIZE;
 
         return Page::fromItems($items, $hasMore, $hasMore ? $current + 1 : null);
     }

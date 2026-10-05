@@ -15,8 +15,10 @@ use App\Inspiration\Dtos\SourceQuery;
  * Tumblr has no dedicated explore endpoint, so explore() falls back to the
  * tagged feed with the curated `inspiration` tag. The API returns posts under
  * `response[]`; only photo posts carrying an `original_size.url` are kept.
- * Pagination is cursor-based (`_links.next`), so the numeric page argument is
- * only used to build the next-page hint.
+ *
+ * `/v2/tagged` is cursor-based (`_links.next` / `before`), while the Page DTO
+ * only carries a numeric next page. The adapter therefore never advertises
+ * pagination (see mapToPage); real cursor support is a future candidate.
  *
  * No maturity parameter exists, hence `hasMaturityLevels: false`.
  */
@@ -71,7 +73,7 @@ class TumblrSource extends AbstractApiSource
             'limit' => self::PAGE_SIZE,
         ]);
 
-        return $this->mapToPage($payload, $page);
+        return $this->mapToPage($payload);
     }
 
     public function explore(int $page, SourceQuery $queryOptions): Page
@@ -80,9 +82,16 @@ class TumblrSource extends AbstractApiSource
     }
 
     /**
+     * Tumblr's tagged feed is cursor-based (`_links.next` / `before`), but the
+     * Page DTO only supports a numeric next page and the tagged endpoint has no
+     * numeric page/offset parameter. Advertising `_links.next` as a page would
+     * make the UI re-issue the identical request forever, so this adapter always
+     * reports `hasMore=false, nextPage=null`. Real cursor paging is a pending
+     * future candidate.
+     *
      * @param  array<string, mixed>  $payload
      */
-    private function mapToPage(array $payload, int $page): Page
+    private function mapToPage(array $payload): Page
     {
         $raw = is_array($payload['response'] ?? null) ? $payload['response'] : [];
         $items = [];
@@ -101,10 +110,7 @@ class TumblrSource extends AbstractApiSource
             }
         }
 
-        $next = $payload['_links']['next']['href'] ?? null;
-        $hasMore = $this->stringValue($next) !== null;
-
-        return Page::fromItems($items, $hasMore, $hasMore ? $page + 1 : null);
+        return Page::fromItems($items, false, null);
     }
 
     /**
