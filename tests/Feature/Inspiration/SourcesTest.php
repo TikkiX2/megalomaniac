@@ -935,6 +935,36 @@ it('explores the :key feed without throwing and returns parsed items', function 
     }
 })->with('scrapeSources');
 
+it('requests the expected search url for :key', function (string $key, string $class): void {
+    fakeScrapeHttp($key, $key.'/feed.html');
+
+    (new $class)->search('portrait', 1, new SourceQuery);
+
+    $expected = match ($key) {
+        'designspiration' => 'https://www.designspiration.net/search/portrait/',
+        'savee' => 'https://savee.it/search/?q=portrait',
+        'trendlist' => 'https://trendlist.org/?search=portrait',
+        'posterspy' => 'https://posterspy.com/?s=portrait',
+    };
+
+    Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
+})->with('scrapeSources');
+
+it('requests the expected explore url for :key', function (string $key, string $class): void {
+    fakeScrapeHttp($key, $key.'/feed.html');
+
+    (new $class)->explore(1, new SourceQuery);
+
+    $expected = match ($key) {
+        'designspiration' => 'https://www.designspiration.net/explore/',
+        'savee' => 'https://savee.it/',
+        'trendlist' => 'https://trendlist.org/',
+        'posterspy' => 'https://posterspy.com/',
+    };
+
+    Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
+})->with('scrapeSources');
+
 it('degrades to an empty page when :key markup is broken', function (string $key, string $class): void {
     fakeScrapeHttp($key, $key.'/broken.html');
 
