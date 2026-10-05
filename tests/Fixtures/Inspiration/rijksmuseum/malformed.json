@@ -1,0 +1,30 @@
+{
+    "elapsedMilliseconds": 9,
+    "count": 4,
+    "artObjects": [
+        null,
+        "not-an-object",
+        {
+            "id": "no-image",
+            "objectNumber": "NO-1",
+            "title": "No Image",
+            "links": {
+                "web": "https://www.rijksmuseum.nl/en/collection/NO-1"
+            }
+        },
+        {
+            "id": "sk-C-5",
+            "objectNumber": "SK-C-5",
+            "title": "Valid Object",
+            "principalOrFirstMaker": "ValidArtist",
+            "webImage": {
+                "url": "https://lh3.googleusercontent.com/valid.jpg",
+                "width": 4000,
+                "height": 5000
+            },
+            "links": {
+                "web": "https://www.rijksmuseum.nl/en/collection/SK-C-5"
+            }
+        }
+    ]
+}

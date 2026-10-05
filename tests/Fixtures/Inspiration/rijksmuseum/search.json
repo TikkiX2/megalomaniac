@@ -1,0 +1,38 @@
+{
+    "elapsedMilliseconds": 42,
+    "count": 120,
+    "artObjects": [
+        {
+            "id": "sk-C-5",
+            "objectNumber": "SK-C-5",
+            "title": "The Night Watch",
+            "hasImage": true,
+            "principalOrFirstMaker": "Rembrandt van Rijn",
+            "webImage": {
+                "url": "https://lh3.googleusercontent.com/nightwatch.jpg",
+                "width": 4000,
+                "height": 5000
+            },
+            "links": {
+                "self": "https://www.rijksmuseum.nl/api/en/collection/sk-C-5",
+                "web": "https://www.rijksmuseum.nl/en/collection/SK-C-5"
+            }
+        },
+        {
+            "id": "sk-C-6",
+            "objectNumber": "SK-C-6",
+            "title": "Portrait of a Lady",
+            "hasImage": true,
+            "principalOrFirstMaker": "Frans Hals",
+            "webImage": {
+                "url": "https://lh3.googleusercontent.com/lady.jpg",
+                "width": 3000,
+                "height": 4000
+            },
+            "links": {
+                "self": "https://www.rijksmuseum.nl/api/en/collection/sk-C-6",
+                "web": "https://www.rijksmuseum.nl/en/collection/SK-C-6"
+            }
+        }
+    ]
+}

@@ -1,0 +1,31 @@
+{
+    "success": true,
+    "requestNumber": 1,
+    "itemsCount": 5,
+    "totalResults": 5,
+    "items": [
+        null,
+        "not-an-item",
+        {
+            "id": "/priv/1",
+            "title": ["Restricted"],
+            "guid": "https://www.europeana.eu/en/item/priv/1",
+            "edmPreview": ["https://api.europeana.eu/thumbnail/v2/url.json?uri=priv"],
+            "previewNoDistribute": true
+        },
+        {
+            "id": "/noimg/1",
+            "title": ["No Image"],
+            "guid": "https://www.europeana.eu/en/item/noimg/1"
+        },
+        {
+            "id": "/2020601/valid_1",
+            "title": ["Valid Item"],
+            "guid": "https://www.europeana.eu/en/item/2020601/valid_1",
+            "edmPreview": ["https://api.europeana.eu/thumbnail/v2/url.json?uri=valid"],
+            "edmIsShownBy": ["https://example.org/images/valid.jpg"],
+            "dcCreator": ["ValidArtist"],
+            "previewNoDistribute": false
+        }
+    ]
+}

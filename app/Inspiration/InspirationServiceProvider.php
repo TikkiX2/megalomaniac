@@ -9,12 +9,16 @@ use App\Inspiration\Sources\Api\AreNaSource;
 use App\Inspiration\Sources\Api\ArtInstituteChicagoSource;
 use App\Inspiration\Sources\Api\ArtStationSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
+use App\Inspiration\Sources\Api\DiscogsSource;
+use App\Inspiration\Sources\Api\EuropeanaSource;
 use App\Inspiration\Sources\Api\FlickrSource;
 use App\Inspiration\Sources\Api\GelbooruSource;
+use App\Inspiration\Sources\Api\GiphySource;
 use App\Inspiration\Sources\Api\MetMuseumSource;
 use App\Inspiration\Sources\Api\OpenverseSource;
 use App\Inspiration\Sources\Api\PexelsSource;
 use App\Inspiration\Sources\Api\PixabaySource;
+use App\Inspiration\Sources\Api\RijksmuseumSource;
 use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
@@ -48,6 +52,10 @@ class InspirationServiceProvider extends ServiceProvider
         UnsplashSource::class,
         PexelsSource::class,
         PixabaySource::class,
+        DiscogsSource::class,
+        GiphySource::class,
+        EuropeanaSource::class,
+        RijksmuseumSource::class,
     ];
 
     public function register(): void

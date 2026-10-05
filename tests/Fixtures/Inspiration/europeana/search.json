@@ -1,0 +1,30 @@
+{
+    "success": true,
+    "requestNumber": 1,
+    "itemsCount": 2,
+    "totalResults": 120,
+    "items": [
+        {
+            "id": "/2020601/collect_art_2",
+            "title": ["Neon Portrait"],
+            "guid": "https://www.europeana.eu/en/item/2020601/collect_art_2",
+            "type": "IMAGE",
+            "edmPreview": ["https://api.europeana.eu/thumbnail/v2/url.json?uri=neon"],
+            "edmIsShownBy": ["https://example.org/images/neon.jpg"],
+            "dcCreator": ["ArtistOne"],
+            "dataProvider": ["Rijksmuseum"],
+            "rights": ["http://creativecommons.org/publicdomain/mark/1.0/"],
+            "previewNoDistribute": false
+        },
+        {
+            "id": "/2020601/collect_art_3",
+            "title": ["Studio Light"],
+            "guid": "https://www.europeana.eu/en/item/2020601/collect_art_3",
+            "type": "IMAGE",
+            "edmPreview": "https://api.europeana.eu/thumbnail/v2/url.json?uri=studio",
+            "edmIsShownBy": ["https://example.org/images/studio.jpg"],
+            "dcCreator": ["ArtistTwo"],
+            "previewNoDistribute": false
+        }
+    ]
+}

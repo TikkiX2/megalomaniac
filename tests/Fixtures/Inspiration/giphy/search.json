@@ -1,0 +1,58 @@
+{
+    "data": [
+        {
+            "type": "gif",
+            "id": "abc123",
+            "url": "https://giphy.com/gifs/neon-portrait-abc123",
+            "slug": "neon-portrait-abc123",
+            "embed_url": "https://giphy.com/embed/abc123",
+            "username": "ArtistOne",
+            "title": "Neon Portrait",
+            "rating": "pg",
+            "images": {
+                "original": {
+                    "url": "https://media.giphy.com/media/abc123/giphy.gif",
+                    "width": "480",
+                    "height": "270"
+                },
+                "fixed_width": {
+                    "url": "https://media.giphy.com/media/abc123/200w.gif",
+                    "width": "200",
+                    "height": "113"
+                }
+            }
+        },
+        {
+            "type": "gif",
+            "id": "def456",
+            "url": "https://giphy.com/gifs/studio-light-def456",
+            "slug": "studio-light-def456",
+            "embed_url": "https://giphy.com/embed/def456",
+            "username": "ArtistTwo",
+            "title": "Studio Light",
+            "rating": "g",
+            "images": {
+                "original": {
+                    "url": "https://media.giphy.com/media/def456/giphy.gif",
+                    "width": "500",
+                    "height": "500"
+                },
+                "fixed_width": {
+                    "url": "https://media.giphy.com/media/def456/200w.gif",
+                    "width": "200",
+                    "height": "200"
+                }
+            }
+        }
+    ],
+    "meta": {
+        "status": 200,
+        "msg": "OK",
+        "response_id": "xyz"
+    },
+    "pagination": {
+        "total_count": 2,
+        "count": 2,
+        "offset": 0
+    }
+}

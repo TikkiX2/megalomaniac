@@ -11,12 +11,16 @@ use App\Inspiration\Sources\Api\AreNaSource;
 use App\Inspiration\Sources\Api\ArtInstituteChicagoSource;
 use App\Inspiration\Sources\Api\ArtStationSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
+use App\Inspiration\Sources\Api\DiscogsSource;
+use App\Inspiration\Sources\Api\EuropeanaSource;
 use App\Inspiration\Sources\Api\FlickrSource;
 use App\Inspiration\Sources\Api\GelbooruSource;
+use App\Inspiration\Sources\Api\GiphySource;
 use App\Inspiration\Sources\Api\MetMuseumSource;
 use App\Inspiration\Sources\Api\OpenverseSource;
 use App\Inspiration\Sources\Api\PexelsSource;
 use App\Inspiration\Sources\Api\PixabaySource;
+use App\Inspiration\Sources\Api\RijksmuseumSource;
 use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
@@ -80,6 +84,10 @@ dataset('keyedApiSources', [
     'unsplash' => ['unsplash', UnsplashSource::class],
     'pexels' => ['pexels', PexelsSource::class],
     'pixabay' => ['pixabay', PixabaySource::class],
+    'discogs' => ['discogs', DiscogsSource::class],
+    'giphy' => ['giphy', GiphySource::class],
+    'europeana' => ['europeana', EuropeanaSource::class],
+    'rijksmuseum' => ['rijksmuseum', RijksmuseumSource::class],
 ]);
 
 dataset('keyedApiHttpErrors', function (): array {
@@ -89,6 +97,10 @@ dataset('keyedApiHttpErrors', function (): array {
         'unsplash' => ['unsplash', UnsplashSource::class],
         'pexels' => ['pexels', PexelsSource::class],
         'pixabay' => ['pixabay', PixabaySource::class],
+        'discogs' => ['discogs', DiscogsSource::class],
+        'giphy' => ['giphy', GiphySource::class],
+        'europeana' => ['europeana', EuropeanaSource::class],
+        'rijksmuseum' => ['rijksmuseum', RijksmuseumSource::class],
     ];
 
     $cases = [];
@@ -105,14 +117,32 @@ dataset('keyedApiHttpErrors', function (): array {
 });
 
 /**
+ * The canonical first credential field for an adapter, read from config.
+ *
+ * @param  class-string<Source>  $class
+ */
+function inspirationCredentialField(string $class): string
+{
+    /** @var array<string, array<int, string>> $fields */
+    $fields = config('inspiration.credential_fields', []);
+    $key = (new $class)->key();
+
+    return $fields[$key][0] ?? 'key';
+}
+
+/**
  * Build a keyed adapter carrying the canonical credential bag.
+ *
+ * The field name comes from `inspiration.credential_fields` so token-based
+ * sources (Discogs) and key-based sources are both covered.
  *
  * @param  class-string<Source>  $class
  */
 function keyedInspirationSource(string $class): Source
 {
     $source = new $class;
-    $source->setCredentials(['key' => 'test-key']);
+    $field = inspirationCredentialField($class);
+    $source->setCredentials([$field => 'test-'.$field]);
 
     return $source;
 }
@@ -180,6 +210,19 @@ function fakeTier1Http(string $key, string $fixture, int $status = 200): void
         ],
         'pixabay' => [
             '*pixabay.com/api*' => Http::response($body, $status),
+        ],
+        'discogs' => [
+            '*api.discogs.com/database/search*' => Http::response($body, $status),
+        ],
+        'giphy' => [
+            '*api.giphy.com/v1/gifs/search*' => Http::response($body, $status),
+            '*api.giphy.com/v1/gifs/trending*' => Http::response($body, $status),
+        ],
+        'europeana' => [
+            '*api.europeana.eu/record/v2/search.json*' => Http::response($body, $status),
+        ],
+        'rijksmuseum' => [
+            '*rijksmuseum.nl/api/en/collection*' => Http::response($body, $status),
         ],
         default => throw new InvalidArgumentException("Unknown tier 1 source [{$key}]."),
     });
@@ -343,6 +386,10 @@ it('registers every tier 1 adapter in the source manager', function (): void {
         'unsplash',
         'pexels',
         'pixabay',
+        'discogs',
+        'giphy',
+        'europeana',
+        'rijksmuseum',
     );
 });
 
@@ -492,9 +539,9 @@ it('declares the expected capabilities for keyed :key', function (string $key, s
     $capabilities = $source->capabilities();
 
     expect($capabilities->supportsSearch)->toBeTrue()
-        ->and($capabilities->supportsExplore)->toBe($key === 'flickr')
+        ->and($capabilities->supportsExplore)->toBe(in_array($key, ['flickr', 'giphy'], true))
         ->and($capabilities->needsKey)->toBeTrue()
-        ->and($capabilities->hasMaturityLevels)->toBe(in_array($key, ['flickr', 'pixabay'], true))
+        ->and($capabilities->hasMaturityLevels)->toBe(in_array($key, ['flickr', 'pixabay', 'giphy'], true))
         ->and($source->isConfigured())->toBeTrue();
 })->with('keyedApiSources');
 
@@ -502,9 +549,9 @@ it('reports keyed :key as unconfigured without credentials', function (string $k
     expect((new $class)->isConfigured())->toBeFalse();
 })->with('keyedApiSources');
 
-it('treats an empty credential key as unconfigured for keyed :key', function (string $key, string $class): void {
+it('treats an empty credential value as unconfigured for keyed :key', function (string $key, string $class): void {
     $source = new $class;
-    $source->setCredentials(['key' => '']);
+    $source->setCredentials([inspirationCredentialField($class) => '']);
 
     expect($source->isConfigured())->toBeFalse();
 })->with('keyedApiSources');
@@ -627,4 +674,194 @@ it('clamps the pixabay pagination to the 500 hit cap', function (): void {
         ->and($withinCap->nextPage)->toBe(21)
         ->and($atCap->hasMore)->toBeFalse()
         ->and($atCap->nextPage)->toBeNull();
+});
+
+it('sends the discogs token as an authorization header', function (): void {
+    Http::fake([
+        '*api.discogs.com/database/search*' => Http::response(inspirationFixture('discogs/search.json')),
+    ]);
+
+    keyedInspirationSource(DiscogsSource::class)->search('portrait', 1, new SourceQuery);
+
+    Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization', 'Discogs token=test-token'));
+});
+
+it('builds discogs release page urls from the result id', function (): void {
+    Http::fake([
+        '*api.discogs.com/database/search*' => Http::response(inspirationFixture('discogs/search.json')),
+    ]);
+
+    $page = keyedInspirationSource(DiscogsSource::class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items[0]->sourceId)->toBe('249504')
+        ->and($page->items[0]->pageUrl)->toBe('https://www.discogs.com/release/249504')
+        ->and($page->items[0]->imageUrl)->toBe('https://i.discogs.com/cover-249504.jpg')
+        ->and($page->items[0]->thumbnailUrl)->toBe('https://i.discogs.com/thumb-249504.jpg');
+});
+
+it('applies the giphy rating filter when maturity is safe', function (): void {
+    Http::fake([
+        '*api.giphy.com/v1/gifs/search*' => Http::response(inspirationFixture('giphy/search.json')),
+    ]);
+
+    keyedInspirationSource(GiphySource::class)->search('portrait', 1, new SourceQuery(maturity: 'safe'));
+
+    Http::assertSent(function (Request $request): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['api_key'] ?? null) === 'test-key'
+            && ($query['rating'] ?? null) === 'pg'
+            && ($query['limit'] ?? null) === '24';
+    });
+});
+
+it('relaxes the giphy rating filter when maturity is allowed', function (): void {
+    Http::fake([
+        '*api.giphy.com/v1/gifs/search*' => Http::response(inspirationFixture('giphy/search.json')),
+    ]);
+
+    keyedInspirationSource(GiphySource::class)->search('portrait', 1, new SourceQuery(maturity: 'allowed'));
+
+    Http::assertSent(function (Request $request): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['rating'] ?? null) === 'r';
+    });
+});
+
+it('offsets giphy pages and uses the trending endpoint for explore', function (): void {
+    Http::fake([
+        '*api.giphy.com/v1/gifs/search*' => Http::response(inspirationFixture('giphy/search.json')),
+        '*api.giphy.com/v1/gifs/trending*' => Http::response(inspirationFixture('giphy/search.json')),
+    ]);
+
+    $source = keyedInspirationSource(GiphySource::class);
+    $source->search('portrait', 3, new SourceQuery);
+    $source->explore(1, new SourceQuery);
+
+    Http::assertSent(function (Request $request): bool {
+        if (! str_contains($request->url(), '/gifs/search')) {
+            return false;
+        }
+
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['offset'] ?? null) === '48'
+            && ($query['q'] ?? null) === 'portrait';
+    });
+
+    Http::assertSent(fn (Request $request): bool => str_contains($request->url(), '/gifs/trending'));
+});
+
+it('advertises more giphy pages when a full page is returned', function (): void {
+    $data = [];
+
+    for ($i = 1; $i <= 24; $i++) {
+        $data[] = [
+            'id' => 'gif-'.$i,
+            'slug' => 'gif-'.$i,
+            'title' => 'Gif '.$i,
+            'images' => [
+                'original' => ['url' => 'https://media.giphy.com/media/gif-'.$i.'/giphy.gif'],
+                'fixed_width' => ['url' => 'https://media.giphy.com/media/gif-'.$i.'/200w.gif'],
+            ],
+        ];
+    }
+
+    Http::fake([
+        '*api.giphy.com/v1/gifs/search*' => Http::response(['data' => $data]),
+    ]);
+
+    $page = keyedInspirationSource(GiphySource::class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(24)
+        ->and($page->hasMore)->toBeTrue()
+        ->and($page->nextPage)->toBe(2);
+});
+
+it('sends the europeana key and start offset', function (): void {
+    Http::fake([
+        '*api.europeana.eu/record/v2/search.json*' => Http::response(inspirationFixture('europeana/search.json')),
+    ]);
+
+    keyedInspirationSource(EuropeanaSource::class)->search('portrait', 2, new SourceQuery);
+
+    Http::assertSent(function (Request $request): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['wskey'] ?? null) === 'test-key'
+            && ($query['rows'] ?? null) === '24'
+            && ($query['start'] ?? null) === '25'
+            && ($query['query'] ?? null) === 'portrait';
+    });
+});
+
+it('drops europeana items that cannot be redistributed', function (): void {
+    Http::fake([
+        '*api.europeana.eu/record/v2/search.json*' => Http::response([
+            'totalResults' => 2,
+            'items' => [
+                [
+                    'id' => '/a',
+                    'guid' => 'https://www.europeana.eu/en/item/a',
+                    'edmPreview' => ['https://api.europeana.eu/thumb/a'],
+                    'previewNoDistribute' => true,
+                ],
+                [
+                    'id' => '/b',
+                    'guid' => 'https://www.europeana.eu/en/item/b',
+                    'edmPreview' => ['https://api.europeana.eu/thumb/b'],
+                    'previewNoDistribute' => false,
+                ],
+            ],
+        ]),
+    ]);
+
+    $page = keyedInspirationSource(EuropeanaSource::class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(1)
+        ->and($page->items[0]->sourceId)->toBe('/b')
+        ->and($page->items[0]->imageUrl)->toBe('https://api.europeana.eu/thumb/b');
+});
+
+it('sends the rijksmuseum key and image-only filter', function (): void {
+    Http::fake([
+        '*rijksmuseum.nl/api/en/collection*' => Http::response(inspirationFixture('rijksmuseum/search.json')),
+    ]);
+
+    keyedInspirationSource(RijksmuseumSource::class)->search('portrait', 2, new SourceQuery);
+
+    Http::assertSent(function (Request $request): bool {
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['key'] ?? null) === 'test-key'
+            && ($query['q'] ?? null) === 'portrait'
+            && ($query['ps'] ?? null) === '24'
+            && ($query['p'] ?? null) === '2'
+            && ($query['imgonly'] ?? null) === 'true';
+    });
+});
+
+it('advertises more rijksmuseum pages when a full page is returned', function (): void {
+    $artObjects = [];
+
+    for ($i = 1; $i <= 24; $i++) {
+        $artObjects[] = [
+            'objectNumber' => 'SK-'.$i,
+            'title' => 'Object '.$i,
+            'principalOrFirstMaker' => 'Maker '.$i,
+            'webImage' => ['url' => 'https://example.org/'.$i.'.jpg'],
+            'links' => ['web' => 'https://www.rijksmuseum.nl/en/collection/SK-'.$i],
+        ];
+    }
+
+    Http::fake([
+        '*rijksmuseum.nl/api/en/collection*' => Http::response(['count' => 24, 'artObjects' => $artObjects]),
+    ]);
+
+    $page = keyedInspirationSource(RijksmuseumSource::class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(24)
+        ->and($page->hasMore)->toBeTrue()
+        ->and($page->nextPage)->toBe(2);
 });

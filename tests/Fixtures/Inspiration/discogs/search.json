@@ -1,0 +1,36 @@
+{
+    "pagination": {
+        "page": 1,
+        "pages": 5,
+        "per_page": 24,
+        "items": 120,
+        "urls": {}
+    },
+    "results": [
+        {
+            "id": 249504,
+            "type": "release",
+            "title": "ArtistOne - Neon Portrait",
+            "thumb": "https://i.discogs.com/thumb-249504.jpg",
+            "cover_image": "https://i.discogs.com/cover-249504.jpg",
+            "resource_url": "https://api.discogs.com/releases/249504",
+            "uri": "https://www.discogs.com/release/249504",
+            "genre": ["Electronic"],
+            "style": ["Synthwave"],
+            "format": ["Vinyl"],
+            "country": "US",
+            "year": "2020"
+        },
+        {
+            "id": 249505,
+            "type": "release",
+            "title": "ArtistTwo - Studio Light",
+            "thumb": "https://i.discogs.com/thumb-249505.jpg",
+            "cover_image": "https://i.discogs.com/cover-249505.jpg",
+            "genre": ["Rock"],
+            "style": ["Indie Rock"],
+            "country": "UK",
+            "year": "2021"
+        }
+    ]
+}

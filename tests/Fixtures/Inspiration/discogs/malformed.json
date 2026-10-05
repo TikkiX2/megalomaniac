@@ -1,0 +1,26 @@
+{
+    "pagination": {
+        "page": 1,
+        "pages": 1,
+        "per_page": 24,
+        "items": 4,
+        "urls": {}
+    },
+    "results": [
+        null,
+        "not-a-release",
+        {
+            "id": 111,
+            "title": "No Image - Release",
+            "thumb": "https://i.discogs.com/thumb-111.jpg"
+        },
+        {
+            "id": 333333,
+            "title": "ValidArtist - Valid Release",
+            "thumb": "https://i.discogs.com/thumb-333333.jpg",
+            "cover_image": "https://i.discogs.com/cover-333333.jpg",
+            "genre": ["Electronic"],
+            "style": ["Ambient"]
+        }
+    ]
+}

@@ -1,0 +1,47 @@
+{
+    "data": [
+        null,
+        "not-a-gif",
+        {
+            "id": "no-image",
+            "slug": "no-image",
+            "title": "No Image",
+            "images": {
+                "original": {
+                    "url": ""
+                },
+                "fixed_width": {
+                    "url": ""
+                }
+            }
+        },
+        {
+            "id": "valid000",
+            "slug": "valid-gif-valid000",
+            "url": "https://giphy.com/gifs/valid-gif-valid000",
+            "username": "ValidArtist",
+            "title": "Valid Gif",
+            "images": {
+                "original": {
+                    "url": "https://media.giphy.com/media/valid000/giphy.gif",
+                    "width": "480",
+                    "height": "270"
+                },
+                "fixed_width": {
+                    "url": "https://media.giphy.com/media/valid000/200w.gif",
+                    "width": "200",
+                    "height": "113"
+                }
+            }
+        }
+    ],
+    "meta": {
+        "status": 200,
+        "msg": "OK"
+    },
+    "pagination": {
+        "total_count": 1,
+        "count": 4,
+        "offset": 0
+    }
+}
