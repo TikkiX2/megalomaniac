@@ -104,6 +104,41 @@ abstract class AbstractApiSource implements Source
     }
 
     /**
+     * Perform a JSON POST and return the decoded JSON object.
+     *
+     * Mirrors getJson()'s failure contract so POST-based adapters (Bandcamp's
+     * internal discover endpoint) still surface every transport and JSON error
+     * as a SourceException.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     *
+     * @throws SourceException
+     */
+    protected function postJson(string $url, array $payload = []): array
+    {
+        try {
+            $response = $this->authorize($this->request())->asJson()->post($url, $payload);
+
+            if ($response->failed()) {
+                throw new SourceException($this->key().': HTTP '.$response->status());
+            }
+
+            $decoded = $response->json();
+
+            if (! is_array($decoded)) {
+                throw new SourceException($this->key().': invalid JSON payload');
+            }
+
+            return $decoded;
+        } catch (SourceException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            throw new SourceException($this->key().': '.$exception->getMessage(), previous: $exception);
+        }
+    }
+
+    /**
      * Stable, always-string identifier used for dedupe; falls back to a hash of
      * the page URL when the API omits its own id.
      */

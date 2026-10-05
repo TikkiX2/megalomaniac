@@ -1,0 +1,28 @@
+{
+    "discover_items": [
+        {
+            "art_id": 3809045440,
+            "band_id": 1234567,
+            "band_name": "Ember Collective",
+            "band_url": "https://embercollective.bandcamp.com",
+            "item_title": "Ember Sessions",
+            "album_name": null,
+            "item_type": "album",
+            "tralbum_id": 791510690,
+            "tralbum_type": "a",
+            "tralbum_url": "https://embercollective.bandcamp.com/album/ember-sessions"
+        },
+        {
+            "art_id": 9812736450,
+            "band_id": 7654321,
+            "band_name": "Ash Ensemble",
+            "band_url": "https://ashensemble.bandcamp.com",
+            "item_title": "Ash Tracks",
+            "album_name": "Ash Tracks Deluxe",
+            "item_type": "album",
+            "tralbum_id": 811223344,
+            "tralbum_type": "a",
+            "tralbum_url": "https://ashensemble.bandcamp.com/album/ash-tracks-deluxe"
+        }
+    ]
+}

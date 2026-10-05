@@ -1,0 +1,17 @@
+{
+    "discover_items": [
+        null,
+        "not-an-item",
+        {
+            "art_id": null,
+            "tralbum_url": "https://noor.bandcamp.com/album/no-cover"
+        },
+        {
+            "art_id": 1122334455,
+            "band_name": "Valid Artist",
+            "item_title": "Valid Release",
+            "tralbum_id": 555666777,
+            "tralbum_url": "https://validartist.bandcamp.com/album/valid-release"
+        }
+    ]
+}

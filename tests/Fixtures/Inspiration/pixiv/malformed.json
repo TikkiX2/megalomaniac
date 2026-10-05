@@ -1,0 +1,35 @@
+{
+    "illusts": [
+        null,
+        "not-an-item",
+        {
+            "id": 11111111,
+            "title": "No image",
+            "type": "illust",
+            "image_urls": {
+                "large": null
+            }
+        },
+        {
+            "id": 98765435,
+            "title": "Valid Portrait",
+            "type": "illust",
+            "image_urls": {
+                "large": "https://i.pximg.net/img-master/img/2024/01/04/00/00/00/98765435_p0_master1200.jpg"
+            },
+            "width": 1000,
+            "height": 1400,
+            "x_restrict": 0,
+            "user": {
+                "id": 12312312,
+                "name": "valid-artist"
+            },
+            "tags": [
+                {
+                    "name": "portrait"
+                }
+            ]
+        }
+    ],
+    "next_url": null
+}

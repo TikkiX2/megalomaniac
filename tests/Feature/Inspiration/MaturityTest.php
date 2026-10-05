@@ -50,6 +50,10 @@ function fakeMaturityHttp(string $key): void
         'flickr' => [
             '*api.flickr.com/services/rest*' => Http::response($body),
         ],
+        'pixiv' => [
+            '*oauth.secure.pixiv.net/auth/token*' => Http::response(['access_token' => 'fake-token', 'expires_in' => 3600]),
+            '*app-api.pixiv.net/v1/search/illust*' => Http::response($body),
+        ],
         'unsplash' => [
             '*api.unsplash.com/search/photos*' => Http::response($body),
         ],
@@ -169,3 +173,25 @@ it('resolves the pixiv maturity token ahead of its adapter', function (): void {
     expect(SourceMaturity::forSource('pixiv', false)->maturity)->toBe('safe')
         ->and(SourceMaturity::forSource('pixiv', true)->maturity)->toBe('allowed');
 });
+
+it('adds the pixiv for_ios filter only when maturity is safe', function (bool $allowed): void {
+    fakeMaturityHttp('pixiv');
+    $user = maturityUser('pixiv', $allowed);
+
+    app(SourceManager::class)->search($user, 'pixiv', 'portrait', 1);
+
+    Http::assertSent(function (Request $request) use ($allowed): bool {
+        if (! str_contains($request->url(), 'app-api.pixiv.net/v1/search/illust')) {
+            return false;
+        }
+
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        // Documented decision: Pixiv's R-18 boundary is account-scoped, so the
+        // global toggle only adds Pixiv's iOS filter on the safe token and
+        // omits it entirely when mature content is allowed.
+        return $allowed
+            ? ! array_key_exists('filter', $query)
+            : ($query['filter'] ?? null) === 'for_ios';
+    });
+})->with([false, true]);

@@ -10,6 +10,7 @@ use App\Inspiration\SourceManager;
 use App\Inspiration\Sources\Api\AreNaSource;
 use App\Inspiration\Sources\Api\ArtInstituteChicagoSource;
 use App\Inspiration\Sources\Api\ArtStationSource;
+use App\Inspiration\Sources\Api\BandcampSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
 use App\Inspiration\Sources\Api\DiscogsSource;
 use App\Inspiration\Sources\Api\EuropeanaSource;
@@ -20,6 +21,7 @@ use App\Inspiration\Sources\Api\MetMuseumSource;
 use App\Inspiration\Sources\Api\OpenverseSource;
 use App\Inspiration\Sources\Api\PexelsSource;
 use App\Inspiration\Sources\Api\PixabaySource;
+use App\Inspiration\Sources\Api\PixivSource;
 use App\Inspiration\Sources\Api\RijksmuseumSource;
 use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
@@ -164,6 +166,35 @@ dataset('scrapeSourcesBatchC', [
     'dribbble' => ['dribbble', DribbbleSource::class],
     'awwwards' => ['awwwards', AwwwardsSource::class],
 ]);
+
+/**
+ * Tier 3 adapters: opt-in sources backed by a network API.
+ */
+dataset('tier3ApiSources', [
+    'pixiv' => ['pixiv', PixivSource::class],
+    'bandcamp' => ['bandcamp', BandcampSource::class],
+]);
+
+/**
+ * Tier 3 HTTP failure matrix. Pixiv's token endpoint stays healthy so the
+ * failure under test is the content request, not the OAuth exchange.
+ */
+dataset('tier3ApiHttpErrors', function (): array {
+    $sources = [
+        'pixiv' => ['pixiv', PixivSource::class],
+        'bandcamp' => ['bandcamp', BandcampSource::class],
+    ];
+
+    $cases = [];
+
+    foreach ($sources as $key => [$sourceKey, $class]) {
+        foreach ([500, 403, 404] as $status) {
+            $cases[$key.' '.$status] = [$sourceKey, $class, $status];
+        }
+    }
+
+    return $cases;
+});
 
 /**
  * The canonical first credential field for an adapter, read from config.
@@ -320,6 +351,29 @@ function fakeScrapeHttp(string $key, string $fixture, int $status = 200): void
     }
 
     Http::fake($stubs);
+}
+
+/**
+ * Stub every host a tier 3 adapter talks to, serving the fixture body.
+ *
+ * Pixiv needs its OAuth exchange stubbed on top of the content endpoint; the
+ * token stub is always healthy so a caller can force an HTTP error on the
+ * search/discover request alone.
+ */
+function fakeTier3Http(string $key, string $fixture, int $status = 200): void
+{
+    $body = inspirationFixture($fixture);
+
+    Http::fake(match ($key) {
+        'pixiv' => [
+            '*oauth.secure.pixiv.net/auth/token*' => Http::response(['access_token' => 'fake-token', 'expires_in' => 3600]),
+            '*app-api.pixiv.net/v1/search/illust*' => Http::response($body, $status),
+        ],
+        'bandcamp' => [
+            '*bandcamp.com/api/discover/1/get_discover_items*' => Http::response($body, $status),
+        ],
+        default => throw new InvalidArgumentException("Unknown tier 3 source [{$key}]."),
+    });
 }
 
 beforeEach(function (): void {
@@ -1233,4 +1287,254 @@ it('registers every scrape adapter in the source manager', function (): void {
         'awwwards',
         'newgrounds',
     );
+});
+
+/*
+|--------------------------------------------------------------------------
+| Tier 3 adapters (Pixiv, Bandcamp)
+|--------------------------------------------------------------------------
+*/
+
+it('maps a happy payload into a non-empty page for tier 3 :key', function (string $key, string $class): void {
+    fakeTier3Http($key, $key.'/search.json');
+
+    $page = keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+
+    expect($page)->toBeInstanceOf(Page::class)
+        ->and($page->items)->not->toBeEmpty();
+
+    foreach ($page->items as $item) {
+        expect($item->source)->toBe($key)
+            ->and($item->sourceId)->toBeString()->not->toBe('')
+            ->and($item->pageUrl)->not->toBe('')
+            ->and($item->imageUrl)->not->toBe('');
+    }
+})->with('tier3ApiSources');
+
+it('returns an empty page for an empty payload from tier 3 :key', function (string $key, string $class): void {
+    fakeTier3Http($key, $key.'/empty.json');
+
+    $page = keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toBe([])
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+})->with('tier3ApiSources');
+
+it('keeps valid items while discarding malformed ones for tier 3 :key', function (string $key, string $class): void {
+    fakeTier3Http($key, $key.'/malformed.json');
+
+    $page = keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(1)
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->items[0]->source)->toBe($key)
+        ->and($page->items[0]->sourceId)->not->toBe('')
+        ->and($page->items[0]->pageUrl)->not->toBe('')
+        ->and($page->items[0]->imageUrl)->not->toBe('');
+})->with('tier3ApiSources');
+
+it('throws a source exception on an http error for tier 3 :key', function (string $key, string $class, int $status): void {
+    fakeTier3Http($key, $key.'/search.json', $status);
+
+    keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+})->with('tier3ApiHttpErrors')->throws(SourceException::class);
+
+it('wraps an unparseable tier 3 body into a source exception for :key', function (string $key, string $class): void {
+    Http::fake(match ($key) {
+        'pixiv' => [
+            '*oauth.secure.pixiv.net/auth/token*' => Http::response(['access_token' => 'fake-token']),
+            '*app-api.pixiv.net/v1/search/illust*' => Http::response('<html>not json</html>', 200),
+        ],
+        'bandcamp' => [
+            '*bandcamp.com/api/discover/1/get_discover_items*' => Http::response('<html>not json</html>', 200),
+        ],
+    });
+
+    keyedInspirationSource($class)->search('portrait', 1, new SourceQuery);
+})->with('tier3ApiSources')->throws(SourceException::class);
+
+it('returns an empty page without any request when the tier 3 query is blank for :key', function (string $key, string $class): void {
+    Http::fake();
+
+    $page = keyedInspirationSource($class)->search('   ', 1, new SourceQuery);
+
+    expect($page->items)->toBe([])
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+
+    Http::assertNothingSent();
+})->with('tier3ApiSources');
+
+it('explores tier 3 :key without throwing and returns parsed items', function (string $key, string $class): void {
+    fakeTier3Http($key, $key.'/search.json');
+
+    $page = keyedInspirationSource($class)->explore(1, new SourceQuery);
+
+    expect($page)->toBeInstanceOf(Page::class)
+        ->and($page->items)->not->toBeEmpty();
+
+    foreach ($page->items as $item) {
+        expect($item->source)->toBe($key)
+            ->and($item->imageUrl)->not->toBe('');
+    }
+})->with('tier3ApiSources');
+
+it('declares the expected capabilities for tier 3 :key', function (string $key, string $class): void {
+    $source = keyedInspirationSource($class);
+    $capabilities = $source->capabilities();
+
+    $expected = match ($key) {
+        'pixiv' => ['search' => true, 'explore' => true, 'key' => true, 'maturity' => true],
+        'bandcamp' => ['search' => false, 'explore' => true, 'key' => false, 'maturity' => false],
+    };
+
+    expect($capabilities->supportsSearch)->toBe($expected['search'])
+        ->and($capabilities->supportsExplore)->toBe($expected['explore'])
+        ->and($capabilities->needsKey)->toBe($expected['key'])
+        ->and($capabilities->hasMaturityLevels)->toBe($expected['maturity'])
+        ->and($capabilities->maxPageSize)->toBe(24)
+        ->and($source->isConfigured())->toBeTrue();
+})->with('tier3ApiSources');
+
+it('reports connectivity through test() for tier 3 :key', function (string $key, string $class): void {
+    fakeTier3Http($key, $key.'/search.json');
+
+    expect(keyedInspirationSource($class)->test())->toBeTrue();
+})->with('tier3ApiSources');
+
+it('reports a failed connectivity test through test() for tier 3 :key', function (string $key, string $class): void {
+    fakeTier3Http($key, $key.'/search.json', 500);
+
+    expect(keyedInspirationSource($class)->test())->toBeFalse();
+})->with('tier3ApiSources');
+
+it('registers every tier 3 adapter in the source manager', function (): void {
+    $keys = app(SourceManager::class)->all()->keys()->all();
+
+    expect($keys)->toContain('pixiv', 'bandcamp');
+});
+
+it('reports pixiv as unconfigured without a refresh token', function (): void {
+    expect((new PixivSource)->isConfigured())->toBeFalse();
+
+    $source = new PixivSource;
+    $source->setCredentials(['refresh_token' => '']);
+
+    expect($source->isConfigured())->toBeFalse();
+});
+
+it('skips pixiv ugoira entries', function (): void {
+    fakeTier3Http('pixiv', 'pixiv/search.json');
+
+    $page = keyedInspirationSource(PixivSource::class)->search('portrait', 1, new SourceQuery);
+
+    $ids = array_map(static fn ($item): string => $item->sourceId, $page->items);
+
+    expect($ids)->toBe(['98765432', '98765433'])
+        ->and($ids)->not->toContain('98765434');
+});
+
+it('caches the pixiv access token across searches', function (): void {
+    fakeTier3Http('pixiv', 'pixiv/search.json');
+
+    $source = keyedInspirationSource(PixivSource::class);
+    $source->search('portrait', 1, new SourceQuery);
+    $source->search('portrait', 2, new SourceQuery);
+
+    $tokenRequests = Http::recorded(fn (Request $request): bool => str_contains($request->url(), 'auth/token'))->count();
+
+    expect($tokenRequests)->toBe(1);
+});
+
+it('wraps an invalid pixiv refresh token into a source exception', function (): void {
+    Http::fake([
+        '*oauth.secure.pixiv.net/auth/token*' => Http::response(['error' => 'invalid_grant'], 400),
+        '*app-api.pixiv.net/v1/search/illust*' => Http::response(['illusts' => []]),
+    ]);
+
+    keyedInspirationSource(PixivSource::class)->search('portrait', 1, new SourceQuery);
+})->throws(SourceException::class, 'pixiv: token inválido o expirado — revisá tu refresh token');
+
+it('sends the pixiv bearer token, offset and search target', function (): void {
+    fakeTier3Http('pixiv', 'pixiv/search.json');
+
+    keyedInspirationSource(PixivSource::class)->search('portrait', 2, new SourceQuery(maturity: 'allowed'));
+
+    Http::assertSent(function (Request $request): bool {
+        if (! str_contains($request->url(), 'app-api.pixiv.net/v1/search/illust')) {
+            return false;
+        }
+
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['word'] ?? null) === 'portrait'
+            && ($query['search_target'] ?? null) === 'partial_match_for_tags'
+            && ($query['offset'] ?? null) === '24'
+            && ! array_key_exists('filter', $query)
+            && $request->hasHeader('Authorization', 'Bearer fake-token');
+    });
+});
+
+it('adds the pixiv for_ios filter when maturity is safe', function (): void {
+    fakeTier3Http('pixiv', 'pixiv/search.json');
+
+    keyedInspirationSource(PixivSource::class)->search('portrait', 1, new SourceQuery(maturity: 'safe'));
+
+    Http::assertSent(function (Request $request): bool {
+        if (! str_contains($request->url(), 'app-api.pixiv.net/v1/search/illust')) {
+            return false;
+        }
+
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['filter'] ?? null) === 'for_ios';
+    });
+});
+
+it('delegates bandcamp search to the discover feed and logs a warning', function (): void {
+    Log::spy();
+    fakeTier3Http('bandcamp', 'bandcamp/search.json');
+
+    $page = (new BandcampSource)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->not->toBeEmpty();
+
+    Log::shouldHaveReceived('warning')->once();
+});
+
+it('posts the minimal discover payload to bandcamp', function (): void {
+    fakeTier3Http('bandcamp', 'bandcamp/search.json');
+
+    (new BandcampSource)->explore(1, new SourceQuery);
+
+    Http::assertSent(function (Request $request): bool {
+        if (! str_contains($request->url(), 'get_discover_items')) {
+            return false;
+        }
+
+        $data = $request->data();
+
+        return $request->method() === 'POST'
+            && ($data['category'] ?? null) === 'music'
+            && ($data['genre'] ?? null) === 'all'
+            && ($data['region'] ?? null) === 'all'
+            && ($data['query'] ?? null) === ''
+            && ($data['count'] ?? null) === 24;
+    });
+});
+
+it('builds bandcamp cover urls and prefers the album title', function (): void {
+    fakeTier3Http('bandcamp', 'bandcamp/search.json');
+
+    $page = (new BandcampSource)->explore(1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(2)
+        ->and($page->items[0]->sourceId)->toBe('791510690')
+        ->and($page->items[0]->pageUrl)->toBe('https://embercollective.bandcamp.com/album/ember-sessions')
+        ->and($page->items[0]->imageUrl)->toBe('https://f4.bcbits.com/img/a3809045440_10.jpg')
+        ->and($page->items[0]->title)->toBe('Ember Sessions')
+        ->and($page->items[0]->author)->toBe('Ember Collective')
+        ->and($page->items[1]->title)->toBe('Ash Tracks Deluxe')
+        ->and($page->items[1]->imageUrl)->toBe('https://f4.bcbits.com/img/a9812736450_10.jpg');
 });

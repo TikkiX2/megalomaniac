@@ -8,6 +8,7 @@ use App\Inspiration\Contracts\Source;
 use App\Inspiration\Sources\Api\AreNaSource;
 use App\Inspiration\Sources\Api\ArtInstituteChicagoSource;
 use App\Inspiration\Sources\Api\ArtStationSource;
+use App\Inspiration\Sources\Api\BandcampSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
 use App\Inspiration\Sources\Api\DiscogsSource;
 use App\Inspiration\Sources\Api\EuropeanaSource;
@@ -18,6 +19,7 @@ use App\Inspiration\Sources\Api\MetMuseumSource;
 use App\Inspiration\Sources\Api\OpenverseSource;
 use App\Inspiration\Sources\Api\PexelsSource;
 use App\Inspiration\Sources\Api\PixabaySource;
+use App\Inspiration\Sources\Api\PixivSource;
 use App\Inspiration\Sources\Api\RijksmuseumSource;
 use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
@@ -82,6 +84,8 @@ class InspirationServiceProvider extends ServiceProvider
         DribbbleSource::class,
         AwwwardsSource::class,
         NewgroundsSource::class,
+        PixivSource::class,
+        BandcampSource::class,
     ];
 
     public function register(): void
