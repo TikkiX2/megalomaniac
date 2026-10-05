@@ -73,6 +73,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Credential fields per source
+    |--------------------------------------------------------------------------
+    |
+    | Canonical shape of the per-user credential bag. The settings form and
+    | the update request validate `keys.{source}` against these field names
+    | for every registered source whose capabilities require a key. Sources
+    | missing from this map default to a single `key` field.
+    |
+    */
+
+    'credential_fields' => [
+        'flickr' => ['key'],
+        'tumblr' => ['key'],
+        'unsplash' => ['key'],
+        'pexels' => ['key'],
+        'pixabay' => ['key'],
+        'discogs' => ['token'],
+        'giphy' => ['key'],
+        'europeana' => ['key'],
+        'rijksmuseum' => ['key'],
+        'wikiart' => ['key'],
+        'pixiv' => ['refresh_token'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Tier 3 sources
     |--------------------------------------------------------------------------
     |
