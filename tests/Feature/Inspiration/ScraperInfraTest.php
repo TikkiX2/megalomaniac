@@ -89,16 +89,49 @@ it('raises a SourceException for a 403 anti-bot response', function () {
 });
 
 it('wraps transport failures such as timeouts in a SourceException', function () {
-    Http::fake([
-        '*' => fn () => throw new ConnectionException('cURL error 28: Operation timed out'),
-    ]);
+    $attempts = 0;
+
+    Http::fake(function () use (&$attempts) {
+        $attempts++;
+
+        throw new ConnectionException('cURL error 28: Operation timed out');
+    });
 
     $exception = scraperException(fn () => (new ScraperClient)->get('https://posterspy.test/'));
 
     expect($exception)->toBeInstanceOf(SourceException::class)
         ->and($exception?->getMessage())->toContain('posterspy.test')
         ->and($exception?->getMessage())->toContain('cURL error 28')
-        ->and($exception?->getPrevious())->toBeInstanceOf(ConnectionException::class);
+        ->and($exception?->getPrevious())->toBeInstanceOf(ConnectionException::class)
+        ->and($attempts)->toBe(2);
+});
+
+it('retries the request once before returning a later success', function () {
+    Http::fake([
+        '*' => Http::sequence()
+            ->pushStatus(500)
+            ->push('<html>recovered</html>', 200),
+    ]);
+
+    expect((new ScraperClient)->get('https://design.test/feed'))->toBe('<html>recovered</html>');
+
+    // Two total attempts: the initial 500 then the successful retry.
+    Http::assertSentCount(2);
+});
+
+it('raises a SourceException when the retry also fails', function () {
+    Http::fake([
+        '*' => Http::sequence()
+            ->pushStatus(500)
+            ->pushStatus(500),
+    ]);
+
+    $exception = scraperException(fn () => (new ScraperClient)->get('https://design.test/feed'));
+
+    expect($exception)->toBeInstanceOf(SourceException::class)
+        ->and($exception?->getMessage())->toBe('scraper: design.test responded 500');
+
+    Http::assertSentCount(2);
 });
 
 it('extracts absolute card URLs with srcset, data-src and ancestor fallbacks', function () {
@@ -145,6 +178,47 @@ it('prefers a lazy-load URL over a data URI placeholder', function () {
     expect($cards)->toHaveCount(1)
         ->and($cards[0]['imageUrl'])->toBe('https://cdn.example.com/5.jpg')
         ->and($cards[0]['pageUrl'])->toBe('https://example.test/p/5');
+});
+
+it('falls back through an array of title selectors', function () {
+    $html = '<div class="card"><a class="card-link" href="/p/6"><img src="/6.jpg"></a>'
+        .'<figcaption class="caption">Caption Title</figcaption></div>';
+
+    $cards = (new HtmlParser)->cards($html, [
+        'card' => '.card',
+        'image' => 'img',
+        'link' => 'a.card-link',
+        'title' => ['.title', '.caption'],
+        'base' => 'https://example.test/',
+    ]);
+
+    expect($cards)->toHaveCount(1)
+        ->and($cards[0]['title'])->toBe('Caption Title');
+});
+
+it('keeps only absolute URLs when neither base selector nor base tag is present', function () {
+    $cards = (new HtmlParser)->cards(scraperFixture('nobase'), [
+        'card' => '.card',
+        'image' => 'img',
+        'link' => 'a.card-link',
+        'title' => null,
+    ]);
+
+    expect($cards)->toHaveCount(1)
+        ->and($cards[0]['imageUrl'])->toBe('https://cdn.test/1.jpg')
+        ->and($cards[0]['pageUrl'])->toBe('https://absolute.test/p/1');
+});
+
+it('returns an empty array when a card selector is invalid CSS', function () {
+    $cards = (new HtmlParser)->cards(scraperFixture('simple'), [
+        'card' => ['!!!not a selector!!!'],
+        'image' => 'img',
+        'link' => 'a',
+        'title' => null,
+        'base' => 'https://example.test/',
+    ]);
+
+    expect($cards)->toBe([]);
 });
 
 it('resolves relative URLs against a base tag when no base selector is passed', function () {

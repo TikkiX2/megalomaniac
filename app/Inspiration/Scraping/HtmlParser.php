@@ -20,7 +20,7 @@ use Throwable;
 final class HtmlParser
 {
     /**
-     * @param  array{card: string|array<int, string>, image: string, link: string, title?: string|null, base?: string|null}  $selectors
+     * @param  array{card: string|array<int, string>, image: string, link: string, title?: string|array<int, string>|null, base?: string|null}  $selectors
      * @return array<int, array{imageUrl: string, pageUrl: string, title: ?string}>
      */
     public function cards(string $html, array $selectors): array
@@ -45,7 +45,13 @@ final class HtmlParser
         $cards = [];
 
         foreach ($this->normalizeSelectors($selectors['card'] ?? []) as $cardSelector) {
-            $nodes = $crawler->filter($cardSelector);
+            $nodes = $this->matches($crawler, $cardSelector);
+
+            // An invalid CSS selector is an adapter bug, not a site change:
+            // degrade to an empty result instead of leaking a CssSelector error.
+            if ($nodes === null) {
+                return [];
+            }
 
             if ($nodes->count() === 0) {
                 continue;
@@ -64,7 +70,7 @@ final class HtmlParser
                     return;
                 }
 
-                $imageUrl = $this->resolveUrl($this->imageRawUrl($imageNode), $baseUri);
+                $imageUrl = $this->resolveUrl($this->imageRawUrl($imageNode, $baseUri), $baseUri);
                 $linkNode = $this->linkNode($card, $imageNode, $linkSelector);
                 $pageUrl = $linkNode === null ? null : $this->resolveUrl($linkNode->attr('href'), $baseUri);
 
@@ -101,19 +107,24 @@ final class HtmlParser
         ));
     }
 
-    private function firstMatch(Crawler $scope, string $selector): ?Crawler
+    private function matches(Crawler $scope, string $selector): ?Crawler
     {
         if (trim($selector) === '') {
             return null;
         }
 
         try {
-            $matches = $scope->filter($selector);
+            return $scope->filter($selector);
         } catch (Throwable) {
             return null;
         }
+    }
 
-        return $matches->count() > 0 ? $matches->first() : null;
+    private function firstMatch(Crawler $scope, string $selector): ?Crawler
+    {
+        $matches = $this->matches($scope, $selector);
+
+        return $matches !== null && $matches->count() > 0 ? $matches->first() : null;
     }
 
     private function linkNode(Crawler $card, Crawler $imageNode, string $linkSelector): ?Crawler
@@ -135,26 +146,37 @@ final class HtmlParser
         return $ancestors->count() > 0 ? $ancestors->first() : null;
     }
 
-    private function imageRawUrl(Crawler $imageNode): ?string
+    private function imageRawUrl(Crawler $imageNode, ?string $baseUri): ?string
     {
         foreach (['src', 'data-src'] as $attribute) {
             $value = $this->clean($imageNode->attr($attribute));
 
-            // A `data:` URI is a lazy-load placeholder, not the real image, so
-            // keep looking instead of returning something the filters reject.
-            if ($value !== null && ! $this->isPlaceholder($value)) {
+            // Skip anything that is not a usable absolute http(s) image once
+            // resolved: `data:`/`javascript:` placeholders, `about:blank`, or a
+            // relative URL with no base. Keep looking at the lazy-load attrs.
+            if ($value !== null && ! $this->isPlaceholder($value, $baseUri)) {
                 return $value;
             }
         }
 
         $srcset = $this->clean($imageNode->attr('srcset'));
 
-        return $srcset === null ? null : $this->firstSrcsetCandidate($srcset);
+        if ($srcset === null) {
+            return null;
+        }
+
+        $candidate = $this->firstSrcsetCandidate($srcset);
+
+        if ($candidate === null || $this->isPlaceholder($candidate, $baseUri)) {
+            return null;
+        }
+
+        return $candidate;
     }
 
-    private function isPlaceholder(string $url): bool
+    private function isPlaceholder(string $url, ?string $baseUri): bool
     {
-        return str_starts_with(strtolower($url), 'data:');
+        return $this->resolveUrl($url, $baseUri) === null;
     }
 
     private function firstSrcsetCandidate(string $srcset): ?string
@@ -171,17 +193,19 @@ final class HtmlParser
     }
 
     /**
-     * @param  string|array<mixed>|null  $titleSelector
+     * @param  string|array<int, string>|null  $titleSelector
      */
     private function title(Crawler $card, string|array|null $titleSelector): ?string
     {
-        if (! is_string($titleSelector) || $titleSelector === '') {
-            return null;
+        foreach ($this->normalizeSelectors($titleSelector ?? []) as $selector) {
+            $node = $this->firstMatch($card, $selector);
+
+            if ($node !== null) {
+                return $this->clean($node->text());
+            }
         }
 
-        $node = $this->firstMatch($card, $titleSelector);
-
-        return $node === null ? null : $this->clean($node->text());
+        return null;
     }
 
     private function resolveUrl(?string $url, ?string $baseUri): ?string

@@ -48,9 +48,11 @@ final class ScraperClient
 
     private function request(): PendingRequest
     {
+        // Two total attempts: the initial request plus one retry after a short
+        // backoff (Laravel's retry helper counts attempts, not retries).
         return Http::withHeaders(['User-Agent' => self::USER_AGENT])
             ->timeout((int) config('inspiration.timeouts.tier2', 12))
-            ->retry(1, 200, throw: false);
+            ->retry(2, 200, throw: false);
     }
 
     private function host(string $url): string
