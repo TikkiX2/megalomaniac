@@ -63,6 +63,9 @@ export default function Lightbox({
             return;
         }
 
+        // Clear a previous load error here so every navigation path (buttons and
+        // arrow keys) lets the next image run its own `onError`.
+        setImageFailed(false);
         onNavigate((index + delta + items.length) % items.length);
     };
 
@@ -122,6 +125,13 @@ export default function Lightbox({
     }
 
     const item = items[index];
+
+    // The grid can shrink underneath an open viewer (e.g. a background reload):
+    // never dereference a stale index.
+    if (!item) {
+        return null;
+    }
+
     const savedBoardId = savedBoardIdFor?.(item);
     const downloadState: DownloadState =
         item.id !== undefined ? (downloadStates?.[item.id] ?? 'idle') : 'idle';
@@ -145,11 +155,22 @@ export default function Lightbox({
 
         const first = nodes[0];
         const last = nodes[nodes.length - 1];
+        const active = document.activeElement;
 
-        if (event.shiftKey && document.activeElement === first) {
+        // The dialog root itself receives focus on open but is not a focusable
+        // node; a backward Tab from it (or any focus left outside) would escape
+        // the aria-modal overlay. Pull it back to the matching edge.
+        if (active === panelRef.current || !panelRef.current.contains(active)) {
+            event.preventDefault();
+            (event.shiftKey ? last : first).focus();
+
+            return;
+        }
+
+        if (event.shiftKey && active === first) {
             event.preventDefault();
             last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
+        } else if (!event.shiftKey && active === last) {
             event.preventDefault();
             first.focus();
         }
@@ -165,7 +186,7 @@ export default function Lightbox({
             onKeyDown={trapFocus}
             className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-0 outline-none duration-200 sm:p-6"
         >
-            <div className="relative flex h-full w-full max-w-6xl flex-col overflow-hidden sm:max-h-[90vh] sm:rounded-2xl sm:border sm:border-border sm:bg-card sm:shadow-2xl">
+            <div className="relative flex h-full w-full max-w-6xl flex-col overflow-hidden sm:max-h-[90vh] sm:flex-row sm:rounded-2xl sm:border sm:border-border sm:bg-card sm:shadow-2xl">
                 <button
                     type="button"
                     onClick={onClose}

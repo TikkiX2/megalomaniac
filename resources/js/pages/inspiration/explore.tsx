@@ -60,11 +60,14 @@ export default function Explore() {
     const [lightbox, setLightbox] = useState<{
         items: LightboxItem[];
         index: number;
-        origin: HTMLElement | null;
     } | null>(null);
+    // Separate from `lightbox` so the origin survives the closing render: the
+    // same update that closes the viewer must not null the element to refocus.
+    const [lightboxOrigin, setLightboxOrigin] = useState<HTMLElement | null>(null);
 
     const openLightbox = (items: LightboxItem[], itemIndex: number, origin: HTMLElement) => {
-        setLightbox({ items, index: itemIndex, origin });
+        setLightboxOrigin(origin);
+        setLightbox({ items, index: itemIndex });
     };
 
     const closeLightbox = () => setLightbox(null);
@@ -291,7 +294,7 @@ export default function Explore() {
                     setSaveItem(item as InspirationItem);
                 }}
                 savedBoardIdFor={(item) => saved[`${item.source}:${item.source_id}`]}
-                returnFocusTo={lightbox?.origin ?? null}
+                returnFocusTo={lightboxOrigin}
             />
 
             <SaveModal

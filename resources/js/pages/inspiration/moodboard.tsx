@@ -27,9 +27,10 @@ export default function Moodboard() {
 
     const [downloads, setDownloads] = useState<Record<number, DownloadState>>({});
     const [error, setError] = useState<string | null>(null);
-    const [lightbox, setLightbox] = useState<{ index: number; origin: HTMLElement | null } | null>(
-        null,
-    );
+    const [lightbox, setLightbox] = useState<{ index: number } | null>(null);
+    // Kept outside `lightbox` so the origin element survives the render that
+    // closes the viewer and the focus can actually be restored.
+    const [lightboxOrigin, setLightboxOrigin] = useState<HTMLElement | null>(null);
 
     const download = async (item: SavedMoodboardItem) => {
         setError(null);
@@ -182,9 +183,10 @@ export default function Moodboard() {
 
                                         <button
                                             type="button"
-                                            onClick={(event) =>
-                                                setLightbox({ index: itemIndex, origin: event.currentTarget })
-                                            }
+                                            onClick={(event) => {
+                                                setLightboxOrigin(event.currentTarget);
+                                                setLightbox({ index: itemIndex });
+                                            }}
                                             aria-label="Expandir imagen"
                                             className="absolute inset-0 flex cursor-zoom-in items-center justify-center opacity-0 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary group-hover:opacity-100 group-focus-within:opacity-100"
                                         >
@@ -320,7 +322,7 @@ export default function Moodboard() {
                 onDownload={(item) => void download(item as SavedMoodboardItem)}
                 downloadStates={downloads}
                 onRefresh={() => router.reload({ only: ['items', 'total', 'sources'] })}
-                returnFocusTo={lightbox?.origin ?? null}
+                returnFocusTo={lightboxOrigin}
             />
         </MainLayout>
     );
