@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Inspiration\Contracts\Source;
+use App\Inspiration\Dtos\Page;
+use App\Inspiration\Dtos\SourceCapabilities;
+use App\Inspiration\Dtos\SourceQuery;
 use App\Inspiration\InspirationSettings;
-use App\Models\InspirationSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -83,9 +86,11 @@ it('renders the settings page with source metadata and no plain keys', function 
                     && $byKey['flickr']['needs_key'] === true
                     && $byKey['flickr']['has_key'] === true
                     && $byKey['flickr']['configured'] === true
+                    && $byKey['flickr']['credential_fields'] === ['key']
                     && $byKey['flickr']['enabled'] === false
                     && $byKey['flickr']['has_tier3_notice'] === false
                     && $byKey['open-one']['needs_key'] === false
+                    && $byKey['open-one']['credential_fields'] === []
                     && $byKey['open-one']['has_key'] === false
                     && $byKey['open-one']['enabled'] === true;
             }));
@@ -149,12 +154,13 @@ it('ignores keys sent for a source that does not need one', function () {
         ->and($bag->hasKey('wallhaven'))->toBeFalse();
 });
 
-it('keeps existing keys when a patch does not send keys', function () {
+it('keeps omitted fields when a patch only sends maturity', function () {
     FakeInspirationSource::register([new FakeInspirationSource('flickr', needsKey: true)]);
 
     $user = settingsUserWith([
         'keys' => ['flickr' => ['key' => 'kept']],
         'enabled_sources' => ['flickr'],
+        'acknowledged_tier3' => ['pixiv'],
     ]);
 
     $this->actingAs($user)
@@ -165,7 +171,45 @@ it('keeps existing keys when a patch does not send keys', function () {
 
     expect($bag->keys)->toBe(['flickr' => ['key' => 'kept']])
         ->and($bag->maturity)->toBeTrue()
-        ->and($bag->enabledSources)->toBe([]);
+        ->and($bag->enabledSources)->toBe(['flickr'])
+        ->and($bag->acknowledgedTier3)->toBe(['pixiv']);
+});
+
+it('exposes per-source credential fields and round-trips a non-default field', function () {
+    FakeInspirationSource::register([new FakeInspirationSource('discogs', needsKey: true)]);
+
+    $user = settingsUserWith([]);
+
+    $this->actingAs($user)
+        ->get('/inspiration/settings')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('sources', function ($sources): bool {
+            $discogs = collect($sources)->firstWhere('key', 'discogs');
+
+            return $discogs['credential_fields'] === ['token']
+                && $discogs['has_key'] === false;
+        }));
+
+    $this->actingAs($user)
+        ->patch('/inspiration/settings', ['keys' => ['discogs' => ['token' => 'tok-secret']]])
+        ->assertRedirect();
+
+    $bag = app(InspirationSettings::class)->for($user);
+
+    expect($bag->keys)->toBe(['discogs' => ['token' => 'tok-secret']])
+        ->and($bag->hasKey('discogs'))->toBeTrue();
+
+    $response = $this->actingAs($user)->get('/inspiration/settings');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page->where('sources', function ($sources): bool {
+            $discogs = collect($sources)->firstWhere('key', 'discogs');
+
+            return $discogs['credential_fields'] === ['token']
+                && $discogs['has_key'] === true;
+        }));
+
+    expect($response->getContent())->not->toContain('tok-secret');
 });
 
 it('normalizes an empty key to null', function () {
@@ -251,20 +295,103 @@ it('fails the test endpoint for an unknown source', function () {
     assertFailedTestResponse($response);
 });
 
-it('does not persist anything beyond what the request carried', function () {
-    $user = settingsUserWith([]);
+it('leaves the bag unchanged when the patch is empty', function () {
+    FakeInspirationSource::register([new FakeInspirationSource('flickr', needsKey: true)]);
+
+    $user = settingsUserWith([
+        'enabled_sources' => ['flickr'],
+        'keys' => ['flickr' => ['key' => 'kept']],
+        'maturity' => true,
+        'zerochan_ua' => 'Megalomaniac/2.0',
+        'acknowledged_tier3' => ['pixiv'],
+    ]);
 
     $this->actingAs($user)
         ->patch('/inspiration/settings', [])
         ->assertRedirect();
 
-    $body = InspirationSetting::query()->whereKey($user->getKey())->first()?->body;
+    $bag = app(InspirationSettings::class)->for($user);
 
-    expect($body)->toBe([
-        'enabled_sources' => [],
-        'keys' => [],
-        'maturity' => false,
-        'zerochan_ua' => null,
-        'acknowledged_tier3' => [],
-    ]);
+    expect($bag->enabledSources)->toBe(['flickr'])
+        ->and($bag->keys)->toBe(['flickr' => ['key' => 'kept']])
+        ->and($bag->maturity)->toBeTrue()
+        ->and($bag->zerochanUa)->toBe('Megalomaniac/2.0')
+        ->and($bag->acknowledgedTier3)->toBe(['pixiv']);
+});
+
+it('normalizes a blank zerochan user agent to null', function () {
+    $user = settingsUserWith(['zerochan_ua' => 'Megalomaniac/2.0']);
+
+    $this->actingAs($user)
+        ->patch('/inspiration/settings', ['zerochan_ua' => '   '])
+        ->assertRedirect();
+
+    expect(app(InspirationSettings::class)->for($user)->zerochanUa)->toBeNull();
+});
+
+it('keeps the zerochan user agent when the patch omits it', function () {
+    $user = settingsUserWith(['zerochan_ua' => 'Megalomaniac/2.0']);
+
+    $this->actingAs($user)
+        ->patch('/inspiration/settings', ['maturity' => true])
+        ->assertRedirect();
+
+    expect(app(InspirationSettings::class)->for($user)->zerochanUa)->toBe('Megalomaniac/2.0');
+});
+
+it('does not leak non-source exception messages from the test endpoint', function () {
+    $exploding = new class implements Source
+    {
+        public function key(): string
+        {
+            return 'boom';
+        }
+
+        public function label(): string
+        {
+            return 'Boom';
+        }
+
+        public function capabilities(): SourceCapabilities
+        {
+            return new SourceCapabilities(true, true, false, false);
+        }
+
+        public function isConfigured(): bool
+        {
+            return true;
+        }
+
+        /**
+         * @param  array<string, mixed>  $credentials
+         */
+        public function setCredentials(array $credentials): void {}
+
+        public function search(string $query, int $page, SourceQuery $queryOptions): Page
+        {
+            return Page::fromItems([], false, null);
+        }
+
+        public function explore(int $page, SourceQuery $queryOptions): Page
+        {
+            return Page::fromItems([], false, null);
+        }
+
+        public function test(): bool
+        {
+            throw new RuntimeException('secret internal detail');
+        }
+    };
+
+    app()->instance('inspiration.fake.boom', $exploding);
+    app()->tag(['inspiration.fake.boom'], 'inspiration.sources');
+
+    $user = settingsUserWith([]);
+
+    $response = $this->actingAs($user)->post('/inspiration/sources/boom/test');
+
+    assertFailedTestResponse($response);
+    expect($response->json('message'))
+        ->toBe('no se pudo conectar con esta fuente')
+        ->not->toContain('secret internal detail');
 });

@@ -17,6 +17,7 @@ export interface InspirationSourceRow {
     key: string;
     label: string;
     needs_key: boolean;
+    credential_fields: string[];
     has_key: boolean;
     configured: boolean;
     enabled: boolean;
@@ -42,12 +43,22 @@ interface TestResult {
 }
 
 /**
- * Field name persisted under `keys.{source}` for every source whose
- * capabilities require a key. Sources registered so far use a single `key`
- * field; the canonical per-source map lives in `config/inspiration.php`
- * (e.g. `discogs` → `token`, `pixiv` → `refresh_token`).
+ * Draft-state key for one credential input, e.g. `discogs::token`.
  */
-const DEFAULT_CREDENTIAL_FIELD = 'key';
+function draftKey(source: string, field: string): string {
+    return `${source}::${field}`;
+}
+
+/**
+ * Credential fields the backend expects for `keys.{source}`. The server always
+ * sends at least one field for a source that needs a key; the `key` fallback
+ * keeps older/cached payloads working.
+ */
+function credentialFieldsFor(source: InspirationSourceRow): string[] {
+    return source.credential_fields && source.credential_fields.length > 0
+        ? source.credential_fields
+        : ['key'];
+}
 
 /**
  * Minimal accessible switch (no dedicated UI primitive exists in the repo).
@@ -105,18 +116,10 @@ export default function InspirationSettings() {
     const tier3Sources = sources.filter((source) => source.has_tier3_notice);
 
     /**
-     * Every patch carries the complete bag because `update()` replaces it and
-     * resets anything the client omits. Keys stay out unless the user typed
-     * one: the server merges stored keys for sources the payload does not
-     * mention (so an unrelated toggle never wipes a saved credential).
+     * Patches send only the field that changed: the backend merges the payload
+     * over the stored bag, so an unrelated toggle can never wipe enablement,
+     * maturity, acknowledgement or credentials.
      */
-    const basePayload = {
-        enabled_sources: settings.enabled_sources,
-        maturity: settings.maturity,
-        zerochan_ua: settings.zerochan_ua,
-        acknowledged_tier3: settings.acknowledged_tier3,
-    };
-
     const toggleSource = (source: InspirationSourceRow, enabled: boolean) => {
         const enabledSources = enabled
             ? Array.from(new Set([...settings.enabled_sources, source.key]))
@@ -124,7 +127,7 @@ export default function InspirationSettings() {
 
         router.patch(
             inspiration.settings.update.url(),
-            { ...basePayload, enabled_sources: enabledSources },
+            { enabled_sources: enabledSources },
             { preserveScroll: true },
         );
     };
@@ -132,7 +135,7 @@ export default function InspirationSettings() {
     const toggleMaturity = (maturity: boolean) => {
         router.patch(
             inspiration.settings.update.url(),
-            { ...basePayload, maturity },
+            { maturity },
             { preserveScroll: true },
         );
     };
@@ -144,13 +147,19 @@ export default function InspirationSettings() {
 
         router.patch(
             inspiration.settings.update.url(),
-            { ...basePayload, acknowledged_tier3: acknowledgedTier3 },
+            { acknowledged_tier3: acknowledgedTier3 },
             { preserveScroll: true },
         );
     };
 
     const saveKey = (source: InspirationSourceRow) => {
-        const value = (drafts[source.key] ?? '').trim();
+        const fields = credentialFieldsFor(source);
+        const credentials = Object.fromEntries(
+            fields.map((field) => [
+                field,
+                (drafts[draftKey(source.key, field)] ?? '').trim(),
+            ]),
+        );
 
         setSaving(source.key);
         setErrors((current) => {
@@ -162,31 +171,37 @@ export default function InspirationSettings() {
 
         router.patch(
             inspiration.settings.update.url(),
-            {
-                ...basePayload,
-                keys: { [source.key]: { [DEFAULT_CREDENTIAL_FIELD]: value } },
-            },
+            { keys: { [source.key]: credentials } },
             {
                 preserveScroll: true,
                 onSuccess: () => {
                     setSaving(null);
                     setDrafts((current) => {
                         const next = { ...current };
-                        delete next[source.key];
+
+                        for (const field of fields) {
+                            delete next[draftKey(source.key, field)];
+                        }
 
                         return next;
                     });
                 },
                 onError: (validationErrors) => {
                     setSaving(null);
+
+                    const fieldError = fields
+                        .map(
+                            (field) =>
+                                validationErrors[`keys.${source.key}.${field}`],
+                        )
+                        .find((message): message is string => Boolean(message));
+
                     setErrors((current) => ({
                         ...current,
                         [source.key]:
-                            validationErrors[
-                                `keys.${source.key}.${DEFAULT_CREDENTIAL_FIELD}`
-                            ] ??
+                            fieldError ??
                             Object.values(validationErrors)[0] ??
-                            'No se pudo guardar la key de esta fuente.',
+                            'No se pudo guardar la credencial de esta fuente.',
                     }));
                 },
             },
@@ -374,84 +389,98 @@ export default function InspirationSettings() {
 
                                             <td className="py-3 pr-4">
                                                 {source.needs_key ? (
-                                                    <div className="space-y-1">
+                                                    <div className="space-y-1.5">
+                                                        {credentialFieldsFor(
+                                                            source,
+                                                        ).map((field) => {
+                                                            const fieldKey =
+                                                                draftKey(
+                                                                    source.key,
+                                                                    field,
+                                                                );
+
+                                                            return (
+                                                                <div
+                                                                    key={field}
+                                                                    className="flex items-center gap-1.5"
+                                                                >
+                                                                    <Input
+                                                                        type={
+                                                                            revealed[
+                                                                                fieldKey
+                                                                            ]
+                                                                                ? 'text'
+                                                                                : 'password'
+                                                                        }
+                                                                        name={`keys.${source.key}.${field}`}
+                                                                        value={
+                                                                            drafts[
+                                                                                fieldKey
+                                                                            ] ??
+                                                                            ''
+                                                                        }
+                                                                        autoComplete="off"
+                                                                        placeholder={
+                                                                            source.has_key
+                                                                                ? `•••••••• (${field} guardada)`
+                                                                                : `Pegá ${field}`
+                                                                        }
+                                                                        aria-label={`${field} de ${source.label}`}
+                                                                        className="h-8 w-44 bg-background font-mono text-xs"
+                                                                        onChange={(
+                                                                            event,
+                                                                        ) =>
+                                                                            setDrafts(
+                                                                                (
+                                                                                    current,
+                                                                                ) => ({
+                                                                                    ...current,
+                                                                                    [fieldKey]:
+                                                                                        event
+                                                                                            .target
+                                                                                            .value,
+                                                                                }),
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="size-8"
+                                                                        aria-label={
+                                                                            revealed[
+                                                                                fieldKey
+                                                                            ]
+                                                                                ? `Ocultar ${field}`
+                                                                                : `Mostrar ${field}`
+                                                                        }
+                                                                        onClick={() =>
+                                                                            setRevealed(
+                                                                                (
+                                                                                    current,
+                                                                                ) => ({
+                                                                                    ...current,
+                                                                                    [fieldKey]:
+                                                                                        !current[
+                                                                                            fieldKey
+                                                                                        ],
+                                                                                }),
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-[16px]">
+                                                                            {revealed[
+                                                                                fieldKey
+                                                                            ]
+                                                                                ? 'visibility_off'
+                                                                                : 'visibility'}
+                                                                        </span>
+                                                                    </Button>
+                                                                </div>
+                                                            );
+                                                        })}
                                                         <div className="flex items-center gap-1.5">
-                                                            <Input
-                                                                type={
-                                                                    revealed[
-                                                                        source
-                                                                            .key
-                                                                    ]
-                                                                        ? 'text'
-                                                                        : 'password'
-                                                                }
-                                                                value={
-                                                                    drafts[
-                                                                        source
-                                                                            .key
-                                                                    ] ?? ''
-                                                                }
-                                                                autoComplete="off"
-                                                                placeholder={
-                                                                    source.has_key
-                                                                        ? '•••••••• (guardada)'
-                                                                        : 'Pegá la key'
-                                                                }
-                                                                aria-label={`Key de ${source.label}`}
-                                                                className="h-8 w-44 bg-background font-mono text-xs"
-                                                                onChange={(
-                                                                    event,
-                                                                ) =>
-                                                                    setDrafts(
-                                                                        (
-                                                                            current,
-                                                                        ) => ({
-                                                                            ...current,
-                                                                            [source.key]:
-                                                                                event
-                                                                                    .target
-                                                                                    .value,
-                                                                        }),
-                                                                    )
-                                                                }
-                                                            />
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="size-8"
-                                                                aria-label={
-                                                                    revealed[
-                                                                        source
-                                                                            .key
-                                                                    ]
-                                                                        ? 'Ocultar key'
-                                                                        : 'Mostrar key'
-                                                                }
-                                                                onClick={() =>
-                                                                    setRevealed(
-                                                                        (
-                                                                            current,
-                                                                        ) => ({
-                                                                            ...current,
-                                                                            [source.key]:
-                                                                                !current[
-                                                                                    source
-                                                                                        .key
-                                                                                ],
-                                                                        }),
-                                                                    )
-                                                                }
-                                                            >
-                                                                <span className="material-symbols-outlined text-[16px]">
-                                                                    {revealed[
-                                                                        source
-                                                                            .key
-                                                                    ]
-                                                                        ? 'visibility_off'
-                                                                        : 'visibility'}
-                                                                </span>
-                                                            </Button>
                                                             <Button
                                                                 type="button"
                                                                 size="sm"
@@ -472,15 +501,16 @@ export default function InspirationSettings() {
                                                                 )}
                                                                 Guardar
                                                             </Button>
+                                                            <InputError
+                                                                message={
+                                                                    errors[
+                                                                        source
+                                                                            .key
+                                                                    ]
+                                                                }
+                                                                className="text-xs"
+                                                            />
                                                         </div>
-                                                        <InputError
-                                                            message={
-                                                                errors[
-                                                                    source.key
-                                                                ]
-                                                            }
-                                                            className="text-xs"
-                                                        />
                                                     </div>
                                                 ) : (
                                                     <span className="text-xs text-muted-foreground">

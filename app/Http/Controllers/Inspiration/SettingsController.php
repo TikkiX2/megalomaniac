@@ -7,12 +7,15 @@ namespace App\Http\Controllers\Inspiration;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Inspiration\UpdateInspirationSettingsRequest;
 use App\Inspiration\Contracts\Source;
+use App\Inspiration\Exceptions\SourceException;
 use App\Inspiration\InspirationSettings;
 use App\Inspiration\SourceManager;
+use App\Inspiration\Support\CredentialFields;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -21,9 +24,10 @@ use Throwable;
  * Per-user inspiration settings: source enablement, credentials, maturity and
  * the Tier 3 acknowledgement.
  *
- * Raw credential values never leave the server. `index()` only exposes a
- * per-source `has_key` boolean, and `update()` persists the complete bag while
- * preserving keys the client did not resend.
+ * Raw credential values never leave the server. `index()` exposes the
+ * per-source credential field names plus a `has_key` boolean, and `update()`
+ * merges the payload over the current bag so any field the client omits keeps
+ * its stored value (including credentials).
  */
 class SettingsController extends Controller
 {
@@ -51,6 +55,9 @@ class SettingsController extends Controller
                     'key' => $key,
                     'label' => $source->label(),
                     'needs_key' => $source->capabilities()->needsKey,
+                    'credential_fields' => $source->capabilities()->needsKey
+                        ? CredentialFields::for($key)
+                        : [],
                     'has_key' => $bag->hasKey($key),
                     'configured' => $source->isConfigured(),
                     'enabled' => $bag->isEnabled($key),
@@ -79,11 +86,13 @@ class SettingsController extends Controller
         $data = $request->validated();
 
         $this->settings->update($user, [
-            'enabled_sources' => $data['enabled_sources'] ?? [],
+            'enabled_sources' => $data['enabled_sources'] ?? $bag->enabledSources,
             'keys' => $this->mergeKeys($bag->keys, (array) ($data['keys'] ?? [])),
-            'maturity' => $data['maturity'] ?? false,
-            'zerochan_ua' => $data['zerochan_ua'] ?? null,
-            'acknowledged_tier3' => $data['acknowledged_tier3'] ?? [],
+            'maturity' => $data['maturity'] ?? $bag->maturity,
+            'zerochan_ua' => $request->exists('zerochan_ua')
+                ? $this->normalizeZerochanUa($data['zerochan_ua'] ?? null)
+                : $bag->zerochanUa,
+            'acknowledged_tier3' => $data['acknowledged_tier3'] ?? $bag->acknowledgedTier3,
         ]);
 
         return back()->with('success', 'Ajustes de inspiración guardados.');
@@ -111,8 +120,21 @@ class SettingsController extends Controller
 
         try {
             $ok = $adapter->test();
+        } catch (SourceException $exception) {
+            Log::warning('Inspiration source test failed', [
+                'source' => $source,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return $this->failure('no se pudo conectar con esta fuente: '.$exception->getMessage());
         } catch (Throwable $exception) {
-            return $this->failure($exception->getMessage());
+            Log::warning('Inspiration source test errored', [
+                'source' => $source,
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return $this->failure('no se pudo conectar con esta fuente');
         }
 
         return $ok
@@ -140,7 +162,7 @@ class SettingsController extends Controller
 
             $normalized = [];
 
-            foreach ($this->credentialFields($source) as $field) {
+            foreach (CredentialFields::for($source) as $field) {
                 $value = is_array($fields) ? ($fields[$field] ?? null) : null;
                 $normalized[$field] = is_string($value) && trim($value) !== '' ? trim($value) : null;
             }
@@ -165,13 +187,17 @@ class SettingsController extends Controller
     }
 
     /**
-     * @return array<int, string>
+     * Normalize the per-user Zerochan User-Agent: blank means "unset".
      */
-    private function credentialFields(string $source): array
+    private function normalizeZerochanUa(mixed $value): ?string
     {
-        $fields = config("inspiration.credential_fields.{$source}", ['key']);
+        if (! is_string($value)) {
+            return null;
+        }
 
-        return is_array($fields) && $fields !== [] ? array_values($fields) : ['key'];
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
     }
 
     private function failure(string $message): JsonResponse

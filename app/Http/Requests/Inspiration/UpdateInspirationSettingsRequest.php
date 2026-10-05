@@ -6,6 +6,7 @@ namespace App\Http\Requests\Inspiration;
 
 use App\Inspiration\Contracts\Source;
 use App\Inspiration\SourceManager;
+use App\Inspiration\Support\CredentialFields;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -40,7 +41,7 @@ class UpdateInspirationSettingsRequest extends FormRequest
         ];
 
         foreach ($this->keySources() as $key => $source) {
-            $fields = $this->credentialFields($key);
+            $fields = CredentialFields::for($key);
 
             $rules["keys.{$key}"] = ['nullable', 'array:'.implode(',', $fields)];
 
@@ -72,16 +73,6 @@ class UpdateInspirationSettingsRequest extends FormRequest
         return app(SourceManager::class)->all()
             ->filter(static fn (Source $source): bool => $source->capabilities()->needsKey)
             ->all();
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function credentialFields(string $source): array
-    {
-        $fields = config("inspiration.credential_fields.{$source}", ['key']);
-
-        return is_array($fields) && $fields !== [] ? array_values($fields) : ['key'];
     }
 
     /**
