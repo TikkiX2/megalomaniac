@@ -151,6 +151,16 @@ dataset('scrapeSourcesWithoutSearch', [
 ]);
 
 /**
+ * Batch C sources whose fixtures carry titled cards; the generic happy test
+ * only asserts the URL fields, so titles get their own dataset case.
+ */
+dataset('scrapeSourcesBatchC', [
+    'behance' => ['behance', BehanceSource::class],
+    'dribbble' => ['dribbble', DribbbleSource::class],
+    'awwwards' => ['awwwards', AwwwardsSource::class],
+]);
+
+/**
  * The canonical first credential field for an adapter, read from config.
  *
  * @param  class-string<Source>  $class
@@ -959,6 +969,18 @@ it('scrapes a happy feed into a non-empty page for :key', function (string $key,
     }
 })->with('scrapeSources');
 
+it('parses a non-empty title for batch C :key', function (string $key, string $class): void {
+    fakeScrapeHttp($key, $key.'/feed.html');
+
+    $page = (new $class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->not->toBeEmpty();
+
+    foreach ($page->items as $item) {
+        expect($item->title)->toBeString()->not->toBe('');
+    }
+})->with('scrapeSourcesBatchC');
+
 it('explores the :key feed without throwing and returns parsed items', function (string $key, string $class): void {
     fakeScrapeHttp($key, $key.'/feed.html');
 
@@ -1100,6 +1122,16 @@ it('reports a failed connectivity test through test() for scrape :key', function
 
     expect((new $class)->test())->toBeFalse();
 })->with('scrapeSources');
+
+it('probes the Awwwards feed rather than the 404 search page for connectivity', function (): void {
+    Http::fake(['*awwwards.com*' => Http::response(inspirationFixture('awwwards/feed.html'))]);
+
+    expect((new AwwwardsSource)->test())->toBeTrue();
+
+    // The live search path answers 404, so test() must stay on the feed.
+    Http::assertSent(fn (Request $request): bool => $request->url() === 'https://www.awwwards.com/websites/');
+    Http::assertNotSent(fn (Request $request): bool => str_contains($request->url(), '/search/'));
+});
 
 it('does not request the secondary brutalist feed when the primary yields cards', function (): void {
     fakeScrapeHttp('brutalist', 'brutalist/feed.html');

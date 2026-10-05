@@ -180,6 +180,24 @@ it('prefers a lazy-load URL over a data URI placeholder', function () {
         ->and($cards[0]['pageUrl'])->toBe('https://example.test/p/5');
 });
 
+it('falls back to data-srcset when src is a data URI placeholder', function () {
+    $cards = (new HtmlParser)->cards(scraperFixture('lazy-srcset'), [
+        'card' => '.card',
+        'image' => 'img',
+        'link' => 'a.card-link',
+        'title' => '.card-title',
+        'base' => 'https://example.test/',
+    ]);
+
+    expect($cards)->toHaveCount(2)
+        ->and($cards[0]['imageUrl'])->toBe('https://assets.test/one-440.png')
+        ->and($cards[0]['pageUrl'])->toBe('https://example.test/sites/one')
+        ->and($cards[0]['title'])->toBe('One')
+        // A plain srcset still wins over the lazy data-srcset.
+        ->and($cards[1]['imageUrl'])->toBe('https://assets.test/two-440.png')
+        ->and($cards[1]['pageUrl'])->toBe('https://example.test/sites/two');
+});
+
 it('falls back through an array of title selectors', function () {
     $html = '<div class="card"><a class="card-link" href="/p/6"><img src="/6.jpg"></a>'
         .'<figcaption class="caption">Caption Title</figcaption></div>';

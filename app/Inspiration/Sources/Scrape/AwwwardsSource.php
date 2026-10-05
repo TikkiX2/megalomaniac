@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Inspiration\Sources\Scrape;
 
+use App\Inspiration\Dtos\SourceQuery;
+use App\Inspiration\Exceptions\SourceException;
+
 /**
  * Awwwards website-showcase HTML feed.
  *
@@ -15,11 +18,10 @@ namespace App\Inspiration\Sources\Scrape;
  * live search path returned 404 during calibration, so it is frozen here and
  * locked by the URL test).
  *
- * Known divergence: the live screenshot carries `data-srcset` plus a base64
- * placeholder `src`, and the shared HtmlParser reads only src/data-src/srcset.
- * The fixture therefore uses a plain srcset. Until the parser learns
- * `data-srcset`, the live feed degrades to an empty page rather than crashing;
- * the card/link/title selectors are otherwise the real ones.
+ * The live screenshot pairs a base64 placeholder `src` with the real URL in
+ * `data-srcset`; the shared HtmlParser skips the placeholder and reads the
+ * data-srcset candidate, so the fixture mirrors that exact shape and the live
+ * feed parses. `test()` probes this feed instead of the 404 search page.
  */
 final class AwwwardsSource extends AbstractScrapeSource
 {
@@ -58,5 +60,23 @@ final class AwwwardsSource extends AbstractScrapeSource
     protected function exploreUrl(): string
     {
         return self::BASE_URL.'/websites/';
+    }
+
+    /**
+     * Probe the reachable feed for connectivity.
+     *
+     * The base `test()` would hit `/search/?q=portrait`, which the live site
+     * answers with 404, so a healthy Awwwards source would report itself down.
+     * The explore feed is the surface we actually serve, so probe that instead.
+     */
+    public function test(): bool
+    {
+        try {
+            $this->explore(1, new SourceQuery);
+
+            return true;
+        } catch (SourceException) {
+            return false;
+        }
     }
 }

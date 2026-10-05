@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Lazy srcset grid</title>
+</head>
+<body>
+    <main class="grid">
+        <!-- Card 1: base64 placeholder src + data-srcset, as Awwwards serves it.
+             The image can only be extracted from data-srcset. -->
+        <div class="card">
+            <a class="card-link" href="/sites/one">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAMCAQAAADB7vUKAAAAEUlEQVR42mNkIAAYRxXQSwEAC5oADbo22BYAAAAASUVORK5CYII=" data-srcset="https://assets.test/one-440.png 1x, https://assets.test/one-880.png 2x" alt="One">
+            </a>
+            <h3 class="card-title">One</h3>
+        </div>
+
+        <!-- Card 2: when both are present plain srcset keeps precedence. -->
+        <div class="card">
+            <a class="card-link" href="/sites/two">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAMCAQAAADB7vUKAAAAEUlEQVR42mNkIAAYRxXQSwEAC5oADbo22BYAAAAASUVORK5CYII=" srcset="https://assets.test/two-440.png 1x" data-srcset="https://assets.test/two-lazy.png 1x" alt="Two">
+            </a>
+            <h3 class="card-title">Two</h3>
+        </div>
+    </main>
+</body>
+</html>

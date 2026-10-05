@@ -159,19 +159,24 @@ final class HtmlParser
             }
         }
 
-        $srcset = $this->clean($imageNode->attr('srcset'));
+        // Plain srcset first, then the lazy-load `data-srcset` variant some
+        // sites (Awwwards) ship alongside a data-URI placeholder src. The first
+        // attribute that yields a usable candidate wins.
+        foreach (['srcset', 'data-srcset'] as $attribute) {
+            $srcset = $this->clean($imageNode->attr($attribute));
 
-        if ($srcset === null) {
-            return null;
+            if ($srcset === null) {
+                continue;
+            }
+
+            $candidate = $this->firstSrcsetCandidate($srcset);
+
+            if ($candidate !== null && ! $this->isPlaceholder($candidate, $baseUri)) {
+                return $candidate;
+            }
         }
 
-        $candidate = $this->firstSrcsetCandidate($srcset);
-
-        if ($candidate === null || $this->isPlaceholder($candidate, $baseUri)) {
-            return null;
-        }
-
-        return $candidate;
+        return null;
     }
 
     private function isPlaceholder(string $url, ?string $baseUri): bool

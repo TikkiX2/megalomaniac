@@ -8,17 +8,17 @@
     <!--
         Mirrors the live /websites/ grid: li.js-collectable > figure > a.figure-rollover__link
         wrapping the screenshot, with the project name in the second
-        .figure-rollover__row. The live image carries data-srcset plus a base64
-        placeholder src; the fixture uses a plain srcset because the shared
-        HtmlParser does not read data-srcset (documented in AwwwardsSource).
+        .figure-rollover__row. As in production, the screenshot carries a base64
+        placeholder src plus the real URL in data-srcset, so the card can only be
+        parsed once HtmlParser reads data-srcset.
     -->
     <ul class="grid-cards js-ajax-entries">
-        <!-- Card 1: srcset-only screenshot on the assets CDN. -->
+        <!-- Card 1: base64 placeholder src + data-srcset (1x/2x). -->
         <li class="col-3 js-collectable">
             <div class="card-site js-container-figure">
                 <figure class="figure-rollover">
                     <a aria-label="EDOLUS" class="figure-rollover__link" href="/sites/edolus">
-                        <img class="lazy figure-rollover__file" srcset="https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/edolus.png 1x, https://assets.awwwards.com/awards/media/cache/thumb_880_660/submissions/edolus.png 2x" alt="EDOLUS">
+                        <img class="lazy figure-rollover__file" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAMCAQAAADB7vUKAAAAEUlEQVR42mNkIAAYRxXQSwEAC5oADbo22BYAAAAASUVORK5CYII=" data-srcset="https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/edolus.png 1x, https://assets.awwwards.com/awards/media/cache/thumb_880_660/submissions/edolus.png 2x" alt="EDOLUS">
                     </a>
                     <div class="figure-rollover__hover">
                         <div class="figure-rollover__left">
@@ -30,12 +30,12 @@
             </div>
         </li>
 
-        <!-- Card 2: relative src resolved through the adapter base. -->
+        <!-- Card 2: base64 placeholder src + single-candidate data-srcset. -->
         <li class="col-3 js-collectable">
             <div class="card-site js-container-figure">
                 <figure class="figure-rollover">
                     <a aria-label="Milledollars" class="figure-rollover__link" href="/sites/milledollars">
-                        <img class="lazy figure-rollover__file" src="/media/thumb/milledollars.png" alt="Milledollars">
+                        <img class="lazy figure-rollover__file" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAMCAQAAADB7vUKAAAAEUlEQVR42mNkIAAYRxXQSwEAC5oADbo22BYAAAAASUVORK5CYII=" data-srcset="https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/milledollars.png 1x" alt="Milledollars">
                     </a>
                     <div class="figure-rollover__hover">
                         <div class="figure-rollover__left">
@@ -47,12 +47,12 @@
             </div>
         </li>
 
-        <!-- Card 3: lazy data-src screenshot. -->
+        <!-- Card 3: base64 placeholder src + data-srcset (assets CDN). -->
         <li class="col-3 js-collectable">
             <div class="card-site js-container-figure">
                 <figure class="figure-rollover">
                     <a aria-label="Colonia Zacamil" class="figure-rollover__link" href="/sites/colonia-zacamil">
-                        <img class="lazy figure-rollover__file" data-src="//assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/colonia-zacamil.png" alt="Colonia Zacamil">
+                        <img class="lazy figure-rollover__file" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAMCAQAAADB7vUKAAAAEUlEQVR42mNkIAAYRxXQSwEAC5oADbo22BYAAAAASUVORK5CYII=" data-srcset="https://assets.awwwards.com/awards/media/cache/thumb_440_330/submissions/colonia-zacamil.png 1x" alt="Colonia Zacamil">
                     </a>
                     <div class="figure-rollover__hover">
                         <div class="figure-rollover__left">
