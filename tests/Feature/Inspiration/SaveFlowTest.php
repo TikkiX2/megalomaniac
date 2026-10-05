@@ -11,9 +11,13 @@ use App\Models\Moodboard;
 use App\Models\Project;
 use App\Models\SavedImage;
 use App\Models\User;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -49,13 +53,16 @@ function saveFlowImage(User $user, Moodboard $board, array $overrides = []): Sav
         'source' => 'deviantart',
         'source_id' => 'abc-123',
         'page_url' => 'https://example.com/page',
-        'image_url' => 'https://cdn.example.com/full.jpg',
+        'image_url' => 'https://93.184.216.34/full.jpg',
         'download_status' => SavedImage::STATUS_THUMB,
     ], $overrides));
 }
 
 /**
  * Validated save payload shape (snake_case, as the Form Request emits it).
+ *
+ * The image/thumbnail hosts are public IP literals so the SSRF rule does not
+ * depend on DNS resolution during tests.
  *
  * @param  array<string, mixed>  $overrides
  * @return array<string, mixed>
@@ -65,9 +72,9 @@ function saveFlowPayload(array $overrides = []): array
     return array_merge([
         'source' => 'deviantart',
         'source_id' => 'abc-123',
-        'page_url' => 'https://example.com/page',
-        'image_url' => 'https://cdn.example.com/full.jpg',
-        'thumbnail_url' => 'https://cdn.example.com/thumb.jpg',
+        'page_url' => 'https://93.184.216.34/page',
+        'image_url' => 'https://93.184.216.34/full.jpg',
+        'thumbnail_url' => 'https://93.184.216.34/thumb.jpg',
     ], $overrides);
 }
 
@@ -155,7 +162,7 @@ it('stores a thumbnail locally when the remote image responds', function () {
     $board = $this->service->ensureInbox($user);
     $image = $this->service->save($user, saveFlowPayload(), $board);
 
-    DownloadThumbJob::dispatchSync($image, 'https://cdn.example.com/thumb.jpg');
+    DownloadThumbJob::dispatchSync($image, 'https://93.184.216.34/thumb.jpg');
 
     $expected = 'inspiration/'.$user->id.'/deviantart/abc-123.thumb.jpg';
 
@@ -172,7 +179,7 @@ it('keeps the remote url fallback when the thumbnail download fails', function (
     $board = saveFlowBoard($user);
     $image = saveFlowImage($user, $board);
 
-    DownloadThumbJob::dispatchSync($image, 'https://cdn.example.com/broken.jpg');
+    DownloadThumbJob::dispatchSync($image, 'https://93.184.216.34/broken.jpg');
 
     expect($image->refresh()->thumb_path)->toBeNull()
         ->and($image->download_status)->toBe(SavedImage::STATUS_THUMB);
@@ -254,7 +261,9 @@ it('queues and stores a full download under the daily quota', function () {
     $this->service->requestFullDownload($user, $image);
     Queue::assertPushed(DownloadFullJob::class, fn (DownloadFullJob $job): bool => $job->saved->is($image));
 
-    // Queue::fake() intercepts dispatchSync for queueable jobs, so run the job directly.
+    // Queue::fake() replaces the "sync" queue connection, so both dispatch() and
+    // dispatchSync() only record the job and never reach handle(). Run handle()
+    // manually here to exercise the real download path.
     (new DownloadFullJob($image))->handle();
 
     $expected = 'inspiration/'.$user->id.'/deviantart/target.full.jpg';
@@ -365,4 +374,148 @@ it('rejects saving into another user board with a 404', function () {
         ->assertNotFound();
 
     expect(SavedImage::count())->toBe(0);
+});
+
+it('refuses a full download for another user saved image', function () {
+    $owner = User::factory()->create();
+    $intruder = User::factory()->create();
+    $board = saveFlowBoard($owner);
+    $image = saveFlowImage($owner, $board);
+
+    expect(fn () => $this->service->requestFullDownload($intruder, $image))
+        ->toThrow(AuthorizationException::class);
+});
+
+it('rejects a save whose image url points at a private host', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/inspiration/save', saveFlowPayload(['image_url' => 'http://127.0.0.1/secret.jpg']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('image_url');
+
+    expect(SavedImage::count())->toBe(0);
+});
+
+it('rejects a save whose thumbnail url points at a private host', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/inspiration/save', saveFlowPayload(['thumbnail_url' => 'http://192.168.0.10/thumb.jpg']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('thumbnail_url');
+
+    expect(SavedImage::count())->toBe(0);
+});
+
+it('rejects a save with a non-http image url scheme', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/inspiration/save', saveFlowPayload(['image_url' => 'data:image/png;base64,AAAA']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('image_url');
+
+    expect(SavedImage::count())->toBe(0);
+});
+
+it('aborts a thumbnail download redirected to a private host', function () {
+    Storage::fake('local');
+
+    $mock = new MockHandler([
+        new GuzzleResponse(302, ['Location' => 'http://127.0.0.1/evil.jpg']),
+        new GuzzleResponse(200, [], 'evil-bytes'),
+    ]);
+    Http::globalOptions(['handler' => HandlerStack::create($mock)]);
+
+    $user = User::factory()->create();
+    $board = saveFlowBoard($user);
+    $image = saveFlowImage($user, $board);
+
+    DownloadThumbJob::dispatchSync($image, 'https://93.184.216.34/thumb.jpg');
+
+    expect($image->refresh()->thumb_path)->toBeNull()
+        ->and($image->download_status)->toBe(SavedImage::STATUS_THUMB);
+
+    Storage::disk('local')->assertMissing('inspiration/'.$user->id.'/deviantart/abc-123.thumb.jpg');
+});
+
+it('marks a full download as failed when redirected to a private host', function () {
+    Storage::fake('local');
+
+    $mock = new MockHandler([
+        new GuzzleResponse(302, ['Location' => 'http://169.254.169.254/latest/meta-data']),
+        new GuzzleResponse(200, [], 'evil-bytes'),
+    ]);
+    Http::globalOptions(['handler' => HandlerStack::create($mock)]);
+
+    $user = User::factory()->create();
+    $board = saveFlowBoard($user);
+    $image = saveFlowImage($user, $board);
+
+    DownloadFullJob::dispatchSync($image);
+
+    expect($image->refresh()->download_status)->toBe(SavedImage::STATUS_FAILED)
+        ->and($image->downloaded_at)->toBeNull()
+        ->and($image->full_path)->toBeNull();
+});
+
+it('stores the image when a redirect stays on a public host', function () {
+    Storage::fake('local');
+
+    $mock = new MockHandler([
+        new GuzzleResponse(302, ['Location' => 'https://93.184.216.34/final.jpg']),
+        new GuzzleResponse(200, [], 'public-bytes'),
+    ]);
+    Http::globalOptions(['handler' => HandlerStack::create($mock)]);
+
+    $user = User::factory()->create();
+    $board = saveFlowBoard($user);
+    $image = saveFlowImage($user, $board, ['source_id' => 'redirected']);
+
+    DownloadThumbJob::dispatchSync($image, 'https://93.184.216.34/thumb.jpg');
+
+    $expected = 'inspiration/'.$user->id.'/deviantart/redirected.thumb.jpg';
+
+    expect($image->refresh()->thumb_path)->toBe($expected);
+    Storage::disk('local')->assertExists($expected);
+});
+
+it('translates a concurrent unique violation into a duplicate exception', function () {
+    Queue::fake();
+    $user = User::factory()->create();
+    $board = $this->service->ensureInbox($user);
+
+    $injected = false;
+
+    SavedImage::creating(function (SavedImage $model) use (&$injected): void {
+        if ($injected) {
+            return;
+        }
+
+        $injected = true;
+
+        // Simulate a concurrent request winning the race between the service
+        // pre-check and its insert.
+        DB::table('saved_images')->insert([
+            'user_id' => $model->user_id,
+            'moodboard_id' => $model->moodboard_id,
+            'source' => $model->source,
+            'source_id' => $model->source_id,
+            'page_url' => $model->page_url,
+            'image_url' => $model->image_url,
+            'download_status' => SavedImage::STATUS_THUMB,
+        ]);
+    });
+
+    try {
+        $this->service->save($user, saveFlowPayload(), $board);
+        $this->fail('Expected DuplicateSavedImageException.');
+    } catch (DuplicateSavedImageException $exception) {
+        expect($exception->existing->source_id)->toBe('abc-123');
+    } finally {
+        SavedImage::flushEventListeners();
+    }
+
+    expect(SavedImage::count())->toBe(1);
 });

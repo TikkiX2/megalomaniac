@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs\Inspiration;
 
+use App\Inspiration\Support\StoredImagePath;
+use App\Inspiration\Support\UrlSafety;
 use App\Models\SavedImage;
+use GuzzleHttp\TransferStats;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -22,7 +25,8 @@ use Throwable;
  * A failure is non-fatal and never touches `download_status`: it logs a
  * warning and leaves `thumb_path` null so the frontend keeps using the remote
  * `image_url` as the visual fallback (Review Focus 2). `$tries = 1` because the
- * user retries from the UI.
+ * user retries from the UI. Redirects are followed (max 3) but a chain that
+ * lands on a private/reserved host aborts the download.
  */
 class DownloadThumbJob implements ShouldQueue
 {
@@ -38,16 +42,23 @@ class DownloadThumbJob implements ShouldQueue
     public function handle(): void
     {
         $url = $this->thumbnailUrl ?? $this->saved->image_url;
-        $path = sprintf(
-            'inspiration/%d/%s/%s.thumb.%s',
-            $this->saved->user_id,
-            $this->saved->source,
-            $this->saved->source_id,
-            self::extension($url),
-        );
+        $path = StoredImagePath::thumb($this->saved, $url);
 
         try {
-            $response = Http::timeout(30)->get($url);
+            $effectiveUri = null;
+
+            $response = Http::timeout(30)
+                ->withOptions([
+                    'allow_redirects' => ['max' => 3],
+                    'on_stats' => static function (TransferStats $stats) use (&$effectiveUri): void {
+                        $effectiveUri = (string) $stats->getEffectiveUri();
+                    },
+                ])
+                ->get($url);
+
+            if (UrlSafety::redirectTargetIsPrivate($effectiveUri)) {
+                throw new RuntimeException('Thumbnail download redirect landed on a private host.');
+            }
 
             if (! $response->successful()) {
                 throw new RuntimeException("Thumbnail download returned HTTP {$response->status()}.");
@@ -63,16 +74,5 @@ class DownloadThumbJob implements ShouldQueue
                 'error' => $exception->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Derive a safe file extension from the remote URL, defaulting to jpg.
-     */
-    private static function extension(string $url): string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        $extension = strtolower(pathinfo(is_string($path) ? $path : '', PATHINFO_EXTENSION));
-
-        return preg_match('/^[a-z0-9]{1,5}$/', $extension) === 1 ? $extension : 'jpg';
     }
 }

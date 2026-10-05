@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Inspiration;
 
 use App\Inspiration\SourceManager;
+use App\Rules\SecureHttpUrl;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,12 +30,12 @@ class StoreSavedImageRequest extends FormRequest
         return [
             'source' => ['required', 'string', Rule::in($this->allowedSources())],
             'source_id' => ['required', 'string', 'max:255'],
-            'image_url' => ['required', 'string', 'max:2048'],
+            'image_url' => ['required', 'string', 'max:2048', new SecureHttpUrl],
             'page_url' => ['required', 'string', 'max:2048'],
             'title' => ['nullable', 'string', 'max:255'],
             'author' => ['nullable', 'string', 'max:255'],
             'author_url' => ['nullable', 'string', 'max:2048'],
-            'thumbnail_url' => ['nullable', 'string', 'max:2048'],
+            'thumbnail_url' => ['nullable', 'string', 'max:2048', new SecureHttpUrl],
             'width' => ['nullable', 'integer', 'min:1'],
             'height' => ['nullable', 'integer', 'min:1'],
             'tags' => ['nullable', 'array'],

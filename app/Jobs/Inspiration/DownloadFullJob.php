@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs\Inspiration;
 
+use App\Inspiration\Support\StoredImagePath;
+use App\Inspiration\Support\UrlSafety;
 use App\Models\SavedImage;
+use GuzzleHttp\TransferStats;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,7 +23,8 @@ use Throwable;
  * Downloads the full-size image on demand and marks the saved image as `full`.
  *
  * A failure flips `download_status` to `failed` so the UI can offer a retry.
- * `$tries = 1` keeps the retry in the user's hands.
+ * `$tries = 1` keeps the retry in the user's hands. Redirects are followed
+ * (max 3) but a chain that lands on a private/reserved host aborts the download.
  */
 class DownloadFullJob implements ShouldQueue
 {
@@ -33,16 +37,23 @@ class DownloadFullJob implements ShouldQueue
     public function handle(): void
     {
         $url = $this->saved->image_url;
-        $path = sprintf(
-            'inspiration/%d/%s/%s.full.%s',
-            $this->saved->user_id,
-            $this->saved->source,
-            $this->saved->source_id,
-            self::extension($url),
-        );
+        $path = StoredImagePath::full($this->saved, $url);
 
         try {
-            $response = Http::timeout(30)->get($url);
+            $effectiveUri = null;
+
+            $response = Http::timeout(30)
+                ->withOptions([
+                    'allow_redirects' => ['max' => 3],
+                    'on_stats' => static function (TransferStats $stats) use (&$effectiveUri): void {
+                        $effectiveUri = (string) $stats->getEffectiveUri();
+                    },
+                ])
+                ->get($url);
+
+            if (UrlSafety::redirectTargetIsPrivate($effectiveUri)) {
+                throw new RuntimeException('Full download redirect landed on a private host.');
+            }
 
             if (! $response->successful()) {
                 throw new RuntimeException("Full download returned HTTP {$response->status()}.");
@@ -64,16 +75,5 @@ class DownloadFullJob implements ShouldQueue
 
             $this->saved->update(['download_status' => SavedImage::STATUS_FAILED]);
         }
-    }
-
-    /**
-     * Derive a safe file extension from the remote URL, defaulting to jpg.
-     */
-    private static function extension(string $url): string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        $extension = strtolower(pathinfo(is_string($path) ? $path : '', PATHINFO_EXTENSION));
-
-        return preg_match('/^[a-z0-9]{1,5}$/', $extension) === 1 ? $extension : 'jpg';
     }
 }

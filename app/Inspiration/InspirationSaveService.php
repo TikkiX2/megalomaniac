@@ -178,6 +178,10 @@ class InspirationSaveService
      */
     public function requestFullDownload(User $user, SavedImage $saved): void
     {
+        if ($saved->user_id !== $user->id) {
+            throw new AuthorizationException('No puedes descargar una imagen de otro usuario.');
+        }
+
         if ($saved->download_status === SavedImage::STATUS_FULL) {
             return;
         }
