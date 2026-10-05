@@ -66,4 +66,24 @@ class Moodboard extends Model
     {
         return $this->project_id === null;
     }
+
+    /**
+     * Board label for the sidebar: the bound project name or null for Inbox.
+     */
+    public function getProjectNameAttribute(): ?string
+    {
+        return $this->project?->name;
+    }
+
+    /**
+     * Saved image total, preferring a `withCount('savedImages')` column.
+     */
+    public function getCountAttribute(): int
+    {
+        if (array_key_exists('saved_images_count', $this->attributes)) {
+            return (int) $this->attributes['saved_images_count'];
+        }
+
+        return $this->savedImages()->count();
+    }
 }
