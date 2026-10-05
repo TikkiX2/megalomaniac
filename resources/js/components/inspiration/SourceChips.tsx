@@ -8,7 +8,7 @@ interface SourceChipsProps {
 
 function chipClass(kind: 'active' | 'ok' | 'down' | 'disabled'): string {
     const base =
-        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold transition-colors';
+        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
     switch (kind) {
         case 'active':

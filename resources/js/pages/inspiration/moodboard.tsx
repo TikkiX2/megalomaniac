@@ -1,8 +1,9 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Download, ExternalLink, Loader2, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, ExternalLink, Loader2, Maximize2, RefreshCw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import Lightbox from '@/components/inspiration/Lightbox';
 import MasonryGrid from '@/components/inspiration/MasonryGrid';
-import { sourceColorClass, sourceLabel, type SavedMoodboardItem } from '@/components/inspiration/shared';
+import { sourceColorClass, sourceLabel, type DownloadState, type SavedMoodboardItem } from '@/components/inspiration/shared';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
@@ -16,8 +17,6 @@ interface MoodboardProps {
     sources: Record<string, number>;
 }
 
-type DownloadState = 'idle' | 'downloading' | 'queued' | 'failed';
-
 export default function Moodboard() {
     const {
         board,
@@ -28,6 +27,9 @@ export default function Moodboard() {
 
     const [downloads, setDownloads] = useState<Record<number, DownloadState>>({});
     const [error, setError] = useState<string | null>(null);
+    const [lightbox, setLightbox] = useState<{ index: number; origin: HTMLElement | null } | null>(
+        null,
+    );
 
     const download = async (item: SavedMoodboardItem) => {
         setError(null);
@@ -129,18 +131,18 @@ export default function Moodboard() {
                 {items.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-border bg-card/50 px-6 py-12 text-center">
                         <p className="text-sm font-bold uppercase tracking-widest text-foreground">
-                            Moodboard vacío
+                            Tu moodboard está vacío
                         </p>
                         <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-                            Guardá imágenes desde Inspiración para llenarlo.
+                            Guardá referencias desde Explorar para armar el muro del proyecto.
                         </p>
                         <Button asChild className="mt-3">
-                            <Link href={inspiration.explore()}>Explorar</Link>
+                            <Link href={inspiration.explore()}>Volver a Explorar</Link>
                         </Button>
                     </div>
                 ) : (
                     <MasonryGrid>
-                        {items.map((item) => {
+                        {items.map((item, itemIndex) => {
                             const state = downloads[item.id] ?? 'idle';
                             const isDownloading = state === 'downloading';
                             const isQueued = state === 'queued';
@@ -152,30 +154,45 @@ export default function Moodboard() {
                                     key={item.id}
                                     className="group relative mb-3 break-inside-avoid overflow-hidden rounded-xl border border-border bg-card"
                                 >
-                                    <img
-                                        src={item.thumb_url}
-                                        alt={item.title ?? `${sourceLabel(item.source)} image`}
-                                        loading="lazy"
-                                        className="h-auto w-full bg-muted object-cover"
-                                    />
+                                    <div className="relative">
+                                        <img
+                                            src={item.thumb_url}
+                                            alt={item.title ?? `${sourceLabel(item.source)} image`}
+                                            loading="lazy"
+                                            className="h-auto w-full bg-muted object-cover"
+                                        />
 
-                                    <span
-                                        className={`absolute left-2 top-2 rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shadow-sm ${sourceColorClass(item.source)}`}
-                                    >
-                                        {sourceLabel(item.source)}
-                                    </span>
-
-                                    {item.download_status === 'full' && (
-                                        <span className="absolute right-2 top-2 rounded-md bg-emerald-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white">
-                                            Full
+                                        <span
+                                            className={`absolute left-2 top-2 rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shadow-sm ${sourceColorClass(item.source)}`}
+                                        >
+                                            {sourceLabel(item.source)}
                                         </span>
-                                    )}
 
-                                    {item.download_status === 'failed' && (
-                                        <span className="absolute right-2 top-2 rounded-md bg-destructive px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white">
-                                            Error
-                                        </span>
-                                    )}
+                                        {item.download_status === 'full' && (
+                                            <span className="absolute right-2 top-2 rounded-md bg-emerald-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white">
+                                                Full
+                                            </span>
+                                        )}
+
+                                        {item.download_status === 'failed' && (
+                                            <span className="absolute right-2 top-2 rounded-md bg-destructive px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white">
+                                                Error
+                                            </span>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={(event) =>
+                                                setLightbox({ index: itemIndex, origin: event.currentTarget })
+                                            }
+                                            aria-label="Expandir imagen"
+                                            className="absolute inset-0 flex cursor-zoom-in items-center justify-center opacity-0 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary group-hover:opacity-100 group-focus-within:opacity-100"
+                                        >
+                                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white">
+                                                <Maximize2 className="h-5 w-5" />
+                                            </span>
+                                        </button>
+                                    </div>
 
                                     <div className="space-y-2 p-3">
                                         {(item.title || item.author) && (
@@ -211,7 +228,7 @@ export default function Moodboard() {
                                                 href={item.page_url}
                                                 target="_blank"
                                                 rel="noopener"
-                                                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-bold text-muted-foreground hover:text-primary"
+                                                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-bold text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                 aria-label="Abrir original"
                                             >
                                                 <ExternalLink className="h-3.5 w-3.5" />
@@ -223,7 +240,7 @@ export default function Moodboard() {
                                                     href={item.full_url}
                                                     target="_blank"
                                                     rel="noopener"
-                                                    className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 px-2 py-1 text-[11px] font-bold text-emerald-300"
+                                                    className="inline-flex items-center gap-1 rounded-md border border-emerald-500/40 px-2 py-1 text-[11px] font-bold text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                     aria-label="Abrir imagen en tamaño completo"
                                                 >
                                                     <Download className="h-3.5 w-3.5" />
@@ -235,7 +252,7 @@ export default function Moodboard() {
                                                 <button
                                                     type="button"
                                                     onClick={() => download(item)}
-                                                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-bold text-muted-foreground hover:text-primary"
+                                                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-bold text-muted-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                     aria-label="Descargar en tamaño completo"
                                                 >
                                                     <Download className="h-3.5 w-3.5" />
@@ -257,6 +274,7 @@ export default function Moodboard() {
                                                         type="button"
                                                         onClick={() => router.reload({ only: ['items', 'total', 'sources'] })}
                                                         aria-label="Refrescar estado de descarga"
+                                                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                     >
                                                         <RefreshCw className="h-3.5 w-3.5" />
                                                     </button>
@@ -267,7 +285,7 @@ export default function Moodboard() {
                                                 <button
                                                     type="button"
                                                     onClick={() => download(item)}
-                                                    className="inline-flex items-center gap-1 rounded-md border border-destructive/50 px-2 py-1 text-[11px] font-bold text-destructive"
+                                                    className="inline-flex items-center gap-1 rounded-md border border-destructive/50 px-2 py-1 text-[11px] font-bold text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                     aria-label="Reintentar descarga"
                                                 >
                                                     <RefreshCw className="h-3.5 w-3.5" />
@@ -278,7 +296,7 @@ export default function Moodboard() {
                                             <button
                                                 type="button"
                                                 onClick={() => remove(item)}
-                                                className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                 aria-label="Quitar del moodboard"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
@@ -291,6 +309,19 @@ export default function Moodboard() {
                     </MasonryGrid>
                 )}
             </div>
+
+            <Lightbox
+                items={items}
+                index={lightbox?.index ?? null}
+                onClose={() => setLightbox(null)}
+                onNavigate={(next) =>
+                    setLightbox((current) => (current ? { ...current, index: next } : current))
+                }
+                onDownload={(item) => void download(item as SavedMoodboardItem)}
+                downloadStates={downloads}
+                onRefresh={() => router.reload({ only: ['items', 'total', 'sources'] })}
+                returnFocusTo={lightbox?.origin ?? null}
+            />
         </MainLayout>
     );
 }

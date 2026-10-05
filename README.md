@@ -11,6 +11,7 @@ Fitness + Freelance + Finance — all-in-one dark performance cockpit.
 - **Grocery** — lista de compra, consume/restock, price history, bulk-restock.
 - **Finance** — dashboard, purchases/incomes/debts/credit-cards/currencies/rates/income-sources/categories/withdrawals/savings-reserves/exchanges + statistics.
 - **Freelance** — clients/projects/tasks/comments/media/quotes (pdf/duplicate/convert) + Notion sync.
+- **Inspiración** — explorador multi-fuente (~35 plataformas: APIs, scrapers y Tier 3 opt-in) con moodboards por proyecto, lightbox y descarga full.
 - **Auth** — Fortify login/register/2FA + settings (profile/password/appearance/2FA).
 
 ## Quick start
@@ -25,9 +26,9 @@ vendor/bin/pint --dirty
 
 ## Estructura
 ```
-app/Http/Controllers/{Gym,Nutrition,Supplement,Grocery,Finance,Freelance}
+app/Http/Controllers/{Gym,Nutrition,Supplement,Grocery,Finance,Freelance,Inspiration}
 app/Models/* (35 modelos)
-resources/js/pages/{fitness,finance,freelance,auth,settings}
+resources/js/pages/{fitness,finance,freelance,inspiration,auth,settings}
 resources/js/layouts/{main-layout,gym-layout,nutrition-layout,grocery-layout,supplement-layout}
 resources/css/app.css  # tokens Ember rojizo (single source)
 routes/web.php + routes/settings.php

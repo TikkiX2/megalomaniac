@@ -1,11 +1,12 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Heading from '@/components/heading';
 import ImageCard from '@/components/inspiration/ImageCard';
+import Lightbox from '@/components/inspiration/Lightbox';
 import MasonryGrid from '@/components/inspiration/MasonryGrid';
 import SaveModal from '@/components/inspiration/SaveModal';
-import { sourceLabel, type BoardOption, type InspirationItem, type ResultGroup, type SourceStatus } from '@/components/inspiration/shared';
+import { sourceLabel, type BoardOption, type InspirationItem, type LightboxItem, type ResultGroup, type SourceStatus } from '@/components/inspiration/shared';
 import SourceChips from '@/components/inspiration/SourceChips';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,17 @@ export default function Explore() {
     const [searching, setSearching] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [saveItem, setSaveItem] = useState<InspirationItem | null>(null);
+    const [lightbox, setLightbox] = useState<{
+        items: LightboxItem[];
+        index: number;
+        origin: HTMLElement | null;
+    } | null>(null);
+
+    const openLightbox = (items: LightboxItem[], itemIndex: number, origin: HTMLElement) => {
+        setLightbox({ items, index: itemIndex, origin });
+    };
+
+    const closeLightbox = () => setLightbox(null);
 
     // A brand-new search/source visit replaces the page props; pagination does
     // not. Reset the snapshot only when the query signature actually changes.
@@ -176,11 +188,14 @@ export default function Explore() {
                 ) : base.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-border bg-card/50 px-6 py-12 text-center">
                         <p className="text-sm font-bold uppercase tracking-widest text-foreground">
-                            Sin resultados
+                            Nada por acá todavía
                         </p>
                         <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-                            Configurá fuentes en Ajustes o probá otro término de búsqueda.
+                            Buscá otro término o activá más fuentes en Ajustes.
                         </p>
+                        <Button asChild variant="outline" className="mt-3 border-border">
+                            <Link href={inspiration.settings.index()}>Ajustes de fuentes</Link>
+                        </Button>
                     </div>
                 ) : source === 'all' ? (
                     <div className="space-y-8">
@@ -206,17 +221,18 @@ export default function Explore() {
                                     {items.length === 0 ? (
                                         <p className="rounded-lg border border-border bg-card/50 px-3 py-2 text-xs text-muted-foreground">
                                             {isDown(group.source)
-                                                ? `${sourceLabel(group.source)} está caída — probá más tarde.`
-                                                : `Sin contenido en ${sourceLabel(group.source)}.`}
+                                                ? `${sourceLabel(group.source)} está caída — probá más tarde o mirá otra fuente.`
+                                                : `${sourceLabel(group.source)} no devolvió nada para esta búsqueda.`}
                                         </p>
                                     ) : (
                                         <MasonryGrid>
-                                            {items.map((item) => (
+                                            {items.map((item, itemIndex) => (
                                                 <ImageCard
                                                     key={`${item.source}:${item.source_id}`}
                                                     item={item}
                                                     savedBoardId={saved[`${item.source}:${item.source_id}`]}
                                                     onSave={setSaveItem}
+                                                    onExpand={(origin) => openLightbox(items, itemIndex, origin)}
                                                 />
                                             ))}
                                         </MasonryGrid>
@@ -240,7 +256,7 @@ export default function Explore() {
                                     <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
                                         {down
                                             ? `${sourceLabel(source)} no está respondiendo ahora. Probá más tarde o elegí otra fuente.`
-                                            : 'Probá otro término o cambiá de fuente.'}
+                                            : 'Probá otro término, cambiá de fuente o volvé a Todo.'}
                                     </p>
                                 </div>
                             );
@@ -248,12 +264,13 @@ export default function Explore() {
 
                         return (
                             <MasonryGrid onLoadMore={loadMore} hasMore={hasMore} loading={loadingMore}>
-                                {items.map((item) => (
+                                {items.map((item, itemIndex) => (
                                     <ImageCard
                                         key={`${item.source}:${item.source_id}`}
                                         item={item}
                                         savedBoardId={saved[`${item.source}:${item.source_id}`]}
                                         onSave={setSaveItem}
+                                        onExpand={(origin) => openLightbox(items, itemIndex, origin)}
                                     />
                                 ))}
                             </MasonryGrid>
@@ -261,6 +278,21 @@ export default function Explore() {
                     })()
                 )}
             </div>
+
+            <Lightbox
+                items={lightbox?.items ?? []}
+                index={lightbox?.index ?? null}
+                onClose={closeLightbox}
+                onNavigate={(next) =>
+                    setLightbox((current) => (current ? { ...current, index: next } : current))
+                }
+                onSave={(item) => {
+                    closeLightbox();
+                    setSaveItem(item as InspirationItem);
+                }}
+                savedBoardIdFor={(item) => saved[`${item.source}:${item.source_id}`]}
+                returnFocusTo={lightbox?.origin ?? null}
+            />
 
             <SaveModal
                 item={saveItem}

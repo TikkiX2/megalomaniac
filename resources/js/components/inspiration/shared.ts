@@ -51,6 +51,8 @@ export interface ProjectOption {
     name: string;
 }
 
+export type DownloadState = 'idle' | 'downloading' | 'queued' | 'failed';
+
 export interface SavedMoodboardItem {
     id: number;
     source: string;
@@ -70,8 +72,36 @@ export interface SavedMoodboardItem {
 }
 
 /**
+ * Superset accepted by the Lightbox so explore items (remote, result payload)
+ * and moodboard items (persisted, local) can share one viewer without mapping
+ * either shape. Only the fields the viewer actually reads are required.
+ */
+export interface LightboxItem {
+    source: string;
+    source_id: string;
+    title: string | null;
+    author: string | null;
+    page_url: string;
+    image_url: string;
+    width: number | null;
+    height: number | null;
+    tags: string[];
+    license: string | null;
+    maturity: string | null;
+    author_url?: string | null;
+    thumbnail_url?: string | null;
+    /** Moodboard alias for `thumbnail_url`. */
+    thumb_url?: string | null;
+    /** Present on persisted moodboard items. */
+    id?: number;
+    download_status?: 'thumb' | 'full' | 'failed';
+    full_url?: string | null;
+}
+
+/**
  * Human labels for the adapter keys. Mirrors `Source::label()` on the backend
- * without shipping the whole registry to the client.
+ * without shipping the whole registry to the client. Keys not listed fall back
+ * to a capitalised key.
  */
 const SOURCE_LABELS: Record<string, string> = {
     deviantart: 'DeviantArt',
@@ -83,6 +113,33 @@ const SOURCE_LABELS: Record<string, string> = {
     arena: 'Are.na',
     met: 'The Met',
     aic: 'Art Institute of Chicago',
+    flickr: 'Flickr',
+    tumblr: 'Tumblr',
+    unsplash: 'Unsplash',
+    pexels: 'Pexels',
+    pixabay: 'Pixabay',
+    discogs: 'Discogs',
+    giphy: 'Giphy',
+    europeana: 'Europeana',
+    rijksmuseum: 'Rijksmuseum',
+    wikiart: 'WikiArt',
+    designspiration: 'Designspiration',
+    savee: 'Savee',
+    trendlist: 'Trend List',
+    posterspy: 'PosterSpy',
+    lapaninja: 'Lapa Ninja',
+    godly: 'Godly',
+    darkmode: 'Dark Mode Design',
+    brutalist: 'Brutalist Websites',
+    behance: 'Behance',
+    dribbble: 'Dribbble',
+    awwwards: 'Awwwards',
+    newgrounds: 'Newgrounds',
+    pixiv: 'Pixiv',
+    bandcamp: 'Bandcamp',
+    pinterest: 'Pinterest',
+    cara: 'Cara',
+    mobbin: 'Mobbin',
 };
 
 export function sourceLabel(key: string): string {

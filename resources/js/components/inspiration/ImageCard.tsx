@@ -8,13 +8,15 @@ interface ImageCardProps {
     /** Present when this source:source_id is already on a moodboard. */
     savedBoardId?: number;
     onSave: (item: InspirationItem) => void;
+    /** Opens the full-screen viewer on this item, within the visible grid. */
+    onExpand: (origin: HTMLElement) => void;
 }
 
 /**
  * Masonry tile for one remote image. Natural aspect (`h-auto`), source badge,
  * and a hover/focus overlay with save / expand / open-in-source.
  */
-export default function ImageCard({ item, savedBoardId, onSave }: ImageCardProps) {
+export default function ImageCard({ item, savedBoardId, onSave, onExpand }: ImageCardProps) {
     const alt = item.title ?? `${sourceLabel(item.source)} image`;
 
     return (
@@ -55,7 +57,7 @@ export default function ImageCard({ item, savedBoardId, onSave }: ImageCardProps
                         {savedBoardId ? (
                             <Link
                                 href={inspiration.moodboards.show(savedBoardId)}
-                                className="inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-bold text-primary-foreground"
+                                className="inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-bold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                                 aria-label="Guardado — ver moodboard"
                             >
                                 <BookmarkCheck className="h-3.5 w-3.5" />
@@ -65,7 +67,7 @@ export default function ImageCard({ item, savedBoardId, onSave }: ImageCardProps
                             <button
                                 type="button"
                                 onClick={() => onSave(item)}
-                                className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2 py-1 text-[11px] font-bold text-black hover:bg-white"
+                                className="inline-flex items-center gap-1 rounded-md bg-white/95 px-2 py-1 text-[11px] font-bold text-black hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                                 aria-label="Guardar en moodboard"
                             >
                                 <Bookmark className="h-3.5 w-3.5" />
@@ -73,21 +75,20 @@ export default function ImageCard({ item, savedBoardId, onSave }: ImageCardProps
                             </button>
                         )}
 
-                        <a
-                            href={item.image_url}
-                            target="_blank"
-                            rel="noopener"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/15 text-white hover:bg-white/25"
+                        <button
+                            type="button"
+                            onClick={(event) => onExpand(event.currentTarget)}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/15 text-white hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                             aria-label="Expandir imagen"
                         >
                             <Maximize2 className="h-3.5 w-3.5" />
-                        </a>
+                        </button>
 
                         <a
                             href={item.page_url}
                             target="_blank"
                             rel="noopener"
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/15 text-white hover:bg-white/25"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/15 text-white hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                             aria-label="Abrir en la fuente original"
                         >
                             <ExternalLink className="h-3.5 w-3.5" />
