@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Brutal Web</title>
+</head>
+<body>
+    <div class="websites">
+        <!-- Card 1: relative href AND relative image; both must resolve against brutalweb.xyz. -->
+        <div class="website">
+            <a class="website__link" href="/site/rawcss/">
+                <img src="/img/rawcss.png" alt="Raw CSS">
+            </a>
+            <h3 class="website__title">Raw CSS</h3>
+        </div>
+
+        <!-- Card 2: protocol-relative image on the secondary host. -->
+        <div class="website">
+            <a class="website__link" href="https://rawcss.example/">
+                <img data-src="//brutalweb.xyz/img/terminal.png" alt="Terminal">
+            </a>
+            <h3 class="website__title">Terminal</h3>
+        </div>
+    </div>
+</body>
+</html>

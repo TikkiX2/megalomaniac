@@ -1085,15 +1085,34 @@ it('reports a failed connectivity test through test() for scrape :key', function
     expect((new $class)->test())->toBeFalse();
 })->with('scrapeSources');
 
-it('falls back to the Brutal Web feed when the primary brutalist feed is empty', function (): void {
+it('does not request the secondary brutalist feed when the primary yields cards', function (): void {
+    fakeScrapeHttp('brutalist', 'brutalist/feed.html');
+
+    $page = (new BrutalistSource)->explore(1, new SourceQuery);
+
+    expect($page->items)->not->toBeEmpty();
+
+    // No mix: the fallback host is never touched while the primary has cards.
+    Http::assertNotSent(fn (Request $request): bool => str_contains($request->url(), 'brutalweb.xyz'));
+});
+
+it('falls back to the Brutal Web feed and resolves relative urls against its own host', function (): void {
     Http::fake([
         '*brutalistwebsites.com*' => Http::response(inspirationFixture('brutalist/broken.html')),
-        '*brutalweb.xyz*' => Http::response(inspirationFixture('brutalist/feed.html')),
+        '*brutalweb.xyz*' => Http::response(inspirationFixture('brutalist/fallback.html')),
     ]);
 
     $page = (new BrutalistSource)->explore(1, new SourceQuery);
 
     expect($page->items)->not->toBeEmpty();
+
+    $first = $page->items[0];
+
+    // The active feed's host is the resolver base, not the primary host.
+    expect($first->pageUrl)->toStartWith('https://brutalweb.xyz/')
+        ->and($first->imageUrl)->toStartWith('https://brutalweb.xyz/')
+        ->and($first->pageUrl)->not->toContain('brutalistwebsites.com')
+        ->and($first->imageUrl)->not->toContain('brutalistwebsites.com');
 
     Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'brutalweb.xyz'));
 });

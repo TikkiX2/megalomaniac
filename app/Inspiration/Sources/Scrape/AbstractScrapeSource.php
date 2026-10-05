@@ -124,7 +124,14 @@ abstract class AbstractScrapeSource implements Source
     public function test(): bool
     {
         try {
-            $this->search('portrait', 1, new SourceQuery);
+            // Probing a source without a native search through search() would
+            // emit the delegation warning on every connectivity check, so probe
+            // its real feed directly instead.
+            if ($this->supportsSearch()) {
+                $this->search('portrait', 1, new SourceQuery);
+            } else {
+                $this->explore(1, new SourceQuery);
+            }
 
             return true;
         } catch (SourceException) {
@@ -132,12 +139,26 @@ abstract class AbstractScrapeSource implements Source
         }
     }
 
-    protected function pageFrom(string $url): Page
+    /**
+     * Fetch a page and normalize its cards.
+     *
+     * The resolver base defaults to the adapter's declared base (its primary
+     * host). A multi-host adapter must pass the base of the *active* feed so
+     * relative src/href served by a secondary host resolve to that host and do
+     * not leak into the primary host's URLs.
+     */
+    protected function pageFrom(string $url, ?string $base = null): Page
     {
+        $selectors = $this->selectors();
+
+        if ($base !== null) {
+            $selectors['base'] = $base;
+        }
+
         $html = $this->client->get($url);
         $items = [];
 
-        foreach ($this->parser->cards($html, $this->selectors()) as $card) {
+        foreach ($this->parser->cards($html, $selectors) as $card) {
             $item = InspirationItem::fromSource($this->key(), [
                 'sourceId' => md5($card['pageUrl']),
                 'pageUrl' => $card['pageUrl'],

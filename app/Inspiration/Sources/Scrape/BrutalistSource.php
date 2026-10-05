@@ -65,6 +65,8 @@ final class BrutalistSource extends AbstractScrapeSource
             return $page;
         }
 
-        return $this->pageFrom(self::FALLBACK_URL);
+        // The active feed's host is the resolver base, not the primary host, so
+        // relative URLs served by brutalweb.xyz resolve to brutalweb.xyz.
+        return $this->pageFrom(self::FALLBACK_URL, self::FALLBACK_URL);
     }
 }
