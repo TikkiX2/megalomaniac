@@ -26,6 +26,11 @@ use Inertia\Response;
  */
 class ExploreController extends Controller
 {
+    /**
+     * Items kept per source in the explore mashup (mirrors searchAll's cap).
+     */
+    private const MASHUP_PER_SOURCE = 12;
+
     public function __construct(private readonly SourceManager $sources) {}
 
     public function index(Request $request): Response
@@ -73,7 +78,10 @@ class ExploreController extends Controller
 
         foreach ($this->sources->activeConfigured($user) as $key => $source) {
             try {
-                $results[] = $this->entry($key, $this->sources->explore($user, $key, 1));
+                $page = $this->sources->explore($user, $key, 1);
+                $page['items'] = array_slice($page['items'], 0, self::MASHUP_PER_SOURCE);
+
+                $results[] = $this->entry($key, $page);
             } catch (SourceException) {
                 $results[] = $this->downEntry($key);
             }

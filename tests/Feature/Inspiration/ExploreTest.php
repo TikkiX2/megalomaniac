@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Inspiration\Dtos\InspirationItem;
 use App\Inspiration\Dtos\Page;
+use App\Inspiration\Dtos\SourceQuery;
 use App\Inspiration\InspirationSettings;
 use App\Models\InspirationCacheEntry;
 use App\Models\Moodboard;
@@ -11,6 +13,7 @@ use App\Models\SavedImage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
 use Tests\Support\FakeInspirationSource;
 
 uses(RefreshDatabase::class);
@@ -141,6 +144,8 @@ it('degrades a failing explore source without failing the page', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('results', 2)
+            ->where('sources.fake-ok.down', false)
+            ->where('sources.fake-down.down', true)
             ->where('results.0.source', 'fake-ok')
             ->where('results.0.items.0.sourceId', 'fake-ok-explore-1')
             ->where('results.1.source', 'fake-down')
@@ -148,6 +153,34 @@ it('degrades a failing explore source without failing the page', function () {
             ->where('results.1.has_more', false)
             ->where('results.1.from_cache', false)
             ->where('results.1.age_minutes', null));
+});
+
+it('caps the explore mashup at twelve items per source', function () {
+    $items = [];
+
+    for ($i = 1; $i <= 20; $i++) {
+        $items[] = new InspirationItem(
+            source: 'fake-capped',
+            sourceId: 'capped-'.$i,
+            pageUrl: 'https://example.com/capped-'.$i,
+            imageUrl: 'https://cdn.example.com/capped-'.$i.'.jpg',
+        );
+    }
+
+    $source = new FakeInspirationSource('fake-capped', exploreCallback: fn (int $page, SourceQuery $options): Page => Page::fromItems($items, true, 2));
+
+    FakeInspirationSource::register([$source]);
+
+    $user = exploreUser(['fake-capped']);
+
+    $this->actingAs($user)
+        ->get('/inspiration')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('results.0.items', 12)
+            ->where('results.0.items.0.sourceId', 'capped-1')
+            ->where('results.0.items.11.sourceId', 'capped-12')
+            ->where('results.0.has_more', true));
 });
 
 it('fans out a search across every active source', function () {
@@ -276,4 +309,44 @@ it('rejects an unknown source key', function () {
 
 it('requires authentication to explore', function () {
     $this->get('/inspiration')->assertRedirect('/login');
+});
+
+it('requires authentication to search', function () {
+    $this->get('/inspiration/search')->assertRedirect('/login');
+});
+
+it('enforces the per-source rate limit as a degraded entry', function () {
+    $key = 'fake-throttle';
+
+    RateLimiter::clear('inspiration:'.$key);
+
+    FakeInspirationSource::register([
+        new FakeInspirationSource($key, ratePerMinute: 1),
+    ]);
+
+    $user = exploreUser([$key]);
+
+    // First hit consumes the single allowed slot and caches a payload.
+    $this->actingAs($user)
+        ->get('/inspiration/search?q=portrait&source='.$key)
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('results.0.source', $key)
+            ->where('results.0.from_cache', false)
+            ->has('results.0.items'));
+
+    // Drop the fallback so the throttled call has to degrade, not serve stale.
+    InspirationCacheEntry::query()->delete();
+
+    // Second hit is denied by the limiter and degrades like a dead source.
+    $this->actingAs($user)
+        ->get('/inspiration')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('sources.'.$key.'.down', true)
+            ->where('results.0.source', $key)
+            ->where('results.0.items', [])
+            ->where('results.0.has_more', false)
+            ->where('results.0.from_cache', false)
+            ->where('results.0.age_minutes', null));
 });

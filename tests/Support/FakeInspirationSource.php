@@ -26,6 +26,7 @@ class FakeInspirationSource implements Source
 
     /**
      * @param  Closure(int, string, SourceQuery): Page|null  $searchCallback
+     * @param  Closure(int, SourceQuery): Page|null  $exploreCallback
      */
     public function __construct(
         private readonly string $key,
@@ -33,6 +34,7 @@ class FakeInspirationSource implements Source
         private readonly bool $needsKey = false,
         private readonly ?int $ratePerMinute = null,
         private readonly ?Closure $searchCallback = null,
+        private readonly ?Closure $exploreCallback = null,
     ) {}
 
     /**
@@ -113,6 +115,10 @@ class FakeInspirationSource implements Source
 
         if ($this->fails) {
             throw new SourceException('Fake source is down.');
+        }
+
+        if ($this->exploreCallback !== null) {
+            return ($this->exploreCallback)($page, $queryOptions);
         }
 
         return Page::fromItems([$this->item($this->key.'-explore-'.$page)], false, null);

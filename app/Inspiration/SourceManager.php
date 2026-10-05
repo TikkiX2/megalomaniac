@@ -120,6 +120,7 @@ class SourceManager
         );
 
         return $this->fetch(
+            $user,
             $key,
             'search',
             InspirationCache::queryHash($query, $options),
@@ -143,6 +144,7 @@ class SourceManager
         );
 
         return $this->fetch(
+            $user,
             $key,
             'explore',
             InspirationCache::queryHash('', $options),
@@ -208,9 +210,13 @@ class SourceManager
      * @param  Closure(): array<string, mixed>  $adapter
      * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int}
      */
-    private function fetch(string $key, string $kind, string $queryHash, int $ttl, Closure $adapter): array
+    private function fetch(User $user, string $key, string $kind, string $queryHash, int $ttl, Closure $adapter): array
     {
         try {
+            if (! $this->rateLimit($user, $key)) {
+                throw new SourceException('inspiration: rate limited (seguí explorando otros orígenes)');
+            }
+
             $result = $this->cache->remember($key, $kind, $queryHash, $ttl, $adapter);
             $this->clearError($key);
 
