@@ -23,9 +23,12 @@ use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
+use App\Inspiration\Sources\Scrape\AwwwardsSource;
+use App\Inspiration\Sources\Scrape\BehanceSource;
 use App\Inspiration\Sources\Scrape\BrutalistSource;
 use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
+use App\Inspiration\Sources\Scrape\DribbbleSource;
 use App\Inspiration\Sources\Scrape\GodlySource;
 use App\Inspiration\Sources\Scrape\LapaNinjaSource;
 use App\Inspiration\Sources\Scrape\PosterSpySource;
@@ -72,6 +75,9 @@ class InspirationServiceProvider extends ServiceProvider
         GodlySource::class,
         DarkModeDesignSource::class,
         BrutalistSource::class,
+        BehanceSource::class,
+        DribbbleSource::class,
+        AwwwardsSource::class,
     ];
 
     public function register(): void

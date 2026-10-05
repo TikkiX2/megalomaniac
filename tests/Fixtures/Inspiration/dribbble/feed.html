@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Dribbble — Popular shots</title>
+</head>
+<body>
+    <ul class="shot-grid">
+        <!-- Card 1: lazy screenshot on the Dribbble CDN (protocol-relative). -->
+        <li class="shot-thumbnail">
+            <a class="shot-thumbnail-link" href="/shots/21001-mobile-banking">
+                <img src="//cdn.dribbble.com/users/1/screenshots/21001/mobile-banking.png" alt="Mobile Banking">
+            </a>
+            <span class="shot-thumbnail-title">Mobile Banking</span>
+        </li>
+
+        <!-- Card 2: relative src resolved through the adapter base. -->
+        <li class="shot-thumbnail">
+            <a class="shot-thumbnail-link" href="/shots/21002-analytics-dashboard">
+                <img src="/shots/analytics-dashboard.png" alt="Analytics Dashboard">
+            </a>
+            <span class="shot-thumbnail-title">Analytics Dashboard</span>
+        </li>
+
+        <!-- Card 3: srcset-only screenshot on the CDN. -->
+        <li class="shot-thumbnail">
+            <a class="shot-thumbnail-link" href="/shots/21003-onboarding-flow">
+                <img srcset="//cdn.dribbble.com/users/1/screenshots/21003/onboarding-flow-800.png 800w, //cdn.dribbble.com/users/1/screenshots/21003/onboarding-flow-1600.png 1600w" alt="Onboarding Flow">
+            </a>
+            <span class="shot-thumbnail-title">Onboarding Flow</span>
+        </li>
+    </ul>
+</body>
+</html>

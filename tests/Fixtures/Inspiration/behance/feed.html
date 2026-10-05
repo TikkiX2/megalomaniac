@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Behance — Galleries</title>
+</head>
+<body>
+    <!--
+        Plausible server-rendered gallery markup. The live Behance grid is an
+        app shell whose state is embedded as JSON, not static cards; this fixture
+        keeps the server-rendered shape the parser can read and is documented as
+        a divergence in BehanceSource.
+    -->
+    <main class="project-grid">
+        <!-- Card 1: relative cover path resolved through the adapter base. -->
+        <div class="project-card">
+            <a class="project-card__link" href="/gallery/12001/aurora-studio">
+                <img src="/covers/aurora-studio.jpg" alt="Aurora Studio">
+            </a>
+            <h3 class="project-card__title">Aurora Studio</h3>
+        </div>
+
+        <!-- Card 2: lazy cover on the S3 CDN (protocol-relative). -->
+        <div class="project-card">
+            <a class="project-card__link" href="/gallery/12002/northwind">
+                <img data-src="//mir-s3-cdn-cf.behance.net/project_modules/1400/northwind.jpg" alt="Northwind">
+            </a>
+            <h3 class="project-card__title">Northwind</h3>
+        </div>
+
+        <!-- Card 3: srcset-only cover. -->
+        <div class="project-card">
+            <a class="project-card__link" href="/gallery/12003/lumen-labs">
+                <img srcset="https://mir-s3-cdn-cf.behance.net/project_modules/1400/lumen-labs-1400.jpg 1400w, https://mir-s3-cdn-cf.behance.net/project_modules/2800/lumen-labs-2800.jpg 2800w" alt="Lumen Labs">
+            </a>
+            <h3 class="project-card__title">Lumen Labs</h3>
+        </div>
+    </main>
+</body>
+</html>

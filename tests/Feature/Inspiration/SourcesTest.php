@@ -25,9 +25,12 @@ use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
+use App\Inspiration\Sources\Scrape\AwwwardsSource;
+use App\Inspiration\Sources\Scrape\BehanceSource;
 use App\Inspiration\Sources\Scrape\BrutalistSource;
 use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
+use App\Inspiration\Sources\Scrape\DribbbleSource;
 use App\Inspiration\Sources\Scrape\GodlySource;
 use App\Inspiration\Sources\Scrape\LapaNinjaSource;
 use App\Inspiration\Sources\Scrape\PosterSpySource;
@@ -134,6 +137,9 @@ dataset('scrapeSources', [
     'godly' => ['godly', GodlySource::class],
     'darkmode' => ['darkmode', DarkModeDesignSource::class],
     'brutalist' => ['brutalist', BrutalistSource::class],
+    'behance' => ['behance', BehanceSource::class],
+    'dribbble' => ['dribbble', DribbbleSource::class],
+    'awwwards' => ['awwwards', AwwwardsSource::class],
 ]);
 
 /**
@@ -275,6 +281,9 @@ function scrapeHttpPatterns(string $key): array
         'godly' => ['*godly.website*'],
         'darkmode' => ['*darkmodedesign.com*'],
         'brutalist' => ['*brutalistwebsites.com*', '*brutalweb.xyz*'],
+        'behance' => ['*behance.net*'],
+        'dribbble' => ['*dribbble.com*'],
+        'awwwards' => ['*awwwards.com*'],
         default => throw new InvalidArgumentException("Unknown scrape source [{$key}]."),
     };
 }
@@ -978,6 +987,9 @@ it('requests the expected search url for :key', function (string $key, string $c
         'posterspy' => 'https://posterspy.com/?s=portrait',
         'lapaninja' => 'https://www.lapa.ninja/search?s=portrait',
         'godly' => 'https://godly.website/search?q=portrait',
+        'behance' => 'https://www.behance.net/search/projects?search=portrait',
+        'dribbble' => 'https://dribbble.com/search/shots?q=portrait',
+        'awwwards' => 'https://www.awwwards.com/search/?q=portrait',
         // No native search box: search() delegates to the explore feed.
         'darkmode' => 'https://www.darkmodedesign.com/',
         'brutalist' => 'https://brutalistwebsites.com/',
@@ -1011,6 +1023,9 @@ it('requests the expected explore url for :key', function (string $key, string $
         'godly' => 'https://godly.website/',
         'darkmode' => 'https://www.darkmodedesign.com/',
         'brutalist' => 'https://brutalistwebsites.com/',
+        'behance' => 'https://www.behance.net/galleries',
+        'dribbble' => 'https://dribbble.com/shots/popular',
+        'awwwards' => 'https://www.awwwards.com/websites/',
     };
 
     Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
@@ -1060,8 +1075,9 @@ it('declares the expected capabilities for scrape :key', function (string $key, 
     $capabilities = $source->capabilities();
 
     $supportsSearch = match ($key) {
-        // Lapa Ninja and Godly ship a search box; Dark Mode and Brutalist do not.
-        'lapaninja', 'godly', 'designspiration', 'savee', 'trendlist', 'posterspy' => true,
+        // Only Dark Mode and Brutalist lack a native search box.
+        'lapaninja', 'godly', 'designspiration', 'savee', 'trendlist', 'posterspy',
+        'behance', 'dribbble', 'awwwards' => true,
         default => false,
     };
 
@@ -1129,5 +1145,8 @@ it('registers every scrape adapter in the source manager', function (): void {
         'godly',
         'darkmode',
         'brutalist',
+        'behance',
+        'dribbble',
+        'awwwards',
     );
 });
