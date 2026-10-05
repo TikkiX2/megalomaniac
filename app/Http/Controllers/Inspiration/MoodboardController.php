@@ -92,13 +92,13 @@ class MoodboardController extends Controller
             return null;
         }
 
-        $disk = Storage::disk((string) config('inspiration.disk'));
-
-        if (! $disk->exists($path)) {
-            return null;
-        }
-
         try {
+            $disk = Storage::disk((string) config('inspiration.disk'));
+
+            if (! $disk->exists($path)) {
+                return null;
+            }
+
             $url = $disk->url($path);
         } catch (Throwable) {
             return null;

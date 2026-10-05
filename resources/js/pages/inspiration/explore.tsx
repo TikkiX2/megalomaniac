@@ -6,7 +6,7 @@ import ImageCard from '@/components/inspiration/ImageCard';
 import Lightbox from '@/components/inspiration/Lightbox';
 import MasonryGrid from '@/components/inspiration/MasonryGrid';
 import SaveModal from '@/components/inspiration/SaveModal';
-import { sourceLabel, type BoardOption, type InspirationItem, type LightboxItem, type ResultGroup, type SourceStatus } from '@/components/inspiration/shared';
+import { sourceLabel, type BoardOption, type InspirationItem, type LightboxItem, type ProjectOption, type ResultGroup, type SourceStatus } from '@/components/inspiration/shared';
 import SourceChips from '@/components/inspiration/SourceChips';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,13 +18,14 @@ import type { SharedData } from '@/types';
 interface ExploreProps {
     sources?: Record<string, SourceStatus>;
     boards?: BoardOption[];
+    projects?: ProjectOption[];
     results?: ResultGroup[];
     saved?: Record<string, number>;
     search?: string;
     source?: string;
 }
 
-const PARTIAL_PROPS = ['results', 'search', 'source', 'sources', 'boards', 'saved'];
+const PARTIAL_PROPS = ['results', 'search', 'source', 'sources', 'boards', 'projects', 'saved'];
 const PAGINATION_PROPS = ['results', 'search', 'source'];
 const SKELETON_HEIGHTS = [220, 320, 180, 280, 360, 240, 300, 200];
 
@@ -42,6 +43,7 @@ export default function Explore() {
     const props = usePage<SharedData & ExploreProps>().props;
     const sources = props.sources ?? {};
     const boards = props.boards ?? [];
+    const projects = props.projects ?? [];
     const results = useMemo(() => props.results ?? [], [props.results]);
     const saved = props.saved ?? {};
     const search = props.search ?? '';
@@ -300,6 +302,7 @@ export default function Explore() {
             <SaveModal
                 item={saveItem}
                 boards={boards}
+                projects={projects}
                 open={saveItem !== null}
                 onOpenChange={(open) => {
                     if (!open) {

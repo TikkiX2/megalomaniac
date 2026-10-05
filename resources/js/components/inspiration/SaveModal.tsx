@@ -13,11 +13,17 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { csrfHeaders } from '@/lib/csrf';
 import inspiration from '@/routes/inspiration';
-import { sourceLabel, type BoardOption, type InspirationItem } from './shared';
+import {
+    sourceLabel,
+    type BoardOption,
+    type InspirationItem,
+    type ProjectOption,
+} from './shared';
 
 interface SaveModalProps {
     item: InspirationItem | null;
     boards: BoardOption[];
+    projects: ProjectOption[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
     /** Called on 201 so the parent can refresh `saved` + `boards`. */
@@ -30,33 +36,117 @@ interface Conflict {
     name: string | null;
 }
 
+/**
+ * One selectable destination. Inbox is always offered (created lazily by the
+ * backend on first save); each personal project resolves either to its existing
+ * moodboard (`moodboard_id`) or, when it has none yet, to a `project_id` that
+ * makes the backend create it lazily.
+ */
+interface SaveOption {
+    key: string;
+    label: string;
+    project: string | null;
+    count: number | null;
+    hint: string | null;
+    group: 'base' | 'projects' | 'boards';
+    payload: { moodboard_id?: number; project_id?: number };
+}
+
+function inboxKey(): string {
+    return 'inbox';
+}
+
+function boardKey(boardId: number): string {
+    return `board:${boardId}`;
+}
+
+function projectKey(projectId: number): string {
+    return `project:${projectId}`;
+}
+
 function flattenErrors(errors: Record<string, string | string[]>): string[] {
     return Object.values(errors).flatMap((value) => (Array.isArray(value) ? value : [value]));
 }
 
-/** Inbox first, then the rest ordered by project (or board) name. */
-function orderBoards(boards: BoardOption[]): BoardOption[] {
-    return [...boards].sort((a, b) => {
-        const aInbox = a.name.toLowerCase() === 'inbox' ? 0 : 1;
-        const bInbox = b.name.toLowerCase() === 'inbox' ? 0 : 1;
-
-        if (aInbox !== bInbox) {
-            return aInbox - bInbox;
-        }
-
-        return (a.project_name ?? a.name).localeCompare(b.project_name ?? b.name);
-    });
+function sortByName<T extends { name: string }>(items: T[]): T[] {
+    return [...items].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /**
- * Save-to-moodboard dialog. Posts JSON directly (the endpoint is not an Inertia
- * response), so 409 conflicts can surface the existing board instead of
- * triggering Inertia's generic error modal.
- *
- * The form is keyed by `source:source_id`, so switching images (or reopening)
- * remounts it and no reset effect is needed.
+ * Build the ordered destination list: Inbox first, then one entry per personal
+ * project, then any board not tied to a listed project (defensive: a board can
+ * outlive the project query). A project with no board yet is offered as a lazy
+ * target.
  */
-export default function SaveModal({ item, boards, open, onOpenChange, onSaved }: SaveModalProps) {
+function buildOptions(boards: BoardOption[], projects: ProjectOption[]): SaveOption[] {
+    const inboxBoard = boards.find((board) => board.project_id === null) ?? null;
+    const options: SaveOption[] = [
+        {
+            key: inboxKey(),
+            label: inboxBoard?.name ?? 'Inbox',
+            project: null,
+            count: inboxBoard?.count ?? 0,
+            hint: 'Guardado rápido',
+            group: 'base',
+            payload: {},
+        },
+    ];
+
+    const projectIds = new Set(projects.map((project) => project.id));
+
+    for (const project of sortByName(projects)) {
+        const board = boards.find((candidate) => candidate.project_id === project.id);
+
+        options.push(
+            board
+                ? {
+                      key: boardKey(board.id),
+                      label: board.name,
+                      project: project.name,
+                      count: board.count,
+                      hint: null,
+                      group: 'projects',
+                      payload: { moodboard_id: board.id },
+                  }
+                : {
+                      key: projectKey(project.id),
+                      label: project.name,
+                      project: null,
+                      count: null,
+                      hint: 'Se crea al guardar',
+                      group: 'projects',
+                      payload: { project_id: project.id },
+                  },
+        );
+    }
+
+    for (const board of sortByName(boards)) {
+        if (board.project_id === null || projectIds.has(board.project_id)) {
+            continue;
+        }
+
+        options.push({
+            key: boardKey(board.id),
+            label: board.name,
+            project: board.project_name,
+            count: board.count,
+            hint: null,
+            group: 'boards',
+            payload: { moodboard_id: board.id },
+        });
+    }
+
+    return options;
+}
+
+export default function SaveModal({
+    item,
+    boards,
+    projects,
+    open,
+    onOpenChange,
+    onSaved,
+}: SaveModalProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="border-border bg-card sm:max-w-md">
@@ -65,6 +155,7 @@ export default function SaveModal({ item, boards, open, onOpenChange, onSaved }:
                         key={`${item.source}:${item.source_id}`}
                         item={item}
                         boards={boards}
+                        projects={projects}
                         onSaved={onSaved}
                         onClose={() => onOpenChange(false)}
                     />
@@ -77,20 +168,24 @@ export default function SaveModal({ item, boards, open, onOpenChange, onSaved }:
 function SaveForm({
     item,
     boards,
+    projects,
     onSaved,
     onClose,
 }: {
     item: InspirationItem;
     boards: BoardOption[];
+    projects: ProjectOption[];
     onSaved: () => void;
     onClose: () => void;
 }) {
-    const ordered = useMemo(() => orderBoards(boards), [boards]);
-    const [boardId, setBoardId] = useState<number | null>(() => ordered[0]?.id ?? null);
+    const options = useMemo(() => buildOptions(boards, projects), [boards, projects]);
+    const [target, setTarget] = useState<string>(() => options[0]?.key ?? inboxKey());
     const [note, setNote] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [conflict, setConflict] = useState<Conflict | null>(null);
     const [errors, setErrors] = useState<string[]>([]);
+
+    const selected = options.find((option) => option.key === target) ?? options[0];
 
     const submit = async () => {
         if (submitting) {
@@ -124,7 +219,7 @@ function SaveForm({
                     license: item.license ?? undefined,
                     maturity: item.maturity ?? undefined,
                     note: note.trim() || undefined,
-                    moodboard_id: boardId ?? undefined,
+                    ...selected?.payload,
                 }),
             });
 
@@ -176,32 +271,20 @@ function SaveForm({
 
             <div className="space-y-3">
                 <div className="max-h-64 space-y-1 overflow-y-auto pr-1">
-                    {ordered.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No hay moodboards todavía.</p>
-                    ) : (
-                        ordered.map((board) => (
-                            <button
-                                key={board.id}
-                                type="button"
-                                onClick={() => setBoardId(board.id)}
-                                className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                                    boardId === board.id
-                                        ? 'border-primary bg-primary/10 text-foreground'
-                                        : 'border-border bg-background text-muted-foreground hover:border-primary/40'
-                                }`}
-                            >
-                                <span className="truncate font-medium">
-                                    {board.name}
-                                    {board.project_name && (
-                                        <span className="ml-1 text-xs text-muted-foreground">· {board.project_name}</span>
-                                    )}
-                                </span>
-                                <span className="ml-2 shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                                    {board.count}
-                                </span>
-                            </button>
-                        ))
-                    )}
+                    {options.map((option, index) => (
+                        <div key={option.key}>
+                            {index > 0 && options[index - 1].group !== option.group && (
+                                <p className="px-1 pt-2 pb-1 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                                    {option.group === 'projects' ? 'Proyectos' : 'Otros moodboards'}
+                                </p>
+                            )}
+                            <OptionButton
+                                option={option}
+                                selected={option.key === selected?.key}
+                                onSelect={() => setTarget(option.key)}
+                            />
+                        </div>
+                    ))}
                 </div>
 
                 <Textarea
@@ -242,11 +325,50 @@ function SaveForm({
                 <Button type="button" variant="ghost" onClick={onClose}>
                     Cancelar
                 </Button>
-                <Button type="button" onClick={submit} disabled={submitting || ordered.length === 0}>
+                <Button type="button" onClick={submit} disabled={submitting || selected === undefined}>
                     {submitting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
                     Guardar
                 </Button>
             </DialogFooter>
         </>
+    );
+}
+
+function OptionButton({
+    option,
+    selected,
+    onSelect,
+}: {
+    option: SaveOption;
+    selected: boolean;
+    onSelect: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                selected
+                    ? 'border-primary bg-primary/10 text-foreground'
+                    : 'border-border bg-background text-muted-foreground hover:border-primary/40'
+            }`}
+        >
+            <span className="min-w-0 truncate font-medium">
+                {option.label}
+                {option.project && (
+                    <span className="ml-1 text-xs text-muted-foreground">· {option.project}</span>
+                )}
+                {option.hint && (
+                    <span className="ml-1 text-[10px] font-normal text-muted-foreground">
+                        {option.hint}
+                    </span>
+                )}
+            </span>
+            {option.count !== null && (
+                <span className="ml-2 shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                    {option.count}
+                </span>
+            )}
+        </button>
     );
 }

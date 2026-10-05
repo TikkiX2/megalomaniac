@@ -97,19 +97,19 @@ it('takes extra query options into account for the hash', function () {
         ->not->toBe(InspirationCache::queryHash('portrait', new SourceQuery('safe', ['page' => 2])));
 });
 
-it('returns well-formed settings bag defaults for a user without settings', function () {
+it('returns well-formed settings bag defaults seeded from config for a user without settings', function () {
     $user = User::factory()->create();
 
     $bag = app(InspirationSettings::class)->for($user);
 
     expect($bag)->toBeInstanceOf(SettingsBag::class)
-        ->and($bag->enabledSources)->toBe([])
+        ->and($bag->enabledSources)->toBe(config('inspiration.default_enabled_sources'))
         ->and($bag->keys)->toBe([])
         ->and($bag->maturity)->toBeFalse()
         ->and($bag->zerochanUa)->toBeNull()
         ->and($bag->acknowledgedTier3)->toBe([])
         ->and($bag->hasKey('deviantart'))->toBeFalse()
-        ->and($bag->isEnabled('deviantart'))->toBeFalse();
+        ->and($bag->isEnabled('wallhaven'))->toBeTrue();
 });
 
 it('persists the complete settings shape and merges defaults for missing keys', function () {

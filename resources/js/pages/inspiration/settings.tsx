@@ -111,6 +111,8 @@ export default function InspirationSettings() {
     const [saving, setSaving] = useState<string | null>(null);
     const [testing, setTesting] = useState<string | null>(null);
     const [results, setResults] = useState<Record<string, TestResult>>({});
+    const [zerochanUa, setZerochanUa] = useState(settings.zerochan_ua ?? '');
+    const [savingZerochanUa, setSavingZerochanUa] = useState(false);
 
     const acknowledged = new Set(settings.acknowledged_tier3);
     const tier3Sources = sources.filter((source) => source.has_tier3_notice);
@@ -149,6 +151,19 @@ export default function InspirationSettings() {
             inspiration.settings.update.url(),
             { acknowledged_tier3: acknowledgedTier3 },
             { preserveScroll: true },
+        );
+    };
+
+    const saveZerochanUa = () => {
+        setSavingZerochanUa(true);
+
+        router.patch(
+            inspiration.settings.update.url(),
+            { zerochan_ua: zerochanUa.trim() },
+            {
+                preserveScroll: true,
+                onFinish: () => setSavingZerochanUa(false),
+            },
         );
     };
 
@@ -584,6 +599,40 @@ export default function InspirationSettings() {
                             label="Permitir contenido para adultos"
                             onCheckedChange={toggleMaturity}
                         />
+                    </div>
+                </section>
+
+                <section className="rounded-xl border border-border bg-card p-4">
+                    <h3 className="flex items-center gap-2 text-sm font-black tracking-widest text-foreground uppercase">
+                        <span className="material-symbols-outlined text-[18px] text-primary">
+                            badge
+                        </span>
+                        User-Agent de Zerochan
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Zerochan exige un User-Agent propio del formato{' '}
+                        <span className="font-mono">proyecto-usuario</span> (por
+                        ejemplo, <span className="font-mono">Megalomaniac-ricky</span>).
+                        Sin él, Zerochan puede rechazar las búsquedas.
+                    </p>
+                    <div className="mt-3 flex items-center gap-2">
+                        <Input
+                            value={zerochanUa}
+                            onChange={(event) => setZerochanUa(event.target.value)}
+                            placeholder="Megalomaniac-tuUsuario"
+                            aria-label="User-Agent de Zerochan"
+                            className="h-8 w-64 bg-background font-mono text-xs"
+                        />
+                        <Button
+                            type="button"
+                            size="sm"
+                            className="h-8"
+                            disabled={savingZerochanUa}
+                            onClick={saveZerochanUa}
+                        >
+                            {savingZerochanUa && <Spinner className="size-3.5" />}
+                            Guardar
+                        </Button>
                     </div>
                 </section>
 

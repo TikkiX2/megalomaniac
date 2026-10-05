@@ -18,6 +18,12 @@ use App\Inspiration\Dtos\SourceQuery;
  * when the user supplied an API key, because Wallhaven gates sketchy/nsfw
  * results behind a key. Without a key the adapter stays at 100 so the request
  * never errors.
+ *
+ * Known trade-off: the cache hash only folds in the maturity level, not the
+ * credentials, so `allowed` without a key shares a cache entry with `allowed`
+ * with a key. That is inherent to the frozen query-hash formula (`SourceQuery`
+ * carries no credential dimension); the result is merely the SFW-only page
+ * rather than a failure.
  */
 class WallhavenSource extends AbstractApiSource
 {

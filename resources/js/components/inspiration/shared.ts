@@ -42,6 +42,7 @@ export interface ResultGroup {
 export interface BoardOption {
     id: number;
     name: string;
+    project_id: number | null;
     project_name: string | null;
     count: number;
 }

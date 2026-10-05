@@ -108,4 +108,40 @@ return [
 
     'tier3' => ['pixiv', 'pinterest', 'cara', 'bandcamp', 'wikiart', 'newgrounds', 'mobbin'],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sources enabled by default
+    |--------------------------------------------------------------------------
+    |
+    | Applied only when the user has no persisted settings row. Every key here
+    | is a Tier 1 source with no user credential (DeviantArt's app-level OAuth
+    | lives in `.env`) plus every Tier 2 HTML scraper. Tier 3 stays opt-in via
+    | the acknowledgement flow. Once the user saves settings, their explicit
+    | list wins — including an empty one (they turned everything off).
+    |
+    */
+
+    'default_enabled_sources' => [
+        'deviantart',
+        'artstation',
+        'wallhaven',
+        'openverse',
+        'zerochan',
+        'gelbooru',
+        'arena',
+        'met',
+        'aic',
+        'designspiration',
+        'savee',
+        'trendlist',
+        'posterspy',
+        'lapaninja',
+        'brutalist',
+        'godly',
+        'darkmode',
+        'behance',
+        'dribbble',
+        'awwwards',
+    ],
+
 ];

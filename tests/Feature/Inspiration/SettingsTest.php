@@ -55,6 +55,37 @@ it('exposes the credential_fields map in config', function () {
         ]);
 });
 
+it('lists the keyless tier 1 and tier 2 sources as enabled by default', function () {
+    $defaults = config('inspiration.default_enabled_sources');
+
+    expect($defaults)->toBeArray()
+        ->and($defaults)->toContain(
+            'deviantart', 'artstation', 'wallhaven', 'openverse', 'zerochan',
+            'gelbooru', 'arena', 'met', 'aic',
+            'designspiration', 'savee', 'trendlist', 'posterspy', 'lapaninja',
+            'brutalist', 'godly', 'darkmode', 'behance', 'dribbble', 'awwwards',
+        )
+        ->and(array_intersect($defaults, config('inspiration.tier3')))->toBe([]);
+});
+
+it('shows the config defaults as enabled for a fresh account without settings', function () {
+    config()->set('inspiration.default_enabled_sources', ['fake-default']);
+    FakeInspirationSource::register([new FakeInspirationSource('fake-default')]);
+
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get('/inspiration/settings')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('settings.enabled_sources', ['fake-default'])
+            ->where('sources', function ($sources): bool {
+                $row = collect($sources)->firstWhere('key', 'fake-default');
+
+                return $row['enabled'] === true;
+            }));
+});
+
 it('renders the settings page with source metadata and no plain keys', function () {
     FakeInspirationSource::register([
         new FakeInspirationSource('flickr', needsKey: true),

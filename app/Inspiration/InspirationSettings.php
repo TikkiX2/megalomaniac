@@ -13,12 +13,23 @@ class InspirationSettings
     /**
      * Resolve the user's settings, always returning a well-formed bag even
      * when no row exists yet.
+     *
+     * A missing row means a fresh account: the bag carries the curated
+     * `default_enabled_sources` so the explore wall is populated without any
+     * setup. Once a row exists it is authoritative — including an explicitly
+     * empty `enabled_sources`, which means the user turned everything off.
      */
     public function for(User $user): SettingsBag
     {
         $row = InspirationSetting::query()->whereKey($user->getKey())->first();
 
-        return SettingsBag::fromArray($row?->body ?? []);
+        if ($row === null) {
+            return SettingsBag::fromArray([
+                'enabled_sources' => config('inspiration.default_enabled_sources', []),
+            ]);
+        }
+
+        return SettingsBag::fromArray($row->body ?? []);
     }
 
     /**

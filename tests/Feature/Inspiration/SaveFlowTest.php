@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Inspiration\Exceptions\DownloadQuotaExceededException;
 use App\Inspiration\Exceptions\DuplicateSavedImageException;
 use App\Inspiration\InspirationSaveService;
+use App\Inspiration\Support\StoredImagePath;
 use App\Jobs\Inspiration\DownloadFullJob;
 use App\Jobs\Inspiration\DownloadThumbJob;
 use App\Models\Moodboard;
@@ -374,6 +375,117 @@ it('rejects saving into another user board with a 404', function () {
         ->assertNotFound();
 
     expect(SavedImage::count())->toBe(0);
+});
+
+it('creates a project moodboard lazily when saving with a project_id', function () {
+    Queue::fake();
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user)->create(['type' => 'personal', 'name' => 'Moodboard Project']);
+
+    $this->actingAs($user)
+        ->postJson('/inspiration/save', saveFlowPayload(['project_id' => $project->id]))
+        ->assertCreated();
+
+    $board = Moodboard::query()->forUser($user)->where('project_id', $project->id)->first();
+
+    expect($board)->not->toBeNull()
+        ->and($board->name)->toBe('Moodboard Project')
+        ->and($board->project_id)->toBe($project->id)
+        ->and(SavedImage::first()->moodboard_id)->toBe($board->id);
+});
+
+it('dedupes against the same lazily-created project board', function () {
+    Queue::fake();
+    $user = User::factory()->create();
+    $project = Project::factory()->for($user)->create(['type' => 'personal', 'name' => 'Moodboard Project']);
+
+    $this->actingAs($user)
+        ->postJson('/inspiration/save', saveFlowPayload(['project_id' => $project->id]))
+        ->assertCreated();
+
+    $board = Moodboard::query()->forUser($user)->where('project_id', $project->id)->firstOrFail();
+
+    $this->actingAs($user)
+        ->postJson('/inspiration/save', saveFlowPayload(['project_id' => $project->id]))
+        ->assertStatus(409)
+        ->assertJsonPath('existing_moodboard_id', $board->id)
+        ->assertJsonPath('existing_moodboard_name', 'Moodboard Project');
+
+    expect(Moodboard::query()->forUser($user)->count())->toBe(1)
+        ->and(SavedImage::count())->toBe(1);
+});
+
+it('prefers project_id over moodboard_id when both are present', function () {
+    Queue::fake();
+    $user = User::factory()->create();
+    $inbox = $this->service->ensureInbox($user);
+    $project = Project::factory()->for($user)->create(['type' => 'personal', 'name' => 'Winner']);
+
+    $this->actingAs($user)
+        ->postJson('/inspiration/save', saveFlowPayload([
+            'moodboard_id' => $inbox->id,
+            'project_id' => $project->id,
+        ]))
+        ->assertCreated();
+
+    $board = Moodboard::query()->forUser($user)->where('project_id', $project->id)->firstOrFail();
+
+    expect(SavedImage::first()->moodboard_id)->toBe($board->id)
+        ->and(SavedImage::first()->moodboard_id)->not->toBe($inbox->id);
+});
+
+it('rejects saving into a foreign or non-personal project with a 404', function () {
+    Queue::fake();
+    $owner = User::factory()->create();
+    $intruder = User::factory()->create();
+    $foreign = Project::factory()->for($owner)->create(['type' => 'personal']);
+    $freelance = Project::factory()->for($intruder)->create(['type' => 'freelance']);
+
+    $this->actingAs($intruder)
+        ->postJson('/inspiration/save', saveFlowPayload(['project_id' => $foreign->id]))
+        ->assertNotFound();
+
+    $this->actingAs($intruder)
+        ->postJson('/inspiration/save', saveFlowPayload(['project_id' => $freelance->id]))
+        ->assertNotFound();
+
+    expect(SavedImage::count())->toBe(0)
+        ->and(Moodboard::count())->toBe(0);
+});
+
+it('rejects a source id containing path traversal characters', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/inspiration/save', saveFlowPayload(['source_id' => '../victim/x']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('source_id');
+
+    expect(SavedImage::count())->toBe(0);
+});
+
+it('sanitizes metacharacters out of the stored path source id', function () {
+    $saved = new SavedImage([
+        'user_id' => 7,
+        'source' => 'deviantart',
+        'source_id' => '../../etc/pa ss',
+    ]);
+
+    expect(StoredImagePath::thumb($saved, 'https://cdn.example.com/a.jpg'))
+        ->toBe('inspiration/7/deviantart/....etcpass.thumb.jpg')
+        ->and(StoredImagePath::full($saved, 'https://cdn.example.com/a.png'))
+        ->toBe('inspiration/7/deviantart/....etcpass.full.png');
+});
+
+it('falls back to a literal image id when sanitization empties the source id', function () {
+    $saved = new SavedImage([
+        'user_id' => 7,
+        'source' => 'deviantart',
+        'source_id' => '///',
+    ]);
+
+    expect(StoredImagePath::thumb($saved, 'https://cdn.example.com/a.jpg'))
+        ->toBe('inspiration/7/deviantart/image.thumb.jpg');
 });
 
 it('refuses a full download for another user saved image', function () {

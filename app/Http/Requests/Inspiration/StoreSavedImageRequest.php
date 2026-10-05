@@ -14,6 +14,9 @@ use Illuminate\Validation\Rule;
  *
  * `thumbnail_url` is intentionally not persisted; it is forwarded to the
  * thumbnail job so it can prefer the lighter remote asset.
+ *
+ * `project_id` targets a personal project's lazy moodboard and wins over
+ * `moodboard_id` when both are present (the UI never sends both).
  */
 class StoreSavedImageRequest extends FormRequest
 {
@@ -29,7 +32,7 @@ class StoreSavedImageRequest extends FormRequest
     {
         return [
             'source' => ['required', 'string', Rule::in($this->allowedSources())],
-            'source_id' => ['required', 'string', 'max:255'],
+            'source_id' => ['required', 'string', 'max:120', 'regex:/^[A-Za-z0-9._-]+$/'],
             'image_url' => ['required', 'string', 'max:2048', new SecureHttpUrl],
             'page_url' => ['required', 'string', 'max:2048'],
             'title' => ['nullable', 'string', 'max:255'],
@@ -44,6 +47,7 @@ class StoreSavedImageRequest extends FormRequest
             'maturity' => ['nullable', 'string', 'max:50'],
             'note' => ['nullable', 'string', 'max:5000'],
             'moodboard_id' => ['nullable', 'integer', Rule::exists('moodboards', 'id')],
+            'project_id' => ['nullable', 'integer', Rule::exists('projects', 'id')],
         ];
     }
 

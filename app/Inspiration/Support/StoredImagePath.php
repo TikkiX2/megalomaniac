@@ -34,11 +34,19 @@ final class StoredImagePath
 
     private static function make(SavedImage $saved, string $kind, string $url): string
     {
+        // Defensive: the request already constrains source_id, but a row created
+        // through another path must never be able to escape the storage prefix.
+        $sourceId = preg_replace('/[^A-Za-z0-9._-]/', '', $saved->source_id);
+
+        if (! is_string($sourceId) || $sourceId === '') {
+            $sourceId = 'image';
+        }
+
         return sprintf(
             'inspiration/%d/%s/%s.%s.%s',
             $saved->user_id,
             $saved->source,
-            $saved->source_id,
+            $sourceId,
             $kind,
             self::extension($url),
         );

@@ -118,6 +118,53 @@ it('isolates a failing source in searchAll while the healthy sources respond', f
         ->and($results['fake-ok']['items'][0]['sourceId'])->toBe('fake-ok-1');
 });
 
+it('degrades a source that throws a non-source error in searchAll', function () {
+    registerInspirationFakeSources([
+        new FakeInspirationSource('fake-ok'),
+        new FakeInspirationSource(
+            'fake-boom',
+            searchCallback: fn (int $page, string $query, SourceQuery $options): Page => throw new TypeError('adapter bug'),
+        ),
+    ]);
+
+    $user = inspirationUserWithSettings(['fake-ok', 'fake-boom']);
+
+    $results = app(SourceManager::class)->searchAll($user, 'portrait');
+
+    expect($results)->toHaveKeys(['fake-ok', 'fake-boom'])
+        ->and($results['fake-boom']['items'])->toBe([])
+        ->and($results['fake-ok']['items'])->toHaveCount(1)
+        ->and($results['fake-ok']['items'][0]['sourceId'])->toBe('fake-ok-1');
+});
+
+it('enables the config defaults for a user without a settings row', function () {
+    config()->set('inspiration.default_enabled_sources', ['fake-default-a', 'fake-default-b']);
+
+    registerInspirationFakeSources([
+        new FakeInspirationSource('fake-default-a'),
+        new FakeInspirationSource('fake-default-b'),
+        new FakeInspirationSource('fake-other'),
+    ]);
+
+    $user = User::factory()->create();
+
+    $active = app(SourceManager::class)->activeConfigured($user);
+
+    expect($active->keys()->all())->toContain('fake-default-a')
+        ->and($active->keys()->all())->toContain('fake-default-b')
+        ->and($active->keys()->all())->not->toContain('fake-other');
+});
+
+it('respects an explicit empty enabled list over the defaults', function () {
+    config()->set('inspiration.default_enabled_sources', ['fake-default']);
+    registerInspirationFakeSources([new FakeInspirationSource('fake-default')]);
+
+    $user = inspirationUserWithSettings([]);
+
+    expect(app(SourceManager::class)->activeConfigured($user)->keys()->all())->toBe([])
+        ->and(app(InspirationSettings::class)->for($user)->enabledSources)->toBe([]);
+});
+
 it('marks a source down only when it failed and no cache row exists at all', function () {
     registerInspirationFakeSources([
         new FakeInspirationSource('fake-ok'),

@@ -15,7 +15,9 @@ use Illuminate\Container\Container;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Throwable;
 
 /**
  * Registry and dispatcher for every inspiration source.
@@ -199,6 +201,23 @@ class SourceManager
                     'next_page' => null,
                     'from_cache' => false,
                     'age_minutes' => $exception->previousCacheAge,
+                ];
+            } catch (Throwable $exception) {
+                // An adapter bug (TypeError, bad array access…) must not take
+                // down the whole fan-out. Normalize it to the same degraded
+                // entry a source failure produces.
+                Log::warning('inspiration: '.$key.' threw '.$exception::class, [
+                    'message' => $exception->getMessage(),
+                ]);
+
+                $this->recordError($key);
+
+                $results[$key] = [
+                    'items' => [],
+                    'has_more' => false,
+                    'next_page' => null,
+                    'from_cache' => false,
+                    'age_minutes' => null,
                 ];
             }
         }

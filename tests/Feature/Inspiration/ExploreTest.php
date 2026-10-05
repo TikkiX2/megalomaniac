@@ -70,10 +70,18 @@ it('renders the explore page as a mashup of the active sources', function () {
             ->has('sources')
             ->has('results', 2)
             ->where('results.0.source', 'fake-ok')
-            ->where('results.0.items.0.sourceId', 'fake-ok-explore-1')
+            ->where('results.0.items.0.source_id', 'fake-ok-explore-1')
+            ->where('results.0.items.0.page_url', 'https://example.com/fake-ok-explore-1')
+            ->where('results.0.items.0.image_url', 'https://cdn.example.com/fake-ok-explore-1.jpg')
+            ->where('results.0.items.0.title', 'fake-ok-explore-1')
+            ->where('results.0.items.0.thumbnail_url', null)
+            ->where('results.0.items.0.dominant_color', null)
+            ->where('results.0.items.0.author_url', null)
+            ->missing('results.0.items.0.sourceId')
+            ->missing('results.0.items.0.imageUrl')
             ->where('results.0.from_cache', false)
             ->where('results.1.source', 'fake-two')
-            ->where('results.1.items.0.sourceId', 'fake-two-explore-1'));
+            ->where('results.1.items.0.source_id', 'fake-two-explore-1'));
 });
 
 it('exposes personal projects, boards and the saved index for the user', function () {
@@ -123,9 +131,11 @@ it('exposes personal projects, boards and the saved index for the user', functio
             ->where('projects.0.name', 'Board Project')
             ->has('boards', 2)
             ->where('boards.0.name', 'Mood')
+            ->where('boards.0.project_id', $project->id)
             ->where('boards.0.project_name', 'Board Project')
             ->where('boards.0.count', 1)
             ->where('boards.1.name', 'Inbox')
+            ->where('boards.1.project_id', null)
             ->where('boards.1.project_name', null)
             ->where('boards.1.count', 0)
             ->where('saved', ['fake-ok:abc' => $board->id]));
@@ -160,7 +170,7 @@ it('serves saved and boards on a partial reload of the search URL', function () 
     $this->actingAs($user)
         ->get('/inspiration/search?q=portrait&source=all', [
             'X-Inertia-Partial-Component' => 'inspiration/explore',
-            'X-Inertia-Partial-Data' => 'saved,boards',
+            'X-Inertia-Partial-Data' => 'saved,boards,projects',
         ])
         ->assertOk()
         ->assertInertia(fn ($page) => $page
@@ -168,8 +178,10 @@ it('serves saved and boards on a partial reload of the search URL', function () 
             ->where('saved', ['fake-ok:abc' => $board->id])
             ->has('boards', 1)
             ->where('boards.0.name', 'Mood')
+            ->where('boards.0.project_id', null)
             ->where('boards.0.project_name', null)
             ->where('boards.0.count', 1)
+            ->has('projects', 0)
             ->missing('results')
             ->missing('sources'));
 });
@@ -208,12 +220,54 @@ it('degrades a failing explore source without failing the page', function () {
             ->where('sources.fake-ok.down', false)
             ->where('sources.fake-down.down', true)
             ->where('results.0.source', 'fake-ok')
-            ->where('results.0.items.0.sourceId', 'fake-ok-explore-1')
+            ->where('results.0.items.0.source_id', 'fake-ok-explore-1')
             ->where('results.1.source', 'fake-down')
             ->where('results.1.items', [])
             ->where('results.1.has_more', false)
             ->where('results.1.from_cache', false)
             ->where('results.1.age_minutes', null));
+});
+
+it('degrades a source that throws a non-source error without failing the page', function () {
+    FakeInspirationSource::register([
+        new FakeInspirationSource('fake-ok'),
+        new FakeInspirationSource(
+            'fake-boom',
+            exploreCallback: fn (int $page, SourceQuery $options): Page => throw new TypeError('adapter bug'),
+        ),
+    ]);
+
+    $user = exploreUser(['fake-ok', 'fake-boom']);
+
+    $this->actingAs($user)
+        ->get('/inspiration')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('results', 2)
+            ->where('results.0.source', 'fake-ok')
+            ->where('results.0.items.0.source_id', 'fake-ok-explore-1')
+            ->where('results.1.source', 'fake-boom')
+            ->where('results.1.items', [])
+            ->where('results.1.has_more', false));
+});
+
+it('degrades a single-source search that throws a non-source error', function () {
+    FakeInspirationSource::register([
+        new FakeInspirationSource(
+            'fake-boom',
+            searchCallback: fn (int $page, string $query, SourceQuery $options): Page => throw new TypeError('adapter bug'),
+        ),
+    ]);
+
+    $user = exploreUser(['fake-boom']);
+
+    $this->actingAs($user)
+        ->get('/inspiration/search?q=portrait&source=fake-boom')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('results', 1)
+            ->where('results.0.source', 'fake-boom')
+            ->where('results.0.items', []));
 });
 
 it('caps the explore mashup at twelve items per source', function () {
@@ -239,8 +293,8 @@ it('caps the explore mashup at twelve items per source', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('results.0.items', 12)
-            ->where('results.0.items.0.sourceId', 'capped-1')
-            ->where('results.0.items.11.sourceId', 'capped-12')
+            ->where('results.0.items.0.source_id', 'capped-1')
+            ->where('results.0.items.11.source_id', 'capped-12')
             ->where('results.0.has_more', true));
 });
 
@@ -261,9 +315,9 @@ it('fans out a search across every active source', function () {
             ->where('source', 'all')
             ->has('results', 2)
             ->where('results.0.source', 'fake-ok')
-            ->where('results.0.items.0.sourceId', 'fake-ok-1')
+            ->where('results.0.items.0.source_id', 'fake-ok-1')
             ->where('results.1.source', 'fake-two')
-            ->where('results.1.items.0.sourceId', 'fake-two-1'));
+            ->where('results.1.items.0.source_id', 'fake-two-1'));
 });
 
 it('isolates a failing source in the search fan-out', function () {
@@ -280,7 +334,7 @@ it('isolates a failing source in the search fan-out', function () {
         ->assertInertia(fn ($page) => $page
             ->has('results', 2)
             ->where('results.0.source', 'fake-ok')
-            ->where('results.0.items.0.sourceId', 'fake-ok-1')
+            ->where('results.0.items.0.source_id', 'fake-ok-1')
             ->where('results.1.source', 'fake-down')
             ->where('results.1.items', [])
             ->where('results.1.has_more', false)

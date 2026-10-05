@@ -6,6 +6,7 @@ use App\Models\Moodboard;
 use App\Models\Project;
 use App\Models\SavedImage;
 use App\Models\User;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 
@@ -184,6 +185,27 @@ it('resolves the stored thumbnail and full size urls from the disk', function ()
             ->where('items.0.thumb_url', Storage::disk('local')->url($thumbPath))
             ->where('items.0.full_url', Storage::disk('local')->url($fullPath))
             ->where('items.0.download_status', SavedImage::STATUS_FULL));
+});
+
+it('falls back to the remote image url when the storage disk throws', function () {
+    $user = User::factory()->create();
+    [$board] = moodboardForProject($user);
+
+    $image = moodboardSavedImage($user, $board, [
+        'thumb_path' => 'inspiration/'.$user->id.'/wallhaven/abc-1.thumb.jpg',
+        'image_url' => 'https://cdn.example.com/original.jpg',
+    ]);
+
+    $disk = Mockery::mock(Filesystem::class);
+    $disk->shouldReceive('exists')->once()->andThrow(new RuntimeException('disk down'));
+    Storage::set('local', $disk);
+
+    $this->actingAs($user)
+        ->get("/inspiration/moodboards/{$board->id}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('items.0.id', $image->id)
+            ->where('items.0.thumb_url', 'https://cdn.example.com/original.jpg'));
 });
 
 it('leaves the full url null when the full download has not happened', function () {

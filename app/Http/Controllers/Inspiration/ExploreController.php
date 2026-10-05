@@ -13,8 +13,10 @@ use App\Models\Project;
 use App\Models\SavedImage;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 /**
  * Read-only inspiration surface: the explore mashup and the search fan-out.
@@ -64,6 +66,7 @@ class ExploreController extends Controller
             'search' => $query,
             'source' => $source,
             'sources' => $this->sources->statuses($user),
+            'projects' => $this->projects($user),
             ...$this->boardsAndSaved($user),
         ]);
     }
@@ -84,6 +87,9 @@ class ExploreController extends Controller
 
                 $results[] = $this->entry($key, $page);
             } catch (SourceException) {
+                $results[] = $this->downEntry($key);
+            } catch (Throwable $exception) {
+                $this->logInternalFailure($key, $exception);
                 $results[] = $this->downEntry($key);
             }
         }
@@ -116,6 +122,10 @@ class ExploreController extends Controller
             return [$this->entry($key, $this->sources->search($user, $key, $query, $page))];
         } catch (SourceException) {
             return [$this->downEntry($key)];
+        } catch (Throwable $exception) {
+            $this->logInternalFailure($key, $exception);
+
+            return [$this->downEntry($key)];
         }
     }
 
@@ -127,11 +137,56 @@ class ExploreController extends Controller
     {
         return [
             'source' => $key,
-            'items' => $page['items'],
+            'items' => array_map(
+                fn (array $item): array => $this->clientItem($item),
+                $page['items'],
+            ),
             'has_more' => $page['has_more'],
             'from_cache' => $page['from_cache'],
             'age_minutes' => $page['age_minutes'],
         ];
+    }
+
+    /**
+     * Map one source DTO payload (camelCase) to the snake_case keys the client
+     * surface declares in `components/inspiration/shared.ts`.
+     *
+     * The internal DTO stays camelCase; this is the single web boundary where
+     * the translation happens, so every entry() caller (mashup, search-all and
+     * single-source search) emits the same shape the cards and SaveModal read.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    private function clientItem(array $item): array
+    {
+        return [
+            'source' => $item['source'] ?? null,
+            'source_id' => $item['sourceId'] ?? null,
+            'title' => $item['title'] ?? null,
+            'author' => $item['author'] ?? null,
+            'author_url' => $item['authorUrl'] ?? null,
+            'page_url' => $item['pageUrl'] ?? null,
+            'image_url' => $item['imageUrl'] ?? null,
+            'thumbnail_url' => $item['thumbnailUrl'] ?? null,
+            'width' => $item['width'] ?? null,
+            'height' => $item['height'] ?? null,
+            'tags' => $item['tags'] ?? [],
+            'dominant_color' => $item['dominantColor'] ?? null,
+            'license' => $item['license'] ?? null,
+            'maturity' => $item['maturity'] ?? null,
+        ];
+    }
+
+    /**
+     * Persist an internal adapter failure (an exception the manager does not
+     * normalize) without leaking its message to the client.
+     */
+    private function logInternalFailure(string $key, Throwable $exception): void
+    {
+        Log::warning('inspiration: '.$key.' threw '.$exception::class, [
+            'message' => $exception->getMessage(),
+        ]);
     }
 
     /**
@@ -167,7 +222,7 @@ class ExploreController extends Controller
     }
 
     /**
-     * @return list<array{id: int, name: string, project_name: ?string, count: int}>
+     * @return list<array{id: int, name: string, project_id: ?int, project_name: ?string, count: int}>
      */
     private function boards(User $user): array
     {
@@ -180,6 +235,7 @@ class ExploreController extends Controller
             ->map(static fn (Moodboard $board): array => [
                 'id' => $board->id,
                 'name' => $board->name,
+                'project_id' => $board->project_id !== null ? (int) $board->project_id : null,
                 'project_name' => $board->project?->name,
                 'count' => (int) $board->saved_images_count,
             ])
@@ -210,7 +266,7 @@ class ExploreController extends Controller
      * reload fired after a save resolves on either URL (see the explore React
      * page's `onSaved` handler).
      *
-     * @return array{boards: list<array{id: int, name: string, project_name: ?string, count: int}>, saved: array<string, int>}
+     * @return array{boards: list<array{id: int, name: string, project_id: ?int, project_name: ?string, count: int}>, saved: array<string, int>}
      */
     private function boardsAndSaved(User $user): array
     {

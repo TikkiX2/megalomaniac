@@ -1538,6 +1538,22 @@ it('caches the pixiv access token across searches', function (): void {
     expect($tokenRequests)->toBe(1);
 });
 
+it('keys the pixiv token cache per refresh token so accounts stay isolated', function (): void {
+    fakeTier3Http('pixiv', 'pixiv/search.json');
+
+    $first = new PixivSource;
+    $first->setCredentials(['refresh_token' => 'account-a']);
+    $first->search('portrait', 1, new SourceQuery);
+
+    $second = new PixivSource;
+    $second->setCredentials(['refresh_token' => 'account-b']);
+    $second->search('portrait', 1, new SourceQuery);
+
+    $tokenRequests = Http::recorded(fn (Request $request): bool => str_contains($request->url(), 'auth/token'))->count();
+
+    expect($tokenRequests)->toBe(2);
+});
+
 it('wraps an invalid pixiv refresh token into a source exception', function (): void {
     Http::fake([
         '*oauth.secure.pixiv.net/auth/token*' => Http::response(['error' => 'invalid_grant'], 400),

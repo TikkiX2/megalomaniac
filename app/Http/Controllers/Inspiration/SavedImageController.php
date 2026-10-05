@@ -10,6 +10,7 @@ use App\Inspiration\Exceptions\DownloadQuotaExceededException;
 use App\Inspiration\Exceptions\DuplicateSavedImageException;
 use App\Inspiration\InspirationSaveService;
 use App\Models\Moodboard;
+use App\Models\Project;
 use App\Models\SavedImage;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -81,10 +82,26 @@ class SavedImageController extends Controller
     }
 
     /**
-     * Resolve the target board: an explicit owned moodboard or the Inbox.
+     * Resolve the target board: a personal project's lazily-created moodboard
+     * (highest precedence), an explicit owned moodboard, or the Inbox.
+     *
+     * The project lookup is scoped to the user's own personal projects, so a
+     * foreign or non-personal project is indistinguishable from a missing one
+     * (404) without relying on the service's AuthorizationException.
      */
     private function boardFor(StoreSavedImageRequest $request, User $user): Moodboard
     {
+        $projectId = $request->validated('project_id');
+
+        if ($projectId !== null) {
+            $project = Project::query()
+                ->where('user_id', $user->id)
+                ->personal()
+                ->findOrFail((int) $projectId);
+
+            return $this->saves->ensureMoodboardForProject($user, $project);
+        }
+
         $moodboardId = $request->validated('moodboard_id');
 
         if ($moodboardId !== null) {

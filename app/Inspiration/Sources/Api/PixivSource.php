@@ -21,7 +21,8 @@ use Throwable;
  * for a short-lived access token at the OAuth endpoint, and only the access
  * token travels in the `Authorization: Bearer` header of every search. The
  * exchange uses Pixiv's well-known public App API client credentials and the
- * resulting access token is cached for one hour.
+ * resulting access token is cached for one hour under a key derived from the
+ * refresh token, so each account keeps its own token.
  *
  * Maturity is a token-level concern on Pixiv (the account controls whether R-18
  * works are visible), so the adapter only adds the `filter=for_ios` parameter
@@ -47,7 +48,7 @@ class PixivSource extends AbstractApiSource
 
     private const CLIENT_SECRET = 'lsACyCD94FhDUtGTZV3nOURqG2z5MDkOkbfm4GwG';
 
-    private const TOKEN_CACHE_KEY = 'inspiration:pixiv:token';
+    private const TOKEN_CACHE_PREFIX = 'inspiration:pixiv:token:';
 
     private const TOKEN_TTL = 3600;
 
@@ -152,16 +153,19 @@ class PixivSource extends AbstractApiSource
      */
     private function accessToken(): string
     {
-        $cached = Cache::get(self::TOKEN_CACHE_KEY);
-
-        if (is_string($cached) && $cached !== '') {
-            return $cached;
-        }
-
         $refreshToken = $this->refreshToken();
 
         if ($refreshToken === null) {
             throw new SourceException('pixiv: falta el refresh token');
+        }
+
+        // Keyed by the account's refresh token so user B can never consume
+        // user A's cached access token.
+        $cacheKey = self::TOKEN_CACHE_PREFIX.md5($refreshToken);
+        $cached = Cache::get($cacheKey);
+
+        if (is_string($cached) && $cached !== '') {
+            return $cached;
         }
 
         try {
@@ -190,7 +194,7 @@ class PixivSource extends AbstractApiSource
             throw new SourceException('pixiv: token inválido o expirado — revisá tu refresh token');
         }
 
-        Cache::put(self::TOKEN_CACHE_KEY, $token, self::TOKEN_TTL);
+        Cache::put($cacheKey, $token, self::TOKEN_TTL);
 
         return $token;
     }
