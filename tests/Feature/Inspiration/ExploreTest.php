@@ -131,6 +131,67 @@ it('exposes personal projects, boards and the saved index for the user', functio
             ->where('saved', ['fake-ok:abc' => $board->id]));
 });
 
+it('serves saved and boards on a partial reload of the search URL', function () {
+    FakeInspirationSource::register([new FakeInspirationSource('fake-ok')]);
+
+    $user = exploreUser(['fake-ok']);
+    $other = User::factory()->create();
+
+    $board = Moodboard::create([
+        'user_id' => $user->id,
+        'name' => 'Mood',
+    ]);
+
+    Moodboard::create([
+        'user_id' => $other->id,
+        'name' => 'Foreign',
+    ]);
+
+    SavedImage::create([
+        'user_id' => $user->id,
+        'moodboard_id' => $board->id,
+        'source' => 'fake-ok',
+        'source_id' => 'abc',
+        'page_url' => 'https://example.com/page',
+        'image_url' => 'https://example.com/image.jpg',
+        'thumb_path' => 'inspiration/1/fake-ok/abc.jpg',
+    ]);
+
+    $this->actingAs($user)
+        ->get('/inspiration/search?q=portrait&source=all', [
+            'X-Inertia-Partial-Component' => 'inspiration/explore',
+            'X-Inertia-Partial-Data' => 'saved,boards',
+        ])
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('inspiration/explore', false)
+            ->where('saved', ['fake-ok:abc' => $board->id])
+            ->has('boards', 1)
+            ->where('boards.0.name', 'Mood')
+            ->where('boards.0.project_name', null)
+            ->where('boards.0.count', 1)
+            ->missing('results')
+            ->missing('sources'));
+});
+
+it('keeps source statuses available on a partial search reload', function () {
+    FakeInspirationSource::register([new FakeInspirationSource('fake-ok')]);
+
+    $user = exploreUser(['fake-ok']);
+
+    $this->actingAs($user)
+        ->get('/inspiration/search?q=portrait&source=all', [
+            'X-Inertia-Partial-Component' => 'inspiration/explore',
+            'X-Inertia-Partial-Data' => 'sources',
+        ])
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('sources')
+            ->where('sources.fake-ok.enabled', true)
+            ->where('sources.fake-ok.down', false)
+            ->missing('results'));
+});
+
 it('degrades a failing explore source without failing the page', function () {
     FakeInspirationSource::register([
         new FakeInspirationSource('fake-ok'),

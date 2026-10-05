@@ -55,6 +55,7 @@ export default function Moodboard() {
             if (response.status === 429) {
                 const data = (await response.json()) as { message?: string };
                 setError(data.message ?? 'Límite diario de descargas alcanzado.');
+                setDownloads((previous) => ({ ...previous, [item.id]: 'failed' }));
 
                 return;
             }

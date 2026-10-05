@@ -1,6 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { Search } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Heading from '@/components/heading';
 import ImageCard from '@/components/inspiration/ImageCard';
 import MasonryGrid from '@/components/inspiration/MasonryGrid';
@@ -38,14 +38,13 @@ function SkeletonGrid() {
 }
 
 export default function Explore() {
-    const {
-        sources = {},
-        boards = [],
-        results = [],
-        saved = {},
-        search = '',
-        source = 'all',
-    } = usePage<SharedData & ExploreProps>().props;
+    const props = usePage<SharedData & ExploreProps>().props;
+    const sources = props.sources ?? {};
+    const boards = props.boards ?? [];
+    const results = useMemo(() => props.results ?? [], [props.results]);
+    const saved = props.saved ?? {};
+    const search = props.search ?? '';
+    const source = props.source ?? 'all';
 
     const [query, setQuery] = useState(search);
     const [base, setBase] = useState<ResultGroup[]>(results);

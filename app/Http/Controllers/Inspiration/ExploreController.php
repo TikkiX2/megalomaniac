@@ -41,11 +41,10 @@ class ExploreController extends Controller
         return Inertia::render('inspiration/explore', [
             'sources' => $this->sources->statuses($user),
             'projects' => $this->projects($user),
-            'boards' => $this->boards($user),
             'results' => $results,
-            'saved' => $this->savedIndex($user),
             'search' => '',
             'source' => 'all',
+            ...$this->boardsAndSaved($user),
         ]);
     }
 
@@ -64,6 +63,8 @@ class ExploreController extends Controller
             'results' => $results,
             'search' => $query,
             'source' => $source,
+            'sources' => $this->sources->statuses($user),
+            ...$this->boardsAndSaved($user),
         ]);
     }
 
@@ -200,5 +201,22 @@ class ExploreController extends Controller
                 $image->source.':'.$image->source_id => (int) $image->moodboard_id,
             ])
             ->all();
+    }
+
+    /**
+     * Boards and saved index shared by the mashup and the search response.
+     *
+     * The search route renders them too so a partial `only(['saved', 'boards'])`
+     * reload fired after a save resolves on either URL (see the explore React
+     * page's `onSaved` handler).
+     *
+     * @return array{boards: list<array{id: int, name: string, project_name: ?string, count: int}>, saved: array<string, int>}
+     */
+    private function boardsAndSaved(User $user): array
+    {
+        return [
+            'boards' => $this->boards($user),
+            'saved' => $this->savedIndex($user),
+        ];
     }
 }
