@@ -1,0 +1,25 @@
+{
+    "data": [
+        {
+            "id": "bad-missing-image",
+            "title": "Untitled",
+            "url": null,
+            "artistUrl": "unknown-artist",
+            "artistName": "Unknown",
+            "image": null
+        },
+        {
+            "id": "5772716cedc2cb3880c1907f",
+            "title": "The Starry Night",
+            "url": "the-starry-night-1889",
+            "artistUrl": "vincent-van-gogh",
+            "artistName": "Vincent van Gogh",
+            "artistId": "57726d82edc2cb3880b486a0",
+            "completitionYear": 1889,
+            "width": 750,
+            "height": 598,
+            "image": "https://uploads3.wikiart.org/00475/images/vincent-van-gogh/the-starry-night-1889.jpg!Large.jpg"
+        }
+    ],
+    "hasMore": false
+}

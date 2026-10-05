@@ -250,6 +250,50 @@ it('rejects an acknowledged tier 3 source outside the config list', function () 
         ->assertJsonValidationErrors('acknowledged_tier3.0');
 });
 
+it('rejects enabling a tier 3 source without acknowledgement', function () {
+    config()->set('inspiration.tier3', ['wikiart']);
+    FakeInspirationSource::register([new FakeInspirationSource('wikiart')]);
+
+    $user = settingsUserWith([]);
+
+    $this->actingAs($user)
+        ->patchJson('/inspiration/settings', ['enabled_sources' => ['wikiart']])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('enabled_sources.0');
+});
+
+it('allows enabling a tier 3 source once acknowledged', function () {
+    config()->set('inspiration.tier3', ['wikiart']);
+    FakeInspirationSource::register([new FakeInspirationSource('wikiart')]);
+
+    $user = settingsUserWith(['acknowledged_tier3' => ['wikiart']]);
+
+    $this->actingAs($user)
+        ->patch('/inspiration/settings', ['enabled_sources' => ['wikiart']])
+        ->assertRedirect();
+
+    expect(app(InspirationSettings::class)->for($user)->enabledSources)->toBe(['wikiart']);
+});
+
+it('allows enabling a tier 3 source when the same patch acknowledges it', function () {
+    config()->set('inspiration.tier3', ['wikiart']);
+    FakeInspirationSource::register([new FakeInspirationSource('wikiart')]);
+
+    $user = settingsUserWith([]);
+
+    $this->actingAs($user)
+        ->patch('/inspiration/settings', [
+            'enabled_sources' => ['wikiart'],
+            'acknowledged_tier3' => ['wikiart'],
+        ])
+        ->assertRedirect();
+
+    $bag = app(InspirationSettings::class)->for($user);
+
+    expect($bag->enabledSources)->toBe(['wikiart'])
+        ->and($bag->acknowledgedTier3)->toBe(['wikiart']);
+});
+
 it('fails the test endpoint when a source that needs a key has none', function () {
     FakeInspirationSource::register([new FakeInspirationSource('flickr', needsKey: true)]);
     $user = settingsUserWith([]);

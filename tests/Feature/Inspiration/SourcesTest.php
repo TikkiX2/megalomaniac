@@ -24,6 +24,7 @@ use App\Inspiration\Sources\Api\RijksmuseumSource;
 use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
+use App\Inspiration\Sources\Api\WikiArtSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
 use App\Inspiration\Sources\Scrape\AwwwardsSource;
 use App\Inspiration\Sources\Scrape\BehanceSource;
@@ -33,6 +34,7 @@ use App\Inspiration\Sources\Scrape\DesignspirationSource;
 use App\Inspiration\Sources\Scrape\DribbbleSource;
 use App\Inspiration\Sources\Scrape\GodlySource;
 use App\Inspiration\Sources\Scrape\LapaNinjaSource;
+use App\Inspiration\Sources\Scrape\NewgroundsSource;
 use App\Inspiration\Sources\Scrape\PosterSpySource;
 use App\Inspiration\Sources\Scrape\SaveeSource;
 use App\Inspiration\Sources\Scrape\TrendListSource;
@@ -100,6 +102,7 @@ dataset('keyedApiSources', [
     'giphy' => ['giphy', GiphySource::class],
     'europeana' => ['europeana', EuropeanaSource::class],
     'rijksmuseum' => ['rijksmuseum', RijksmuseumSource::class],
+    'wikiart' => ['wikiart', WikiArtSource::class],
 ]);
 
 dataset('keyedApiHttpErrors', function (): array {
@@ -113,6 +116,7 @@ dataset('keyedApiHttpErrors', function (): array {
         'giphy' => ['giphy', GiphySource::class],
         'europeana' => ['europeana', EuropeanaSource::class],
         'rijksmuseum' => ['rijksmuseum', RijksmuseumSource::class],
+        'wikiart' => ['wikiart', WikiArtSource::class],
     ];
 
     $cases = [];
@@ -140,6 +144,7 @@ dataset('scrapeSources', [
     'behance' => ['behance', BehanceSource::class],
     'dribbble' => ['dribbble', DribbbleSource::class],
     'awwwards' => ['awwwards', AwwwardsSource::class],
+    'newgrounds' => ['newgrounds', NewgroundsSource::class],
 ]);
 
 /**
@@ -268,6 +273,9 @@ function fakeTier1Http(string $key, string $fixture, int $status = 200): void
         'rijksmuseum' => [
             '*rijksmuseum.nl/api/en/collection*' => Http::response($body, $status),
         ],
+        'wikiart' => [
+            '*wikiart.org/en/api/2/*' => Http::response($body, $status),
+        ],
         default => throw new InvalidArgumentException("Unknown tier 1 source [{$key}]."),
     });
 }
@@ -294,6 +302,7 @@ function scrapeHttpPatterns(string $key): array
         'behance' => ['*behance.net*'],
         'dribbble' => ['*dribbble.com*'],
         'awwwards' => ['*awwwards.com*'],
+        'newgrounds' => ['*newgrounds.com*'],
         default => throw new InvalidArgumentException("Unknown scrape source [{$key}]."),
     };
 }
@@ -475,6 +484,7 @@ it('registers every tier 1 adapter in the source manager', function (): void {
         'giphy',
         'europeana',
         'rijksmuseum',
+        'wikiart',
     );
 });
 
@@ -624,7 +634,7 @@ it('declares the expected capabilities for keyed :key', function (string $key, s
     $capabilities = $source->capabilities();
 
     expect($capabilities->supportsSearch)->toBeTrue()
-        ->and($capabilities->supportsExplore)->toBe(in_array($key, ['flickr', 'giphy'], true))
+        ->and($capabilities->supportsExplore)->toBe(in_array($key, ['flickr', 'giphy', 'wikiart'], true))
         ->and($capabilities->needsKey)->toBeTrue()
         ->and($capabilities->hasMaturityLevels)->toBe(in_array($key, ['flickr', 'pixabay', 'giphy'], true))
         ->and($source->isConfigured())->toBeTrue();
@@ -951,6 +961,45 @@ it('advertises more rijksmuseum pages when a full page is returned', function ()
         ->and($page->nextPage)->toBe(2);
 });
 
+it('builds wikiart page urls and sends the term and key', function (): void {
+    Http::fake([
+        '*wikiart.org/en/api/2/*' => Http::response(inspirationFixture('wikiart/search.json')),
+    ]);
+
+    $page = keyedInspirationSource(WikiArtSource::class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(2)
+        ->and($page->items[0]->sourceId)->toBe('57727444edc2cb3880cb7bf6')
+        ->and($page->items[0]->pageUrl)->toBe('https://www.wikiart.org/en/leonardo-da-vinci/mona-lisa')
+        ->and($page->items[0]->author)->toBe('Leonardo da Vinci')
+        // PaintingSearch sends `url: null`, so the slug is derived from the title.
+        ->and($page->items[1]->pageUrl)->toBe('https://www.wikiart.org/en/giuseppe-arcimboldo/portrait-of-eve');
+
+    Http::assertSent(function (Request $request): bool {
+        if (! str_contains($request->url(), '/PaintingSearch')) {
+            return false;
+        }
+
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return ($query['term'] ?? null) === 'portrait'
+            && ($query['key'] ?? null) === 'test-key';
+    });
+});
+
+it('explores wikiart through the most viewed feed', function (): void {
+    Http::fake([
+        '*wikiart.org/en/api/2/*' => Http::response(inspirationFixture('wikiart/search.json')),
+    ]);
+
+    $page = keyedInspirationSource(WikiArtSource::class)->explore(1, new SourceQuery);
+
+    expect($page->items)->not->toBeEmpty()
+        ->and($page->hasMore)->toBeFalse();
+
+    Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'MostViewedPaintings'));
+});
+
 it('scrapes a happy feed into a non-empty page for :key', function (string $key, string $class): void {
     fakeScrapeHttp($key, $key.'/feed.html');
 
@@ -1012,6 +1061,7 @@ it('requests the expected search url for :key', function (string $key, string $c
         'behance' => 'https://www.behance.net/search/projects?search=portrait',
         'dribbble' => 'https://dribbble.com/search/shots?q=portrait',
         'awwwards' => 'https://www.awwwards.com/search/?q=portrait',
+        'newgrounds' => 'https://www.newgrounds.com/search/conduct/post?query=portrait&category=art',
         // No native search box: search() delegates to the explore feed.
         'darkmode' => 'https://www.darkmodedesign.com/',
         'brutalist' => 'https://brutalistwebsites.com/',
@@ -1048,6 +1098,7 @@ it('requests the expected explore url for :key', function (string $key, string $
         'behance' => 'https://www.behance.net/galleries',
         'dribbble' => 'https://dribbble.com/shots/popular',
         'awwwards' => 'https://www.awwwards.com/websites/',
+        'newgrounds' => 'https://www.newgrounds.com/art/browse?sort=date',
     };
 
     Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
@@ -1099,7 +1150,7 @@ it('declares the expected capabilities for scrape :key', function (string $key, 
     $supportsSearch = match ($key) {
         // Only Dark Mode and Brutalist lack a native search box.
         'lapaninja', 'godly', 'designspiration', 'savee', 'trendlist', 'posterspy',
-        'behance', 'dribbble', 'awwwards' => true,
+        'behance', 'dribbble', 'awwwards', 'newgrounds' => true,
         default => false,
     };
 
@@ -1180,5 +1231,6 @@ it('registers every scrape adapter in the source manager', function (): void {
         'behance',
         'dribbble',
         'awwwards',
+        'newgrounds',
     );
 });

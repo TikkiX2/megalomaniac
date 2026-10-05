@@ -255,6 +255,37 @@ it('filters activeConfigured by enabled sources that are configured', function (
         ->and($active->keys()->all())->toContain('fake-keyed');
 });
 
+it('gates a tier 3 source out of activeConfigured until the user acknowledges it', function () {
+    config(['inspiration.tier3' => ['fake-tier3']]);
+
+    registerInspirationFakeSources([
+        new FakeInspirationSource('fake-tier3'),
+        new FakeInspirationSource('fake-open'),
+    ]);
+
+    $user = inspirationUserWithSettings(['fake-tier3', 'fake-open']);
+
+    $manager = app(SourceManager::class);
+    $active = $manager->activeConfigured($user);
+
+    // Enabled and configured, but still behind the Tier 3 acknowledgement.
+    expect($active->keys()->all())->toContain('fake-open')
+        ->and($active->keys()->all())->not->toContain('fake-tier3');
+
+    // statuses() still lists it so the settings UI can render the notice.
+    expect($manager->statuses($user))->toHaveKey('fake-tier3');
+
+    app(InspirationSettings::class)->update($user, [
+        'enabled_sources' => ['fake-tier3', 'fake-open'],
+        'acknowledged_tier3' => ['fake-tier3'],
+    ]);
+
+    $active = app(SourceManager::class)->activeConfigured($user);
+
+    expect($active->keys()->all())->toContain('fake-tier3')
+        ->and($active->keys()->all())->toContain('fake-open');
+});
+
 it('rate limits a source according to its capabilities', function () {
     $key = 'fake-rate-'.uniqid();
 

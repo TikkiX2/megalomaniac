@@ -67,6 +67,10 @@ class SourceManager
     /**
      * Sources enabled by the user whose credentials are present.
      *
+     * Tier 3 sources are additionally gated behind an explicit per-source
+     * acknowledgement: enabled + configured is not enough, the user must accept
+     * the notice before the source takes part in explore/search-all.
+     *
      * @return Collection<string, Source>
      */
     public function activeConfigured(User $user): Collection
@@ -76,8 +80,27 @@ class SourceManager
         return $this->all()->filter(function (Source $source) use ($bag): bool {
             $this->hydrateCredentials($bag, $source);
 
+            if ($this->isTier3Unacknowledged($source->key(), $bag)) {
+                return false;
+            }
+
             return $bag->isEnabled($source->key()) && $source->isConfigured();
         });
+    }
+
+    /**
+     * A source listed in `inspiration.tier3` stays out of the active set until
+     * its key appears in the user's `acknowledged_tier3` list.
+     */
+    private function isTier3Unacknowledged(string $key, SettingsBag $bag): bool
+    {
+        $tier3 = config('inspiration.tier3', []);
+
+        if (! is_array($tier3) || ! in_array($key, $tier3, true)) {
+            return false;
+        }
+
+        return ! in_array($key, $bag->acknowledgedTier3, true);
     }
 
     /**

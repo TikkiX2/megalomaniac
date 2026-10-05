@@ -22,6 +22,7 @@ use App\Inspiration\Sources\Api\RijksmuseumSource;
 use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
+use App\Inspiration\Sources\Api\WikiArtSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
 use App\Inspiration\Sources\Scrape\AwwwardsSource;
 use App\Inspiration\Sources\Scrape\BehanceSource;
@@ -31,6 +32,7 @@ use App\Inspiration\Sources\Scrape\DesignspirationSource;
 use App\Inspiration\Sources\Scrape\DribbbleSource;
 use App\Inspiration\Sources\Scrape\GodlySource;
 use App\Inspiration\Sources\Scrape\LapaNinjaSource;
+use App\Inspiration\Sources\Scrape\NewgroundsSource;
 use App\Inspiration\Sources\Scrape\PosterSpySource;
 use App\Inspiration\Sources\Scrape\SaveeSource;
 use App\Inspiration\Sources\Scrape\TrendListSource;
@@ -67,6 +69,7 @@ class InspirationServiceProvider extends ServiceProvider
         GiphySource::class,
         EuropeanaSource::class,
         RijksmuseumSource::class,
+        WikiArtSource::class,
         DesignspirationSource::class,
         SaveeSource::class,
         TrendListSource::class,
@@ -78,6 +81,7 @@ class InspirationServiceProvider extends ServiceProvider
         BehanceSource::class,
         DribbbleSource::class,
         AwwwardsSource::class,
+        NewgroundsSource::class,
     ];
 
     public function register(): void

@@ -1,0 +1,30 @@
+{
+    "data": [
+        {
+            "id": "57727444edc2cb3880cb7bf6",
+            "title": "Mona Lisa",
+            "url": "mona-lisa",
+            "artistUrl": "leonardo-da-vinci",
+            "artistName": "Leonardo da Vinci",
+            "artistId": "57726d85edc2cb3880b48ccd",
+            "completitionYear": 1519,
+            "width": 408,
+            "height": 600,
+            "image": "https://uploads5.wikiart.org/00475/images/leonardo-da-vinci/0000136308-og.JPG!Large.JPG"
+        },
+        {
+            "id": "57726e0cedc2cb3880b583ed",
+            "title": "Portrait of Eve",
+            "url": null,
+            "artistUrl": "giuseppe-arcimboldo",
+            "artistName": "Giuseppe Arcimboldo",
+            "artistId": "57726d7bedc2cb3880b47a39",
+            "completitionYear": 1578,
+            "width": 477,
+            "height": 600,
+            "image": "https://uploads0.wikiart.org/portrait-of-eve-1578(1).jpg!Large.jpg"
+        }
+    ],
+    "paginationToken": "mYYKCPvUlMCe%2bm%2bFr5oqhQMkrOoYn5aiww0v0fxCbRXNwE9P3x4ZDhgY%2bM6HOpJyaGzmDAIeL9y4qGI4FTKrgw%3d%3d",
+    "hasMore": false
+}

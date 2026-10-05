@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Newgrounds — Art Browse</title>
+</head>
+<body>
+    <div class="art-browse">
+        <!-- Card 1: server-rendered tile, relative /art/view href. -->
+        <div class="item-art">
+            <a class="item-link" href="/art/view/pixelpioneer/neon-city">
+                <img src="https://art.ngfiles.com/images/21001/neon-city.png" alt="Neon City">
+            </a>
+            <h4 class="item-title"><a href="/art/view/pixelpioneer/neon-city">Neon City</a></h4>
+        </div>
+
+        <!-- Card 2: absolute href plus a protocol-relative lazy image. -->
+        <div class="item-art">
+            <a class="item-link" href="https://www.newgrounds.com/art/view/inkspire/forest-spirit">
+                <img data-src="//art.ngfiles.com/images/21002/forest-spirit.png" alt="Forest Spirit">
+            </a>
+            <h4 class="item-title"><a href="https://www.newgrounds.com/art/view/inkspire/forest-spirit">Forest Spirit</a></h4>
+        </div>
+
+        <!-- Card 3: explicit absolute CDN image. -->
+        <div class="item-art">
+            <a class="item-link" href="/art/view/monolith/clockwork-owl">
+                <img src="https://art.ngfiles.com/images/21003/clockwork-owl.png" alt="Clockwork Owl">
+            </a>
+            <h4 class="item-title"><a href="/art/view/monolith/clockwork-owl">Clockwork Owl</a></h4>
+        </div>
+    </div>
+</body>
+</html>
