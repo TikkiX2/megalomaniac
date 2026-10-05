@@ -18,8 +18,9 @@ use Throwable;
  * DeviantArt official API.
  *
  * Uses app-level OAuth2 client-credentials: the token is fetched once and
- * cached for 24h under its own key. Maturity is fixed to safe for now
- * (`mature_content=false`); the global mapping lands in Task 13.
+ * cached for 24h under its own key. Maturity maps onto the `mature_content`
+ * flag: `safe` sends `false` while `allowed` sends `true`. The flag is sent as
+ * a literal string so it round-trips as `mature_content=false|true` in the URL.
  */
 class DeviantArtSource extends AbstractApiSource
 {
@@ -74,7 +75,7 @@ class DeviantArtSource extends AbstractApiSource
             'q' => $query,
             'limit' => self::PAGE_SIZE,
             'offset' => $this->offset($page),
-            'mature_content' => false,
+            'mature_content' => $this->matureContent($queryOptions),
         ]);
 
         return $this->mapToPage($payload, $page);
@@ -85,7 +86,7 @@ class DeviantArtSource extends AbstractApiSource
         $payload = $this->getJson(self::BROWSE_URL, [
             'limit' => self::PAGE_SIZE,
             'offset' => $this->offset($page),
-            'mature_content' => false,
+            'mature_content' => $this->matureContent($queryOptions),
         ]);
 
         return $this->mapToPage($payload, $page);
@@ -99,6 +100,15 @@ class DeviantArtSource extends AbstractApiSource
     private function offset(int $page): int
     {
         return max(0, ($page - 1) * self::PAGE_SIZE);
+    }
+
+    /**
+     * Literal boolean flag so the outbound URL reads
+     * `mature_content=false|true` instead of `0|1`.
+     */
+    private function matureContent(SourceQuery $queryOptions): string
+    {
+        return $queryOptions->maturity === 'allowed' ? 'true' : 'false';
     }
 
     /**

@@ -115,7 +115,7 @@ class SourceManager
         $this->hydrateCredentials($bag, $source);
 
         $options = new SourceQuery(
-            maturity: $bag->maturity ? 'allowed' : 'safe',
+            maturity: SourceMaturity::forSource($key, $bag->maturity)->maturity,
             extra: ['page' => $page],
         );
 
@@ -139,7 +139,7 @@ class SourceManager
         $this->hydrateCredentials($bag, $source);
 
         $options = new SourceQuery(
-            maturity: $bag->maturity ? 'allowed' : 'safe',
+            maturity: SourceMaturity::forSource($key, $bag->maturity)->maturity,
             extra: ['page' => $page],
         );
 

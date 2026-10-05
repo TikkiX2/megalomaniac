@@ -13,8 +13,11 @@ use App\Inspiration\Dtos\SourceQuery;
  * Wallhaven official API.
  *
  * Wallhaven exposes no public explore feed, so explore() falls back to the
- * search endpoint with a curated term. Maturity is fixed to safe
- * (`purity=100`); the global mapping lands in Task 13.
+ * search endpoint with a curated term. Maturity maps onto `purity`: `safe`
+ * sends 100 (SFW only) while `allowed` sends 110 (SFW + sketchy) — but only
+ * when the user supplied an API key, because Wallhaven gates sketchy/nsfw
+ * results behind a key. Without a key the adapter stays at 100 so the request
+ * never errors.
  */
 class WallhavenSource extends AbstractApiSource
 {
@@ -56,7 +59,7 @@ class WallhavenSource extends AbstractApiSource
         $payload = $this->getJson(self::SEARCH_URL, [
             'q' => $query,
             'page' => $page,
-            'purity' => 100,
+            'purity' => $this->purity($queryOptions),
             'sorting' => 'toplist',
         ]);
 
@@ -66,6 +69,18 @@ class WallhavenSource extends AbstractApiSource
     public function explore(int $page, SourceQuery $queryOptions): Page
     {
         return $this->search(self::EXPLORE_TERM, $page, $queryOptions);
+    }
+
+    /**
+     * SFW-only (100) unless maturity is allowed and the user supplied a key,
+     * in which case sketchy content (110) becomes reachable. Wallhaven refuses
+     * sketchy/nsfw without a user key, so the safe value is the fallback.
+     */
+    private function purity(SourceQuery $queryOptions): int
+    {
+        $hasUserKey = $this->stringValue($this->credentials['key'] ?? null) !== null;
+
+        return $queryOptions->maturity === 'allowed' && $hasUserKey ? 110 : 100;
     }
 
     /**
