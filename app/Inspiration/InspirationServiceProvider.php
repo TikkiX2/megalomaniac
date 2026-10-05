@@ -23,6 +23,10 @@ use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
+use App\Inspiration\Sources\Scrape\DesignspirationSource;
+use App\Inspiration\Sources\Scrape\PosterSpySource;
+use App\Inspiration\Sources\Scrape\SaveeSource;
+use App\Inspiration\Sources\Scrape\TrendListSource;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -56,6 +60,10 @@ class InspirationServiceProvider extends ServiceProvider
         GiphySource::class,
         EuropeanaSource::class,
         RijksmuseumSource::class,
+        DesignspirationSource::class,
+        SaveeSource::class,
+        TrendListSource::class,
+        PosterSpySource::class,
     ];
 
     public function register(): void

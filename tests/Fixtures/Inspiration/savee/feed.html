@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Savee</title>
+</head>
+<body>
+    <section class="feed">
+        <!-- Card 1: relative href plus an absolute image. -->
+        <article class="post" data-id="aa01">
+            <a class="post-link" href="/post/aa01">
+                <img src="https://cdn.savee.it/aa01.jpg" alt="Chrome">
+            </a>
+            <h2 class="post-title">Chrome Study</h2>
+        </article>
+
+        <!-- Card 2: srcset-only image (no src attribute). -->
+        <article class="post" data-id="aa02">
+            <a class="post-link" href="https://savee.it/post/aa02">
+                <img srcset="https://cdn.savee.it/aa02-800.jpg 800w, https://cdn.savee.it/aa02-1600.jpg 1600w" alt="Glass">
+            </a>
+            <h2 class="post-title">Glass Horizon</h2>
+        </article>
+
+        <!-- Card 3: lazy data-src image. -->
+        <article class="post" data-id="aa03">
+            <a class="post-link" href="/post/aa03">
+                <img data-src="//cdn.savee.it/aa03.jpg" alt="Satellite">
+            </a>
+            <h2 class="post-title">Satellite Dish</h2>
+        </article>
+    </section>
+</body>
+</html>

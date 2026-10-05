@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Designspiration — Explore</title>
+</head>
+<body>
+    <main class="grid">
+        <!-- Card 1: relative page href resolved through the adapter base. -->
+        <div class="pin" data-id="4821">
+            <a class="pin-link" href="/image/4821/neon-grid/">
+                <img src="https://cdn.designspiration.net/data/4821/neon-grid.jpg" alt="Neon Grid">
+            </a>
+            <span class="pin-title">Neon Grid Poster</span>
+        </div>
+
+        <!-- Card 2: absolute href plus a lazy data-src image. -->
+        <div class="pin" data-id="4822">
+            <a class="pin-link" href="https://www.designspiration.net/image/4822/mono/">
+                <img data-src="//cdn.designspiration.net/data/4822/mono.jpg" alt="Mono">
+            </a>
+            <span class="pin-title">Monochrome Type</span>
+        </div>
+
+        <!-- Card 3: data URI src must be skipped in favour of the srcset candidate. -->
+        <div class="pin" data-id="4823">
+            <a class="pin-link" href="/image/4823/riso/">
+                <img src="data:image/gif;base64,R0lGOD" srcset="https://cdn.designspiration.net/data/4823/riso.jpg 1x, https://cdn.designspiration.net/data/4823/riso@2x.jpg 2x" alt="Riso">
+            </a>
+            <span class="pin-title">Risograph Layers</span>
+        </div>
+
+        <!-- Card 4: no image at all, must be dropped by the parser. -->
+        <div class="pin" data-id="4824">
+            <a class="pin-link" href="/image/4824/no-image/">Broken tile without an image</a>
+            <span class="pin-title">Dropped</span>
+        </div>
+    </main>
+</body>
+</html>

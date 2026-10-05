@@ -25,6 +25,10 @@ use App\Inspiration\Sources\Api\TumblrSource;
 use App\Inspiration\Sources\Api\UnsplashSource;
 use App\Inspiration\Sources\Api\WallhavenSource;
 use App\Inspiration\Sources\Api\ZerochanSource;
+use App\Inspiration\Sources\Scrape\DesignspirationSource;
+use App\Inspiration\Sources\Scrape\PosterSpySource;
+use App\Inspiration\Sources\Scrape\SaveeSource;
+use App\Inspiration\Sources\Scrape\TrendListSource;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -115,6 +119,13 @@ dataset('keyedApiHttpErrors', function (): array {
 
     return $cases;
 });
+
+dataset('scrapeSources', [
+    'designspiration' => ['designspiration', DesignspirationSource::class],
+    'savee' => ['savee', SaveeSource::class],
+    'trendlist' => ['trendlist', TrendListSource::class],
+    'posterspy' => ['posterspy', PosterSpySource::class],
+]);
 
 /**
  * The canonical first credential field for an adapter, read from config.
@@ -226,6 +237,30 @@ function fakeTier1Http(string $key, string $fixture, int $status = 200): void
         ],
         default => throw new InvalidArgumentException("Unknown tier 1 source [{$key}]."),
     });
+}
+
+/**
+ * The URL pattern that stubs every host a scrape adapter talks to.
+ */
+function scrapeHttpPattern(string $key): string
+{
+    return match ($key) {
+        'designspiration' => '*designspiration.net*',
+        'savee' => '*savee.it*',
+        'trendlist' => '*trendlist.org*',
+        'posterspy' => '*posterspy.com*',
+        default => throw new InvalidArgumentException("Unknown scrape source [{$key}]."),
+    };
+}
+
+/**
+ * Stub every host the given scrape adapter talks to, serving the fixture body.
+ */
+function fakeScrapeHttp(string $key, string $fixture, int $status = 200): void
+{
+    Http::fake([
+        scrapeHttpPattern($key) => Http::response(inspirationFixture($fixture), $status),
+    ]);
 }
 
 beforeEach(function (): void {
@@ -864,4 +899,107 @@ it('advertises more rijksmuseum pages when a full page is returned', function ()
     expect($page->items)->toHaveCount(24)
         ->and($page->hasMore)->toBeTrue()
         ->and($page->nextPage)->toBe(2);
+});
+
+it('scrapes a happy feed into a non-empty page for :key', function (string $key, string $class): void {
+    fakeScrapeHttp($key, $key.'/feed.html');
+
+    $page = (new $class)->search('portrait', 1, new SourceQuery);
+
+    expect($page)->toBeInstanceOf(Page::class)
+        ->and($page->items)->not->toBeEmpty()
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+
+    foreach ($page->items as $item) {
+        expect($item->source)->toBe($key)
+            ->and($item->sourceId)->toBeString()->not->toBe('')
+            ->and($item->pageUrl)->not->toBe('')
+            ->and($item->imageUrl)->not->toBe('');
+    }
+})->with('scrapeSources');
+
+it('explores the :key feed without throwing and returns parsed items', function (string $key, string $class): void {
+    fakeScrapeHttp($key, $key.'/feed.html');
+
+    $page = (new $class)->explore(1, new SourceQuery);
+
+    expect($page)->toBeInstanceOf(Page::class)
+        ->and($page->items)->not->toBeEmpty()
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+
+    foreach ($page->items as $item) {
+        expect($item->source)->toBe($key)
+            ->and($item->imageUrl)->not->toBe('');
+    }
+})->with('scrapeSources');
+
+it('degrades to an empty page when :key markup is broken', function (string $key, string $class): void {
+    fakeScrapeHttp($key, $key.'/broken.html');
+
+    $search = (new $class)->search('portrait', 1, new SourceQuery);
+    $explore = (new $class)->explore(1, new SourceQuery);
+
+    expect($search->items)->toBe([])
+        ->and($search->hasMore)->toBeFalse()
+        ->and($search->nextPage)->toBeNull()
+        ->and($explore->items)->toBe([])
+        ->and($explore->hasMore)->toBeFalse()
+        ->and($explore->nextPage)->toBeNull();
+})->with('scrapeSources');
+
+it('returns an empty page without a request for page two of :key', function (string $key, string $class): void {
+    Http::fake();
+
+    $page = (new $class)->search('portrait', 2, new SourceQuery);
+
+    expect($page->items)->toBe([])
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+
+    // Scraped sites expose one page per term; page 2 must not hit the network.
+    Http::assertNothingSent();
+})->with('scrapeSources');
+
+it('returns an empty page without any request when the scrape query is blank for :key', function (string $key, string $class): void {
+    Http::fake();
+
+    $page = (new $class)->search('   ', 1, new SourceQuery);
+
+    expect($page->items)->toBe([])
+        ->and($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+
+    Http::assertNothingSent();
+})->with('scrapeSources');
+
+it('declares the expected capabilities for scrape :key', function (string $key, string $class): void {
+    $source = new $class;
+    $capabilities = $source->capabilities();
+
+    expect($capabilities->supportsSearch)->toBeTrue()
+        ->and($capabilities->supportsExplore)->toBeTrue()
+        ->and($capabilities->needsKey)->toBeFalse()
+        ->and($capabilities->hasMaturityLevels)->toBeFalse()
+        ->and($capabilities->maxPageSize)->toBe(24)
+        ->and($source->isConfigured())->toBeTrue();
+})->with('scrapeSources');
+
+it('reports connectivity through test() for scrape :key', function (string $key, string $class): void {
+    fakeScrapeHttp($key, $key.'/feed.html');
+
+    expect((new $class)->test())->toBeTrue();
+})->with('scrapeSources');
+
+it('reports a failed connectivity test through test() for scrape :key', function (string $key, string $class): void {
+    fakeScrapeHttp($key, $key.'/feed.html', 500);
+
+    expect((new $class)->test())->toBeFalse();
+})->with('scrapeSources');
+
+it('registers every scrape adapter in the source manager', function (): void {
+    $keys = app(SourceManager::class)->all()->keys()->all();
+
+    expect($keys)->toContain('designspiration', 'savee', 'trendlist', 'posterspy');
 });
