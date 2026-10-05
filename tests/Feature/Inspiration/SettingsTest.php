@@ -49,9 +49,10 @@ it('exposes the credential_fields map in config', function () {
         ->and($fields['flickr'])->toBe(['key'])
         ->and($fields['discogs'])->toBe(['token'])
         ->and($fields['pixiv'])->toBe(['refresh_token'])
+        ->and($fields['wallhaven'])->toBe(['key'])
         ->and(array_keys($fields))->toEqualCanonicalizing([
             'flickr', 'tumblr', 'unsplash', 'pexels', 'pixabay', 'discogs',
-            'giphy', 'europeana', 'rijksmuseum', 'wikiart', 'pixiv',
+            'giphy', 'europeana', 'rijksmuseum', 'wikiart', 'pixiv', 'wallhaven',
         ]);
 });
 
@@ -172,17 +173,19 @@ it('persists a valid key for a source that needs one', function () {
         ->and($bag->hasKey('flickr'))->toBeTrue();
 });
 
-it('ignores keys sent for a source that does not need one', function () {
+it('ignores keys sent for a source without credential fields', function () {
+    FakeInspirationSource::register([new FakeInspirationSource('open-one')]);
+
     $user = settingsUserWith([]);
 
     $this->actingAs($user)
-        ->patch('/inspiration/settings', ['keys' => ['wallhaven' => ['key' => 'abc']]])
+        ->patch('/inspiration/settings', ['keys' => ['open-one' => ['key' => 'abc']]])
         ->assertRedirect();
 
     $bag = app(InspirationSettings::class)->for($user);
 
     expect($bag->keys)->toBe([])
-        ->and($bag->hasKey('wallhaven'))->toBeFalse();
+        ->and($bag->hasKey('open-one'))->toBeFalse();
 });
 
 it('keeps omitted fields when a patch only sends maturity', function () {
@@ -256,6 +259,46 @@ it('normalizes an empty key to null', function () {
 
     expect($bag->keys)->toBe([])
         ->and($bag->hasKey('flickr'))->toBeFalse();
+});
+
+it('exposes an optional credential field for wallhaven while staying keyless', function () {
+    FakeInspirationSource::register([new FakeInspirationSource('wallhaven')]);
+
+    $user = settingsUserWith([]);
+
+    $this->actingAs($user)
+        ->get('/inspiration/settings')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('sources', function ($sources): bool {
+            $wallhaven = collect($sources)->firstWhere('key', 'wallhaven');
+
+            return $wallhaven['needs_key'] === false
+                && $wallhaven['credential_fields'] === ['key']
+                && $wallhaven['has_key'] === false
+                && $wallhaven['configured'] === true;
+        }));
+
+    $this->actingAs($user)
+        ->patch('/inspiration/settings', ['keys' => ['wallhaven' => ['key' => 'wh-secret']]])
+        ->assertRedirect();
+
+    $bag = app(InspirationSettings::class)->for($user);
+
+    expect($bag->keys)->toBe(['wallhaven' => ['key' => 'wh-secret']])
+        ->and($bag->hasKey('wallhaven'))->toBeTrue();
+
+    $response = $this->actingAs($user)->get('/inspiration/settings');
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page->where('sources', function ($sources): bool {
+            $wallhaven = collect($sources)->firstWhere('key', 'wallhaven');
+
+            return $wallhaven['credential_fields'] === ['key']
+                && $wallhaven['has_key'] === true
+                && $wallhaven['configured'] === true;
+        }));
+
+    expect($response->getContent())->not->toContain('wh-secret');
 });
 
 it('persists acknowledged tier 3 sources', function () {

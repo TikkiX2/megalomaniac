@@ -55,7 +55,7 @@ class SettingsController extends Controller
                     'key' => $key,
                     'label' => $source->label(),
                     'needs_key' => $source->capabilities()->needsKey,
-                    'credential_fields' => $source->capabilities()->needsKey
+                    'credential_fields' => CredentialFields::has($key)
                         ? CredentialFields::for($key)
                         : [],
                     'has_key' => $bag->hasKey($key),
@@ -183,7 +183,7 @@ class SettingsController extends Controller
     {
         $source = $this->sources->get($key);
 
-        return $source !== null && $source->capabilities()->needsKey ? $source : null;
+        return $source !== null && CredentialFields::has($key) ? $source : null;
     }
 
     /**

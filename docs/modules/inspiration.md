@@ -43,7 +43,7 @@ Frontend (`resources/js/`):
 
 ## Setup de keys por fuente
 
-Las fuentes sin key del usuario (DeviantArt, ArtStation, Wallhaven, Openverse, Zerochan, Gelbooru, Are.na, Met, AIC y todos los scrapers Tier 2) funcionan sin configurar nada. DeviantArt usa credenciales **a nivel app** en `.env`: `DEVIANTART_CLIENT_ID` / `DEVIANTART_CLIENT_SECRET` (registrar en https://www.deviantart.com/developers/apps).
+Las fuentes sin key del usuario (DeviantArt, ArtStation, Wallhaven, Openverse, Zerochan, Gelbooru, Are.na, Met, AIC y todos los scrapers Tier 2) funcionan sin configurar nada. **Wallhaven** acepta una key **opcional** (columna de credenciales en Ajustes) que, junto al toggle de madurez, desbloquea sketchy/NSFW. DeviantArt usa credenciales **a nivel app** en `.env`: `DEVIANTART_CLIENT_ID` / `DEVIANTART_CLIENT_SECRET` (registrar en https://www.deviantart.com/developers/apps).
 
 Las credenciales por usuario se cargan en **Ajustes de inspiración** y se guardan en el servidor (nunca se devuelven al cliente). El campo canónico por fuente está en `config/inspiration.php` → `credential_fields`.
 
@@ -60,6 +60,7 @@ Las credenciales por usuario se cargan en **Ajustes de inspiración** y se guard
 | Rijksmuseum | `key` | https://data.rijksmuseum.nl/ — solicitar API key |
 | WikiArt | `key` | https://www.wikiart.org/en/developers — acceso a la API por invitación (400 req/h) |
 | Pixiv | `refresh_token` | Flujo OAuth PKCE propio contra `oauth.secure.pixiv.net` (referencia no oficial: https://github.com/upbit/pixivpy/wiki/Auth) |
+| Wallhaven | `key` (**opcional**) | https://wallhaven.cc/settings/account — API key. Sin ella solo SFW; con ella el toggle de madurez desbloquea sketchy/NSFW |
 
 **Zerochan** no lleva key: usa un User-Agent por usuario (`zerochan_ua`, formato `Megalomaniac-{usuario}`) que se guarda en el bag. **DeviantArt**, además, resuelve su token OAuth2 client-credentials a nivel app.
 

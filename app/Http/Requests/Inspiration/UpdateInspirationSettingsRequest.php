@@ -82,7 +82,7 @@ class UpdateInspirationSettingsRequest extends FormRequest
     private function keySources(): array
     {
         return app(SourceManager::class)->all()
-            ->filter(static fn (Source $source): bool => $source->capabilities()->needsKey)
+            ->filter(static fn (Source $source): bool => CredentialFields::has($source->key()))
             ->all();
     }
 

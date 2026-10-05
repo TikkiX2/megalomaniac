@@ -95,6 +95,9 @@ return [
         'rijksmuseum' => ['key'],
         'wikiart' => ['key'],
         'pixiv' => ['refresh_token'],
+        // Optional: SFW works without it; the key unlocks sketchy/NSFW when
+        // the global maturity toggle is on (see WallhavenSource::purity()).
+        'wallhaven' => ['key'],
     ],
 
     /*

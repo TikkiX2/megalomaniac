@@ -61,6 +61,19 @@ function credentialFieldsFor(source: InspirationSourceRow): string[] {
 }
 
 /**
+ * Whether the row can accept credentials. Sources whose key is optional (e.g.
+ * Wallhaven, where the key unlocks sketchy/NSFW) expose `credential_fields`
+ * without `needs_key`; stale payloads fall back to the needs-key flag.
+ */
+function hasCredentialFields(source: InspirationSourceRow): boolean {
+    if (source.credential_fields && source.credential_fields.length > 0) {
+        return true;
+    }
+
+    return source.needs_key === true;
+}
+
+/**
  * Minimal accessible switch (no dedicated UI primitive exists in the repo).
  *
  * Renders a native button with `role="switch"` so it stays keyboard- and
@@ -403,7 +416,7 @@ export default function InspirationSettings() {
                                             </td>
 
                                             <td className="py-3 pr-4">
-                                                {source.needs_key ? (
+                                                {hasCredentialFields(source) ? (
                                                     <div className="space-y-1.5">
                                                         {credentialFieldsFor(
                                                             source,
@@ -495,6 +508,15 @@ export default function InspirationSettings() {
                                                                 </div>
                                                             );
                                                         })}
+                                                        {!source.needs_key && (
+                                                            <span className="block text-[10px] text-muted-foreground">
+                                                                Opcional — con
+                                                                el toggle de
+                                                                madurez
+                                                                desbloquea
+                                                                sketchy/NSFW.
+                                                            </span>
+                                                        )}
                                                         <div className="flex items-center gap-1.5">
                                                             <Button
                                                                 type="button"

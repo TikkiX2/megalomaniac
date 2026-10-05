@@ -22,4 +22,18 @@ final class CredentialFields
 
         return is_array($fields) && $fields !== [] ? array_values($fields) : ['key'];
     }
+
+    /**
+     * Whether the source accepts user credentials at all.
+     *
+     * Unlike `for()`, this does NOT fall back to a default field: a source
+     * without a `credential_fields` entry (e.g. Openverse, Are.na) must not
+     * render credential inputs nor accept `keys.{source}` payloads.
+     */
+    public static function has(string $source): bool
+    {
+        $fields = config("inspiration.credential_fields.{$source}");
+
+        return is_array($fields) && $fields !== [];
+    }
 }
