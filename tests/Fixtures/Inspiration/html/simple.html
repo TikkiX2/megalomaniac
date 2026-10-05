@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Simple grid</title>
+</head>
+<body>
+    <main class="grid">
+        <!-- Card 1: the card node itself is the wrapping <a>. The link
+             selector below does NOT match inside it, so the parser must fall
+             back to the ancestor <a> of the image node. -->
+        <a class="card" href="/work/one">
+            <img src="//cdn.example.com/1.jpg" alt="One">
+            <h3 class="card-title">First Work</h3>
+        </a>
+
+        <!-- Card 2: wrapper div, direct link match and data-src image. -->
+        <div class="card">
+            <a class="card-link" href="https://elsewhere.test/two">
+                <img data-src="//cdn.example.com/2.jpg" alt="Two">
+            </a>
+            <h3 class="card-title">Second Work</h3>
+        </div>
+
+        <!-- Card 3: the wrapping <a> lives outside the card wrapper, so the
+             ancestor fallback walks up from the image to the <a>. Image URL
+             comes from srcset (first candidate only). -->
+        <a class="tile" href="/work/three">
+            <div class="card">
+                <img srcset="//cdn.example.com/3.jpg 1x, //cdn.example.com/3@2x.jpg 2x" alt="Three">
+                <h3 class="card-title">Third Work</h3>
+            </div>
+        </a>
+
+        <!-- Card 4: no image at all, must be dropped. -->
+        <div class="card">
+            <a class="card-link" href="/work/four">No image here</a>
+            <h3 class="card-title">Broken Card</h3>
+        </div>
+    </main>
+</body>
+</html>
