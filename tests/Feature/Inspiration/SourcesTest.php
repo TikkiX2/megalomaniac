@@ -1435,6 +1435,48 @@ it('skips pixiv ugoira entries', function (): void {
         ->and($ids)->not->toContain('98765434');
 });
 
+it('maps the full pixiv item fields and maturity labels', function (): void {
+    fakeTier3Http('pixiv', 'pixiv/search.json');
+
+    $page = keyedInspirationSource(PixivSource::class)->search('portrait', 1, new SourceQuery);
+
+    $safe = $page->items[0];
+    $restricted = $page->items[1];
+
+    expect($safe->title)->toBe('Ember Portrait')
+        ->and($safe->author)->toBe('ember-artist')
+        ->and($safe->authorUrl)->toBe('https://www.pixiv.net/en/users/11122233')
+        ->and($safe->thumbnailUrl)->toBe('https://i.pximg.net/c/540x540_70/img-master/img/2024/01/01/00/00/00/98765432_p0_master1200.jpg')
+        ->and($safe->tags)->toBe(['portrait', 'original'])
+        ->and($safe->maturity)->toBe('safe')
+        ->and($safe->width)->toBe(1200)
+        ->and($safe->height)->toBe(1600)
+        ->and($restricted->title)->toBe('Ash Study')
+        ->and($restricted->author)->toBe('ash-artist')
+        ->and($restricted->tags)->toBe(['portrait', 'r-18'])
+        // x_restrict > 0 must surface as the mature label.
+        ->and($restricted->maturity)->toBe('mature');
+});
+
+it('advertises the next pixiv page from next_url below the page size', function (): void {
+    fakeTier3Http('pixiv', 'pixiv/next-page.json');
+
+    $page = keyedInspirationSource(PixivSource::class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->items)->toHaveCount(2)
+        ->and($page->hasMore)->toBeTrue()
+        ->and($page->nextPage)->toBe(2);
+});
+
+it('pins the pixiv first page when next_url is null', function (): void {
+    fakeTier3Http('pixiv', 'pixiv/search.json');
+
+    $page = keyedInspirationSource(PixivSource::class)->search('portrait', 1, new SourceQuery);
+
+    expect($page->hasMore)->toBeFalse()
+        ->and($page->nextPage)->toBeNull();
+});
+
 it('caches the pixiv access token across searches', function (): void {
     fakeTier3Http('pixiv', 'pixiv/search.json');
 

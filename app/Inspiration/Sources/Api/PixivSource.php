@@ -217,7 +217,10 @@ class PixivSource extends AbstractApiSource
             }
         }
 
-        $hasMore = count($raw) === self::PAGE_SIZE;
+        // Pixiv advertises pagination through an explicit next-page URL; its
+        // App API may return fewer than PAGE_SIZE items on a full page, so a
+        // count comparison would pin the source to page one forever.
+        $hasMore = is_string($payload['next_url'] ?? null) && $payload['next_url'] !== '';
 
         return Page::fromItems($items, $hasMore, $hasMore ? $page + 1 : null);
     }
