@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inspiration\Sources\Scrape;
 
+use App\Inspiration\Concerns\SendsSessionCookie;
 use App\Inspiration\Concerns\UsesCredentials;
 use App\Inspiration\Contracts\Source;
 use App\Inspiration\Dtos\InspirationItem;
@@ -35,6 +36,7 @@ use Illuminate\Support\Facades\Log;
  */
 abstract class AbstractEmbeddedJsonSource implements Source
 {
+    use SendsSessionCookie;
     use UsesCredentials;
 
     private const PAGE_SIZE = 24;
@@ -97,7 +99,7 @@ abstract class AbstractEmbeddedJsonSource implements Source
 
     public function explore(int $page, SourceQuery $queryOptions): Page
     {
-        $html = $this->client->get($this->exploreUrl());
+        $html = $this->client->get($this->exploreUrl(), $this->sessionHeaders());
         $items = [];
 
         foreach ($this->itemsFromPayloads($this->embeddedJson($html)) as $data) {

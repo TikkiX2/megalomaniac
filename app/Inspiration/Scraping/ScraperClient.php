@@ -26,16 +26,54 @@ final class ScraperClient
      * @throws SourceException when the host rejects the request (4xx/5xx) or
      *                         when the transfer itself fails (timeout, DNS…).
      */
-    public function get(string $url): string
+    public function get(string $url, array $headers = []): string
     {
         try {
-            $response = $this->request()->get($url);
+            $response = $this->request()->withHeaders($headers)->get($url);
 
             if ($response->failed()) {
-                throw new SourceException('scraper: '.$this->host($url).' responded '.$response->status());
+                throw new SourceException(
+                    'scraper: '.$this->host($url).' responded '.$response->status(),
+                    httpStatus: (int) $response->status(),
+                );
             }
 
             return $response->body();
+        } catch (SourceException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            throw new SourceException(
+                'scraper: '.$this->host($url).': '.$exception->getMessage(),
+                previous: $exception,
+            );
+        }
+    }
+
+    /**
+     * JSON POST used by simulated login flows. Returns the raw session-cookie
+     * header value the platform set, or '' when it set none.
+     *
+     * @param  array<string, mixed>  $body
+     */
+    public function postJson(string $url, array $body): string
+    {
+        try {
+            $response = $this->request()->asJson()->acceptJson()->post($url, $body);
+
+            if ($response->failed()) {
+                throw new SourceException(
+                    'scraper: '.$this->host($url).' responded '.$response->status(),
+                    httpStatus: (int) $response->status(),
+                );
+            }
+
+            $jar = $response->cookies();
+            $cookies = collect($jar->toArray())
+                ->map(static fn (array $cookie): string => ($cookie['Name'] ?? '').'='.($cookie['Value'] ?? ''))
+                ->filter(static fn (string $pair): bool => str_contains($pair, '='))
+                ->implode('; ');
+
+            return $cookies;
         } catch (SourceException $exception) {
             throw $exception;
         } catch (Throwable $exception) {

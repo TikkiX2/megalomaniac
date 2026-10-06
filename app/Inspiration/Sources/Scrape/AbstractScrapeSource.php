@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inspiration\Sources\Scrape;
 
+use App\Inspiration\Concerns\SendsSessionCookie;
 use App\Inspiration\Concerns\UsesCredentials;
 use App\Inspiration\Contracts\Source;
 use App\Inspiration\Dtos\InspirationItem;
@@ -30,6 +31,7 @@ use Illuminate\Support\Facades\Log;
  */
 abstract class AbstractScrapeSource implements Source
 {
+    use SendsSessionCookie;
     use UsesCredentials;
 
     private const PAGE_SIZE = 24;
@@ -155,7 +157,7 @@ abstract class AbstractScrapeSource implements Source
             $selectors['base'] = $base;
         }
 
-        $html = $this->client->get($url);
+        $html = $this->client->get($url, $this->sessionHeaders());
         $items = [];
 
         foreach ($this->parser->cards($html, $selectors) as $card) {

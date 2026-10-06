@@ -14,12 +14,21 @@ use Throwable;
  */
 class SourceException extends RuntimeException
 {
+    /**
+     * HTTP status that produced the failure (401/403 flag an expired session
+     * credential when the source uses one), or null for transport failures.
+     */
+    public ?int $httpStatus = null;
+
     public function __construct(
         string $message = '',
         public readonly ?int $previousCacheAge = null,
         int $code = 0,
         ?Throwable $previous = null,
+        ?int $httpStatus = null,
     ) {
         parent::__construct($message, $code, $previous);
+
+        $this->httpStatus = $httpStatus;
     }
 }

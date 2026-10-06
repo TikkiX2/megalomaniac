@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inspiration;
 
+use App\Inspiration\Auth\InspirationAuthStore;
 use App\Inspiration\Contracts\Source;
 use App\Inspiration\Dtos\SettingsBag;
 use App\Inspiration\Dtos\SourceQuery;
@@ -51,6 +52,7 @@ class SourceManager
         private readonly Container $app,
         private readonly InspirationSettings $settings,
         private readonly InspirationCache $cache,
+        private readonly InspirationAuthStore $auth,
     ) {}
 
     /**
@@ -81,8 +83,8 @@ class SourceManager
     {
         $bag = $this->settings->for($user);
 
-        return $this->all()->filter(function (Source $source) use ($bag): bool {
-            $this->hydrateCredentials($bag, $source);
+        return $this->all()->filter(function (Source $source) use ($user, $bag): bool {
+            $this->hydrateCredentials($user, $bag, $source);
 
             if ($this->isTier3Unacknowledged($source->key(), $bag)) {
                 return false;
@@ -116,9 +118,10 @@ class SourceManager
         $statuses = [];
 
         foreach ($this->all() as $key => $source) {
-            $this->hydrateCredentials($bag, $source);
+            $this->hydrateCredentials($user, $bag, $source);
             $cacheAge = $this->cacheAge($key);
             $errorAt = $this->lastErrorAt($key);
+            $auth = $this->auth->status($user, $key);
 
             $statuses[$key] = [
                 'enabled' => $bag->isEnabled($key),
@@ -126,6 +129,9 @@ class SourceManager
                 'down' => $errorAt !== null && $cacheAge === null,
                 'cache_age_minutes' => $cacheAge,
                 'error_at' => $errorAt,
+                'has_auth' => $auth !== null,
+                'auth_type' => $auth['type'] ?? null,
+                'auth_invalid' => $auth['invalid'] ?? false,
             ];
         }
 
@@ -139,7 +145,7 @@ class SourceManager
     {
         $source = $this->resolve($key);
         $bag = $this->settings->for($user);
-        $this->hydrateCredentials($bag, $source);
+        $this->hydrateCredentials($user, $bag, $source);
 
         $options = new SourceQuery(
             maturity: SourceMaturity::forSource($key, $bag->maturity)->maturity,
@@ -165,7 +171,7 @@ class SourceManager
     {
         $source = $this->resolve($key);
         $bag = $this->settings->for($user);
-        $this->hydrateCredentials($bag, $source);
+        $this->hydrateCredentials($user, $bag, $source);
 
         $options = new SourceQuery(
             maturity: SourceMaturity::forSource($key, $bag->maturity)->maturity,
@@ -283,9 +289,21 @@ class SourceManager
             $result = $this->cache->remember($key, $kind, $queryHash, $ttl, $adapter);
             $this->clearError($key);
 
+            if ($this->auth->hasCredential($user, $key)) {
+                $this->auth->clearInvalid($user, $key);
+            }
+
             return $this->present($result['payload'], $result['from_cache'], $result['age_minutes'], false);
         } catch (SourceException $exception) {
             $this->recordError($key);
+
+            // 401/403 on a session-authenticated source means the stored
+            // credential went stale: flag it so the UI offers "reconectar".
+            if ($exception->httpStatus !== null
+                && in_array($exception->httpStatus, [401, 403], true)
+                && $this->auth->hasCredential($user, $key)) {
+                $this->auth->markInvalid($user, $key);
+            }
 
             $stale = InspirationCache::latestRow($key, $kind, $queryHash);
 
@@ -324,7 +342,7 @@ class SourceManager
         try {
             $source = $this->resolve($key);
             $bag = $this->settings->for($user);
-            $this->hydrateCredentials($bag, $source);
+            $this->hydrateCredentials($user, $bag, $source);
 
             if (! $this->rateLimit($user, $key)) {
                 return;
@@ -411,13 +429,18 @@ class SourceManager
         return $value instanceof CarbonInterface ? $value : Carbon::parse($value);
     }
 
-    private function hydrateCredentials(SettingsBag $bag, Source $source): void
+    private function hydrateCredentials(User $user, SettingsBag $bag, Source $source): void
     {
         $key = $source->key();
+
+        $session = $this->auth->hasCredential($user, $key)
+            ? ($this->auth->cookiesFor($user, $key) !== null ? ['session_cookie' => $this->auth->cookiesFor($user, $key)] : [])
+            : [];
 
         $source->setCredentials(array_merge(
             $bag->keys[$key] ?? [],
             ['user_agent' => $bag->zerochanUa],
+            $session,
         ));
     }
 }

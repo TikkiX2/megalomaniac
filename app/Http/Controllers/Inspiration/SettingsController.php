@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Inspiration;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Inspiration\UpdateInspirationSettingsRequest;
+use App\Inspiration\Auth\InspirationAuthStore;
 use App\Inspiration\Contracts\Source;
 use App\Inspiration\Exceptions\SourceException;
 use App\Inspiration\InspirationSettings;
@@ -43,7 +44,7 @@ class SettingsController extends Controller
         $bag = $this->settings->for($user);
 
         $sources = $this->sources->all()
-            ->map(function (Source $source) use ($bag): array {
+            ->map(function (Source $source) use ($user, $bag): array {
                 $key = $source->key();
 
                 $source->setCredentials(array_merge(
@@ -62,6 +63,7 @@ class SettingsController extends Controller
                     'configured' => $source->isConfigured(),
                     'enabled' => $bag->isEnabled($key),
                     'has_tier3_notice' => in_array($key, config('inspiration.tier3', []), true),
+                    ...$this->authFlags($user, $key),
                 ];
             })
             ->values()
@@ -203,5 +205,16 @@ class SettingsController extends Controller
     private function failure(string $message): JsonResponse
     {
         return response()->json(['ok' => false, 'message' => $message], 422);
+    }
+
+    private function authFlags(User $user, string $key): array
+    {
+        $status = app(InspirationAuthStore::class)->status($user, $key);
+
+        return [
+            'has_auth' => $status !== null,
+            'auth_type' => $status['type'] ?? null,
+            'auth_invalid' => $status['invalid'] ?? false,
+        ];
     }
 }

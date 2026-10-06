@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Inspiration\Sources\Api;
 
+use App\Inspiration\Concerns\SendsSessionCookie;
 use App\Inspiration\Concerns\UsesCredentials;
 use App\Inspiration\Contracts\Source;
 use App\Inspiration\Dtos\Page;
@@ -19,9 +20,12 @@ use Throwable;
  *
  * Every transport or JSON failure is normalized into a SourceException so the
  * SourceManager isolation contract is never broken by a raw Guzzle error.
+ * Sources with an optional user session cookie send it through
+ * SendsSessionCookie.
  */
 abstract class AbstractApiSource implements Source
 {
+    use SendsSessionCookie;
     use UsesCredentials;
 
     abstract public function key(): string;
@@ -83,10 +87,21 @@ abstract class AbstractApiSource implements Source
     protected function getJson(string $url, array $query = []): array
     {
         try {
-            $response = $this->authorize($this->request())->get($url, $query);
+            $pending = $this->authorize($this->request());
+
+            $sessionHeaders = $this->sessionHeaders();
+
+            if ($sessionHeaders !== []) {
+                $pending = $pending->withHeaders($sessionHeaders);
+            }
+
+            $response = $pending->get($url, $query);
 
             if ($response->failed()) {
-                throw new SourceException($this->key().': HTTP '.$response->status());
+                throw new SourceException(
+                    $this->key().': HTTP '.$response->status(),
+                    httpStatus: (int) $response->status(),
+                );
             }
 
             $payload = $response->json();
