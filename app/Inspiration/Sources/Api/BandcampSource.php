@@ -13,6 +13,12 @@ use Illuminate\Support\Facades\Log;
 /**
  * Bandcamp discover feed (tier 3, opt-in).
  *
+ * STATUS 2026-10: `POST /api/discover/1/get_discover_items` answers 404
+ * (`Endpoints::UnknownEndpointError`) and the documented partner API is gated
+ * to labels. The source is DORMANT: the adapter keeps the previously known
+ * shape (and degrades to cache when the live shell changes) but Bandcamp is
+ * removed from the active defaults until an anonymous endpoint returns.
+ *
  * Bandcamp's documented API is gated behind label accounts, so this adapter
  * uses the internal web endpoint `POST /api/discover/1/get_discover_items`,
  * reverse-engineered by the community (michaelherger/Bandcamp-API and the

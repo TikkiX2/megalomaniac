@@ -5,30 +5,31 @@
     <title>Brutalist Websites</title>
 </head>
 <body>
-    <div class="websites">
-        <!-- Card 1: absolute screenshot, link points at the live site. -->
-        <div class="website">
-            <a class="website__link" href="https://anza.example/">
-                <img src="https://brutalistwebsites.com/images/anza.png" alt="Anza">
-            </a>
-            <h3 class="website__title">Anza</h3>
-        </div>
+    <!-- Decoy: no screenshot, must be dropped. -->
+    <div class="box"> <p>Brutalist Websites<br/>–<br/><a href="mailto:submit@brutalistwebsites.com">Submit</a></p> </div>
 
-        <!-- Card 2: protocol-relative screenshot. -->
-        <div class="website">
-            <a class="website__link" href="https://gaijin.example/">
-                <img data-src="//brutalistwebsites.com/images/gaijin.png" alt="Gaijin">
-            </a>
-            <h3 class="website__title">Gaijin</h3>
+    <!-- Card 1: absolute screenshot, link points at the live site. -->
+    <div class="box">
+        <div class="screenshot">
+            <a href="https://anza.example/"><img src="https://brutalistwebsites.com/_img/anza.jpg" loading="lazy" alt="Anza"></a>
         </div>
+        <p>Anza</p>
+    </div>
 
-        <!-- Card 3: srcset-only screenshot. -->
-        <div class="website">
-            <a class="website__link" href="https://rawcss.example/">
-                <img srcset="https://brutalistwebsites.com/images/rawcss-1200.png 1200w" alt="Raw CSS">
-            </a>
-            <h3 class="website__title">Raw CSS</h3>
+    <!-- Card 2: protocol-relative screenshot. -->
+    <div class="box">
+        <div class="screenshot">
+            <a href="https://gaijin.example/"><img data-src="//brutalistwebsites.com/_img/gaijin.jpg" loading="lazy" alt="Gaijin"></a>
         </div>
+        <p>Gaijin</p>
+    </div>
+
+    <!-- Card 3: srcset-only screenshot. -->
+    <div class="box">
+        <div class="screenshot">
+            <a href="https://rawcss.example/"><img srcset="https://brutalistwebsites.com/_img/rawcss-1200.png 1200w" alt="Raw CSS"></a>
+        </div>
+        <p>Raw CSS</p>
     </div>
 </body>
 </html>

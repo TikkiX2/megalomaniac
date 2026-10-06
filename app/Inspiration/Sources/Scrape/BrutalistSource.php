@@ -44,10 +44,12 @@ final class BrutalistSource extends AbstractScrapeSource
     protected function selectors(): array
     {
         return [
-            'card' => ['.website', '.brutalist-entry'],
+            // Live markup (2026): `.box` tiles with a `.screenshot` anchor+
+            // image and a plain <p> caption; legacy classes kept as fallbacks.
+            'card' => ['.box', '.website', '.brutalist-entry'],
             'image' => 'img',
             'link' => 'a',
-            'title' => ['.website__title', '.brutalist-entry__title'],
+            'title' => ['p', '.website__title', '.brutalist-entry__title'],
             'base' => self::PRIMARY_URL,
         ];
     }

@@ -13,6 +13,13 @@ use App\Inspiration\Exceptions\SourceException;
 /**
  * The Metropolitan Museum of Art collection API.
  *
+ * STATUS 2026-10: the public `/v1/search` endpoint answers 410 Gone (retired);
+ * only the raw objects listing (`/v1/objects`) still responds, which would
+ * make every page a 500k-id crawl plus one detail request per object. The
+ * source is therefore DORMANT: it stays registered and degrades to cached
+ * content, but is removed from the default sources until Met reopens a
+ * searchable surface.
+ *
  * Met is a two-call source: the search endpoint returns a flat `objectIDs`
  * list, and every object still needs an individual `GET /objects/{id}`. That
  * list is the adapter's *pending id queue*: each search page consumes a batch

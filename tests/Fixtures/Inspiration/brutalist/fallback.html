@@ -5,22 +5,20 @@
     <title>Brutal Web</title>
 </head>
 <body>
-    <div class="websites">
-        <!-- Card 1: relative href AND relative image; both must resolve against brutalweb.xyz. -->
-        <div class="website">
-            <a class="website__link" href="/site/rawcss/">
-                <img src="/img/rawcss.png" alt="Raw CSS">
-            </a>
-            <h3 class="website__title">Raw CSS</h3>
+    <!-- Card 1: relative href AND relative image; both must resolve against brutalweb.xyz. -->
+    <div class="box">
+        <div class="screenshot">
+            <a href="/site/rawcss/"><img src="/img/rawcss.png" alt="Raw CSS"></a>
         </div>
+        <p>Raw CSS</p>
+    </div>
 
-        <!-- Card 2: protocol-relative image on the secondary host. -->
-        <div class="website">
-            <a class="website__link" href="https://rawcss.example/">
-                <img data-src="//brutalweb.xyz/img/terminal.png" alt="Terminal">
-            </a>
-            <h3 class="website__title">Terminal</h3>
+    <!-- Card 2: protocol-relative image on the secondary host. -->
+    <div class="box">
+        <div class="screenshot">
+            <a href="https://rawcss.example/"><img data-src="//brutalweb.xyz/img/terminal.png" alt="Terminal"></a>
         </div>
+        <p>Terminal</p>
     </div>
 </body>
 </html>
