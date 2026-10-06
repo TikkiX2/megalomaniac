@@ -184,11 +184,23 @@ export function AppSidebar() {
                             <SidebarMenuButton
                                 asChild
                                 tooltip="Inspiración"
-                                isActive={window.location.pathname.startsWith('/inspiration')}
+                                isActive={window.location.pathname === '/inspiration'}
                             >
                                 <Link href={inspiration.explore()} prefetch>
                                     <Palette className="h-4 w-4" />
                                     <span>Inspiración</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                tooltip="Ajustes de fuentes"
+                                isActive={window.location.pathname.startsWith('/inspiration/settings')}
+                            >
+                                <Link href={inspiration.settings.index()} prefetch>
+                                    <span className="material-symbols-outlined h-4 w-4 text-[16px]">tune</span>
+                                    <span>Ajustes de fuentes</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

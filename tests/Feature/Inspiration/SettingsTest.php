@@ -50,9 +50,11 @@ it('exposes the credential_fields map in config', function () {
         ->and($fields['discogs'])->toBe(['token'])
         ->and($fields['pixiv'])->toBe(['refresh_token'])
         ->and($fields['wallhaven'])->toBe(['key'])
+        ->and($fields['gelbooru'])->toBe(['key'])
         ->and(array_keys($fields))->toEqualCanonicalizing([
             'flickr', 'tumblr', 'unsplash', 'pexels', 'pixabay', 'discogs',
-            'giphy', 'europeana', 'rijksmuseum', 'wikiart', 'pixiv', 'wallhaven',
+            'giphy', 'europeana', 'rijksmuseum', 'wikiart', 'pixiv',
+            'wallhaven', 'gelbooru',
         ]);
 });
 

@@ -10,13 +10,15 @@ use App\Inspiration\Dtos\SourceCapabilities;
 use App\Inspiration\Dtos\SourceQuery;
 
 /**
- * Gelbooru public JSON API.
+ * Gelbooru JSON API.
  *
  * Gelbooru exposes no anonymous explore feed, so explore() falls back to the
- * search endpoint with a curated term. Maturity is expressed through the tag
- * string: `safe` appends `-rating:explicit`, while `allowed` leaves the query
- * untouched. The manager toggles the maturity value in Task 13; this adapter
- * already honours the passed SourceQuery so only the settings wiring is left.
+ * search endpoint with a curated term. Since 2026 the API answers 401 without
+ * an API key (visible to the inspiration module as a dead source until the
+ * user adds it in Ajustes), so the source reports needsKey and sends the key
+ * as `api_key` whenever one is configured. Maturity is expressed through the
+ * tag string: `safe` appends `-rating:explicit`, while `allowed` leaves the
+ * query untouched.
  */
 class GelbooruSource extends AbstractApiSource
 {
@@ -43,10 +45,15 @@ class GelbooruSource extends AbstractApiSource
         return new SourceCapabilities(
             supportsSearch: true,
             supportsExplore: false,
-            needsKey: false,
+            needsKey: true,
             hasMaturityLevels: true,
             maxPageSize: self::PAGE_SIZE,
         );
+    }
+
+    public function isConfigured(): bool
+    {
+        return $this->stringValue($this->credentials['key'] ?? null) !== null;
     }
 
     public function search(string $query, int $page, SourceQuery $queryOptions): Page
@@ -57,7 +64,7 @@ class GelbooruSource extends AbstractApiSource
             return Page::fromItems([], false, null);
         }
 
-        $payload = $this->getJson(self::SEARCH_URL, [
+        $params = [
             'page' => 'dapi',
             's' => 'post',
             'q' => 'index',
@@ -65,7 +72,15 @@ class GelbooruSource extends AbstractApiSource
             'tags' => $this->tags($query, $queryOptions),
             'pid' => max(0, $page - 1),
             'limit' => self::PAGE_SIZE,
-        ]);
+        ];
+
+        $apiKey = $this->stringValue($this->credentials['key'] ?? null);
+
+        if ($apiKey !== null) {
+            $params['api_key'] = $apiKey;
+        }
+
+        $payload = $this->getJson(self::SEARCH_URL, $params);
 
         return $this->mapToPage($payload, $page);
     }

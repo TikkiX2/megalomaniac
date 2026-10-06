@@ -69,7 +69,6 @@ dataset('tier1ApiSources', [
     'wallhaven' => ['wallhaven', WallhavenSource::class],
     'openverse' => ['openverse', OpenverseSource::class],
     'zerochan' => ['zerochan', ZerochanSource::class],
-    'gelbooru' => ['gelbooru', GelbooruSource::class],
     'arena' => ['arena', AreNaSource::class],
     'met' => ['met', MetMuseumSource::class],
     'aic' => ['aic', ArtInstituteChicagoSource::class],
@@ -110,6 +109,8 @@ dataset('keyedApiSources', [
     'europeana' => ['europeana', EuropeanaSource::class],
     'rijksmuseum' => ['rijksmuseum', RijksmuseumSource::class],
     'wikiart' => ['wikiart', WikiArtSource::class],
+    // 401 without a key since 2026.
+    'gelbooru' => ['gelbooru', GelbooruSource::class],
 ]);
 
 dataset('keyedApiHttpErrors', function (): array {
@@ -746,7 +747,7 @@ it('declares the expected capabilities for keyed :key', function (string $key, s
     expect($capabilities->supportsSearch)->toBeTrue()
         ->and($capabilities->supportsExplore)->toBe(in_array($key, ['flickr', 'giphy', 'wikiart'], true))
         ->and($capabilities->needsKey)->toBeTrue()
-        ->and($capabilities->hasMaturityLevels)->toBe(in_array($key, ['flickr', 'pixabay', 'giphy'], true))
+        ->and($capabilities->hasMaturityLevels)->toBe(in_array($key, ['flickr', 'pixabay', 'giphy', 'gelbooru'], true))
         ->and($source->isConfigured())->toBeTrue();
 })->with('keyedApiSources');
 

@@ -98,6 +98,8 @@ return [
         // Optional: SFW works without it; the key unlocks sketchy/NSFW when
         // the global maturity toggle is on (see WallhavenSource::purity()).
         'wallhaven' => ['key'],
+        // Required since 2026: Gelbooru answers 401 without an API key.
+        'gelbooru' => ['key'],
     ],
 
     /*
@@ -110,6 +112,32 @@ return [
     */
 
     'tier3' => ['pixiv', 'pinterest', 'cara', 'bandcamp', 'wikiart', 'newgrounds', 'mobbin'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session-auth capable sources
+    |--------------------------------------------------------------------------
+    |
+    | Sources that accept an optional user session (cookie pasted from the
+    | user's own browser, or a simulated login as fallback) to bypass public
+    | bot-walls. Stored encrypted in the settings bag; never exposed in props.
+    |
+    */
+
+    'auth_sources' => ['behance', 'newgrounds', 'pinterest', 'cara', 'mobbin', 'artstation'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Home-wall subset
+    |--------------------------------------------------------------------------
+    |
+    | The first render of the explore wall only fans out over these fast,
+    | reliable sources; every other active source loads lazily when its chip
+    | is clicked. Kept out of the year-2026 bot-walls on purpose.
+    |
+    */
+
+    'home_sources' => ['aic', 'arena', 'openverse', 'wallhaven', 'zerochan', 'archdaily', 'cosmos', 'awwwards'],
 
     /*
     |--------------------------------------------------------------------------

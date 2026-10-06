@@ -390,6 +390,16 @@ export default function InspirationSettings() {
                                                             sin configurar
                                                         </Badge>
                                                     )}
+                                                    {source.key === 'deviantart' &&
+                                                        !source.configured && (
+                                                            <span className="mt-1 block text-[10px] text-muted-foreground">
+                                                                Requiere
+                                                                DEVIANTART_CLIENT_ID/SECRET
+                                                                en el .env del
+                                                                servidor (creds
+                                                                de app).
+                                                            </span>
+                                                        )}
                                                 </span>
                                             </td>
 

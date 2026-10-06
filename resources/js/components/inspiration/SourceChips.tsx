@@ -4,6 +4,7 @@ interface SourceChipsProps {
     sources: Record<string, SourceStatus>;
     active: string;
     onSelect: (source: string) => void;
+    onConfigure?: () => void;
 }
 
 function chipClass(kind: 'active' | 'ok' | 'down' | 'disabled'): string {
@@ -39,9 +40,13 @@ function statusKind(status: SourceStatus | undefined, isActive: boolean): 'activ
  * registry order) with a fixed "Todo" chip first. Chips carry the health of
  * each source so a dead adapter is visible before the user clicks it.
  */
-export default function SourceChips({ sources, active, onSelect }: SourceChipsProps) {
+export default function SourceChips({ sources, active, onSelect, onConfigure }: SourceChipsProps) {
+    const needsKeys = Object.entries(sources).some(([key, status]) =>
+        key !== 'deviantart' ? status?.configured === false && status?.enabled === false : false,
+    );
+
     return (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
             <button
                 type="button"
                 onClick={() => onSelect('all')}
@@ -55,6 +60,7 @@ export default function SourceChips({ sources, active, onSelect }: SourceChipsPr
                 const isActive = active === key;
                 const kind = statusKind(status, isActive);
                 const cache = status.down ? formatCacheAge(status.cache_age_minutes) : null;
+                const missingKey = !status.configured && status.enabled === false;
 
                 return (
                     <button
@@ -64,20 +70,44 @@ export default function SourceChips({ sources, active, onSelect }: SourceChipsPr
                         onClick={() => onSelect(key)}
                         className={chipClass(kind)}
                         aria-pressed={isActive}
-                        title={status.down ? 'Fuente caída' : undefined}
+                        title={
+                            missingKey
+                                ? 'Falta configurar — entrá a Ajustes de fuentes'
+                                : status.down
+                                  ? 'Fuente caída'
+                                  : undefined
+                        }
                     >
                         {!isActive && (
                             <span
                                 className={`h-1.5 w-1.5 rounded-full ${
-                                    kind === 'down' ? 'bg-red-400' : kind === 'disabled' ? 'bg-muted-foreground' : 'bg-emerald-400'
+                                    kind === 'down'
+                                        ? 'bg-red-400'
+                                        : kind === 'disabled'
+                                          ? missingKey
+                                              ? 'bg-amber-400'
+                                              : 'bg-muted-foreground'
+                                          : 'bg-emerald-400'
                                 }`}
                             />
                         )}
                         {sourceLabel(key)}
+                        {missingKey && <span className="font-normal opacity-80">· key</span>}
                         {cache && <span className="font-normal opacity-80">· caché {cache}</span>}
                     </button>
                 );
             })}
+
+            {onConfigure && (
+                <button
+                    type="button"
+                    onClick={onConfigure}
+                    className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs font-bold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                    <span className="material-symbols-outlined text-[16px]">tune</span>
+                    Ajustes
+                </button>
+            )}
         </div>
     );
 }

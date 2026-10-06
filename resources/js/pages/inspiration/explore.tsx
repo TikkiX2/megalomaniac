@@ -184,9 +184,23 @@ export default function Explore() {
                         />
                     </div>
                     <Button type="submit">Buscar</Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="border-border"
+                        onClick={() => router.visit(inspiration.settings.index())}
+                        aria-label="Ajustes de fuentes"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">tune</span>
+                    </Button>
                 </form>
 
-                <SourceChips sources={sources} active={source} onSelect={selectSource} />
+                <SourceChips
+                    sources={sources}
+                    active={source}
+                    onSelect={selectSource}
+                    onConfigure={() => router.visit(inspiration.settings.index())}
+                />
 
                 {searching ? (
                     <SkeletonGrid />
