@@ -81,6 +81,12 @@ class ExploreController extends Controller
         $results = [];
 
         foreach ($this->sources->activeConfigured($user) as $key => $source) {
+            // The first render only fans out over the curated home subset;
+            // every other active source loads lazily via its chip.
+            if (! in_array($key, $this->homeSubset(), true)) {
+                continue;
+            }
+
             try {
                 $page = $this->sources->explore($user, $key, 1);
                 $page['items'] = array_slice($page['items'], 0, self::MASHUP_PER_SOURCE);
@@ -144,7 +150,16 @@ class ExploreController extends Controller
             'has_more' => $page['has_more'],
             'from_cache' => $page['from_cache'],
             'age_minutes' => $page['age_minutes'],
+            'stale' => $page['stale'] ?? false,
         ];
+    }
+
+    private function homeSubset(): array
+    {
+        return array_values(array_filter(
+            (array) config('inspiration.home_sources', []),
+            static fn (mixed $key): bool => is_string($key),
+        ));
     }
 
     /**
@@ -200,6 +215,7 @@ class ExploreController extends Controller
             'has_more' => false,
             'from_cache' => false,
             'age_minutes' => null,
+            'stale' => false,
         ];
     }
 

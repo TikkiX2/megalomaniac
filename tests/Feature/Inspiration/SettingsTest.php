@@ -63,12 +63,15 @@ it('lists the keyless tier 1 and tier 2 sources as enabled by default', function
 
     expect($defaults)->toBeArray()
         ->and($defaults)->toContain(
-            'deviantart', 'artstation', 'wallhaven', 'openverse', 'zerochan',
-            'gelbooru', 'arena', 'met', 'aic',
-            'designspiration', 'savee', 'trendlist', 'posterspy', 'lapaninja',
-            'brutalist', 'archdaily', 'godly', 'darkmode', 'behance', 'dribbble',
+            'deviantart', 'wallhaven', 'openverse', 'zerochan',
+            'gelbooru', 'arena', 'aic',
+            'designspiration', 'trendlist', 'posterspy',
+            'brutalist', 'archdaily', 'godly', 'darkmode', 'dribbble',
             'awwwards', 'cosmos',
         )
+        // Bot-walled, retired or account-gated sources stay out of the home
+        // defaults until they get a working surface (or a session cookie).
+        ->and(array_intersect($defaults, ['artstation', 'behance', 'met', 'bandcamp', 'lapaninja', 'newgrounds', 'savee']))->toBe([])
         ->and(array_intersect($defaults, config('inspiration.tier3')))->toBe([]);
 });
 

@@ -37,6 +37,7 @@ export interface ResultGroup {
     has_more: boolean;
     from_cache: boolean;
     age_minutes: number | null;
+    stale?: boolean;
 }
 
 export interface BoardOption {

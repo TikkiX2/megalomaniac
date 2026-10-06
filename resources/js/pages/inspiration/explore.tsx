@@ -6,7 +6,7 @@ import ImageCard from '@/components/inspiration/ImageCard';
 import Lightbox from '@/components/inspiration/Lightbox';
 import MasonryGrid from '@/components/inspiration/MasonryGrid';
 import SaveModal from '@/components/inspiration/SaveModal';
-import { sourceLabel, type BoardOption, type InspirationItem, type LightboxItem, type ProjectOption, type ResultGroup, type SourceStatus } from '@/components/inspiration/shared';
+import { formatCacheAge, sourceLabel, type BoardOption, type InspirationItem, type LightboxItem, type ProjectOption, type ResultGroup, type SourceStatus } from '@/components/inspiration/shared';
 import SourceChips from '@/components/inspiration/SourceChips';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -231,8 +231,15 @@ export default function Explore() {
                                             {items.length}
                                         </span>
                                         {group.from_cache && (
-                                            <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
-                                                caché
+                                            <span
+                                                className={`rounded-full border px-2 py-0.5 text-[10px] ${
+                                                    group.stale
+                                                        ? 'border-amber-400/40 text-amber-300'
+                                                        : 'border-border text-muted-foreground'
+                                                }`}
+                                                title={group.stale ? 'Resultado de caché vencida — se está refrescando en segundo plano' : undefined}
+                                            >
+                                                {group.stale ? 'refrescando…' : `caché · ${formatCacheAge(group.age_minutes) ?? 'hace un rato'}`}
                                             </span>
                                         )}
                                     </div>

@@ -8,6 +8,8 @@ use App\Inspiration\Contracts\Source;
 use App\Inspiration\Dtos\SettingsBag;
 use App\Inspiration\Dtos\SourceQuery;
 use App\Inspiration\Exceptions\SourceException;
+use App\Jobs\Inspiration\RefreshSourceJob;
+use App\Models\InspirationCacheEntry;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Closure;
@@ -131,7 +133,7 @@ class SourceManager
     }
 
     /**
-     * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int}
+     * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int, stale: bool}
      */
     public function search(User $user, string $key, string $query, int $page = 1): array
     {
@@ -148,6 +150,8 @@ class SourceManager
             $user,
             $key,
             'search',
+            $query,
+            $page,
             InspirationCache::queryHash($query, $options),
             (int) config('inspiration.ttl.search', 1800),
             fn (): array => $source->search($query, $page, $options)->toArray(),
@@ -155,7 +159,7 @@ class SourceManager
     }
 
     /**
-     * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int}
+     * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int, stale: bool}
      */
     public function explore(User $user, string $key, int $page = 1): array
     {
@@ -172,6 +176,8 @@ class SourceManager
             $user,
             $key,
             'explore',
+            '',
+            $page,
             InspirationCache::queryHash('', $options),
             (int) config('inspiration.ttl.explore', 3600),
             fn (): array => $source->explore($page, $options)->toArray(),
@@ -250,10 +256,25 @@ class SourceManager
 
     /**
      * @param  Closure(): array<string, mixed>  $adapter
-     * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int}
+     * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int, stale: bool}
      */
-    private function fetch(User $user, string $key, string $kind, string $queryHash, int $ttl, Closure $adapter): array
+    private function fetch(User $user, string $key, string $kind, string $query, int $page, string $queryHash, int $ttl, Closure $adapter): array
     {
+        // Stale-while-revalidate: any stored payload (fresh or expired, up to
+        // the 12h cap) is served instantly; expired entries are refreshed by a
+        // queued job instead of blocking the wall on the remote fan-out.
+        $entry = InspirationCache::latestRow($key, $kind, $queryHash);
+
+        if ($entry !== null && InspirationCache::ageOf($entry) < InspirationCache::STALE_CAP_MINUTES) {
+            $stale = $entry->expires_at->isPast();
+
+            if ($stale) {
+                $this->dispatchRefresh($user, $key, $kind, $query, $page, $queryHash);
+            }
+
+            return $this->present($entry->payload, true, InspirationCache::ageOf($entry), $stale);
+        }
+
         try {
             if (! $this->rateLimit($user, $key)) {
                 throw new SourceException('inspiration: rate limited (seguí explorando otros orígenes)');
@@ -262,14 +283,16 @@ class SourceManager
             $result = $this->cache->remember($key, $kind, $queryHash, $ttl, $adapter);
             $this->clearError($key);
 
-            return $this->present($result['payload'], $result['from_cache'], $result['age_minutes']);
+            return $this->present($result['payload'], $result['from_cache'], $result['age_minutes'], false);
         } catch (SourceException $exception) {
             $this->recordError($key);
 
             $stale = InspirationCache::latestRow($key, $kind, $queryHash);
 
             if ($stale !== null) {
-                return $this->present($stale->payload, true, InspirationCache::ageOf($stale));
+                $age = InspirationCache::ageOf($stale);
+
+                return $this->present($stale->payload, true, $age, $age < InspirationCache::STALE_CAP_MINUTES);
             }
 
             throw new SourceException($exception->getMessage(), null, $exception->getCode(), $exception);
@@ -277,10 +300,78 @@ class SourceManager
     }
 
     /**
-     * @param  array<string, mixed>  $payload
-     * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int}
+     * Enqueue one background refresh per cache key; duplicate dispatches for
+     * the same key are skipped via a short-lived marker.
      */
-    private function present(array $payload, bool $fromCache, ?int $ageMinutes): array
+    private function dispatchRefresh(User $user, string $key, string $kind, string $query, int $page, string $queryHash): void
+    {
+        $marker = 'inspiration:refreshing:'.$key.':'.$kind.':'.$queryHash;
+
+        if (! Cache::add($marker, true, 300)) {
+            return;
+        }
+
+        RefreshSourceJob::dispatch($user->id, $key, $kind, $query, $page);
+    }
+
+    /**
+     * Direct refetch of one cache entry (used by RefreshSourceJob). Writes the
+     * fresh payload through and never reads the stale path, so a refresh
+     * cannot serve itself.
+     */
+    public function refresh(User $user, string $key, string $kind, string $query, int $page = 1): void
+    {
+        try {
+            $source = $this->resolve($key);
+            $bag = $this->settings->for($user);
+            $this->hydrateCredentials($bag, $source);
+
+            if (! $this->rateLimit($user, $key)) {
+                return;
+            }
+
+            $options = new SourceQuery(
+                maturity: SourceMaturity::forSource($key, $bag->maturity)->maturity,
+                extra: ['page' => $page],
+            );
+
+            $queryHash = InspirationCache::queryHash($kind === 'search' ? $query : '', $options);
+            $ttl = (int) config($kind === 'search' ? 'inspiration.ttl.search' : 'inspiration.ttl.explore', 1800);
+
+            $payload = $kind === 'search'
+                ? $source->search($query, $page, $options)->toArray()
+                : $source->explore($page, $options)->toArray();
+
+            InspirationCacheEntry::updateOrCreate(
+                [
+                    'source' => $key,
+                    'kind' => $kind,
+                    'query_hash' => $queryHash,
+                ],
+                [
+                    'payload' => $payload,
+                    'fetched_at' => now(),
+                    'expires_at' => now()->addSeconds($ttl),
+                ],
+            );
+
+            $this->clearError($key);
+        } catch (SourceException $exception) {
+            $this->recordError($key);
+        } catch (Throwable $exception) {
+            Log::warning('inspiration: refresh for '.$key.' threw '.$exception::class, [
+                'message' => $exception->getMessage(),
+            ]);
+
+            $this->recordError($key);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{items: array<int, array<string, mixed>>, has_more: bool, next_page: ?int, from_cache: bool, age_minutes: ?int, stale: bool}
+     */
+    private function present(array $payload, bool $fromCache, ?int $ageMinutes, bool $stale = false): array
     {
         return [
             'items' => array_values($payload['items'] ?? []),
@@ -288,6 +379,7 @@ class SourceManager
             'next_page' => $payload['next_page'] ?? null,
             'from_cache' => $fromCache,
             'age_minutes' => $ageMinutes,
+            'stale' => $stale,
         ];
     }
 

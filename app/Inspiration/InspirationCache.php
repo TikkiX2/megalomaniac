@@ -11,6 +11,12 @@ use Closure;
 class InspirationCache
 {
     /**
+     * Ceiling (minutes) for serving an expired entry as stale before giving up
+     * and letting the source degrade: 12 hours.
+     */
+    public const STALE_CAP_MINUTES = 720;
+
+    /**
      * Return the cached payload for the key, fetching and writing it through
      * when missing or expired.
      *

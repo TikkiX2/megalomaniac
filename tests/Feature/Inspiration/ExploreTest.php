@@ -6,13 +6,16 @@ use App\Inspiration\Dtos\InspirationItem;
 use App\Inspiration\Dtos\Page;
 use App\Inspiration\Dtos\SourceQuery;
 use App\Inspiration\InspirationSettings;
+use App\Jobs\Inspiration\RefreshSourceJob;
 use App\Models\InspirationCacheEntry;
 use App\Models\Moodboard;
 use App\Models\Project;
 use App\Models\SavedImage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\Support\FakeInspirationSource;
 
@@ -50,6 +53,13 @@ function exploreUser(array $enabledSources): User
 
 beforeEach(function (): void {
     $this->withoutVite();
+
+    // The first render only fans out over `home_sources`; keep the fakes in
+    // that subset so the mashup tests exercise the full flow.
+    config()->set('inspiration.home_sources', array_merge(
+        (array) config('inspiration.home_sources', []),
+        ['fake-ok', 'fake-two', 'fake-down', 'fake-boom', 'fake-capped', 'fake-throttle'],
+    ));
 });
 
 it('renders the explore page as a mashup of the active sources', function () {
@@ -464,4 +474,70 @@ it('enforces the per-source rate limit as a degraded entry', function () {
             ->where('results.0.has_more', false)
             ->where('results.0.from_cache', false)
             ->where('results.0.age_minutes', null));
+});
+
+it('only fans out over the home subset on the first render', function () {
+    FakeInspirationSource::register([
+        new FakeInspirationSource('fake-ok'),
+        new FakeInspirationSource('fake-two'),
+        new FakeInspirationSource('fake-lazy'),
+    ]);
+
+    config()->set('inspiration.home_sources', ['fake-ok']);
+
+    $user = exploreUser(['fake-ok', 'fake-two', 'fake-lazy']);
+
+    $this->actingAs($user)
+        ->get('/inspiration')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('results', function ($results): bool {
+            $sources = $results instanceof Collection
+                ? $results->pluck('source')->all()
+                : array_column((array) $results, 'source');
+
+            return $sources === ['fake-ok'];
+        }));
+});
+
+it('serves an expired cache entry instantly and dispatches one background refresh', function () {
+    FakeInspirationSource::register([new FakeInspirationSource('fake-ok')]);
+
+    config()->set('inspiration.home_sources', ['fake-ok']);
+
+    $user = exploreUser(['fake-ok']);
+
+    InspirationCacheEntry::create([
+        'source' => 'fake-ok',
+        'kind' => 'explore',
+        'query_hash' => md5('|safe|{"page":1}'),
+        'payload' => [
+            'items' => [['source' => 'fake-ok', 'sourceId' => 'stale-1', 'pageUrl' => 'https://example.com/1', 'imageUrl' => 'https://cdn.example.com/1.jpg']],
+            'has_more' => false,
+        ],
+        'fetched_at' => now()->subHours(2),
+        'expires_at' => now()->subHour(),
+    ]);
+
+    Queue::fake();
+
+    $this->actingAs($user)
+        ->get('/inspiration')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('results', function ($results): bool {
+            $group = $results[0] ?? null;
+
+            return $group !== null
+                && $group['source'] === 'fake-ok'
+                && $group['from_cache'] === true
+                && $group['stale'] === true
+                && $group['items'][0]['source_id'] === 'stale-1';
+        }));
+
+    // The stale entry is served without touching the adapter again, and
+    // exactly one background refresh is queued for the key.
+    Http::assertNothingSent();
+    Queue::assertPushed(
+        RefreshSourceJob::class,
+        fn (RefreshSourceJob $job): bool => $job->source === 'fake-ok' && $job->kind === 'explore',
+    );
 });
