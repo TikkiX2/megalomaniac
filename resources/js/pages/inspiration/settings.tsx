@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import AuthModal from '@/components/inspiration/AuthModal';
+import { sourceLabel } from '@/components/inspiration/shared';
 import { Spinner } from '@/components/ui/spinner';
 import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
@@ -22,6 +24,9 @@ export interface InspirationSourceRow {
     configured: boolean;
     enabled: boolean;
     has_tier3_notice: boolean;
+    has_auth?: boolean;
+    auth_type?: string | null;
+    auth_invalid?: boolean;
 }
 
 export interface InspirationSettingsBag {
@@ -34,6 +39,7 @@ export interface InspirationSettingsBag {
 export interface InspirationSettingsPageProps {
     sources: InspirationSourceRow[];
     settings: InspirationSettingsBag;
+    auth_sources: string[];
     flash?: { success?: string | null; error?: string | null };
 }
 
@@ -47,6 +53,10 @@ interface TestResult {
  */
 function draftKey(source: string, field: string): string {
     return `${source}::${field}`;
+}
+
+function authSourceLabel(source: string): string {
+    return sourceLabel(source);
 }
 
 /**
@@ -114,9 +124,12 @@ function Switch({
 }
 
 export default function InspirationSettings() {
-    const { sources, settings, flash } = usePage<
+    const { sources, settings, flash, auth_sources } = usePage<
         SharedData & InspirationSettingsPageProps
     >().props;
+
+    const [authSource, setAuthSource] = useState<string | null>(null);
+    const authSources = auth_sources ?? [];
 
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [revealed, setRevealed] = useState<Record<string, boolean>>({});
@@ -390,6 +403,20 @@ export default function InspirationSettings() {
                                                             sin configurar
                                                         </Badge>
                                                     )}
+                                                    {source.has_auth && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={
+                                                                source.auth_invalid
+                                                                    ? 'border-red-500/40 text-red-300'
+                                                                    : 'border-primary/40 text-primary'
+                                                            }
+                                                        >
+                                                            {source.auth_invalid
+                                                                ? 'sesión vencida'
+                                                                : 'sesión guardada'}
+                                                        </Badge>
+                                                    )}
                                                     {source.key === 'deviantart' &&
                                                         !source.configured && (
                                                             <span className="mt-1 block text-[10px] text-muted-foreground">
@@ -568,6 +595,24 @@ export default function InspirationSettings() {
 
                                             <td className="py-3">
                                                 <div className="flex flex-col items-start gap-1">
+                                                    {authSources.includes(source.key) && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-8"
+                                                            onClick={() => setAuthSource(source.key)}
+                                                        >
+                                                            <span className="material-symbols-outlined text-[16px]">
+                                                                vpn_key
+                                                            </span>
+                                                            {source.has_auth
+                                                                ? source.auth_invalid
+                                                                    ? 'Reconectar'
+                                                                    : 'Cuenta'
+                                                                : 'Conectar'}
+                                                        </Button>
+                                                    )}
                                                     <Button
                                                         type="button"
                                                         variant="outline"
@@ -719,6 +764,15 @@ export default function InspirationSettings() {
                     esta página.
                 </p>
             </div>
+
+            {authSource && (
+                <AuthModal
+                    sourceKey={authSource}
+                    sourceLabel={authSourceLabel(authSource)}
+                    hasAuth={sources.find((source) => source.key === authSource)?.has_auth ?? false}
+                    onClose={() => setAuthSource(null)}
+                />
+            )}
         </MainLayout>
     );
 }
