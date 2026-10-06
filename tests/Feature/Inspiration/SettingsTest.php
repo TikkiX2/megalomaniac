@@ -64,9 +64,9 @@ it('lists the keyless tier 1 and tier 2 sources as enabled by default', function
     expect($defaults)->toBeArray()
         ->and($defaults)->toContain(
             'deviantart', 'wallhaven', 'openverse', 'zerochan',
-            'gelbooru', 'arena', 'aic',
+            'gelbooru', 'arena', 'aic', '500px',
             'designspiration', 'trendlist', 'posterspy',
-            'brutalist', 'archdaily', 'godly', 'darkmode', 'dribbble',
+            'brutalist', 'archdaily', 'itsnicethat', 'godly', 'darkmode', 'dribbble',
             'awwwards', 'cosmos',
         )
         // Bot-walled, retired or account-gated sources stay out of the home

@@ -12,6 +12,7 @@ use App\Inspiration\Sources\Api\BandcampSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
 use App\Inspiration\Sources\Api\DiscogsSource;
 use App\Inspiration\Sources\Api\EuropeanaSource;
+use App\Inspiration\Sources\Api\FiveHundredPxSource;
 use App\Inspiration\Sources\Api\FlickrSource;
 use App\Inspiration\Sources\Api\GelbooruSource;
 use App\Inspiration\Sources\Api\GiphySource;
@@ -36,6 +37,7 @@ use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
 use App\Inspiration\Sources\Scrape\DribbbleSource;
 use App\Inspiration\Sources\Scrape\GodlySource;
+use App\Inspiration\Sources\Scrape\ItsNiceThatSource;
 use App\Inspiration\Sources\Scrape\LapaNinjaSource;
 use App\Inspiration\Sources\Scrape\MobbinSource;
 use App\Inspiration\Sources\Scrape\NewgroundsSource;
@@ -67,6 +69,7 @@ class InspirationServiceProvider extends ServiceProvider
         AreNaSource::class,
         MetMuseumSource::class,
         ArtInstituteChicagoSource::class,
+        FiveHundredPxSource::class,
         FlickrSource::class,
         TumblrSource::class,
         UnsplashSource::class,
@@ -86,6 +89,7 @@ class InspirationServiceProvider extends ServiceProvider
         DarkModeDesignSource::class,
         BrutalistSource::class,
         ArchDailySource::class,
+        ItsNiceThatSource::class,
         BehanceSource::class,
         DribbbleSource::class,
         AwwwardsSource::class,

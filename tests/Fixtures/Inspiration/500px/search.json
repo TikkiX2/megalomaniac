@@ -1,0 +1,28 @@
+{
+  "current_page": 1,
+  "total_pages": 2,
+  "total_items": 30,
+  "photos": [
+    {
+      "id": 78890159,
+      "name": "Puffin portrait",
+      "url": "/photo/78890159/Puffin-portrait-by-Mirek-Srb",
+      "images": [
+        { "size": 1, "width": 70, "height": 70, "url": "https://drscdn.500px.org/photo/78890159/w=70_h=70/v2?sig=thumb1" },
+        { "size": 21, "width": 400, "height": 600, "url": "https://drscdn.500px.org/photo/78890159/h=600/v2?sig=large1" },
+        { "size": 33, "width": 400, "height": 600, "url": "https://drscdn.500px.org/photo/78890159/q=75_m=600/v2?sig=crop1" }
+      ],
+      "user": { "fullname": "Mirek Srb", "username": "mireksrb" }
+    },
+    {
+      "id": 4,
+      "name": "Slow shutter",
+      "url": "/photo/4/slow-shutter-by-test",
+      "images": [
+        { "size": 1, "width": 70, "height": 70, "url": "https://drscdn.500px.org/photo/4/w=70_h=70/v2?sig=thumb2" },
+        { "size": 21, "width": 400, "height": 600, "url": "https://drscdn.500px.org/photo/4/h=600/v2?sig=large2" }
+      ],
+      "user": { "fullname": "Test Author", "username": "testauthor" }
+    }
+  ]
+}

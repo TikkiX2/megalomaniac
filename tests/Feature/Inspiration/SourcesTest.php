@@ -14,6 +14,7 @@ use App\Inspiration\Sources\Api\BandcampSource;
 use App\Inspiration\Sources\Api\DeviantArtSource;
 use App\Inspiration\Sources\Api\DiscogsSource;
 use App\Inspiration\Sources\Api\EuropeanaSource;
+use App\Inspiration\Sources\Api\FiveHundredPxSource;
 use App\Inspiration\Sources\Api\FlickrSource;
 use App\Inspiration\Sources\Api\GelbooruSource;
 use App\Inspiration\Sources\Api\GiphySource;
@@ -38,6 +39,7 @@ use App\Inspiration\Sources\Scrape\DarkModeDesignSource;
 use App\Inspiration\Sources\Scrape\DesignspirationSource;
 use App\Inspiration\Sources\Scrape\DribbbleSource;
 use App\Inspiration\Sources\Scrape\GodlySource;
+use App\Inspiration\Sources\Scrape\ItsNiceThatSource;
 use App\Inspiration\Sources\Scrape\LapaNinjaSource;
 use App\Inspiration\Sources\Scrape\MobbinSource;
 use App\Inspiration\Sources\Scrape\NewgroundsSource;
@@ -72,6 +74,7 @@ dataset('tier1ApiSources', [
     'arena' => ['arena', AreNaSource::class],
     'met' => ['met', MetMuseumSource::class],
     'aic' => ['aic', ArtInstituteChicagoSource::class],
+    '500px' => ['500px', FiveHundredPxSource::class],
 ]);
 
 dataset('tier1ApiHttpErrors', function (): array {
@@ -150,6 +153,7 @@ dataset('scrapeSources', [
     'darkmode' => ['darkmode', DarkModeDesignSource::class],
     'brutalist' => ['brutalist', BrutalistSource::class],
     'archdaily' => ['archdaily', ArchDailySource::class],
+    'itsnicethat' => ['itsnicethat', ItsNiceThatSource::class],
     'behance' => ['behance', BehanceSource::class],
     'dribbble' => ['dribbble', DribbbleSource::class],
     'awwwards' => ['awwwards', AwwwardsSource::class],
@@ -163,6 +167,7 @@ dataset('scrapeSourcesWithoutSearch', [
     'darkmode' => ['darkmode', DarkModeDesignSource::class],
     'brutalist' => ['brutalist', BrutalistSource::class],
     'archdaily' => ['archdaily', ArchDailySource::class],
+    'itsnicethat' => ['itsnicethat', ItsNiceThatSource::class],
 ]);
 
 /**
@@ -295,6 +300,9 @@ function fakeTier1Http(string $key, string $fixture, int $status = 200): void
         'aic' => [
             '*api.artic.edu/api/v1/artworks/search*' => Http::response($body, $status),
         ],
+        '500px' => [
+            '*api.500px.com/v1/photos/search*' => Http::response($body, $status),
+        ],
         'flickr' => [
             '*api.flickr.com/services/rest*' => Http::response($body, $status),
         ],
@@ -350,6 +358,7 @@ function scrapeHttpPatterns(string $key): array
         'darkmode' => ['*darkmodedesign.com*'],
         'brutalist' => ['*brutalistwebsites.com*', '*brutalweb.xyz*'],
         'archdaily' => ['*archdaily.com*'],
+        'itsnicethat' => ['*itsnicethat.com*'],
         'behance' => ['*behance.net*'],
         'dribbble' => ['*dribbble.com*'],
         'awwwards' => ['*awwwards.com*'],
@@ -1177,6 +1186,7 @@ it('requests the expected search url for :key', function (string $key, string $c
         'darkmode' => 'https://www.darkmodedesign.com/',
         'brutalist' => 'https://brutalistwebsites.com/',
         'archdaily' => 'https://www.archdaily.com/',
+        'itsnicethat' => 'https://www.itsnicethat.com/articles',
     };
 
     Http::assertSent(fn (Request $request): bool => $request->url() === $expected);
@@ -1208,6 +1218,7 @@ it('requests the expected explore url for :key', function (string $key, string $
         'darkmode' => 'https://www.darkmodedesign.com/',
         'brutalist' => 'https://brutalistwebsites.com/',
         'archdaily' => 'https://www.archdaily.com/',
+        'itsnicethat' => 'https://www.itsnicethat.com/articles',
         'behance' => 'https://www.behance.net/galleries',
         'dribbble' => 'https://dribbble.com/shots/popular',
         'awwwards' => 'https://www.awwwards.com/websites/',
@@ -1342,6 +1353,7 @@ it('registers every scrape adapter in the source manager', function (): void {
         'darkmode',
         'brutalist',
         'archdaily',
+        'itsnicethat',
         'behance',
         'dribbble',
         'awwwards',
