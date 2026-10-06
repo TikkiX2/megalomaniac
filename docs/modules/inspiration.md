@@ -1,12 +1,25 @@
 # Módulo Inspiración
 
-Explorador y tablero de referencias visuales multi-fuente: busca imágenes en ~35 plataformas externas (APIs oficiales, JSON públicos y scrapers HTML), guárdalas en moodboards vinculados a proyectos personales (Inbox + uno por proyecto) y descarga la imagen completa bajo demanda.
+Explorador y tablero de referencias visuales multi-fuente: busca imágenes en ~40 plataformas externas (APIs oficiales, JSON públicos y scrapers HTML), guárdalas en moodboards vinculados a proyectos personales (Inbox + uno por proyecto) y descarga la imagen completa bajo demanda.
 
 ## Qué es
 
 - **Explorar** (`/inspiration`): mashup de una página por fuente activa, con chips de salud por fuente, búsqueda fan-out, muro masonry real y lightbox full-screen.
 - **Moodboards** (`/inspiration/moodboards/{board}`): muro persistido por proyecto, orden `created_at` desc, quitar, descargar full y abrir original.
-- **Ajustes** (`/inspiration/settings`): toggles por fuente, credenciales por fuente, prueba de conexión, toggle global de madurez y aviso/aceptación Tier 3.
+- **Ajustes** (`/inspiration/settings`): toggles por fuente, credenciales por fuente, prueba de conexión, **conexión de cuentas por sesión** (cookie o login simulado), toggle global de madurez y aviso/aceptación Tier 3.
+
+## Rendimiento (2026-10)
+
+El primer render del muro solo hace fan-out sobre `home_sources` (8 fuentes rápidas: aic, arena, openverse, wallhaven, zerochan, archdaily, cosmos, awwwards); el resto carga lazy al clique del chip. La caché es **stale-while-revalidate**: cualquier payload guardado (fresco o vencido, tope 12 h) se sirve al instante y un `RefreshSourceJob` en cola lo refresca en segundo plano. Las fuentes bot-walled o retiradas quedan fuera de `default_enabled_sources` (siguen visibles en chips como off/configurables).
+
+## Conectar cuentas (sesiones por fuente)
+
+Algunas fuentes bloquean el acceso desde servidores (bot-walls) o exigen sesión. En Ajustes, esas fuentes muestran un botón **Conectar cuenta** con dos vías:
+
+1. **Pegar cookie (principal)** — el usuario copia la cookie de sesión de su navegador y se guarda cifrada; el adapter la envía como header `Cookie:`.
+2. **Login simulado (alternativa)** — email+contraseña, con aviso explícito de riesgo de ban (checkbox de aceptación obligatorio). El flujo existe para Behance; las demás fuentes caen en "pegá la cookie".
+
+Almacenamiento: tabla `inspiration_auth` con payload cifrado (`Crypt`) — nunca se expone en props, logs o respuestas; solo flags (`has_auth`, `auth_type`, `auth_invalid`). Una sesión vencida (401/403) marca `auth_invalid` y el chip ofrece "reconectar"; el tipo `login` intenta re-login automático con tope de 3/hora. Fuentes con soporte (`auth_sources`): behance, newgrounds, pinterest, cara, mobbin, artstation.
 
 ## Arquitectura de un vistazo — `app/Inspiration/`
 
@@ -82,12 +95,15 @@ Cada fila de la tabla de Ajustes tiene un botón **Probar** que hace una conexi�
 
 ## Scrapers — notas de estado (2026-10)
 
-Tier 2 (activados por defecto, sin key): Designspiration, Savee, Trend List, PosterSpy, Lapa Ninja, Godly, Dark Mode Design, Brutalist (+ Brutal Web), ArchDaily, Behance, Dribbble, Awwwards, Cosmos.
+Tier 2 (activados por defecto, sin key): Designspiration, Savee, Trend List, PosterSpy, Lapa Ninja, Godly, Dark Mode Design, Brutalist (+ Brutal Web), ArchDaily, It's Nice That, Behance, Dribbble, Awwwards, Cosmos, 500px (API abierta).
 
 - **ArchDaily**: HTML server-rendered (`.afd-post-stream` + `a.afd-title--black-link`); la búsqueda carga client-side, así que `search()` delega al feed con warning.
+- **It's Nice That**: server-rendered (`.listing-item`); búsqueda client-side → delega.
+- **500px**: la API v1 (`/v1/photos/search`) responde anónima (~5.5M fotos); `feature=popular` devuelve vacío sin credenciales → explore delega al término curado.
 - **Cosmos**: `/discover` server-renderiza el cache SSR de Apollo (`window[Symbol.for("ApolloSSRDataTransport")]`); se parsean elementos (`shareUrl` `…/e/{id}` + `source.url`). GraphQL tiene introspección deshabilitada → sin búsqueda nativa.
 - **Savee (dormida)**: `savee.it` redirige a `savee.com` y la app es SPA; la API pública (`api.savee.it/v1/…`) responde `401 Missing Bearer token`. Queda como best-effort: degrada a caché hasta que exista una superficie anónima.
-- **Behance / Dribbble / Newgrounds**: bot-walls (403 / AWS WAF) → degradan a caché; los selectores quedan lockeados por fixtures para cuando abran.
+- **Behance / Newgrounds / Pinterest / Cara / Mobbin / ArtStation**: bot-walls o sesión → degradan a caché; se pueden reactivar **conectando una cuenta** (cookie) desde Ajustes.
+- **Met / Bandcamp / Lapa Ninja (dormidas)**: el search del Met responde 410 Gone, Bandcamp 404 (`UnknownEndpointError`) y Lapa Ninja 403 Cloudflare — fuera de defaults hasta que reabran una superficie utilizable.
 
 ## Mapeo de madurez por fuente
 
