@@ -13,6 +13,7 @@ use App\Ai\Tools\ManageAgentsTool;
 use App\Ai\Tools\PromoteMemoryTool;
 use App\Ai\Tools\RememberMemoryTool;
 use App\Ai\Tools\ToolCatalog;
+use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\User;
 use Laravel\Ai\Attributes\RepairToolCalls;
@@ -24,6 +25,7 @@ use Laravel\Ai\Contracts\HasMiddleware;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Files\Image;
+use Laravel\Ai\Messages\AssistantMessage;
 use Laravel\Ai\Messages\UserMessage;
 use Laravel\Ai\Promptable;
 
@@ -150,8 +152,72 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
      */
     public function messages(): array
     {
-        $messages = array_values((array) $this->conversationMessages());
+        return $this->hydrateReasoning(
+            $this->trimHistoricalImages(array_values((array) $this->conversationMessages()))
+        );
+    }
 
+    /**
+     * DeepSeek's thinking mode requires the raw `reasoning_content` of the
+     * assistant turns with tool calls to be passed back on the next request.
+     * The SDK only persists the paused turn's provider blocks; the display
+     * reasoning accumulated by the app (meta.reasoning.text) is re-attached
+     * here for every matching message.
+     *
+     * @param  array<int, object>  $messages
+     * @return array<int, object>
+     */
+    protected function hydrateReasoning(array $messages): array
+    {
+        if ($this->conversationId === null) {
+            return $messages;
+        }
+
+        $reasoningByContent = ChatMessage::query()
+            ->where('conversation_id', $this->conversationId)
+            ->where('role', 'assistant')
+            ->orderBy('id')
+            ->get(['content', 'meta'])
+            ->mapWithKeys(function (ChatMessage $message): array {
+                $text = $message->meta['reasoning']['text'] ?? null;
+
+                return [$message->content => is_string($text) && $text !== '' ? $text : null];
+            })
+            ->filter()
+            ->all();
+
+        if ($reasoningByContent === []) {
+            return $messages;
+        }
+
+        foreach ($messages as $message) {
+            if (! $message instanceof AssistantMessage || $message->toolCalls->isEmpty()) {
+                continue;
+            }
+
+            if (filled($message->providerContentBlocks['reasoning_content'] ?? null)) {
+                continue;
+            }
+
+            $text = $reasoningByContent[$message->content] ?? null;
+
+            if (is_string($text) && $text !== '') {
+                $message->providerContentBlocks['reasoning_content'] = $text;
+            }
+        }
+
+        return $messages;
+    }
+
+    /**
+     * Only the newest user message keeps its photos; older turns get a text
+     * placeholder so the payload does not regrow without bound.
+     *
+     * @param  array<int, object>  $messages
+     * @return array<int, object>
+     */
+    protected function trimHistoricalImages(array $messages): array
+    {
         $lastUserIndex = null;
 
         foreach ($messages as $index => $message) {

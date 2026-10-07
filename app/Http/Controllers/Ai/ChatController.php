@@ -30,6 +30,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -49,10 +50,24 @@ class ChatController extends Controller
 {
     use ProvidesAiState;
 
+    private static ?string $lastProviderRequest = null;
+
     public function __construct(
         protected ChatService $service,
         protected SkillCatalog $skillCatalog,
-    ) {}
+    ) {
+        static $hooked = false;
+
+        if (! $hooked) {
+            $hooked = true;
+
+            Http::globalRequestMiddleware(function ($request): mixed {
+                self::$lastProviderRequest = (string) $request->getBody();
+
+                return $request;
+            });
+        }
+    }
 
     public function index(Request $request): Response
     {
@@ -666,6 +681,7 @@ class ChatController extends Controller
                     'thread' => $threadId,
                     'status' => $candidate->response?->status(),
                     'response' => substr((string) $candidate->response?->body(), 0, 6000),
+                    'request' => substr((string) (self::$lastProviderRequest ?? ''), 0, 12000),
                 ]);
 
                 continue;
@@ -682,6 +698,7 @@ class ChatController extends Controller
                     'thread' => $threadId,
                     'status' => $previous->response?->status(),
                     'response' => substr((string) $previous->response?->body(), 0, 6000),
+                    'request' => substr((string) (self::$lastProviderRequest ?? ''), 0, 12000),
                 ]);
             }
         }

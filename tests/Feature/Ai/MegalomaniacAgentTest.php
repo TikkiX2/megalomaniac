@@ -30,6 +30,8 @@ use App\Ai\Tools\TaskActionTool;
 use App\Ai\Tools\TaskQueryTool;
 use App\Ai\Tools\WebFetchTool;
 use App\Ai\Tools\WebSearchTool;
+use App\Models\ChatMessage;
+use App\Models\ChatThread;
 use App\Models\Currency;
 use App\Models\Exercise;
 use App\Models\GroceryItem;
@@ -42,6 +44,7 @@ use App\Services\Gym\RoutineService;
 use App\Services\Gym\WorkoutSessionService;
 use App\Services\Nutrition\NutritionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Ai\Messages\AssistantMessage;
 use Laravel\Ai\Tools\Request;
 
 uses(RefreshDatabase::class);
@@ -265,4 +268,34 @@ test('action tool returns error for unknown action', function () {
 
     expect($data)->toHaveKey('error');
     expect($data['error'])->toContain('Invalid action');
+});
+
+test('re-attaches the stored reasoning to assistant tool messages for deepseek echo', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    ChatMessage::factory()->create([
+        'conversation_id' => $thread->id,
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+        'role' => 'assistant',
+        'content' => '',
+        'tool_calls' => [
+            ['id' => 'call_1', 'name' => 'TaskQueryTool', 'arguments' => [], 'result_id' => null],
+        ],
+        'meta' => ['reasoning' => ['text' => 'PENSAMIENTO_DE_DIAGNOSTICO']],
+        'approval_state' => ['pending' => ['call_1' => ['status' => 'pending']]],
+    ]);
+
+    $agent = (new MegalomaniacAgent($user))->continue($thread->id, as: $user);
+
+    $assistant = collect($agent->messages())
+        ->first(fn ($message) => $message instanceof AssistantMessage);
+
+    expect($assistant)->not->toBeNull()
+        ->and($assistant->providerContentBlocks['reasoning_content'] ?? null)
+        ->toBe('PENSAMIENTO_DE_DIAGNOSTICO');
 });
