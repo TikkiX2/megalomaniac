@@ -10,6 +10,7 @@ import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
 import { aiModuleLabel } from '@/lib/ai-modules';
+import { clearChatDraft, loadChatDraft, saveChatDraft } from '@/lib/chat-draft';
 import type { AiChatState, ChatThread, ToolPolicy } from '@/types/chat';
 
 export interface ChatIndexProps {
@@ -39,12 +40,13 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
     const [skillKeys, setSkillKeys] = useState<string[]>([]);
     const [forceWeb, setForceWeb] = useState(false);
     const [pendingMessage, setPendingMessage] = useState<string | null>(null);
-    const [composerSeed, setComposerSeed] = useState('');
+    const [composerSeed, setComposerSeed] = useState(() => loadChatDraft('home'));
     const [draftToken, setDraftToken] = useState(0);
 
     const createdThreadRef = useRef<string | null>(null);
     const pendingMessageRef = useRef<string | null>(null);
     const lastErrorRef = useRef<string | null>(null);
+    const seededMessageRef = useRef<string | null>(null);
 
     const upload = useAttachmentUpload(null);
 
@@ -53,18 +55,23 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
             createdThreadRef.current = threadId;
         },
         onError: (message, recoverable) => {
-            if (recoverable || lastErrorRef.current === message) return;
-
             lastErrorRef.current = message;
 
-            if (pendingMessageRef.current === null) return;
+            // Always restore the pending text on the first error of a turn,
+            // even when the error message repeats: a failed turn must never
+            // eat the user's message. Later errors keep the user's edits.
+            const retried = pendingMessageRef.current;
 
-            setComposerSeed(pendingMessageRef.current);
+            if (retried === null || recoverable || seededMessageRef.current === retried) return;
+
+            seededMessageRef.current = retried;
+            setComposerSeed(retried);
             setDraftToken((token) => token + 1);
         },
         onComplete: () => {
             const threadId = createdThreadRef.current;
 
+            clearChatDraft('home');
             upload.clearImages();
 
             if (threadId) {
@@ -75,6 +82,8 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
             // The paused turn is persisted by the time the stream settles, so
             // the thread page can render its pending_approvals cards.
             const threadId = createdThreadRef.current;
+
+            clearChatDraft('home');
 
             if (threadId) {
                 router.visit(ChatController.show.url(threadId), { replace: true });
@@ -99,6 +108,8 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
 
         pendingMessageRef.current = message;
         lastErrorRef.current = null;
+        seededMessageRef.current = null;
+        saveChatDraft('home', message);
         setPendingMessage(message);
         setComposerSeed('');
         stream.start(ChatController.send.url(), {

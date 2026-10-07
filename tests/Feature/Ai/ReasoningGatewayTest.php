@@ -42,3 +42,33 @@ test('gateway emits reasoning deltas before text deltas', function () {
     expect($reasoning)->toBe('Pienso mucho');
     expect($text)->toBe('Hola');
 });
+
+test('gateway keeps the raw reasoning content for the next request', function () {
+    $sse = implode("\n\n", [
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['reasoning_content' => 'Pienso'], 'finish_reason' => null]]]),
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['reasoning_content' => ' mucho'], 'finish_reason' => null]]]),
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['tool_calls' => [[
+            'index' => 0, 'id' => 'call_1', 'type' => 'function',
+            'function' => ['name' => 'TaskQueryTool', 'arguments' => '{}'],
+        ]]], 'finish_reason' => null]]]),
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => [], 'finish_reason' => 'tool_calls']]]),
+        'data: [DONE]',
+    ])."\n\n";
+
+    $gateway = new class(app(Dispatcher::class)) extends ReasoningOpenAiCompatibleGateway
+    {
+        public function exposeStream($body): Generator
+        {
+            return $this->streamBody($body, 'inv-1', 'msg-1');
+        }
+    };
+
+    $generator = $gateway->exposeStream(Utils::streamFor($sse));
+
+    iterator_to_array($generator);
+
+    $step = $generator->getReturn();
+
+    expect($step->providerContentBlocks['reasoning_content'] ?? null)->toBe('Pienso mucho')
+        ->and($step->toArray()['provider_content_blocks'])->toBe(['reasoning_content' => 'Pienso mucho']);
+});

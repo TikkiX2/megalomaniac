@@ -25,6 +25,19 @@ function pausedToolSse(string $tool): string
     ])."\n\n";
 }
 
+function pausedToolSseWithReasoning(string $tool, string $reasoning): string
+{
+    return implode("\n\n", [
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['reasoning_content' => $reasoning], 'finish_reason' => null]]]),
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => ['tool_calls' => [[
+            'index' => 0, 'id' => 'call_1', 'type' => 'function',
+            'function' => ['name' => $tool, 'arguments' => '{"action":"create_workout","started_at":"2026-09-25T10:00:00Z"}'],
+        ]]], 'finish_reason' => null]]]),
+        'data: '.json_encode(['model' => 'qa', 'choices' => [['delta' => [], 'finish_reason' => 'tool_calls']]]),
+        'data: [DONE]',
+    ])."\n\n";
+}
+
 test('write tools pause the turn with a tool approval request', function () {
     Http::fake(['*' => Http::response(pausedToolSse('GymActionTool'), 200, ['Content-Type' => 'text/event-stream'])]);
 
@@ -78,6 +91,28 @@ test('approving resumes the run and executes the tool', function () {
     expect($paused->approval_state['pending'])->toBe([]);
 
     expect(Workout::where('user_id', $user->id)->count())->toBe(1);
+});
+
+test('the resumed turn echoes the paused reasoning_content back to the provider', function () {
+    Http::fakeSequence()
+        ->push(pausedToolSseWithReasoning('GymActionTool', 'RAZONAMIENTO_SECRETO_XYZ'), 200, ['Content-Type' => 'text/event-stream'])
+        ->push("data: {\"choices\":[{\"delta\":{\"content\":\"Listo\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n", 200, ['Content-Type' => 'text/event-stream']);
+
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create(['participant_type' => $user->getMorphClass(), 'participant_id' => $user->id]);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), ['message' => 'loguea mi workout', 'thread_id' => $thread->id])->streamedContent();
+
+    $this->actingAs($user)
+        ->post(route('ai.chat.approve', $thread), ['decisions' => ['call_1' => ['action' => 'approve']]])
+        ->streamedContent();
+
+    Http::assertSent(function ($request): bool {
+        $body = (string) $request->body();
+
+        return str_contains($body, 'RAZONAMIENTO_SECRETO_XYZ')
+            && str_contains($body, 'reasoning_content');
+    });
 });
 
 test('rejecting records the denial without a follow-up completion', function () {

@@ -5,8 +5,11 @@ namespace App\Ai\Gateway;
 use Generator;
 use Laravel\Ai\Gateway\OpenAiCompatible\OpenAiCompatibleGateway;
 use Laravel\Ai\Gateway\StepResponse;
+use Laravel\Ai\Messages\AssistantMessage;
+use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Providers\Provider;
 use Laravel\Ai\Responses\Data\Meta;
+use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Ai\Responses\Data\Usage;
 use Laravel\Ai\Streaming\Events\Error;
 use Laravel\Ai\Streaming\Events\ReasoningDelta;
@@ -63,6 +66,7 @@ class ReasoningOpenAiCompatibleGateway extends OpenAiCompatibleGateway
         $currentText = '';
         $toolCalls = [];
         $pendingToolCalls = [];
+        $reasoningContent = '';
         $usage = null;
         $finishReason = null;
         $responseModel = $model ?? '';
@@ -105,6 +109,8 @@ class ReasoningOpenAiCompatibleGateway extends OpenAiCompatibleGateway
             }
 
             if (isset($delta['reasoning_content']) && $delta['reasoning_content'] !== '') {
+                $reasoningContent .= $delta['reasoning_content'];
+
                 if (! $reasoningStartEmitted) {
                     $reasoningStartEmitted = true;
                     $reasoningId = $this->generateEventId();
@@ -210,12 +216,52 @@ class ReasoningOpenAiCompatibleGateway extends OpenAiCompatibleGateway
             }
         }
 
+        // DeepSeek's thinking mode requires the raw `reasoning_content` to be
+        // passed back on the next request (e.g. an approval resume). Carried
+        // through StepResponse, it lands in the paused turn's stored
+        // provider_content_blocks and is echoed by mapAssistantMessage below.
+        $providerContentBlocks = [];
+
+        if (filled($reasoningContent)) {
+            $providerContentBlocks['reasoning_content'] = $reasoningContent;
+        }
+
         return new StepResponse(
             text: $currentText,
             toolCalls: $toolCalls,
             finishReason: $this->extractFinishReason(['finish_reason' => $finishReason ?? '']),
             usage: $usage ?? new Usage(0, 0),
             meta: new Meta($provider?->name() ?? '', $responseModel),
+            providerContentBlocks: $providerContentBlocks,
         );
+    }
+
+    /**
+     * Echo the paused turn's raw reasoning back to DeepSeek when the message
+     * is replayed (same behaviour as the SDK's native DeepSeek gateway).
+     */
+    protected function mapAssistantMessage(AssistantMessage|Message $message, array &$chatMessages): void
+    {
+        $msg = ['role' => 'assistant'];
+
+        if (filled($message->content)) {
+            $msg['content'] = $message->content;
+        }
+
+        if (! $message instanceof AssistantMessage) {
+            $chatMessages[] = $msg;
+
+            return;
+        }
+
+        if ($message->toolCalls->isNotEmpty()) {
+            $msg['tool_calls'] = $message->toolCalls->map(
+                fn (ToolCall $toolCall) => $this->serializeToolCallToChat($toolCall)
+            )->all();
+
+            $msg['reasoning_content'] = $message->providerContentBlocks['reasoning_content'] ?? '';
+        }
+
+        $chatMessages[] = $msg;
     }
 }

@@ -38,6 +38,7 @@ import {
 } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
 import ChatLayout from '@/layouts/chat-layout';
+import { clearChatDraft, loadChatDraft, saveChatDraft } from '@/lib/chat-draft';
 import { aiModuleLabel, aiModuleUrl } from '@/lib/ai-modules';
 import { csrfHeaders } from '@/lib/csrf';
 import { index as memoryIndex } from '@/routes/ai/memory';
@@ -88,26 +89,33 @@ export default function ChatThread({
     const [title, setTitle] = useState(thread.title);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingMessage, setPendingMessage] = useState<string | null>(null);
-    const [composerSeed, setComposerSeed] = useState('');
+    const [composerSeed, setComposerSeed] = useState(() => loadChatDraft(thread.id));
     const [draftToken, setDraftToken] = useState(0);
 
     const pendingMessageRef = useRef<string | null>(null);
     const lastErrorRef = useRef<string | null>(null);
+    const seededMessageRef = useRef<string | null>(null);
 
     const upload = useAttachmentUpload(thread.id, sources);
 
     const stream = useChatStream({
         onError: (message, recoverable) => {
-            if (recoverable || lastErrorRef.current === message) return;
-
             lastErrorRef.current = message;
 
-            if (pendingMessageRef.current === null) return;
+            // Always restore the pending text on the first error of a turn,
+            // even when the error message repeats: a failed turn must never
+            // eat the user's message. Later errors keep the user's edits.
+            const retried = pendingMessageRef.current;
 
-            setComposerSeed(pendingMessageRef.current);
+            if (retried === null || recoverable || seededMessageRef.current === retried) return;
+
+            seededMessageRef.current = retried;
+            setComposerSeed(retried);
             setDraftToken((token) => token + 1);
         },
         onComplete: () => {
+            clearChatDraft(thread.id);
+
             router.reload({
                 only: ['threads', 'messages'],
                 onSuccess: () => {
@@ -125,6 +133,8 @@ export default function ChatThread({
 
         pendingMessageRef.current = message;
         lastErrorRef.current = null;
+        seededMessageRef.current = null;
+        saveChatDraft(thread.id, message);
         setPendingMessage(message);
         setComposerSeed('');
         stream.start(ChatController.send.url(), {

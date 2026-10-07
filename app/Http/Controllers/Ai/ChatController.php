@@ -30,6 +30,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Ai\Approvals\Decision;
@@ -484,6 +485,8 @@ class ChatController extends Controller
 
                     report($failover?->lastError() ?? $exception);
 
+                    $this->logProviderFailure($failover?->lastError() ?? $exception, $thread->id);
+
                     echo 'data: '.json_encode([
                         'type' => 'error',
                         'message' => $this->errorMessageFor($failover?->lastError()?->lastException() ?? $exception)
@@ -644,6 +647,44 @@ class ChatController extends Controller
         }
 
         return sprintf(' (Fallaron %d proveedores.)', count($lastError->errors()));
+    }
+
+    /**
+     * Capture the rejected provider response for failed turns. The generic
+     * RequestException only carries the status; the body explains the
+     * rejection (model capability, payload shape, etc.).
+     */
+    protected function logProviderFailure(Throwable $exception, string $threadId): void
+    {
+        $exceptions = $exception instanceof AiAllProvidersFailedException
+            ? array_values($exception->errors())
+            : [$exception];
+
+        foreach ($exceptions as $candidate) {
+            if ($candidate instanceof RequestException) {
+                Log::warning('ai.provider_request_failed', [
+                    'thread' => $threadId,
+                    'status' => $candidate->response?->status(),
+                    'response' => substr((string) $candidate->response?->body(), 0, 6000),
+                ]);
+
+                continue;
+            }
+
+            $previous = $candidate instanceof Throwable ? $candidate->getPrevious() : null;
+
+            while ($previous !== null && ! $previous instanceof RequestException) {
+                $previous = $previous->getPrevious();
+            }
+
+            if ($previous instanceof RequestException) {
+                Log::warning('ai.provider_request_failed', [
+                    'thread' => $threadId,
+                    'status' => $previous->response?->status(),
+                    'response' => substr((string) $previous->response?->body(), 0, 6000),
+                ]);
+            }
+        }
     }
 
     protected function errorMessageFor(Throwable $exception): string
