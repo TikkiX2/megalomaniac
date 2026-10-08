@@ -46,7 +46,7 @@ export default function TaskTimeline({ tasks, onTaskClick }: Props) {
                 <span>{new Date(max).toLocaleDateString()}</span>
             </div>
 
-            <div className="relative flex flex-col gap-2 min-w-[600px]">
+            <div className="relative flex flex-col gap-2 min-w-0 md:min-w-[600px]">
                 {/* Today line */}
                 {todayPos >= 0 && todayPos <= 100 && (
                     <div className="absolute top-0 bottom-0 w-0.5 bg-destructive/50 z-10" style={{ left: `${todayPos}%` }} />

@@ -174,9 +174,9 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                     <div className="flex flex-col gap-1">
                         <h1 className="text-white text-2xl md:text-4xl font-black tracking-tight leading-none">Grocery Tracker</h1>
                         <div className="flex items-center gap-2 text-[#e8b4b4] mt-2">
-                            <button className="hover:text-white transition-colors p-1"><span className="material-symbols-outlined text-sm">arrow_back_ios</span></button>
+                            <button className="hover:text-white transition-colors p-1 min-h-[44px] min-w-[44px] inline-flex items-center justify-center" aria-label="Mes anterior"><span className="material-symbols-outlined text-sm">arrow_back_ios</span></button>
                             <span className="text-sm font-black uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
-                            <button className="hover:text-white transition-colors p-1"><span className="material-symbols-outlined text-sm">arrow_forward_ios</span></button>
+                            <button className="hover:text-white transition-colors p-1 min-h-[44px] min-w-[44px] inline-flex items-center justify-center" aria-label="Mes siguiente"><span className="material-symbols-outlined text-sm">arrow_forward_ios</span></button>
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-3">
@@ -202,7 +202,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                         <div className="flex w-full sm:w-auto overflow-x-auto no-scrollbar bg-[#2b1a1a] rounded-xl p-1 border border-[#3e2121]">
                             <button
                                 onClick={() => setActiveTab('inventory')}
-                                className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary text-white shadow-lg' : 'text-[#e8b4b4] hover:text-white'}`}
+                                className={`px-6 py-2 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary text-white shadow-lg' : 'text-[#e8b4b4] hover:text-white'}`}
                             >
                                 Inventory
                             </button>
@@ -211,7 +211,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                     setActiveTab('history');
                                     router.visit('/grocery/history', { only: ['history'], preserveState: true });
                                 }}
-                                className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary text-white shadow-lg' : 'text-[#e8b4b4] hover:text-white'}`}
+                                className={`px-6 py-2 min-h-[44px] rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-primary text-white shadow-lg' : 'text-[#e8b4b4] hover:text-white'}`}
                             >
                                 History
                             </button>
@@ -232,7 +232,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                         </button>
 
                         <Dialog open={isRestockModalOpen} onOpenChange={setIsRestockModalOpen}>
-                            <DialogContent className="bg-[#1c0f0f] border-[#3e2121] text-white sm:max-w-[800px] p-8 rounded-2xl max-h-[90vh] overflow-y-auto">
+                            <DialogContent className="bg-[#1c0f0f] border-[#3e2121] text-white sm:max-w-[800px] p-8 rounded-2xl max-h-[92dvh] overflow-y-auto">
                                 <DialogHeader className="mb-6">
                                     <DialogTitle className="text-3xl font-black text-white uppercase tracking-tight">
                                         Restock Items
@@ -268,7 +268,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                                                     step="0.01"
                                                                     value={data.quantity}
                                                                     onChange={(e) => updateRestockItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                                                    className="bg-[#2b1a1a] border-[#3e2121] h-10 w-full text-center font-bold"
+                                                                    className="bg-[#2b1a1a] border-[#3e2121] h-11 w-full text-center font-bold text-base"
                                                                 />
                                                             </td>
                                                             <td className="p-4">
@@ -277,7 +277,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                                                     step="0.01"
                                                                     value={data.price}
                                                                     onChange={(e) => updateRestockItem(index, 'price', parseFloat(e.target.value) || 0)}
-                                                                    className="bg-[#2b1a1a] border-[#3e2121] h-10 w-full text-center font-bold"
+                                                                    className="bg-[#2b1a1a] border-[#3e2121] h-11 w-full text-center font-bold text-base"
                                                                 />
                                                             </td>
                                                         </tr>
@@ -539,7 +539,60 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                             </div>
 
                             <div className="rounded-2xl border border-[#3e2121] bg-[#2b1a1a] overflow-hidden shadow-2xl">
-                                <div className="overflow-x-auto">
+                                {/* Mobile cards (<md): misma filteredItems, sin tabla */}
+                                <div className="block divide-y divide-[#3e2121] md:hidden">
+                                    {filteredItems.length > 0 ? filteredItems.map((item) => (
+                                        <div key={item.id} className="p-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-11 rounded-xl bg-[#3e2121] flex items-center justify-center shrink-0 border border-[#3e2121] shadow-lg">
+                                                    <span className="material-symbols-outlined text-white text-xl">{getCategoryIcon(item.category)}</span>
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-white font-bold text-base truncate">{item.name}</p>
+                                                    <span className="mt-1 inline-flex items-center rounded-lg bg-[#3e2121] px-2.5 py-1 text-[10px] font-black text-primary uppercase tracking-widest ring-1 ring-inset ring-[#3e2121]">
+                                                        {item.category || 'Other'}
+                                                    </span>
+                                                </div>
+                                                <div className="shrink-0 text-right">
+                                                    <p className={`text-lg font-black tabular-nums ${item.current_stock < item.target_stock ? 'text-rose-500' : 'text-primary'}`}>
+                                                        {item.current_stock}<span className="text-[#e8b4b4]/50 text-xs font-bold"> / {item.target_stock}</span>
+                                                    </p>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">{item.unit} · ${((parseFloat(item.price?.toString() || '0') || 0) * item.current_stock).toFixed(2)}</p>
+                                                </div>
+                                            </div>
+                                            {item.current_stock < item.target_stock && (
+                                                <p className="text-rose-500 text-[10px] font-black uppercase tracking-widest mt-2">Low Stock</p>
+                                            )}
+                                            <div className="mt-3 grid grid-cols-3 gap-2">
+                                                <button
+                                                    onClick={() => handleConsume(item)}
+                                                    title="Consume 1 Unit"
+                                                    className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg bg-[#2b1a1a] border border-[#3e2121] text-white text-[11px] font-black uppercase tracking-widest hover:bg-rose-500/20 hover:border-rose-500 hover:text-rose-500 transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">water_drop</span>
+                                                    Use 1
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEdit(item)}
+                                                    className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg border border-[#3e2121] text-[#e8b4b4] text-[11px] font-black uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(item)}
+                                                    className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg border border-[#3e2121] text-[#e8b4b4] text-[11px] font-black uppercase tracking-widest hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">delete</span>
+                                                    Del
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <p className="p-5 text-center text-white/50">No items found</p>
+                                    )}
+                                </div>
+                                <div className="hidden overflow-x-auto md:block">
                                     <table className="w-full text-left border-collapse">
                                         <thead>
                                             <tr className="bg-[#1c0f0f]/50 border-b border-[#3e2121]">
@@ -619,9 +672,9 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                 <div className="bg-[#1c0f0f]/30 p-5 flex items-center justify-between border-t border-[#3e2121]">
                                     <span className="text-[10px] font-black text-[#e8b4b4] uppercase tracking-[0.2em]">Showing {filteredItems.length} of {items.length} records</span>
                                     <div className="flex gap-2">
-                                        <button disabled className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4] rounded-lg hover:bg-white/5 disabled:opacity-30 transition-all">Prev</button>
-                                        <button className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white bg-primary rounded-lg shadow-lg">1</button>
-                                        <button disabled className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#e8b4b4] rounded-lg hover:bg-white/5 disabled:opacity-30 transition-all">Next</button>
+                                        <button disabled className="px-4 py-2 min-h-[44px] text-[10px] font-black uppercase tracking-widest text-[#e8b4b4] rounded-lg hover:bg-white/5 disabled:opacity-30 transition-all">Prev</button>
+                                        <button className="px-4 py-2 min-h-[44px] text-[10px] font-black uppercase tracking-widest text-white bg-primary rounded-lg shadow-lg">1</button>
+                                        <button disabled className="px-4 py-2 min-h-[44px] text-[10px] font-black uppercase tracking-widest text-[#e8b4b4] rounded-lg hover:bg-white/5 disabled:opacity-30 transition-all">Next</button>
                                     </div>
                                 </div>
                             </div>

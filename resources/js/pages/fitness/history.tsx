@@ -367,7 +367,95 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                 )}
 
                 <div className="overflow-hidden rounded-2xl border border-[#3e2121] bg-[#2b1a1a] shadow-xl">
-                    <div className="overflow-x-auto">
+                    {/* Mobile cards (<md): misma data, sin tabla */}
+                    <div className="block divide-y divide-[#3e2121]/60 md:hidden">
+                        {data.length === 0 ? (
+                            <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+                                <span className="material-symbols-outlined text-4xl text-[#3e2121]">fitness_center</span>
+                                <p className="text-sm font-bold text-white">Aún sin entrenamientos finalizados</p>
+                                <p className="text-xs font-medium text-[#e8b4b4]">Completa un workout (Finish Workout) para verlo aquí.</p>
+                                <Link href="/fitness/gym" className="mt-2 inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-primary/90">
+                                    Ir a Entrenar
+                                </Link>
+                            </div>
+                        ) : (
+                            data.map((w) => {
+                                const vol = calcVolume(w);
+                                const sets = calcSets(w);
+                                const expanded = expandedIds.has(w.id);
+                                return (
+                                    <div key={w.id} className="px-4 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleExpand(w.id)}
+                                                title={expanded ? 'Ocultar detalle' : 'Ver detalle'}
+                                                aria-expanded={expanded}
+                                                aria-label={expanded ? 'Ocultar detalle' : 'Ver detalle'}
+                                                className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition ${expanded ? 'border-primary/40 bg-primary/15 text-primary' : 'border-[#3e2121] bg-[#1c0f0f] text-[#e8b4b4] hover:text-white'}`}
+                                            >
+                                                <span className={`material-symbols-outlined text-base transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}>expand_more</span>
+                                            </button>
+                                            <div className="flex min-w-0 flex-1 flex-col">
+                                                <span className="truncate text-[13px] font-bold text-white">{formatDate(w.ended_at || w.started_at)}</span>
+                                                <span className="truncate text-[11px] font-medium text-[#e8b4b4]">{w.routine?.name ?? 'Quick Session'} · ID #{w.id}</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRepeat(w)}
+                                                title="Repetir este entrenamiento"
+                                                aria-label="Repetir este entrenamiento"
+                                                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#3e2121] bg-[#1c0f0f] text-[#e8b4b4] transition hover:border-primary/40 hover:bg-primary/15 hover:text-primary"
+                                            >
+                                                <span className="material-symbols-outlined text-base">refresh</span>
+                                            </button>
+                                        </div>
+                                        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                                            <div className="rounded-lg border border-[#3e2121]/60 bg-[#1c0f0f] px-2 py-2">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Volumen</p>
+                                                <p className="mt-0.5 text-sm font-black tabular-nums text-white">{vol.toLocaleString()} <span className="text-[10px] font-bold text-[#e8b4b4]">kg</span></p>
+                                            </div>
+                                            <div className="rounded-lg border border-[#3e2121]/60 bg-[#1c0f0f] px-2 py-2">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Sets</p>
+                                                <p className="mt-0.5 text-sm font-black tabular-nums text-primary">{sets}</p>
+                                            </div>
+                                            <div className="rounded-lg border border-[#3e2121]/60 bg-[#1c0f0f] px-2 py-2">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Ejs.</p>
+                                                <p className="mt-0.5 text-sm font-black tabular-nums text-white">{w.exercises.length}</p>
+                                            </div>
+                                        </div>
+                                        {expanded && (
+                                            <div className="mt-3 grid gap-2 rounded-xl border border-[#3e2121] bg-[#1c0f0f] p-3">
+                                                {(w.exercises ?? []).length === 0 ? (
+                                                    <p className="text-sm font-medium text-[#e8b4b4]">Sin ejercicios registrados.</p>
+                                                ) : (
+                                                    (w.exercises ?? []).map((ex) => (
+                                                        <div key={ex.id} className="rounded-lg border border-[#3e2121]/70 bg-[#2b1a1a] p-3">
+                                                            <p className="flex items-center gap-2 text-sm font-black text-white">
+                                                                                <span className="material-symbols-outlined text-base text-primary">exercise</span>
+                                                                                {ex.exercise?.name ?? `Ejercicio #${ex.exercise_id}`}
+                                                            </p>
+                                                            <ul className="mt-2 space-y-1">
+                                                                                {ex.sets.map((s, idx) => (
+                                                                                    <li key={s.id} className="flex items-center justify-between gap-2 text-xs font-medium text-[#e8b4b4]">
+                                                                                        <span className="tabular-nums">{setLabel(s, idx)}</span>
+                                                                                        {s.completed && (
+                                                                                            <span className="rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-primary">completado</span>
+                                                                                        )}
+                                                                                    </li>
+                                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                    <div className="hidden overflow-x-auto md:block">
                         <table className="w-full text-left text-sm">
                             <thead className="bg-[#1c0f0f] border-b border-[#3e2121]">
                                 <tr className="text-[11px] font-black uppercase tracking-widest text-[#e8b4b4]">
@@ -498,7 +586,7 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                                             key={`${link.label}-${idx}`}
                                             disabled={isDisabled}
                                             onClick={() => link.url && router.get(link.url, {}, { preserveScroll: true })}
-                                            className={`min-w-9 rounded-lg px-3 py-1.5 text-xs font-black border transition ${link.active ? 'bg-primary border-primary text-white shadow' : isDisabled ? 'bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4]/40 cursor-not-allowed' : 'bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-[#3e2121] hover:text-white'}`}
+                                            className={`min-h-[44px] min-w-9 rounded-lg px-3 py-1.5 text-xs font-black border transition ${link.active ? 'bg-primary border-primary text-white shadow' : isDisabled ? 'bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4]/40 cursor-not-allowed' : 'bg-[#2b1a1a] border-[#3e2121] text-[#e8b4b4] hover:bg-[#3e2121] hover:text-white'}`}
                                             dangerouslySetInnerHTML={{ __html: label }}
                                         />
                                     );
@@ -529,7 +617,7 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                         <div className="space-y-2">
                             <Label className="text-[#e8b4b4]">Rutina</Label>
                             <Select value={logForm.routine_id} onValueChange={(v) => setLogForm('routine_id', v)}>
-                                <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121] text-white">
+                                <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121] text-white h-11 text-base">
                                     <SelectValue placeholder="Sesión rápida" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-[#1c0f0f] border-[#3e2121] text-white">
@@ -548,7 +636,7 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                                 value={logForm.started_at}
                                 max={toLocalInputValue(new Date())}
                                 onChange={(e) => setLogForm('started_at', e.target.value)}
-                                className="bg-[#1c0f0f] border-[#3e2121] text-white [color-scheme:dark]"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white [color-scheme:dark] h-11 text-base"
                                 required
                             />
                             {errors.started_at && <p className="text-xs text-primary">{errors.started_at}</p>}
@@ -559,15 +647,15 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                                 value={logForm.notes}
                                 onChange={(e) => setLogForm('notes', e.target.value)}
                                 placeholder="Opcional"
-                                className="bg-[#1c0f0f] border-[#3e2121] text-white placeholder:text-[#e8b4b4]/60"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white placeholder:text-[#e8b4b4]/60 text-base min-h-[44px]"
                             />
                             {errors.notes && <p className="text-xs text-primary">{errors.notes}</p>}
                         </div>
                         <DialogFooter className="gap-2">
-                            <Button type="button" variant="outline" onClick={() => setLogPastOpen(false)} className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white">
+                            <Button type="button" variant="outline" onClick={() => setLogPastOpen(false)} className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white min-h-[44px]">
                                 Cancelar
                             </Button>
-                            <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary/90 text-white font-black">
+                            <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary/90 text-white font-black min-h-[44px]">
                                 {processing ? 'Guardando…' : 'Agregar'}
                             </Button>
                         </DialogFooter>

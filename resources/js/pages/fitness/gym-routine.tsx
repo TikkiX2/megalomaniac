@@ -595,14 +595,14 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                                 onClick={() => workoutExercise.exercise.video_url && window.open(workoutExercise.exercise.video_url, '_blank', 'noopener')}
                                                 disabled={!workoutExercise.exercise.video_url}
                                                 title={workoutExercise.exercise.video_url ? 'Ver video' : 'Sin video'}
-                                                className="p-2 text-[#e8b4b4] hover:text-white hover:bg-white/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                                className="p-2 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-[#e8b4b4] hover:text-white hover:bg-white/5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                             >
                                                 <span className="material-symbols-outlined">videocam</span>
                                             </button>
                                             <button
                                                 onClick={() => handleRemoveExercise(workoutExercise.id)}
                                                 title="Eliminar ejercicio"
-                                                className="p-2 text-[#e8b4b4] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                                className="p-2 min-h-[44px] min-w-[44px] inline-flex items-center justify-center text-[#e8b4b4] hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                                             >
                                                 <span className="material-symbols-outlined">delete</span>
                                             </button>
@@ -611,12 +611,13 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
 
                                     {/* Card Body (Sets) */}
                                     <div className="p-4">
-                                        <div className="grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px_40px] gap-4 mb-2 text-[10px] uppercase tracking-widest font-black text-[#e8b4b4] px-2">
+                                        <div className="grid grid-cols-[28px_1fr_44px_44px] md:grid-cols-[30px_1fr_1fr_1fr_1fr_40px_40px] gap-2 md:gap-4 mb-2 text-[10px] uppercase tracking-widest font-black text-[#e8b4b4] px-2">
                                             <div className="text-center">Set</div>
-                                            <div>Previous</div>
-                                            <div>kg</div>
-                                            <div>Reps</div>
-                                            <div>RPE</div>
+                                            <div className="hidden md:block">Previous</div>
+                                            <div className="md:hidden">Kg / Reps / RPE</div>
+                                            <div className="hidden md:block">kg</div>
+                                            <div className="hidden md:block">Reps</div>
+                                            <div className="hidden md:block">RPE</div>
                                             <div className="text-center"><span className="material-symbols-outlined text-sm">check</span></div>
                                             <div className="text-center"><span className="material-symbols-outlined text-sm">delete</span></div>
                                         </div>
@@ -626,46 +627,55 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                             {workoutExercise.sets.map((set, setIndex) => (
                                                 <div
                                                     key={set.id}
-                                                    className={`grid grid-cols-[30px_1fr_1fr_1fr_1fr_40px_40px] gap-4 items-center rounded-xl p-2 border transition-all ${set.completed
+                                                    className={`grid grid-cols-[28px_1fr_44px_44px] md:grid-cols-[30px_1fr_1fr_1fr_1fr_40px_40px] gap-2 md:gap-4 items-center rounded-xl p-2 border transition-all ${set.completed
                                                         ? 'bg-primary/5 border-primary/20'
                                                         : 'border-transparent hover:bg-white/5'
                                                         }`}
                                                 >
-                                                    <div className={`flex flex-col items-center font-black ${set.completed ? 'text-primary' : 'text-white'}`}>
+                                                    <div className={`flex flex-col items-center justify-center min-h-[44px] font-black ${set.completed ? 'text-primary' : 'text-white'}`}>
                                                         <span>{set.set_number}</span>
                                                         {set.is_pr && (
                                                             <span className="material-symbols-outlined text-[12px] text-primary" title="Nuevo PR">emoji_events</span>
                                                         )}
                                                     </div>
-                                                    <div className="text-[#e8b4b4] text-[10px] font-bold">
+                                                    <div className="hidden md:block text-[#e8b4b4] text-[10px] font-bold">
                                                         {workoutExercise.previous?.find(ps => ps.set_number === set.set_number)
                                                             ? `${workoutExercise.previous.find(ps => ps.set_number === set.set_number)?.weight}kg x ${workoutExercise.previous.find(ps => ps.set_number === set.set_number)?.reps}`
                                                             : '-'}
                                                     </div>
+                                                    <div className="grid grid-cols-3 gap-2 md:contents">
                                                     <input
-                                                        className="bg-[#3e2121] border-none rounded-lg text-white text-center font-bold focus:ring-2 focus:ring-primary py-1.5 h-9 w-full"
+                                                        className="bg-[#3e2121] border-none rounded-lg text-white text-center font-bold text-base focus:ring-2 focus:ring-primary py-1.5 h-11 w-full"
                                                         placeholder="-"
                                                         type="text"
+                                                        inputMode="decimal"
+                                                        aria-label={`Peso serie ${set.set_number}`}
                                                         defaultValue={set.weight || ''}
                                                         onBlur={(e) => handleLogSet(workoutExercise.id, set.set_number, { weight: e.target.value })}
                                                     />
                                                     <input
-                                                        className="bg-[#3e2121] border-none rounded-lg text-white text-center font-bold focus:ring-2 focus:ring-primary py-1.5 h-9 w-full"
+                                                        className="bg-[#3e2121] border-none rounded-lg text-white text-center font-bold text-base focus:ring-2 focus:ring-primary py-1.5 h-11 w-full"
                                                         placeholder="-"
                                                         type="text"
+                                                        inputMode="numeric"
+                                                        aria-label={`Reps serie ${set.set_number}`}
                                                         defaultValue={set.reps || ''}
                                                         onBlur={(e) => handleLogSet(workoutExercise.id, set.set_number, { reps: e.target.value })}
                                                     />
                                                     <input
-                                                        className="bg-[#3e2121] border-none rounded-lg text-white text-center font-bold focus:ring-2 focus:ring-primary py-1.5 h-9 w-full"
+                                                        className="bg-[#3e2121] border-none rounded-lg text-white text-center font-bold text-base focus:ring-2 focus:ring-primary py-1.5 h-11 w-full"
                                                         placeholder="-"
                                                         type="text"
+                                                        inputMode="decimal"
+                                                        aria-label={`RPE serie ${set.set_number}`}
                                                         defaultValue={set.rpe || ''}
                                                         onBlur={(e) => handleLogSet(workoutExercise.id, set.set_number, { rpe: e.target.value })}
                                                     />
+                                                    </div>
                                                     <button
                                                         onClick={() => handleLogSet(workoutExercise.id, set.set_number, { completed: !set.completed })}
-                                                        className={`flex items-center justify-center h-9 w-full rounded-lg transition-all ${set.completed
+                                                        aria-label={set.completed ? `Desmarcar serie ${set.set_number}` : `Completar serie ${set.set_number}`}
+                                                        className={`flex items-center justify-center h-11 w-11 rounded-lg transition-all ${set.completed
                                                             ? 'bg-primary text-white'
                                                             : 'bg-[#3e2121] text-[#e8b4b4] hover:bg-primary hover:text-white'
                                                             }`}
@@ -675,7 +685,8 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                                     <button
                                                         onClick={() => handleRemoveSet(set.id)}
                                                         title="Eliminar serie"
-                                                        className="flex items-center justify-center h-9 w-full rounded-lg bg-[#3e2121] text-[#e8b4b4] hover:bg-red-400/10 hover:text-red-400 transition-all"
+                                                        aria-label={`Eliminar serie ${set.set_number}`}
+                                                        className="flex items-center justify-center h-11 w-11 rounded-lg bg-[#3e2121] text-[#e8b4b4] hover:bg-red-400/10 hover:text-red-400 transition-all"
                                                     >
                                                         <span className="material-symbols-outlined text-lg">delete</span>
                                                     </button>
@@ -685,7 +696,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
 
                                         <button
                                             onClick={() => handleLogSet(workoutExercise.id, (workoutExercise.sets.length || 0) + 1, {})}
-                                            className="w-full mt-4 py-3 border border-dashed border-[#3e2121] rounded-xl text-[#e8b4b4] hover:text-white hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest"
+                                            className="w-full mt-4 py-3 min-h-[48px] border border-dashed border-[#3e2121] rounded-xl text-[#e8b4b4] hover:text-white hover:border-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest"
                                         >
                                             <span className="material-symbols-outlined text-lg">add</span> Add Set
                                         </button>
@@ -872,7 +883,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
                                 placeholder="Ej: Press Banca Inclinado"
-                                className="bg-[#1c0f0f] border-[#3e2121] text-white placeholder:text-[#e8b4b4]/60 focus-visible:ring-primary"
+                                className="bg-[#1c0f0f] border-[#3e2121] text-white placeholder:text-[#e8b4b4]/60 focus-visible:ring-primary h-11 text-base"
                                 required
                             />
                             {errors.name && <p className="text-xs text-red-400">{errors.name}</p>}
@@ -881,7 +892,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                             <div className="space-y-2">
                                 <Label className="text-[#e8b4b4]">Grupo muscular</Label>
                                 <Select value={data.muscle_group} onValueChange={(v) => setData('muscle_group', v)}>
-                                    <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121] text-white">
+                                    <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121] text-white h-11 text-base">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#1c0f0f] border-[#3e2121] text-white">
@@ -895,7 +906,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                             <div className="space-y-2">
                                 <Label className="text-[#e8b4b4]">Tipo</Label>
                                 <Select value={data.type} onValueChange={(v) => setData('type', v)}>
-                                    <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121] text-white">
+                                    <SelectTrigger className="bg-[#1c0f0f] border-[#3e2121] text-white h-11 text-base">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent className="bg-[#1c0f0f] border-[#3e2121] text-white">
@@ -907,11 +918,11 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                 {errors.type && <p className="text-xs text-red-400">{errors.type}</p>}
                             </div>
                         </div>
-                        <div className="flex justify-end gap-2 pt-2">
-                            <Button type="button" variant="outline" onClick={() => setShowNewExercise(false)} className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white">
+                        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
+                            <Button type="button" variant="outline" onClick={() => setShowNewExercise(false)} className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white w-full sm:w-auto min-h-[44px]">
                                 Cancelar
                             </Button>
-                            <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary/90 text-white font-black">
+                            <Button type="submit" disabled={processing} className="bg-primary hover:bg-primary/90 text-white font-black w-full sm:w-auto min-h-[44px]">
                                 {processing ? 'Guardando...' : '+ Crear Ejercicio'}
                             </Button>
                         </div>
@@ -927,7 +938,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                     if (!open) setConflictError('');
                 }}
             >
-                <DialogContent className="bg-[#2b1a1a] border-[#3e2121] text-white sm:max-w-md max-h-[85vh] overflow-y-auto custom-scrollbar">
+                <DialogContent className="bg-[#2b1a1a] border-[#3e2121] text-white sm:max-w-md max-h-[92dvh] overflow-y-auto custom-scrollbar">
                     <DialogHeader>
                         <DialogTitle className="text-white flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary">edit_calendar</span>
@@ -961,7 +972,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                 <p className="text-xs text-[#e8b4b4] mt-1 mb-4">Creá tu primera rutina para arrancar con un plan.</p>
                                 <Link
                                     href="/fitness/routines"
-                                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-primary/90 transition"
+                                    className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-primary/90 transition"
                                 >
                                     <span className="material-symbols-outlined text-sm">add</span>
                                     Crear rutina
@@ -1069,14 +1080,14 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                             type="button"
                             variant="outline"
                             onClick={handleContinueActive}
-                            className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white"
+                            className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white w-full sm:w-auto min-h-[44px]"
                         >
                             Continuar el activo
                         </Button>
                         <Button
                             type="button"
                             onClick={handleFinishAndStartRoutine}
-                            className="bg-primary hover:bg-primary/90 text-white font-black"
+                            className="bg-primary hover:bg-primary/90 text-white font-black w-full sm:w-auto min-h-[44px]"
                         >
                             Terminar y empezar la rutina
                         </Button>
@@ -1091,7 +1102,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                     if (!open) setProgressionFor(null);
                 }}
             >
-                <DialogContent className="bg-[#2b1a1a] border-[#3e2121] text-white sm:max-w-lg max-h-[85vh] overflow-y-auto custom-scrollbar">
+                <DialogContent className="bg-[#2b1a1a] border-[#3e2121] text-white sm:max-w-lg max-h-[92dvh] overflow-y-auto custom-scrollbar">
                     <DialogHeader>
                         <DialogTitle className="text-white flex items-center gap-2">
                             <span className="material-symbols-outlined text-primary">monitoring</span>
@@ -1116,7 +1127,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                                 type="button"
                                 variant="outline"
                                 onClick={retryProgression}
-                                className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white"
+                                className="border-[#3e2121] bg-transparent text-[#e8b4b4] hover:bg-[#1c0f0f] hover:text-white min-h-[44px]"
                             >
                                 Intentar de nuevo
                             </Button>
