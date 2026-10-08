@@ -75,21 +75,21 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
     return (
         <MainLayout>
             <Head title="Panel" />
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in duration-700">
-                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-4 md:p-6 lg:p-8 animate-in fade-in duration-700">
+                <div className="flex flex-col flex-wrap justify-between gap-4 md:flex-row md:items-end">
                     <div>
-                        <h2 className="text-3xl font-black tracking-tight text-white lg:text-4xl">
+                        <h2 className="text-2xl md:text-4xl font-black tracking-tight text-white">
                             Bienvenido, {auth.user.name.split(' ')[0]}!</h2>
                         <p className="mt-1 text-base font-medium text-[#e8b4b4]">
                             Hoy es {todayEs}
                         </p>
                     </div>
-                    <div className="flex gap-3">
-                        <Link href="/fitness/nutrition" className="flex items-center gap-2 rounded-lg bg-[#3e2121] border border-[#3e2121] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95">
+                    <div className="flex flex-wrap gap-3">
+                        <Link href="/fitness/nutrition" className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 rounded-lg bg-[#3e2121] border border-[#3e2121] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95">
                             <span className="material-symbols-outlined text-[20px]">add</span>
                             Registrar comida
                         </Link>
-                        <Link href="/fitness/gym" className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-white shadow-[0_0_20px_rgba(239,68,68,0.25)] transition hover:bg-primary/90 active:scale-95">
+                        <Link href="/fitness/gym" className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-white shadow-[0_0_20px_rgba(239,68,68,0.25)] transition hover:bg-primary/90 active:scale-95">
                             <span className="material-symbols-outlined font-bold" style={{ fontSize: '20px' }}>bolt</span>
                             Inicio rápido
                         </Link>
@@ -106,7 +106,7 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
                                     Calorías restantes
                                 </span>
                                 <div className="flex items-baseline gap-2 mt-1">
-                                    <span className="text-5xl font-black text-white">{caloriesRemaining.toLocaleString()}</span>
+                                    <span className="text-4xl md:text-5xl tabular-nums font-black text-white">{caloriesRemaining.toLocaleString()}</span>
                                     <span className="text-sm font-bold text-[#e8b4b4]">kcal</span>
                                 </div>
                             </div>

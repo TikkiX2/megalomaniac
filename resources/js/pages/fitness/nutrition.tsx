@@ -274,18 +274,18 @@ export default function Nutrition({ logs, currentDate }: Props) {
     return (
         <NutritionLayout>
             <Head title="Nutrición" />
-            <div className="p-6 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+            <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <header className="flex flex-col flex-wrap md:flex-row md:items-end justify-between gap-6 mb-10">
                     <div>
-                        <h1 className="text-4xl font-black text-white tracking-tight leading-none">Nutrición diaria</h1>
+                        <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-none">Nutrición diaria</h1>
                         <p className="mt-2 text-muted-foreground font-medium uppercase text-xs tracking-widest flex items-center gap-2">
                             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
                             Registra tus macros y comidas
                         </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <ModuleAiButton module="nutrition" />
-                        <div className="flex items-center gap-2 p-2 bg-card rounded-xl border border-border shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <ModuleAiButton module="nutrition" className="w-full sm:w-auto justify-center min-h-[44px] shrink-0 text-muted-foreground hover:text-primary" />
+                        <div className="flex flex-wrap items-center gap-2 p-2 bg-card rounded-xl border border-border shadow-sm">
                         <button
                             type="button"
                             onClick={() => changeDate(-1)}

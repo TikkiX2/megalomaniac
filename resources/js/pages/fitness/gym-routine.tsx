@@ -492,12 +492,12 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
 
                 <div className="flex-1 flex overflow-hidden">
                     {/* Scrollable Workout Area */}
-                    <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-8 h-full custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-8 h-full custom-scrollbar">
                         {/* Routine Info */}
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+                        <div className="flex flex-col flex-wrap md:flex-row md:items-end justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
                             <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+                                <div className="flex flex-wrap items-center gap-3 mb-2">
+                                    <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight leading-tight">
                                         {today} <span className="text-primary italic">•</span> {currentRoutineName}
                                     </h1>
                                     <button

@@ -81,33 +81,33 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
     return (
         <MainLayout>
             <Head title="Finance Dashboard" />
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in duration-700">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-4 md:p-6 lg:p-8 animate-in fade-in duration-700">
                 {/* Header Section */}
-                <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+                <div className="flex flex-col flex-wrap justify-between gap-4 md:flex-row md:items-end">
                     <div>
-                        <h2 className="text-3xl font-black tracking-tight text-white lg:text-4xl">
+                        <h2 className="text-2xl md:text-4xl font-black tracking-tight text-white">
                             Financial Overview</h2>
                         <p className="mt-1 text-base font-medium text-[#e8b4b4]">
                             Master your money, control your destiny.
                         </p>
                     </div>
-                    <div className="flex gap-3">
-                        <ModuleAiButton module="finance" />
+                    <div className="flex flex-wrap gap-3">
+                        <ModuleAiButton module="finance" className="w-full sm:w-auto justify-center min-h-[44px] shrink-0 text-muted-foreground hover:text-primary" />
                         <Link
                             href={finance.currencyExchanges.create().url}
-                            className="flex items-center gap-2 rounded-lg bg-[#1c0f0f] border border-[#3e2121] px-4 py-2 text-sm font-bold text-[#e8b4b4] transition hover:bg-white/10 active:scale-95">
+                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 rounded-lg bg-[#1c0f0f] border border-[#3e2121] px-4 py-2 text-sm font-bold text-[#e8b4b4] transition hover:bg-white/10 active:scale-95">
                             <span className="material-symbols-outlined text-[20px]">currency_exchange</span>
                             New Exchange
                         </Link>
                         <Link
                             href={finance.purchases.create().url}
-                            className="flex items-center gap-2 rounded-lg bg-[#3e2121] border border-[#3e2121] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95">
+                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 rounded-lg bg-[#3e2121] border border-[#3e2121] px-4 py-2 text-sm font-bold text-white transition hover:bg-white/10 active:scale-95">
                             <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
                             New Purchase
                         </Link>
                         <Link
                             href={finance.incomes.create().url}
-                            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-white shadow-[0_0_20px_rgba(239,68,68,0.25)] transition hover:bg-primary/90 active:scale-95">
+                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-black text-white shadow-[0_0_20px_rgba(239,68,68,0.25)] transition hover:bg-primary/90 active:scale-95">
                             <span className="material-symbols-outlined font-bold" style={{ fontSize: '20px' }}>payments</span>
                             Add Income
                         </Link>
@@ -134,7 +134,7 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                             <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl group-hover:bg-primary/10 transition-colors"></div>
                             <div className="flex flex-col gap-1 relative z-10">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-[#e8b4b4]">Balance {item.currency.code}</span>
-                                <div className="text-3xl font-black text-white">
+                                <div className="text-4xl md:text-5xl tabular-nums font-black text-white">
                                     {item.currency.symbol} {item.balance.toLocaleString()}
                                 </div>
                                 <div className="mt-4 flex justify-between text-[10px] font-bold text-[#e8b4b4] uppercase">
@@ -150,7 +150,7 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                         <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-orange-500/5 blur-2xl group-hover:bg-orange-500/10 transition-colors"></div>
                         <div className="flex flex-col gap-1 relative z-10">
                             <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Active Debts</span>
-                            <div className="text-3xl font-black text-white">
+                            <div className="text-4xl md:text-5xl tabular-nums font-black text-white">
                                 {stats.active_debts_count}
                             </div>
                             <div className="mt-4 text-[10px] font-bold text-[#e8b4b4] uppercase">
@@ -196,7 +196,7 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                         {monthlyBudget ? (
                             <>
                                 <div className="flex items-baseline gap-2 relative z-10">
-                                    <span className="text-3xl font-black tracking-tight text-white">
+                                    <span className="text-4xl md:text-5xl tabular-nums font-black tracking-tight text-white">
                                         {monthlyBudget.currency?.symbol ?? '$'}
                                         {Number(monthlyBudget.spent).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>

@@ -109,6 +109,13 @@
     .pb-safe {
         padding-bottom: env(safe-area-inset-bottom);
     }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 }
 
 /* Código resaltado — paleta Ember */

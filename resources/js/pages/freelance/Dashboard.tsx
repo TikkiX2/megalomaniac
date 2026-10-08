@@ -50,29 +50,29 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
         <MainLayout>
             <Head title="Freelance Dashboard" />
 
-            <div className="flex h-full flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex h-full flex-col gap-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-700">
+                <div className="flex flex-col flex-wrap gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Panel de Control Freelance</h1>
+                        <h1 className="text-2xl md:text-4xl font-bold tracking-tight">Panel de Control Freelance</h1>
                         <p className="text-muted-foreground">Resumen de tu actividad y proyectos.</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button asChild variant="outline">
+                        <Button asChild variant="outline" className="w-full sm:w-auto justify-center min-h-[44px]">
                             <Link href={freelance.clients.create().url}>
                                 <Users className="mr-2 h-4 w-4" /> Cliente
                             </Link>
                         </Button>
-                        <Button asChild variant="outline">
+                        <Button asChild variant="outline" className="w-full sm:w-auto justify-center min-h-[44px]">
                             <Link href={freelance.projects.create().url}>
                                 <Briefcase className="mr-2 h-4 w-4" /> Proyecto
                             </Link>
                         </Button>
-                        <Button asChild variant="outline">
+                        <Button asChild variant="outline" className="w-full sm:w-auto justify-center min-h-[44px]">
                             <Link href={freelance.quotes.create().url}>
                                 <FileText className="mr-2 h-4 w-4" /> Cotización
                             </Link>
                         </Button>
-                        <ModuleAiButton module="freelance" />
+                        <ModuleAiButton module="freelance" className="w-full sm:w-auto justify-center min-h-[44px] shrink-0 text-muted-foreground hover:text-primary" />
                     </div>
                 </div>
 

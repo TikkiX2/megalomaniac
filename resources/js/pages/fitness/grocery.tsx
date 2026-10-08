@@ -168,19 +168,19 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
     return (
         <GroceryLayout>
             <Head title="Groceries & Stock" />
-            <div className="flex-1 w-full max-w-[1200px] mx-auto p-4 md:p-8 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-white">
+            <div className="flex-1 w-full max-w-[1200px] mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-white">
                 {/* Page Header */}
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <header className="flex flex-col flex-wrap md:flex-row md:items-center justify-between gap-4">
                     <div className="flex flex-col gap-1">
-                        <h1 className="text-white text-3xl md:text-5xl font-black tracking-tight leading-none">Grocery Tracker</h1>
+                        <h1 className="text-white text-2xl md:text-4xl font-black tracking-tight leading-none">Grocery Tracker</h1>
                         <div className="flex items-center gap-2 text-[#e8b4b4] mt-2">
                             <button className="hover:text-white transition-colors p-1"><span className="material-symbols-outlined text-sm">arrow_back_ios</span></button>
                             <span className="text-sm font-black uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                             <button className="hover:text-white transition-colors p-1"><span className="material-symbols-outlined text-sm">arrow_forward_ios</span></button>
                         </div>
                     </div>
-                    <div className="flex gap-3">
-                        <ModuleAiButton module="grocery" />
+                    <div className="flex flex-wrap gap-3">
+                        <ModuleAiButton module="grocery" className="w-full sm:w-auto justify-center min-h-[44px] shrink-0 text-muted-foreground hover:text-primary" />
                         <button
                             onClick={() => {
                                 fetch('/ai/insights/grocery')
@@ -188,18 +188,18 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                     .then((data) => setGroceryInsight(data.insight))
                                     .catch(() => {});
                             }}
-                            className="flex items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all"
+                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all"
                         >
                             <span className="material-symbols-outlined text-lg">psychology</span>
                             AI Shopping List
                         </button>
-                        <button className="flex items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all">
+                        <button className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all">
                             <span className="material-symbols-outlined text-lg">download</span>
                             Export Report
                         </button>
 
 
-                        <div className="flex bg-[#2b1a1a] rounded-xl p-1 border border-[#3e2121]">
+                        <div className="flex w-full sm:w-auto overflow-x-auto no-scrollbar bg-[#2b1a1a] rounded-xl p-1 border border-[#3e2121]">
                             <button
                                 onClick={() => setActiveTab('inventory')}
                                 className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'inventory' ? 'bg-primary text-white shadow-lg' : 'text-[#e8b4b4] hover:text-white'}`}
@@ -220,7 +220,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
 
                         <button
                             onClick={openRestockModal}
-                            className="flex items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all relative"
+                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all relative"
                         >
                             <span className="material-symbols-outlined text-lg">shopping_cart_checkout</span>
                             Complete Shopping
@@ -310,7 +310,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                             <DialogTrigger asChild>
                                 <button
                                     onClick={handleAdd}
-                                    className="flex items-center gap-2 px-6 h-12 rounded-xl bg-primary hover:bg-[#dc2626] text-white text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:scale-105 active:scale-95"
+                                    className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 px-6 h-12 rounded-xl bg-primary hover:bg-[#dc2626] text-white text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:scale-105 active:scale-95"
                                 >
                                     <span className="material-symbols-outlined text-xl font-black">add</span>
                                     Add Item
@@ -430,7 +430,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                 <div className="flex flex-col gap-3 relative z-10">
                                     <p className="text-[#e8b4b4] text-xs font-black uppercase tracking-[0.2em]">Total Expenditure</p>
                                     <div className="flex items-end gap-3">
-                                        <p className="text-white text-4xl font-black leading-none">${totalExpenditure.toFixed(2)}</p>
+                                        <p className="text-white text-4xl md:text-5xl tabular-nums font-black leading-none">${totalExpenditure.toFixed(2)}</p>
                                         <span className="flex items-center text-primary text-[10px] font-black bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20 uppercase tracking-tighter">
                                             <span className="material-symbols-outlined text-sm mr-0.5">trending_up</span>
                                             +12%
@@ -445,7 +445,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                 </div>
                                 <div className="flex flex-col gap-3 relative z-10 text-white">
                                     <p className="text-[#e8b4b4] text-xs font-black uppercase tracking-[0.2em]">Total Items</p>
-                                    <p className="text-white text-4xl font-black leading-none">{totalItems}</p>
+                                    <p className="text-white text-4xl md:text-5xl tabular-nums font-black leading-none">{totalItems}</p>
                                     <p className="text-[#e8b4b4]/40 text-[10px] font-bold uppercase tracking-widest mt-1">Current Stock Level</p>
                                 </div>
                             </div>
@@ -455,7 +455,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                                 </div>
                                 <div className="flex flex-col gap-3 relative z-10 text-white">
                                     <p className="text-[#e8b4b4] text-xs font-black uppercase tracking-[0.2em]">Low Stock Items</p>
-                                    <p className="text-white text-4xl font-black leading-none">{lowStockItems}</p>
+                                    <p className="text-white text-4xl md:text-5xl tabular-nums font-black leading-none">{lowStockItems}</p>
                                     <p className="text-[#e8b4b4]/40 text-[10px] font-bold uppercase tracking-widest mt-1">Need Restocking</p>
                                 </div>
                             </div>
