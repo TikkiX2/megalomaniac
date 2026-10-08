@@ -105,6 +105,12 @@
     }
 }
 
+@layer utilities {
+    .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
 /* Código resaltado — paleta Ember */
 .hljs-comment,
 .hljs-quote {
