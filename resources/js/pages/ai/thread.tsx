@@ -89,25 +89,40 @@ export default function ChatThread({
     const [title, setTitle] = useState(thread.title);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingMessage, setPendingMessage] = useState<string | null>(null);
-    const [composerSeed, setComposerSeed] = useState(() => loadChatDraft(thread.id));
+    const [composerSeed, setComposerSeed] = useState(() =>
+        loadChatDraft(thread.id),
+    );
     const [draftToken, setDraftToken] = useState(0);
 
     const pendingMessageRef = useRef<string | null>(null);
     const lastErrorRef = useRef<string | null>(null);
     const seededMessageRef = useRef<string | null>(null);
+    /**
+     * Ids de decisiones ya enviadas al backend: sus tarjetas se ocultan mientras
+     * el retomo se procesa y vuelven si algo falla (o si se detiene).
+     */
+    const [submittedDecisions, setSubmittedDecisions] = useState<string[]>([]);
 
     const upload = useAttachmentUpload(thread.id, sources);
 
     const stream = useChatStream({
         onError: (message, recoverable) => {
             lastErrorRef.current = message;
+            // Un retomo fallido restaura sus tarjetas en el servidor: nada que
+            // sembrar en el composer (el turno no se perdió, solo la decisión).
+            setSubmittedDecisions([]);
 
             // Always restore the pending text on the first error of a turn,
             // even when the error message repeats: a failed turn must never
             // eat the user's message. Later errors keep the user's edits.
             const retried = pendingMessageRef.current;
 
-            if (retried === null || recoverable || seededMessageRef.current === retried) return;
+            if (
+                retried === null ||
+                recoverable ||
+                seededMessageRef.current === retried
+            )
+                return;
 
             seededMessageRef.current = retried;
             setComposerSeed(retried);
@@ -120,9 +135,26 @@ export default function ChatThread({
                 only: ['threads', 'messages'],
                 onSuccess: () => {
                     stream.reset();
+                    setSubmittedDecisions([]);
                     pendingMessageRef.current = null;
                     setPendingMessage(null);
                     upload.clearImages();
+                },
+            });
+        },
+        onPaused: () => {
+            // El turno quedó pausado con decisiones pendientes: el mensaje ya
+            // está persistido y las tarjetas también, así que se recargan los
+            // mensajes (y se limpia el optimista) sin perder las tarjetas en
+            // vivo, que MessageList deduplica por id.
+            setSubmittedDecisions([]);
+
+            router.reload({
+                only: ['messages'],
+                onSuccess: () => {
+                    clearChatDraft(thread.id);
+                    pendingMessageRef.current = null;
+                    setPendingMessage(null);
                 },
             });
         },
@@ -134,6 +166,7 @@ export default function ChatThread({
         pendingMessageRef.current = message;
         lastErrorRef.current = null;
         seededMessageRef.current = null;
+        setSubmittedDecisions([]);
         saveChatDraft(thread.id, message);
         setPendingMessage(message);
         setComposerSeed('');
@@ -296,21 +329,35 @@ export default function ChatThread({
     };
 
     const decide: DecideApproval = (id, action, payload) => {
-        stream.start(ChatController.approve.url(thread.id), {
-            decisions: {
-                [id]: { action, ...payload },
+        setSubmittedDecisions((previous) =>
+            previous.includes(id) ? previous : [...previous, id],
+        );
+        stream.start(
+            ChatController.approve.url(thread.id),
+            {
+                decisions: {
+                    [id]: { action, ...payload },
+                },
             },
-        });
+            { retainApprovals: true },
+        );
     };
 
     const approveAll = (ids: string[]) => {
         if (ids.length === 0) return;
 
-        stream.start(ChatController.approve.url(thread.id), {
-            decisions: Object.fromEntries(
-                ids.map((id) => [id, { action: 'approve' }]),
-            ),
-        });
+        setSubmittedDecisions((previous) => [
+            ...new Set([...previous, ...ids]),
+        ]);
+        stream.start(
+            ChatController.approve.url(thread.id),
+            {
+                decisions: Object.fromEntries(
+                    ids.map((id) => [id, { action: 'approve' }]),
+                ),
+            },
+            { retainApprovals: true },
+        );
     };
 
     const commitRename = () => {
@@ -351,17 +398,20 @@ export default function ChatThread({
         );
 
     // `moduleTitle` is only set for a known module key, so the back link always
-// points at a real `/ai/{module}` page.
-const threadModule = thread.module ?? null;
-const moduleTitle = aiModuleLabel(threadModule);
+    // points at a real `/ai/{module}` page.
+    const threadModule = thread.module ?? null;
+    const moduleTitle = aiModuleLabel(threadModule);
 
     // The live event wins while a turn streams: the persisted `meta.ai` of the
     // last assistant message only arrives after the reload that saves it.
-    const persistedMeta = messages.reduce<ChatTurnMeta | null>((found, message) => {
-        if (message.role !== 'assistant') return found;
+    const persistedMeta = messages.reduce<ChatTurnMeta | null>(
+        (found, message) => {
+            if (message.role !== 'assistant') return found;
 
-        return message.meta?.ai ?? found;
-    }, null);
+            return message.meta?.ai ?? found;
+        },
+        null,
+    );
 
     const turnMeta = stream.meta ?? persistedMeta;
 
@@ -480,6 +530,7 @@ const moduleTitle = aiModuleLabel(threadModule);
                 liveReasoning={stream.reasoning}
                 reasoningMs={stream.reasoningMs}
                 liveApprovals={stream.pendingApprovals}
+                hiddenApprovalIds={submittedDecisions}
                 streaming={stream.status === 'streaming'}
                 onRegenerate={regenerate}
                 onEdit={edit}

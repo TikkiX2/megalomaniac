@@ -3,6 +3,7 @@
 namespace App\Ai\Agents;
 
 use App\Ai\Memory\MemoryCatalog;
+use App\Ai\Tools\AskUserTool;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
 use App\Ai\Tools\ToolCatalog;
@@ -84,6 +85,10 @@ class RuntimeAgent implements Agent, Conversational, HasTools
             $tools[] = new IntegrationCatalogTool($this->definition->user, $integrations);
             $tools[] = new IntegrationCallTool($this->definition->user, app(IntegrationExecutor::class), $integrations);
         }
+
+        // AskUserTool is always available: a custom agent must be able to pause
+        // the thread for a decision, exactly like the main agent.
+        $tools[] = new AskUserTool;
 
         return $tools;
     }

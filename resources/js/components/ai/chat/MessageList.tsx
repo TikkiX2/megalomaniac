@@ -19,6 +19,11 @@ interface MessageListProps {
     liveReasoning: string;
     reasoningMs: number | null;
     liveApprovals: PendingApproval[];
+    /**
+     * Decisiones ya enviadas: sus tarjetas no se pintan (ni en vivo ni en los
+     * mensajes persistidos) mientras el retomo se procesa.
+     */
+    hiddenApprovalIds?: string[];
     streaming: boolean;
     onRegenerate: () => void;
     onEdit: (messageId: string, content: string) => void;
@@ -35,6 +40,7 @@ export function MessageList({
     liveReasoning,
     reasoningMs,
     liveApprovals,
+    hiddenApprovalIds = [],
     streaming,
     onRegenerate,
     onEdit,
@@ -118,11 +124,22 @@ export function MessageList({
     const lastAssistantId =
         [...messages].reverse().find((message) => message.role === 'assistant')
             ?.id ?? null;
+
+    // Las tarjetas en vivo ganan sobre las persistidas: cuando un `router.reload`
+    // devuelve el mensaje pausado mientras el stream todavía conserva sus
+    // approvals, se pinta una sola vez (dedupe por id). Las decididas se ocultan
+    // en ambas fuentes mientras el retomo se procesa.
+    const hiddenIds = new Set(hiddenApprovalIds);
+    const liveIds = new Set(liveApprovals.map((approval) => approval.id));
+    const visibleLiveApprovals = liveApprovals.filter(
+        (approval) => !hiddenIds.has(approval.id),
+    );
+
     const showLive =
         streaming ||
         liveText !== '' ||
         liveReasoning !== '' ||
-        liveApprovals.length > 0;
+        visibleLiveApprovals.length > 0;
 
     return (
         <div className="relative min-h-0 flex-1">
@@ -150,7 +167,11 @@ export function MessageList({
                                 citations={message.citations}
                                 reasoning={message.reasoning?.text}
                                 reasoningMs={message.reasoning?.duration_ms}
-                                pendingApprovals={message.pending_approvals}
+                                pendingApprovals={message.pending_approvals.filter(
+                                    (approval) =>
+                                        !liveIds.has(approval.id) &&
+                                        !hiddenIds.has(approval.id),
+                                )}
                                 onDecide={onDecide}
                                 onApproveAll={onApproveAll}
                                 onRegenerate={
@@ -179,7 +200,7 @@ export function MessageList({
                             reasoning={liveReasoning}
                             reasoningMs={reasoningMs}
                             streaming={streaming}
-                            pendingApprovals={liveApprovals}
+                            pendingApprovals={visibleLiveApprovals}
                             onDecide={onDecide}
                             onApproveAll={onApproveAll}
                         />

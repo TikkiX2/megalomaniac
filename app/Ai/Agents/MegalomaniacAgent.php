@@ -293,6 +293,8 @@ EOF;
 
         $instructions .= $this->writeInstructions();
 
+        $instructions .= "\n\nCuando necesites una decisión o un dato que no podés inferir, usá AskUserTool: una sola pregunta por turno, con las opciones viables si las hay. La conversación se pausa hasta que el usuario responda, así que no mandes varias preguntas juntas.";
+
         if ($this->workoutEnabled()) {
             $instructions .= "\n\nFor training: start a workout (optionally from a routine so the template is copied), add exercises by name (new ones are created automatically), log sets with weight/reps/rpe, and finish the workout. To create a routine with several exercises, send all of them in the \"exercises\" array in a single create_routine call.";
         }

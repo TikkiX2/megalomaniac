@@ -338,18 +338,31 @@ class ChatController extends Controller
             'Configura tu proveedor de IA en Settings → IA.'
         );
 
-        $decisions = Decisions::from(collect($request->validated('decisions'))
-            ->map(function (array|bool $decision): Decision|bool {
-                if (is_bool($decision)) {
-                    return $decision;
-                }
+        // Snapshot the paused row before the resume so a failed continuation
+        // can put the decision back (see compensateFailedResume).
+        $paused = $this->pausedApprovalCandidate($thread);
 
-                return match ($decision['action']) {
-                    'approve' => Decision::approve(),
-                    'edit' => Decision::edit($decision['arguments'] ?? []),
-                    default => Decision::reject($decision['result'] ?? null),
-                };
-            })
+        $resumeSnapshot = $paused === null ? null : [
+            'id' => $paused->getKey(),
+            'approval_state' => $paused->approval_state,
+            'tool_results' => $paused->tool_results,
+        ];
+
+        $decisions = Decisions::from(collect(
+            $paused === null
+                ? $request->validated('decisions')
+                : $this->coalescePendingDecisions($paused, $request->validated('decisions'))
+        )->map(function (array|bool $decision): Decision|bool {
+            if (is_bool($decision)) {
+                return $decision;
+            }
+
+            return match ($decision['action']) {
+                'approve' => Decision::approve(),
+                'edit' => Decision::edit($decision['arguments'] ?? []),
+                default => Decision::reject($decision['result'] ?? null),
+            };
+        })
             ->all());
 
         try {
@@ -358,7 +371,60 @@ class ChatController extends Controller
             abort(422, $exception->getMessage());
         }
 
-        return $this->streamResponse($stream, $thread);
+        return $this->streamResponse($stream, $thread, resumeSnapshot: $resumeSnapshot);
+    }
+
+    /**
+     * The newest approval-paused assistant row of the thread, if any.
+     */
+    protected function pausedApprovalCandidate(ChatThread $thread): ?ChatMessage
+    {
+        return $thread->messages()
+            ->where('role', 'assistant')
+            ->whereNotNull('approval_state')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
+     * Complete a partial decisions payload: every pending call without a
+     * decision is settled as a rejected result with a placeholder, so
+     * answering one of several questions never 422s the whole turn. Unknown
+     * ids are left untouched and are still rejected by the SDK.
+     *
+     * @param  array<string, mixed>  $decisions
+     * @return array<string, mixed>
+     */
+    protected function coalescePendingDecisions(ChatMessage $paused, array $decisions): array
+    {
+        if (array_key_exists('*', $decisions)) {
+            return $decisions;
+        }
+
+        $toolByCallId = collect($paused->tool_calls ?? [])
+            ->filter(fn (mixed $call): bool => is_array($call))
+            ->mapWithKeys(fn (array $call): array => [
+                $call['id'] ?? '' => (string) (data_get($call, 'name') ?? data_get($call, 'function.name') ?? ''),
+            ])
+            ->filter(fn (string $tool): bool => $tool !== '')
+            ->all();
+
+        foreach (array_keys((array) ($paused->approval_state['pending'] ?? [])) as $callId) {
+            if (array_key_exists($callId, $decisions)) {
+                continue;
+            }
+
+            $isQuestion = ($toolByCallId[$callId] ?? null) === 'AskUserTool';
+
+            $decisions[$callId] = [
+                'action' => 'reject',
+                'result' => $isQuestion
+                    ? 'El usuario no respondió a esta pregunta (la saltó y el turno continúa con las demás respuestas).'
+                    : 'El usuario no respondió esta consulta (el turno continúa sin esta aprobación).',
+            ];
+        }
+
+        return $decisions;
     }
 
     /**
@@ -376,6 +442,7 @@ class ChatController extends Controller
         array $toolPolicy = [],
         ?array $attachmentIds = null,
         ?string $webWarning = null,
+        ?array $resumeSnapshot = null,
     ): StreamedResponse {
         // The forced pre-search sources are snapshotted before the closure runs
         // (like $webWarning) so it never reads ChatService mutable state.
@@ -388,7 +455,7 @@ class ChatController extends Controller
         $providerModel = $this->service->lastProviderModel;
         $fallbackUsed = $this->service->lastFallbackUsed;
 
-        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds, $webWarning, $preSearchSources, $failover, $providerName, $providerModel, $fallbackUsed): void {
+        return response()->stream(function () use ($stream, $thread, $toolPolicy, $attachmentIds, $webWarning, $preSearchSources, $failover, $providerName, $providerModel, $fallbackUsed, $resumeSnapshot): void {
             if (function_exists('set_time_limit')) {
                 set_time_limit(0);
             }
@@ -512,6 +579,15 @@ class ChatController extends Controller
 
                     break;
                 }
+            }
+
+            // A resume that died before its continuation produced anything
+            // must not eat the user's decision: side-effect-free pendings
+            // (questions) are restored so the cards return and the answer is
+            // retryable; executed writes are left consumed to avoid doubling
+            // the side effect.
+            if ($failed && $resumeSnapshot !== null) {
+                $this->compensateFailedResume($thread, $resumeSnapshot);
             }
 
             if ($attachmentIds !== null && $attachmentIds !== []) {
@@ -662,6 +738,39 @@ class ChatController extends Controller
         }
 
         return sprintf(' (Fallaron %d proveedores.)', count($lastError->errors()));
+    }
+
+    /**
+     * Roll a failed approval resume back to its pre-decision state when the
+     * continuation never produced anything: the pending cards return so the
+     * user can retry the decision. When the resume already executed a write,
+     * the result stays in history (retrying would duplicate the side effect)
+     * and only the decision stays consumed.
+     *
+     * @param  array{id: string, approval_state: ?array, tool_results: ?array}  $snapshot
+     */
+    protected function compensateFailedResume(ChatThread $thread, array $snapshot): void
+    {
+        $paused = $this->pausedApprovalCandidate($thread);
+
+        if (! $paused instanceof ChatMessage || $paused->getKey() !== $snapshot['id']) {
+            return;
+        }
+
+        $beforeIds = collect($snapshot['tool_results'] ?? [])->pluck('id')->all();
+
+        $executedWrite = collect($paused->tool_results ?? [])
+            ->reject(fn (mixed $result): bool => ! is_array($result) || in_array($result['id'] ?? null, $beforeIds, true))
+            ->contains(fn (mixed $result): bool => ! ($result['denied'] ?? false));
+
+        if ($executedWrite) {
+            return;
+        }
+
+        $paused->forceFill([
+            'approval_state' => $snapshot['approval_state'],
+            'tool_results' => $snapshot['tool_results'],
+        ])->save();
     }
 
     /**
