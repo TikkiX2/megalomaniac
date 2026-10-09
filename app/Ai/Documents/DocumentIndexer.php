@@ -116,6 +116,12 @@ class DocumentIndexer
         $rows = [];
 
         foreach ($contents as $position => $content) {
+            // Postgres rechaza secuencias UTF-8 inválidas y bytes NUL: un
+            // solo chunk roto (p.ej. sustitutos sueltos \uD83D del export)
+            // no puede tumbar el indexado del documento entero.
+            $content = (string) mb_convert_encoding($content, 'UTF-8', 'UTF-8');
+            $content = str_replace("\0", '', $content);
+
             $rows[] = [
                 'attachment_id' => $attachment->id,
                 'position' => $position,

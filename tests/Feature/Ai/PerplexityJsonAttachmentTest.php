@@ -164,3 +164,29 @@ test('generic json without conversations is indexed as plain text', function () 
         ->and($attachment->chunks()->count())->toBeGreaterThan(0)
         ->and($attachment->chunks()->orderBy('position')->first()->content)->toContain('hipotiroidismo');
 });
+
+test('perplexity chunks never split multibyte characters', function () {
+    $user = User::factory()->create();
+    $filler = str_repeat('contenido de relleno para forzar el particionado ', 30);
+    $content = $filler."\n\nRespuesta con emoji ✅\n\n".$filler;
+    $payload = ['conversations' => [[
+        'id' => 'c-emoji', 'title' => 'Emojis', 'created_at' => '2026-03-01T10:00:00Z',
+        'messages' => [
+            ['id' => 'm1', 'role' => 'assistant', 'content' => $content, 'created_at' => '2026-03-01T10:00:00Z'],
+        ],
+    ]]];
+    $attachment = perplexityJsonAttachment($user, 'emoji.json', json_encode($payload, JSON_UNESCAPED_UNICODE));
+
+    (new DocumentIndexer)->index($attachment);
+
+    expect($attachment->refresh()->status)->toBe('indexed');
+
+    $chunks = $attachment->chunks()->orderBy('position')->pluck('content')->all();
+
+    expect($chunks)->not->toBeEmpty()
+        ->and(implode("\n", $chunks))->toContain('✅');
+
+    foreach ($chunks as $chunk) {
+        expect(mb_check_encoding($chunk, 'UTF-8'))->toBeTrue();
+    }
+});

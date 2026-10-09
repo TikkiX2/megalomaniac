@@ -102,6 +102,24 @@ test('perplexity documents cannot exceed the maximum chunk count', function () {
     expect($attachment->chunks()->count())->toBe(12000);
 });
 
+test('txt chunks with nul bytes are sanitized, not fatal on pgsql', function () {
+    $attachment = documentAttachment('nul.txt', 'text/plain', "texto con\0nulo en medio");
+
+    (new DocumentIndexer)->index($attachment);
+
+    expect($attachment->refresh()->status)->toBe('indexed');
+
+    $chunks = $attachment->chunks()->orderBy('position')->pluck('content')->all();
+
+    expect($chunks)->not->toBeEmpty()
+        ->and(implode('', $chunks))->toContain('texto connulo en medio');
+
+    foreach ($chunks as $chunk) {
+        expect(mb_check_encoding($chunk, 'UTF-8'))->toBeTrue();
+        expect(str_contains($chunk, "\0"))->toBeFalse();
+    }
+});
+
 test('docx xml over the size limit is rejected before extraction', function () {
     $path = 'ai-attachments/qa/gigante.docx';
     Storage::disk('local')->makeDirectory('ai-attachments/qa');

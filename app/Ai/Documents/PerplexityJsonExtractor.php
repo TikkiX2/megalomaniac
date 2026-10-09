@@ -115,7 +115,7 @@ class PerplexityJsonExtractor
      */
     protected function splitMessage(string $content, int $limit = self::MAX_MESSAGE_LENGTH): array
     {
-        $paragraphs = preg_split("/\R\R+/", $content) ?: [$content];
+        $paragraphs = preg_split("/\R\R+/u", $content) ?: [$content];
         $pieces = [];
 
         foreach ($paragraphs as $paragraph) {
