@@ -16,6 +16,8 @@ class IndexChatDocument implements ShouldQueue
 
     public function __construct(public string $attachmentId) {}
 
+    public int $timeout = 360;
+
     public function handle(DocumentIndexer $indexer): void
     {
         $attachment = ChatAttachment::find($this->attachmentId);

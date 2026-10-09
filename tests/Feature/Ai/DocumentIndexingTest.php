@@ -80,7 +80,26 @@ test('very large documents cannot exceed the maximum chunk count', function () {
     (new DocumentIndexer)->index($attachment);
 
     expect($attachment->refresh()->status)->toBe('indexed');
-    expect($attachment->chunks()->count())->toBe(2000);
+    expect($attachment->chunks()->count())->toBe(3125);
+});
+
+test('perplexity documents cannot exceed the maximum chunk count', function () {
+    $messages = [];
+
+    for ($i = 0; $i < 13_000; $i++) {
+        $messages[] = ['id' => null, 'role' => 'user', 'content' => "mensaje {$i}", 'created_at' => '2026-01-01T00:00:00Z'];
+    }
+
+    $json = json_encode(['conversations' => [
+        ['id' => 'c1', 'title' => 'Tope', 'created_at' => '2026-01-01T00:00:00Z', 'messages' => $messages],
+    ]]);
+
+    $attachment = documentAttachment('tope.json', 'application/json', $json);
+
+    (new DocumentIndexer)->index($attachment);
+
+    expect($attachment->refresh()->status)->toBe('indexed');
+    expect($attachment->chunks()->count())->toBe(12000);
 });
 
 test('docx xml over the size limit is rejected before extraction', function () {

@@ -117,7 +117,7 @@ class ChatThread extends Conversation
      * documents that match the given query. Returns null when there is
      * nothing relevant (or the query has no usable terms).
      */
-    public function documentContext(string $query, int $limit = 6): ?string
+    public function documentContext(string $query, int $limit = 10): ?string
     {
         $terms = collect(preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($query)) ?: [])
             ->filter(fn (string $term): bool => mb_strlen($term) >= 3)
