@@ -15,6 +15,7 @@ export interface ChatThread {
      */
     module?: string | null;
     mode: SourceMode;
+    deep_context: boolean;
     tools_policy: ToolPolicy | null;
     is_pinned: boolean;
     memories_count?: number;

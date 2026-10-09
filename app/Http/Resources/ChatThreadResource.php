@@ -23,6 +23,7 @@ class ChatThreadResource extends JsonResource
             'title' => $this->title,
             'model' => $this->model,
             'mode' => app(ChatService::class)->sourceMode($this->resource),
+            'deep_context' => (bool) ($this->deep_context ?? false),
             'tools_policy' => $this->tools_policy,
             'is_pinned' => $this->pinned_at !== null,
             'memories_count' => $this->whenCounted('memories'),

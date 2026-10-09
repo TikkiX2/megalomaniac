@@ -28,8 +28,10 @@ interface ComposerProps {
     onSelectedSkillsChange?: (keys: string[]) => void;
     sourceMode?: SourceMode;
     forceWeb?: boolean;
+    deepContext?: boolean;
     onSourceModeChange?: (mode: SourceMode) => void;
     onForceWebChange?: (forceWeb: boolean) => void;
+    onDeepContextChange?: (value: boolean) => void;
     hasTavilyKey?: boolean;
     attachments?: ChatAttachment[];
     onAddFiles?: (files: File[]) => void;
@@ -73,8 +75,10 @@ export function Composer({
     onSelectedSkillsChange,
     sourceMode,
     forceWeb = false,
+    deepContext = false,
     onSourceModeChange,
     onForceWebChange,
+    onDeepContextChange,
     hasTavilyKey = false,
     attachments = [],
     onAddFiles,
@@ -267,8 +271,10 @@ ${text}` : text));
                         <SourceModeMenu
                             mode={sourceMode}
                             forceWeb={forceWeb}
+                            deepContext={deepContext}
                             onChangeMode={onSourceModeChange}
                             onChangeForceWeb={onForceWebChange}
+                            onChangeDeepContext={onDeepContextChange}
                             hasTavilyKey={hasTavilyKey}
                             disabled={disabled || streaming}
                         />

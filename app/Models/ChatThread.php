@@ -36,6 +36,7 @@ class ChatThread extends Conversation
             'archived_at' => 'datetime',
             'tools_policy' => 'array',
             'tools_policy_backup' => 'array',
+            'deep_context' => 'boolean',
         ];
     }
 
@@ -116,8 +117,12 @@ class ChatThread extends Conversation
      * Build an untrusted, formatted context block from the thread's indexed
      * documents that match the given query. Returns null when there is
      * nothing relevant (or the query has no usable terms).
+     *
+     * With $expand ("comprensión extendida") the FTS runs with a 30-hit
+     * budget and every hit is widened with its ±3 neighbour chunks, deduped
+     * and capped to 60.000 characters (~15k tokens).
      */
-    public function documentContext(string $query, int $limit = 10): ?string
+    public function documentContext(string $query, int $limit = 10, bool $expand = false): ?string
     {
         $terms = collect(preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($query)) ?: [])
             ->filter(fn (string $term): bool => mb_strlen($term) >= 3)
@@ -128,10 +133,12 @@ class ChatThread extends Conversation
             return null;
         }
 
+        $searchLimit = $expand ? 30 : $limit;
+
         try {
             $rows = DB::connection()->getDriverName() === 'pgsql'
-                ? $this->searchDocumentsOnPostgres($terms, $limit)
-                : $this->searchDocumentsOnSqlite($terms, $limit);
+                ? $this->searchDocumentsOnPostgres($terms, $searchLimit)
+                : $this->searchDocumentsOnSqlite($terms, $searchLimit);
         } catch (Throwable) {
             return null;
         }
@@ -140,10 +147,15 @@ class ChatThread extends Conversation
             // Fallback: aunque la pregunta no matchee términos con el FTS,
             // el asesor debe saber qué documentos adjuntos existen. Se usa la
             // búsqueda por orden de relevancia general (últimos documentos).
-            $rows = $this->fallbackDocuments($limit);
+            $rows = $this->fallbackDocuments($searchLimit);
 
             if ($rows === []) {
                 return null;
+            }
+
+            if ($expand) {
+                return "Documentos del hilo disponibles (sin coincidencia textual con la consulta):\n"
+                    .$this->formatDocumentRows($this->capDocumentRows($rows));
             }
 
             return "Documentos del hilo disponibles (sin coincidencia textual con la consulta):\n"
@@ -152,6 +164,128 @@ class ChatThread extends Conversation
                     ->implode("\n\n");
         }
 
+        if ($expand) {
+            $rows = $this->capDocumentRows($this->expandDocumentRows($rows));
+        }
+
+        return collect($rows)
+            ->map(fn (object $row): string => '### '.$row->original_name."\n".$row->content)
+            ->implode("\n\n");
+    }
+
+    /**
+     * Widen every FTS hit with its ±3 neighbour chunks of the same
+     * attachment. Dedupes by chunk id and orders by attachment + position.
+     *
+     * @param  array<int, object>  $rows
+     * @return array<int, object>
+     */
+    private function expandDocumentRows(array $rows): array
+    {
+        $positionsByAttachment = [];
+        $namesByAttachment = [];
+        $byId = [];
+
+        foreach ($rows as $row) {
+            if (! isset($row->id, $row->attachment_id, $row->position)) {
+                continue;
+            }
+
+            $attachmentId = (string) $row->attachment_id;
+            $positionsByAttachment[$attachmentId][] = (int) $row->position;
+            $namesByAttachment[$attachmentId] ??= $row->original_name ?? '';
+            $byId[(int) $row->id] = $row;
+        }
+
+        if ($positionsByAttachment === []) {
+            return $rows;
+        }
+
+        $neighbours = ChatDocumentChunk::query()
+            ->whereIn('attachment_id', array_keys($positionsByAttachment))
+            ->get(['id', 'attachment_id', 'position', 'content']);
+
+        foreach ($neighbours as $chunk) {
+            $attachmentId = (string) $chunk->attachment_id;
+
+            $nearHit = false;
+
+            foreach ($positionsByAttachment[$attachmentId] ?? [] as $position) {
+                if (abs((int) $chunk->position - $position) <= 3) {
+                    $nearHit = true;
+
+                    break;
+                }
+            }
+
+            if (! $nearHit) {
+                continue;
+            }
+
+            if (! isset($byId[(int) $chunk->getKey()])) {
+                $row = (object) [
+                    'id' => $chunk->getKey(),
+                    'attachment_id' => $chunk->attachment_id,
+                    'position' => $chunk->position,
+                    'content' => $chunk->content,
+                    'original_name' => $namesByAttachment[$attachmentId] ?? '',
+                ];
+                $byId[(int) $chunk->getKey()] = $row;
+            }
+        }
+
+        $expanded = array_values($byId);
+
+        usort($expanded, fn (object $a, object $b): int => ((string) $a->attachment_id) <=> ((string) $b->attachment_id)
+            ?: ((int) $a->position <=> (int) $b->position));
+
+        return $expanded;
+    }
+
+    /**
+     * Cap the formatted rows to 60.000 characters (~15k tokens), keeping
+     * whole chunks in attachment + position order.
+     *
+     * @param  array<int, object>  $rows
+     * @return array<int, object>
+     */
+    private function capDocumentRows(array $rows): array
+    {
+        $kept = [];
+        $total = 0;
+
+        foreach ($rows as $row) {
+            $block = '### '.($row->original_name ?? '')."\n".($row->content ?? '');
+            $length = mb_strlen($block) + ($kept === [] ? 0 : 2);
+
+            if ($total + $length > 60000) {
+                break;
+            }
+
+            $kept[] = $row;
+            $total += $length;
+        }
+
+        if ($kept === [] && $rows !== []) {
+            // Un solo bloque ya supera el techo: se trunca su contenido para
+            // no romper el contrato de 60.000 caracteres.
+            $first = clone $rows[0];
+            $prefix = '### '.($first->original_name ?? '')."\n";
+            $first->content = mb_substr((string) ($first->content ?? ''), 0, max(0, 60000 - mb_strlen($prefix)));
+
+            return [$first];
+        }
+
+        return $kept;
+    }
+
+    /**
+     * Format rows with the same '### name + content' shape used everywhere.
+     *
+     * @param  array<int, object>  $rows
+     */
+    private function formatDocumentRows(array $rows): string
+    {
         return collect($rows)
             ->map(fn (object $row): string => '### '.$row->original_name."\n".$row->content)
             ->implode("\n\n");
@@ -168,7 +302,7 @@ class ChatThread extends Conversation
             ->implode(' OR ');
 
         return DB::select(
-            'select c.content, a.original_name
+            'select c.id, c.attachment_id, c.position, c.content, a.original_name
              from chat_document_chunks_fts
              join chat_document_chunks c on c.id = chat_document_chunks_fts.rowid
              join chat_attachments a on a.id = c.attachment_id
@@ -193,7 +327,7 @@ class ChatThread extends Conversation
     {
         return DB::connection()->getDriverName() === 'pgsql'
             ? DB::select(
-                'select c.content, a.original_name
+                'select c.id, c.attachment_id, c.position, c.content, a.original_name
                  from chat_document_chunks c
                  join chat_attachments a on a.id = c.attachment_id
                  join chat_thread_sources s on s.attachment_id = a.id
@@ -205,7 +339,7 @@ class ChatThread extends Conversation
                 [$this->id, $this->participant_id, 'indexed', $limit],
             )
             : DB::select(
-                'select c.content, a.original_name
+                'select c.id, c.attachment_id, c.position, c.content, a.original_name
                  from chat_document_chunks c
                  join chat_attachments a on a.id = c.attachment_id
                  join chat_thread_sources s on s.attachment_id = a.id
@@ -229,7 +363,7 @@ class ChatThread extends Conversation
             ->implode(' | ');
 
         return DB::select(
-            "select c.content, a.original_name
+            "select c.id, c.attachment_id, c.position, c.content, a.original_name
              from chat_document_chunks c
              join chat_attachments a on a.id = c.attachment_id
              join chat_thread_sources s on s.attachment_id = a.id

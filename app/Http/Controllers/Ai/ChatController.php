@@ -164,6 +164,10 @@ class ChatController extends Controller
             $thread->mode = $data['mode'];
         }
 
+        if (array_key_exists('deep_context', $data)) {
+            $thread->deep_context = (bool) $data['deep_context'];
+        }
+
         if (array_key_exists('category', $data)) {
             $thread->category = $data['category'];
 

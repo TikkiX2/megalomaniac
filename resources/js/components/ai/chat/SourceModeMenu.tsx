@@ -24,8 +24,10 @@ const MODE_LABELS: Record<SourceMode, string> = {
 interface SourceModeMenuProps {
     mode: SourceMode;
     forceWeb: boolean;
+    deepContext: boolean;
     onChangeMode?: (mode: SourceMode) => void;
     onChangeForceWeb?: (forceWeb: boolean) => void;
+    onChangeDeepContext?: (value: boolean) => void;
     hasTavilyKey: boolean;
     disabled?: boolean;
 }
@@ -33,8 +35,10 @@ interface SourceModeMenuProps {
 export function SourceModeMenu({
     mode,
     forceWeb,
+    deepContext,
     onChangeMode,
     onChangeForceWeb,
+    onChangeDeepContext,
     hasTavilyKey,
     disabled = false,
 }: SourceModeMenuProps) {
@@ -87,6 +91,27 @@ export function SourceModeMenu({
                             }}
                         >
                             Buscar siempre (esta pregunta)
+                        </DropdownMenuCheckboxItem>
+                    </>
+                )}
+
+                {onChangeDeepContext !== undefined && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuCheckboxItem
+                            checked={deepContext}
+                            disabled={mode === 'off'}
+                            onSelect={(event) => {
+                                event.preventDefault();
+                                onChangeDeepContext(!deepContext);
+                            }}
+                        >
+                            <span className="flex flex-col gap-0.5">
+                                <span>Comprensión extendida</span>
+                                <span className="text-[11px] font-normal text-muted-foreground">
+                                    Hasta ~15k tokens por pregunta
+                                </span>
+                            </span>
                         </DropdownMenuCheckboxItem>
                     </>
                 )}

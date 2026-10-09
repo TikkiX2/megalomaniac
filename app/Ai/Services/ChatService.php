@@ -498,7 +498,11 @@ class ChatService
             && $lastUserMessage instanceof ChatMessage
             && in_array($this->sourceMode($thread), self::LOCAL_SOURCE_MODES, true)
         ) {
-            $agent->withResumeDocumentContext($thread->documentContext($lastUserMessage->content));
+            $deep = (bool) ($thread->deep_context ?? false);
+
+            $agent->withResumeDocumentContext($deep
+                ? $thread->documentContext($lastUserMessage->content, 30, true)
+                : $thread->documentContext($lastUserMessage->content));
         }
 
         $build = fn (AiProvider $provider): StreamableAgentResponse => $this->buildStreamAttempt(

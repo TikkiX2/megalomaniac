@@ -85,6 +85,7 @@ export default function ChatThread({
     const [skillKeys, setSkillKeys] = useState<string[]>([]);
     const [forceWeb, setForceWeb] = useState(false);
     const [sourceMode, setSourceMode] = useState<SourceMode>(thread.mode);
+    const [deepContext, setDeepContext] = useState(thread.deep_context ?? false);
     const [renaming, setRenaming] = useState(false);
     const [title, setTitle] = useState(thread.title);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -193,6 +194,15 @@ export default function ChatThread({
         router.patch(
             ChatController.update.url(thread.id),
             { mode },
+            { preserveScroll: true, preserveState: true },
+        );
+    };
+
+    const changeDeepContext = (value: boolean) => {
+        setDeepContext(value);
+        router.patch(
+            ChatController.update.url(thread.id),
+            { deep_context: value },
             { preserveScroll: true, preserveState: true },
         );
     };
@@ -576,8 +586,10 @@ export default function ChatThread({
                         onSelectedSkillsChange={setSkillKeys}
                         sourceMode={sourceMode}
                         forceWeb={forceWeb}
+                        deepContext={deepContext}
                         onSourceModeChange={changeSourceMode}
                         onForceWebChange={setForceWeb}
+                        onDeepContextChange={changeDeepContext}
                         hasTavilyKey={ai.has_tavily_key}
                         model={model}
                         onModelChange={setModel}
