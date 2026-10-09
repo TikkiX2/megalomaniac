@@ -293,7 +293,7 @@ EOF;
 
         $instructions .= $this->writeInstructions();
 
-        $instructions .= "\n\nCuando necesites una decisión o un dato que no podés inferir, usá AskUserTool: una sola pregunta por turno, con las opciones viables si las hay. La conversación se pausa hasta que el usuario responda, así que no mandes varias preguntas juntas.";
+        $instructions .= "\n\nCuando necesites una decisión o un dato que no podés inferir, usá AskUserTool: una sola pregunta por turno, con las opciones viables si las hay. La conversación se pausa hasta que el usuario responda, así que no mandes varias preguntas juntas. AskUserTool es exclusivo: cuando lo uses, llamalo SOLO, sin ningún otro tool_call en el mismo bloque. Si necesitás un dato antes de actuar, preguntá primero y recién después de la respuesta ejecutá la acción en el turno siguiente; nunca combines una pregunta con una escritura en la misma pausa.";
 
         if ($this->workoutEnabled()) {
             $instructions .= "\n\nFor training: start a workout (optionally from a routine so the template is copied), add exercises by name (new ones are created automatically), log sets with weight/reps/rpe, and finish the workout. To create a routine with several exercises, send all of them in the \"exercises\" array in a single create_routine call.";

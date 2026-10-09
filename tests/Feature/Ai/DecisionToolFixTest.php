@@ -23,7 +23,11 @@ uses(RefreshDatabase::class);
  *    decision is NOT restored for it.
  * 3. Partial decisions (one of several pending) are coalesced server-side
  *    instead of 422-ing the whole turn: unanswered pendings become rejected
- *    tool results with a placeholder and the turn continues.
+ *    tool results with a placeholder and the turn continues — except on mixed
+ *    pauses (a question plus a write approval in the same block), where
+ *    settling one side alone would destroy the other. A partial mixed payload
+ *    is rejected (422) so the UI stages every card and resumes with the full
+ *    set; a combined mixed payload executes the write and delivers the answer.
  * 4. Custom-agent threads can ask questions (AskUserTool is always available).
  */
 function decisionFixPauseSse(array $calls): string
@@ -163,6 +167,70 @@ test('answering one of several pending questions coalesces the others and contin
         ->and($paused->tool_results)->toHaveCount(2);
 });
 
+test('a partial decision on a mixed pause is rejected so both cards are decided together', function () {
+    Http::fake(['*' => Http::response(decisionFixPauseSse([
+        ['id' => 'call_q', 'tool' => 'AskUserTool', 'arguments' => '{"question":"¿Qué presupuesto?"}'],
+        ['id' => 'call_w', 'tool' => 'GymActionTool', 'arguments' => '{"action":"create_workout"}'],
+    ]), 200, ['Content-Type' => 'text/event-stream'])]);
+
+    $user = User::factory()->withAiProvider()->create();
+    $thread = decisionFixThread($user);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), ['message' => 'hola', 'thread_id' => $thread->id])->streamedContent();
+
+    expect(decisionFixPausedRow($thread)->approval_state['pending'])->toHaveCount(2);
+
+    // Answering only the question must not auto-deny the write the user
+    // never denied.
+    $this->actingAs($user)
+        ->postJson(route('ai.chat.approve', $thread), ['decisions' => ['call_q' => ['action' => 'reject', 'result' => '1000']]])
+        ->assertStatus(422);
+
+    // Approving only the write must not kill the question and lose the answer.
+    $this->actingAs($user)
+        ->postJson(route('ai.chat.approve', $thread), ['decisions' => ['call_w' => ['action' => 'approve']]])
+        ->assertStatus(422);
+
+    // Nothing was consumed or executed: both calls are still pending and no
+    // continuation was ever issued.
+    expect(decisionFixPausedRow($thread)->refresh()->approval_state['pending'])
+        ->toHaveKeys(['call_q', 'call_w'])
+        ->and(Workout::where('user_id', $user->id)->count())->toBe(0)
+        ->and(Http::recorded())->toHaveCount(1);
+});
+
+test('a combined decision on a mixed pause executes the write and delivers the answer', function () {
+    Http::fakeSequence()
+        ->push(decisionFixPauseSse([
+            ['id' => 'call_q', 'tool' => 'AskUserTool', 'arguments' => '{"question":"¿Qué presupuesto?"}'],
+            ['id' => 'call_w', 'tool' => 'GymActionTool', 'arguments' => '{"action":"create_workout"}'],
+        ]), 200, ['Content-Type' => 'text/event-stream'])
+        ->push(decisionFixAnswerSse('Anotado con 1000'), 200, ['Content-Type' => 'text/event-stream']);
+
+    $user = User::factory()->withAiProvider()->create();
+    $thread = decisionFixThread($user);
+
+    $this->actingAs($user)->post(route('ai.chat.send'), ['message' => 'hola', 'thread_id' => $thread->id])->streamedContent();
+
+    $content = $this->actingAs($user)
+        ->post(route('ai.chat.approve', $thread), ['decisions' => [
+            'call_q' => ['action' => 'reject', 'result' => '1000'],
+            'call_w' => ['action' => 'approve'],
+        ]])
+        ->streamedContent();
+
+    expect($content)->toContain('Anotado con 1000');
+
+    $requests = Http::recorded();
+    expect($requests)->toHaveCount(2);
+
+    $body = json_encode($requests[1][0]->data(), JSON_UNESCAPED_UNICODE);
+
+    expect($body)->toContain('1000')
+        ->and(Workout::where('user_id', $user->id)->count())->toBe(1)
+        ->and(decisionFixPausedRow($thread)->refresh()->approval_state['pending'])->toBe([]);
+});
+
 test('unknown decision ids still reject the resume', function () {
     Http::fake(['*' => Http::response(decisionFixPauseSse([
         ['id' => 'call_1', 'tool' => 'AskUserTool', 'arguments' => '{"question":"¿A?"}'],
@@ -221,16 +289,31 @@ test('the stream hook keeps the decision cards across a failed resume', function
 test('the thread page resumes decisions without wiping their cards', function () {
     $source = file_get_contents(resource_path('js/pages/ai/thread.tsx'));
 
-    // Both decide() and approveAll() resume with `retainApprovals`.
-    expect(substr_count($source, 'retainApprovals: true'))->toBe(2);
+    // decide()/approveAll() resume with `retainApprovals` (at most once per path).
+    expect(substr_count($source, 'retainApprovals: true'))->toBe(4);
 
     // The decided card is hidden while the resume runs and comes back if the
     // request errors (the hook restores the snapshot on error).
     expect($source)->toContain('hiddenApprovalIds={submittedDecisions}')
-        ->toMatch('/onError: \(message, recoverable\) => \{[^}]*setSubmittedDecisions\(\[\]\);/s');
+        ->toMatch('/onError: \(message, recoverable\) => \{[\s\S]{0,400}clearDecisionState\(\);/');
 
     // A pause reloads the persisted cards, and MessageList dedupes them.
     expect($source)->toMatch('/onPaused: \(\) => \{[^}]*only: \[\'messages\'\]/s');
+});
+
+test('a mixed pause stages every card and resumes with the full set', function () {
+    $source = file_get_contents(resource_path('js/pages/ai/thread.tsx'));
+
+    // A partial mixed resume would 422 (and settle nothing), so decisions are
+    // staged until every pending id has one, then sent together.
+    expect($source)->toContain('mixedPause')
+        ->toContain('stagedDecisions')
+        ->toContain('allPendingIds.every((pendingId) => pendingId in next)')
+        ->toContain('Decisión guardada: decidí las tarjetas restantes');
+
+    $controller = file_get_contents(base_path('app/Http/Controllers/Ai/ChatController.php'));
+
+    expect($controller)->toContain('respondé la pregunta y decidí la acción juntas');
 });
 
 test('the message list renders each pending decision exactly once', function () {

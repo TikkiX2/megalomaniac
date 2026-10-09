@@ -103,6 +103,26 @@ export default function ChatThread({
      * el retomo se procesa y vuelven si algo falla (o si se detiene).
      */
     const [submittedDecisions, setSubmittedDecisions] = useState<string[]>([]);
+    /**
+     * Decisiones juntadas en una pausa mixta (pregunta + aprobación en el mismo
+     * bloque): el backend 422ea un retomo parcial porque liquidaría al otro
+     * lado, así que se envían todas juntas cuando están completas.
+     */
+    const [stagedDecisions, setStagedDecisions] = useState<
+        Record<
+            string,
+            {
+                action: 'approve' | 'reject' | 'edit';
+                result?: string;
+                arguments?: Record<string, unknown>;
+            }
+        >
+    >({});
+
+    const clearDecisionState = () => {
+        setSubmittedDecisions([]);
+        setStagedDecisions({});
+    };
 
     const upload = useAttachmentUpload(thread.id, sources);
 
@@ -111,7 +131,7 @@ export default function ChatThread({
             lastErrorRef.current = message;
             // Un retomo fallido restaura sus tarjetas en el servidor: nada que
             // sembrar en el composer (el turno no se perdió, solo la decisión).
-            setSubmittedDecisions([]);
+            clearDecisionState();
 
             // Always restore the pending text on the first error of a turn,
             // even when the error message repeats: a failed turn must never
@@ -136,7 +156,7 @@ export default function ChatThread({
                 only: ['threads', 'messages'],
                 onSuccess: () => {
                     stream.reset();
-                    setSubmittedDecisions([]);
+                    clearDecisionState();
                     pendingMessageRef.current = null;
                     setPendingMessage(null);
                     upload.clearImages();
@@ -148,7 +168,7 @@ export default function ChatThread({
             // está persistido y las tarjetas también, así que se recargan los
             // mensajes (y se limpia el optimista) sin perder las tarjetas en
             // vivo, que MessageList deduplica por id.
-            setSubmittedDecisions([]);
+            clearDecisionState();
 
             router.reload({
                 only: ['messages'],
@@ -167,7 +187,7 @@ export default function ChatThread({
         pendingMessageRef.current = message;
         lastErrorRef.current = null;
         seededMessageRef.current = null;
-        setSubmittedDecisions([]);
+        clearDecisionState();
         saveChatDraft(thread.id, message);
         setPendingMessage(message);
         setComposerSeed('');
@@ -323,6 +343,7 @@ export default function ChatThread({
     const clearPending = () => {
         pendingMessageRef.current = null;
         setPendingMessage(null);
+        clearDecisionState();
     };
 
     const regenerate = () => {
@@ -339,22 +360,82 @@ export default function ChatThread({
     };
 
     const decide: DecideApproval = (id, action, payload) => {
-        setSubmittedDecisions((previous) =>
-            previous.includes(id) ? previous : [...previous, id],
-        );
-        stream.start(
-            ChatController.approve.url(thread.id),
-            {
-                decisions: {
-                    [id]: { action, ...payload },
+        const entry = { action, ...payload };
+
+        // Pausa mixta (pregunta + aprobación): un retomo parcial 422ea y no
+        // consume nada, así que la decisión se junta y el retomo sale cuando
+        // todas las tarjetas están decididas. Sin mezcla, el retomo es
+        // inmediato y el backend coalesce el resto del mismo tipo.
+        if (!mixedPause) {
+            setSubmittedDecisions((previous) =>
+                previous.includes(id) ? previous : [...previous, id],
+            );
+            stream.start(
+                ChatController.approve.url(thread.id),
+                {
+                    decisions: {
+                        [id]: entry,
+                    },
                 },
-            },
-            { retainApprovals: true },
-        );
+                { retainApprovals: true },
+            );
+
+            return;
+        }
+
+        const next = { ...stagedDecisions, [id]: entry };
+
+        setStagedDecisions(next);
+        setSubmittedDecisions((previous) => [...new Set([...previous, id])]);
+
+        if (allPendingIds.every((pendingId) => pendingId in next)) {
+            stream.start(
+                ChatController.approve.url(thread.id),
+                {
+                    decisions: Object.fromEntries(
+                        allPendingIds.map((pendingId) => [
+                            pendingId,
+                            next[pendingId],
+                        ]),
+                    ),
+                },
+                { retainApprovals: true },
+            );
+        }
     };
 
     const approveAll = (ids: string[]) => {
         if (ids.length === 0) return;
+
+        // En pausa mixta "aprobar todo" solo junta las aprobaciones: las
+        // preguntas siguen pendientes hasta que se respondan.
+        if (mixedPause) {
+            const next = { ...stagedDecisions };
+
+            for (const id of ids) next[id] = { action: 'approve' as const };
+
+            setStagedDecisions(next);
+            setSubmittedDecisions((previous) => [
+                ...new Set([...previous, ...ids]),
+            ]);
+
+            if (allPendingIds.every((pendingId) => pendingId in next)) {
+                stream.start(
+                    ChatController.approve.url(thread.id),
+                    {
+                        decisions: Object.fromEntries(
+                            allPendingIds.map((pendingId) => [
+                                pendingId,
+                                next[pendingId],
+                            ]),
+                        ),
+                    },
+                    { retainApprovals: true },
+                );
+            }
+
+            return;
+        }
 
         setSubmittedDecisions((previous) => [
             ...new Set([...previous, ...ids]),
@@ -399,13 +480,27 @@ export default function ChatThread({
     const composerAttachments = upload.attachments.filter(
         (attachment) => attachment.kind !== 'document',
     );
-    const hasPendingApprovals =
-        stream.pendingApprovals.length > 0 ||
-        messages.some(
-            (message) =>
-                message.role === 'assistant' &&
-                message.pending_approvals.length > 0,
-        );
+
+    // Todas las tarjetas pendientes (en vivo primero, persistidas después, por
+    // id): es el conjunto que un retomo debe decidir completo en pausa mixta.
+    const allPendings = [
+        ...stream.pendingApprovals,
+        ...messages.flatMap((message) =>
+            message.role === 'assistant' ? message.pending_approvals : [],
+        ),
+    ].filter(
+        (approval, index, list) =>
+            list.findIndex((other) => other.id === approval.id) === index,
+    );
+    const allPendingIds = allPendings.map((approval) => approval.id);
+    const mixedPause =
+        allPendings.some((approval) => approval.kind === 'question') &&
+        allPendings.some((approval) => approval.kind === 'approval');
+    const stagedCount = Object.keys(stagedDecisions).length;
+    const awaitingStagedRest =
+        mixedPause && stagedCount > 0 && stagedCount < allPendingIds.length;
+
+    const hasPendingApprovals = allPendings.length > 0;
 
     // `moduleTitle` is only set for a known module key, so the back link always
     // points at a real `/ai/{module}` page.
@@ -548,6 +643,15 @@ export default function ChatThread({
                 onApproveAll={approveAll}
                 pendingUser={pendingMessage}
             />
+
+            {awaitingStagedRest && (
+                <div className="mx-auto w-full max-w-3xl px-4" role="status">
+                    <p className="text-xs text-muted-foreground">
+                        Decisión guardada: decidí las tarjetas restantes para
+                        continuar.
+                    </p>
+                </div>
+            )}
 
             {stream.error && (
                 <div

@@ -352,24 +352,25 @@ class ChatController extends Controller
             'tool_results' => $paused->tool_results,
         ];
 
-        $decisions = Decisions::from(collect(
-            $paused === null
-                ? $request->validated('decisions')
-                : $this->coalescePendingDecisions($paused, $request->validated('decisions'))
-        )->map(function (array|bool $decision): Decision|bool {
-            if (is_bool($decision)) {
-                return $decision;
-            }
-
-            return match ($decision['action']) {
-                'approve' => Decision::approve(),
-                'edit' => Decision::edit($decision['arguments'] ?? []),
-                default => Decision::reject($decision['result'] ?? null),
-            };
-        })
-            ->all());
-
         try {
+            $validated = $paused === null
+                ? $request->validated('decisions')
+                : $this->coalescePendingDecisions($paused, $request->validated('decisions'));
+
+            $decisions = Decisions::from(collect($validated)
+                ->map(function (array|bool $decision): Decision|bool {
+                    if (is_bool($decision)) {
+                        return $decision;
+                    }
+
+                    return match ($decision['action']) {
+                        'approve' => Decision::approve(),
+                        'edit' => Decision::edit($decision['arguments'] ?? []),
+                        default => Decision::reject($decision['result'] ?? null),
+                    };
+                })
+                ->all());
+
             $stream = $this->service->decide($request->user(), $thread, $decisions);
         } catch (ApprovalMismatchException|ApprovalNotResumableException $exception) {
             abort(422, $exception->getMessage());
@@ -396,8 +397,16 @@ class ChatController extends Controller
      * answering one of several questions never 422s the whole turn. Unknown
      * ids are left untouched and are still rejected by the SDK.
      *
+     * Mixed pauses (a question plus a write approval in the same block) are
+     * NOT coalesced: answering one side would wrongly settle the other (the
+     * write would be denied without the user denying it, or the question
+     * would be killed and its answer lost). A partial mixed payload is
+     * rejected so the UI stages every card and resumes with the full set.
+     *
      * @param  array<string, mixed>  $decisions
      * @return array<string, mixed>
+     *
+     * @throws ApprovalMismatchException on a partial mixed pause
      */
     protected function coalescePendingDecisions(ChatMessage $paused, array $decisions): array
     {
@@ -413,12 +422,36 @@ class ChatController extends Controller
             ->filter(fn (string $tool): bool => $tool !== '')
             ->all();
 
-        foreach (array_keys((array) ($paused->approval_state['pending'] ?? [])) as $callId) {
+        $pendingIds = array_keys((array) ($paused->approval_state['pending'] ?? []));
+
+        $kinds = [];
+
+        foreach ($pendingIds as $callId) {
+            $kinds[$callId] = ($toolByCallId[$callId] ?? null) === 'AskUserTool' ? 'question' : 'approval';
+        }
+
+        // A mixed pause needs every card decided together: settling one side
+        // alone would destroy the other, so the UI stages the decisions and
+        // resumes once the set is complete.
+        if (in_array('question', $kinds, true) && in_array('approval', $kinds, true)) {
+            $missing = array_diff($pendingIds, array_keys($decisions));
+
+            if ($missing !== []) {
+                throw new ApprovalMismatchException(
+                    'Esta pausa combina una pregunta y una aprobación: respondé la pregunta y decidí la acción juntas para continuar.',
+                    collect()
+                );
+            }
+
+            return $decisions;
+        }
+
+        foreach ($pendingIds as $callId) {
             if (array_key_exists($callId, $decisions)) {
                 continue;
             }
 
-            $isQuestion = ($toolByCallId[$callId] ?? null) === 'AskUserTool';
+            $isQuestion = ($kinds[$callId] ?? 'approval') === 'question';
 
             $decisions[$callId] = [
                 'action' => 'reject',

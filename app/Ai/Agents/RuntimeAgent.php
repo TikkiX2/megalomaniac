@@ -44,6 +44,7 @@ class RuntimeAgent implements Agent, Conversational, HasTools
         - Trabajá solo con los datos reales del usuario (usá las herramientas disponibles).
         - No inventes datos; si falta información, decilo en el informe.
         - Las acciones de escritura quedan pendientes de aprobación del usuario; mencionalo si proponés alguna.
+        - Si necesitás preguntarle algo al usuario (AskUserTool), hacelo SOLO, sin ningún otro tool_call en el mismo bloque: primero la pregunta, y recién después de su respuesta la acción.
         - Cuando corras como agente programado, respondé SOLO con un objeto JSON válido con esta forma:
           {"report": "informe en markdown", "suggestions": "[{\\"title\\": \\"...\\", \\"content\\": \\"...\\"}]", "notify": "mensaje corto opcional"}
           (hasta 3 sugerencias; "suggestions" y "notify" pueden ser cadenas vacías).
