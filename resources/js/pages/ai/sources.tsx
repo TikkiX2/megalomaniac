@@ -38,9 +38,11 @@ const ACCEPT = {
     'text/plain': ['.txt'],
     'text/markdown': ['.md'],
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+    'application/pdf': ['.pdf'],
+    'application/json': ['.json'],
 };
 
-const INPUT_ACCEPT = '.jpg,.jpeg,.png,.webp,.txt,.md,.docx';
+const INPUT_ACCEPT = '.jpg,.jpeg,.png,.webp,.txt,.md,.docx,.pdf,.json';
 
 const STATUS_TONES: Record<ChatAttachment['status'], string> = {
     ready: 'border-primary/30 bg-primary/10 text-primary',
@@ -94,7 +96,7 @@ export default function Sources({ items }: SourcesPageProps) {
         onDropRejected: (rejections) => {
             const names = rejections.map((rejection) => rejection.file.name).join(', ');
 
-            setDropError(`No se admiten: ${names}. Usa imágenes JPG, PNG o WebP, .txt, .md o .docx.`);
+            setDropError(`No se admiten: ${names}. Usa imágenes JPG, PNG o WebP, .txt, .md, .docx, .pdf o .json.`);
         },
     });
 
@@ -159,7 +161,7 @@ export default function Sources({ items }: SourcesPageProps) {
                             {upload.uploading ? 'Subiendo archivos…' : 'Arrastrá tus archivos acá'}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            Imágenes JPG, PNG o WebP hasta 10 MB · .txt, .md o .docx hasta 25 MB
+                            Imágenes JPG, PNG o WebP hasta 10 MB · .txt, .md, .docx, .pdf o .json hasta 25 MB
                         </p>
 
                         <Button
@@ -203,7 +205,7 @@ export default function Sources({ items }: SourcesPageProps) {
                         <FileText className="h-8 w-8 text-muted-foreground" />
                         <p className="text-sm font-medium text-foreground">Todavía no tenés fuentes</p>
                         <p className="max-w-md text-xs text-muted-foreground">
-                            Subí una imagen o un documento (.txt, .md, .docx) para guardarlo en tu biblioteca y reutilizarlo
+                            Subí una imagen o un documento (.txt, .md, .docx, .pdf o .json) para guardarlo en tu biblioteca y reutilizarlo
                             en el chat.
                         </p>
                     </div>

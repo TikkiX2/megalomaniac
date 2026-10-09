@@ -50,7 +50,7 @@ interface ComposerProps {
 }
 
 const MAX_LENGTH = 4000;
-const FILE_ACCEPT = 'image/*,.txt,.md,.docx,.pdf';
+const FILE_ACCEPT = 'image/*,.txt,.md,.docx,.pdf,.json';
 const VISION_MODELS = ['deepseek-v4-flash-vision-exp', 'gpt-', 'gemini-', 'claude-', 'grok-'];
 
 function isVisionModel(model: string | null): boolean {

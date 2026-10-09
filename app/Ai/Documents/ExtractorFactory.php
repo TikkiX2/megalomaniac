@@ -9,7 +9,7 @@ class ExtractorFactory
         $mime = mb_strtolower(trim($mime));
         $extension = mb_strtolower(trim($extension));
 
-        if (in_array($mime, ['text/plain', 'text/markdown'], true) || in_array($extension, ['txt', 'md'], true)) {
+        if (in_array($mime, ['text/plain', 'text/markdown', 'application/json'], true) || in_array($extension, ['txt', 'md', 'json'], true)) {
             return new TextExtractor;
         }
 

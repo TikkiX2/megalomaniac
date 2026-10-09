@@ -7,7 +7,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 const POLL_INTERVAL_MS = 3000;
 const LOCAL_ID_PREFIX = 'local-';
-const DOCUMENT_EXTENSIONS = ['.txt', '.md', '.docx', '.pdf'];
+const DOCUMENT_EXTENSIONS = ['.txt', '.md', '.docx', '.pdf', '.json'];
 const NO_DOCUMENTS: ChatAttachment[] = [];
 
 export interface UseAttachmentUploadResult {
@@ -104,7 +104,7 @@ function isDocumentFile(file: File): boolean {
 
 function validationErrorFor(file: File): string | null {
     if (!isImageFile(file) && !isDocumentFile(file)) {
-        return `“${file.name}” no es compatible. Usa imágenes, .txt, .md o .docx.`;
+        return `“${file.name}” no es compatible. Usa imágenes, .txt, .md, .docx, .pdf o .json.`;
     }
 
     if (isImageFile(file) && file.size > MAX_IMAGE_BYTES) {

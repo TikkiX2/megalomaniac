@@ -18,7 +18,7 @@ class StoreChatAttachmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'max:25600', 'mimes:jpg,jpeg,png,webp,txt,md,docx,pdf'],
+            'file' => ['required', 'file', 'max:25600', 'mimes:jpg,jpeg,png,webp,txt,md,json,docx,pdf'],
             'thread_id' => ['nullable', 'string', 'size:36'],
         ];
     }
