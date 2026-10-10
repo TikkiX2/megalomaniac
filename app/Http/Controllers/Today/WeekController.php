@@ -19,6 +19,15 @@ class WeekController extends Controller
             ->orderBy('sort_order')
             ->get(['id', 'title']);
 
+        $candidates = ProjectTask::where('user_id', $request->user()->id)
+            ->notDone()
+            ->notArchived()
+            ->where('in_week', false)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->limit(20)
+            ->get(['id', 'title', 'created_at']);
+
         $blocks = Block::where('user_id', $request->user()->id)
             ->orderBy('weekday')
             ->orderBy('start_time')
@@ -27,6 +36,7 @@ class WeekController extends Controller
         return Inertia::render('today/Week', [
             'pool' => $pool,
             'overloaded' => $pool->count() > 7,
+            'candidates' => $candidates,
             'blocks' => $blocks,
         ]);
     }

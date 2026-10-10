@@ -18,6 +18,7 @@ interface BlockPayload {
 interface Props {
     pool: { id: number; title: string }[];
     overloaded: boolean;
+    candidates: { id: number; title: string }[];
     blocks: BlockPayload[];
 }
 
@@ -25,7 +26,7 @@ const WEEKDAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes
 
 const EMPTY_BLOCK = { label: '', weekday: 0, start_time: '19:00', duration_min: 60, active: true };
 
-export default function Week({ pool, overloaded, blocks }: Props) {
+export default function Week({ pool, overloaded, candidates, blocks }: Props) {
     const [q, setQ] = useState('');
     const [res, setRes] = useState<{ id: number; title: string }[]>([]);
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,7 +57,7 @@ export default function Week({ pool, overloaded, blocks }: Props) {
         });
         setQ('');
         setRes([]);
-        router.reload({ only: ['pool', 'overloaded'] });
+        router.reload({ only: ['pool', 'overloaded', 'candidates'] });
     };
 
     const submitBlock = async () => {
@@ -115,9 +116,13 @@ export default function Week({ pool, overloaded, blocks }: Props) {
                 <div className="flex gap-2">
                     <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar en backlog…" className="bg-card border-border" />
                 </div>
-                {res.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                        <span className="text-sm text-foreground">{t.title}</span>
+                <h3 className="text-sm font-black text-foreground">Pendientes para agregar</h3>
+                {q.trim() === '' && candidates.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No hay pendientes para agregar.</p>
+                )}
+                {(q.trim() === '' ? candidates : res).map((t) => (
+                    <div key={t.id} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
+                        <span className="min-w-0 flex-1 truncate text-sm text-foreground">{t.title}</span>
                         <Button size="sm" onClick={() => add(t.id)}>Agregar</Button>
                     </div>
                 ))}
