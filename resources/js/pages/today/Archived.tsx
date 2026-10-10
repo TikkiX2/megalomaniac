@@ -9,7 +9,7 @@ interface ArchivedItem {
     archived_at: string | null;
 }
 
-export default function Archivadas({ items }: { items: ArchivedItem[] }) {
+export default function Archived({ items }: { items: ArchivedItem[] }) {
     const [sel, setSel] = useState<number[]>([]);
     const toggle = (id: number) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 

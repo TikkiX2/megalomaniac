@@ -17,7 +17,7 @@ class ArchiveController extends Controller
             ->limit(100)
             ->get(['id', 'title', 'archived_at']);
 
-        return Inertia::render('today/Archivadas', ['items' => $items]);
+        return Inertia::render('today/Archived', ['items' => $items]);
     }
 
     public function restore(Request $request)

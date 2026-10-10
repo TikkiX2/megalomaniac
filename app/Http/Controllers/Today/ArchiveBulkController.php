@@ -12,7 +12,7 @@ class ArchiveBulkController extends Controller
 {
     public function index(Request $request)
     {
-        return Inertia::render('today/ArchivoMasivo', []);
+        return Inertia::render('today/BulkArchive', []);
     }
 
     public function preview(Request $request)

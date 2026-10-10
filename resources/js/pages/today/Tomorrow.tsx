@@ -17,12 +17,12 @@ interface Props {
 
 export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Props) {
     const existentes: any[] = (diaManana as any)?.visible_items ?? (diaManana as any)?.visibleItems ?? [];
-    const [sel, setSel] = useState<Record<number, { titulo: string; anchor: string; task_id: number | null }>>(() => {
+    const [sel, setSel] = useState<Record<number, { title: string; anchor: string; task_id: number | null }>>(() => {
         const m: any = {};
-        existentes.forEach((it: any, i: number) => { m[i] = { titulo: it.title, anchor: it.anchor, task_id: it.task_id }; });
+        existentes.forEach((it: any, i: number) => { m[i] = { title: it.title, anchor: it.anchor, task_id: it.task_id }; });
         return m;
     });
-    const count = Object.keys(sel).filter((k) => (sel as any)[k]?.titulo).length;
+    const count = Object.keys(sel).filter((k) => (sel as any)[k]?.title).length;
 
     const toggle = (t: PoolItem) => {
         const entries = Object.entries(sel);
@@ -33,13 +33,13 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
             setSel(n);
         } else if (count < 3) {
             const idx = [0, 1, 2].find((i) => !(i in sel)) ?? 0;
-            setSel({ ...sel, [idx]: { titulo: t.title, anchor: 'no_anchor', task_id: t.id } });
+            setSel({ ...sel, [idx]: { title: t.title, anchor: 'no_anchor', task_id: t.id } });
         }
     };
 
     const guardar = () => {
         const items = Object.entries(sel).map(([k, v]: any, i) => ({
-            task_id: v.task_id, titulo: v.titulo, anchor: v.anchor, position: Number(k) + 1 > 3 ? i + 1 : Number(k) + 1,
+            task_id: v.task_id, title: v.title, anchor: v.anchor, position: Number(k) + 1 > 3 ? i + 1 : Number(k) + 1,
         }));
         router.post('/today/tomorrow', { items });
     };
@@ -86,7 +86,7 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
                 {Object.entries(sel).map(([k, v]: any) => (
                     <div key={k} className="flex gap-2">
                         <span className="text-xs font-black text-muted-foreground pt-2">{Number(k) + 1}</span>
-                        <span className="flex-1 text-sm font-bold text-foreground">{v.titulo}</span>
+                        <span className="flex-1 text-sm font-bold text-foreground">{v.title}</span>
                         <Select value={v.anchor} onValueChange={(a) => setSel({ ...sel, [k]: { ...v, anchor: a } })}>
                             <SelectTrigger className="w-44 bg-card border-border"><SelectValue /></SelectTrigger>
                             <SelectContent>{ANCHORS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>

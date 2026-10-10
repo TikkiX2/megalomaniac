@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { csrfHeaders } from '@/lib/csrf';
 
-export default function ArchivoMasivo() {
+export default function BulkArchive() {
     const [filtro, setFiltro] = useState('mas_n_dias');
     const [dias, setDias] = useState(30);
     const [proyectoId, setProyectoId] = useState('');

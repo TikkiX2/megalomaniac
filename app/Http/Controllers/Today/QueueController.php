@@ -13,7 +13,7 @@ class QueueController extends Controller
     {
         $items = QueueItem::where('user_id', $request->user()->id)->orderBy('position')->get();
 
-        return Inertia::render('today/Cola', ['items' => $items]);
+        return Inertia::render('today/Queue', ['items' => $items]);
     }
 
     public function store(Request $request)

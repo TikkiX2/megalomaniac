@@ -41,9 +41,9 @@ function SortableRow({ item, onRemove }: { item: QueueItem; onRemove: (id: numbe
     );
 }
 
-export default function Cola({ items }: { items: QueueItem[] }) {
+export default function Queue({ items }: { items: QueueItem[] }) {
     const [local, setLocal] = useState<QueueItem[]>(items);
-    const [titulo, setTitulo] = useState('');
+    const [title, setTitle] = useState('');
     const [tipo, setTipo] = useState('serie');
     const sensors = useSensors(useSensor(PointerSensor));
 
@@ -79,7 +79,7 @@ export default function Cola({ items }: { items: QueueItem[] }) {
                     </SortableContext>
                 </DndContext>
                 <div className="flex gap-2">
-                    <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Título…" className="bg-card border-border" />
+                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título…" className="bg-card border-border" />
                     <Select value={tipo} onValueChange={setTipo}>
                         <SelectTrigger className="w-36 bg-card border-border"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -88,9 +88,9 @@ export default function Cola({ items }: { items: QueueItem[] }) {
                     </Select>
                     <Button
                         onClick={() => {
-                            if (!titulo.trim()) return;
-                            router.post('/today/queue', { title: titulo.trim(), type: tipo });
-                            setTitulo('');
+                            if (!title.trim()) return;
+                            router.post('/today/queue', { title: title.trim(), type: tipo });
+                            setTitle('');
                         }}
                         className="bg-primary font-bold"
                     >

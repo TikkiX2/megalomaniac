@@ -63,7 +63,7 @@ class TomorrowController extends Controller
         foreach ($items as $it) {
             $day->items()->create([
                 'task_id' => $it['task_id'] ?? null,
-                'title' => $it['titulo'],
+                'title' => $it['title'],
                 'anchor' => $it['anchor'],
                 'position' => $it['position'],
                 'state' => 'pending',

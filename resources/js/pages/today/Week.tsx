@@ -10,7 +10,7 @@ interface Props {
     overloaded: boolean;
 }
 
-export default function Semana({ pool, overloaded }: Props) {
+export default function Week({ pool, overloaded }: Props) {
     const [q, setQ] = useState('');
     const [res, setRes] = useState<{ id: number; title: string }[]>([]);
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);

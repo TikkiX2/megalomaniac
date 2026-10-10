@@ -18,7 +18,7 @@ class WeekController extends Controller
             ->orderBy('sort_order')
             ->get(['id', 'title']);
 
-        return Inertia::render('today/Semana', [
+        return Inertia::render('today/Week', [
             'pool' => $pool,
             'overloaded' => $pool->count() > 7,
         ]);
