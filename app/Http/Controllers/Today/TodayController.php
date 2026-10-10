@@ -7,8 +7,11 @@ use App\Http\Requests\Today\UpdateDayItemRequest;
 use App\Models\Block;
 use App\Models\Day;
 use App\Models\DayItem;
+use App\Models\MealLog;
 use App\Models\QueueItem;
 use App\Models\Routine;
+use App\Models\Supplement;
+use App\Models\Workout;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,9 +22,9 @@ class TodayController extends Controller
         $userId = $request->user()->id;
         $today = now()->toDateString();
 
-        $day = Day::with(['visibleItems.task'])
+        $day = Day::with('visibleItems')
             ->where('user_id', $userId)
-            ->where('date', $today)
+            ->whereDate('date', $today)
             ->first();
 
         $block = Block::where('user_id', $userId)
@@ -34,17 +37,26 @@ class TodayController extends Controller
             ->where('scheduled_date', now()->format('l'))
             ->first();
 
-        $queueFirst = QueueItem::where('user_id', $userId)
+        $pickType = $day?->pick_type ?? 'pelicula';
+        $queueItem = QueueItem::where('user_id', $userId)
+            ->where('type', $pickType)
             ->orderBy('position')
             ->first();
 
-        return Inertia::render('today/Index', [
-            'fecha' => $today,
-            'day' => $day,
-            'block' => $block,
-            'routine' => $routine ? ['id' => $routine->id, 'name' => $routine->name, 'focus' => $routine->focus] : null,
-            'queueFirst' => $queueFirst,
-        ]);
+        return Inertia::render('fitness/dashboard', array_merge(
+            $this->dashboardProps($userId),
+            [
+                'date' => $today,
+                'day' => $this->dayPayload($day),
+                'block' => $block,
+                'routine' => $routine ? ['id' => $routine->id, 'name' => $routine->name, 'focus' => $routine->focus] : null,
+                'pick' => $queueItem ? [
+                    'title' => $queueItem->title,
+                    'type' => $queueItem->type,
+                    'cover_url' => $queueItem->cover_url,
+                ] : null,
+            ]
+        ));
     }
 
     public function update(UpdateDayItemRequest $request, DayItem $item)
@@ -65,5 +77,64 @@ class TodayController extends Controller
         $item->update(['state' => 'released']);
 
         return back()->with('success', 'Soltado.');
+    }
+
+    /**
+     * @return array{id: int, pick_type: string, items: array<int, array{id: int, title: string, anchor: string, position: int, state: string, closing_note: string|null}>}|null
+     */
+    private function dayPayload(?Day $day): ?array
+    {
+        if (! $day) {
+            return null;
+        }
+
+        return [
+            'id' => $day->id,
+            'pick_type' => $day->pick_type,
+            'items' => $day->visibleItems->map(fn (DayItem $item) => [
+                'id' => $item->id,
+                'title' => $item->title,
+                'anchor' => $item->anchor,
+                'position' => $item->position,
+                'state' => $item->state,
+                'closing_note' => $item->closing_note,
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Props que consume resources/js/pages/fitness/dashboard.tsx,
+     * recuperados del closure original del dashboard (commit f97d459).
+     *
+     * @return array<string, mixed>
+     */
+    private function dashboardProps(int $userId): array
+    {
+        $mealLogsToday = MealLog::with('items')
+            ->where('user_id', $userId)
+            ->whereDate('date', now()->toDateString())
+            ->get();
+
+        $caloriesToday = $mealLogsToday->sum(fn ($log) => $log->total_calories ?? 0);
+        $macrosToday = ['protein' => 0, 'carbs' => 0, 'fats' => 0];
+        foreach ($mealLogsToday as $log) {
+            $macros = $log->total_macros ?? ['protein' => 0, 'carbs' => 0, 'fats' => 0];
+            $macrosToday['protein'] += (float) ($macros['protein'] ?? 0);
+            $macrosToday['carbs'] += (float) ($macros['carbs'] ?? 0);
+            $macrosToday['fats'] += (float) ($macros['fats'] ?? 0);
+        }
+
+        return [
+            'workoutCount' => Workout::where('user_id', $userId)->count(),
+            'recentWorkouts' => Workout::with('routine')
+                ->where('user_id', $userId)
+                ->orderByDesc('started_at')
+                ->limit(5)
+                ->get(),
+            'caloriesToday' => $caloriesToday,
+            'macrosToday' => $macrosToday,
+            'goals' => ['calories' => 2400, 'protein' => 180, 'carbs' => 250, 'fats' => 70],
+            'lowStockSupplements' => Supplement::where('user_id', $userId)->get()->filter->is_low_stock->values(),
+        ];
     }
 }

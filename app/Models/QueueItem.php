@@ -10,6 +10,8 @@ class QueueItem extends Model
 {
     use HasFactory;
 
+    public const TYPES = ['pelicula', 'serie', 'disco', 'libro', 'juego'];
+
     protected $table = 'queue_items';
 
     protected $fillable = [

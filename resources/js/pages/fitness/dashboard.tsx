@@ -1,17 +1,9 @@
 import { Head, usePage, Link } from '@inertiajs/react';
+import type { MediaPick } from '@/components/today/MediaLine';
+import TodayPanel from '@/components/today/TodayPanel';
+import type { BlockPayload, DayPayload, RoutinePayload } from '@/components/today/TodayPanel';
 import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
-
-interface WeeklyDay {
-    date: string;
-    label: string;
-    volume: number;
-}
-
-interface StreakData {
-    current: number;
-    days: { date: string; label: string; hasWorkout: boolean }[];
-}
 
 interface Props {
     workoutCount: number;
@@ -20,13 +12,14 @@ interface Props {
     macrosToday?: { protein: number; carbs: number; fats: number };
     goals?: { calories: number; protein: number; carbs: number; fats: number };
     lowStockSupplements: any[];
-    weeklyVolumeByDay?: WeeklyDay[];
-    weeklyVolumes?: number[];
-    weeklyVolumeTotal?: number;
-    streak?: StreakData;
+    date: string;
+    day: DayPayload | null;
+    block: BlockPayload | null;
+    routine: RoutinePayload | null;
+    pick: MediaPick | null;
 }
 
-export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday, macrosToday, goals, lowStockSupplements, weeklyVolumeByDay, weeklyVolumes, weeklyVolumeTotal, streak }: Props) {
+export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday, macrosToday, goals, lowStockSupplements, date, day, block, routine, pick }: Props) {
     const { auth } = usePage<SharedData>().props;
 
 
@@ -73,6 +66,8 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
                         </Link>
                     </div>
                 </div>
+
+                <TodayPanel date={date} day={day} block={block} routine={routine} pick={pick} />
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                     <div className="group relative overflow-hidden rounded-2xl bg-[#2b1a1a] p-6 shadow-xl border border-[#3e2121] md:col-span-2">
@@ -197,21 +192,6 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
                                     <p className="text-[11px] text-[#e8b4b4] font-bold uppercase tracking-tight italic">¡Todo abastecido!</p>
                                 </div>
                             )}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col rounded-2xl bg-[#2b1a1a] p-6 shadow-xl border border-[#3e2121] lg:col-span-1">
-                        <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-sm font-black uppercase tracking-widest text-white">Hidratación</h3>
-                            <span className="material-symbols-outlined text-sky-400 fill-1">opacity</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="text-3xl font-black text-white leading-none tracking-tighter">1.8 <span className="text-xs text-[#e8b4b4]">litros</span></div>
-                        </div>
-                        <div className="mt-4 flex gap-1">
-                            {[1, 2, 3, 4].map(i => <div key={i} className="h-6 w-2 rounded-full bg-sky-500/30"></div>)}
-                            <div className="h-6 w-2 rounded-full bg-sky-500 animate-pulse"></div>
-                            {[1, 2, 3].map(i => <div key={i} className="h-6 w-2 rounded-full bg-[#1c0f0f]"></div>)}
                         </div>
                     </div>
 
