@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     Select,
     SelectContent,
@@ -29,6 +29,9 @@ interface Props {
 
 const EMPTY_NOTICE = 'No hay nada de ese tipo en la cola.';
 
+/** Identidad del pick del server: si cambia, se descarta lo local (misma semántica que un effect de sync). */
+const pickKey = (pick: MediaPick | null) => (pick ? `${pick.type}|${pick.title}|${pick.cover_url ?? ''}` : '');
+
 /** Se evalúa en cada request: la cookie XSRF rota en cada respuesta. */
 const jsonHeaders = () => ({ 'Content-Type': 'application/json', Accept: 'application/json', ...csrfHeaders() });
 
@@ -37,14 +40,16 @@ const jsonHeaders = () => ({ 'Content-Type': 'application/json', Accept: 'applic
  * (solo click explícito, sin persistir ni notificar) y "Siguiente".
  */
 export default function MediaLine({ pick, pickType, pickTypes, onNext }: Props) {
-    const [surprise, setSurprise] = useState<MediaPick | null>(null);
-    const [notice, setNotice] = useState<string | null>(null);
+    const [local, setLocal] = useState<{ key: string; surprise: MediaPick | null; notice: string | null }>({
+        key: pickKey(pick),
+        surprise: null,
+        notice: null,
+    });
 
     // Cada reload de 'pick' trae la verdad del servidor: se descarta lo local.
-    useEffect(() => {
-        setSurprise(null);
-        setNotice(null);
-    }, [pick]);
+    const stale = local.key !== pickKey(pick);
+    const surprise = stale ? null : local.surprise;
+    const notice = stale ? null : local.notice;
 
     const changeType = async (type: string) => {
         await fetch('/today/pick-type', {
@@ -63,8 +68,7 @@ export default function MediaLine({ pick, pickType, pickTypes, onNext }: Props) 
         });
 
         if (res.status === 204) {
-            setSurprise(null);
-            setNotice(EMPTY_NOTICE);
+            setLocal({ key: pickKey(pick), surprise: null, notice: EMPTY_NOTICE });
             return;
         }
 
@@ -72,8 +76,7 @@ export default function MediaLine({ pick, pickType, pickTypes, onNext }: Props) 
             return;
         }
 
-        setSurprise((await res.json()) as MediaPick);
-        setNotice(null);
+        setLocal({ key: pickKey(pick), surprise: (await res.json()) as MediaPick, notice: null });
     };
 
     const shown = surprise ?? pick;

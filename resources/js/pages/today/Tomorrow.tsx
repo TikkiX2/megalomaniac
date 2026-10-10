@@ -1,35 +1,38 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import MainLayout from '@/layouts/main-layout';
+import { ANCHOR_LABELS } from '@/components/today/DayItemRow';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MainLayout from '@/layouts/main-layout';
 
 const ANCHORS = ['wake_up', 'after_meal', 'after_gym', 'after_shower', 'before_sleep', 'no_anchor'];
 
 interface PoolItem { id: number; title: string; }
 interface PendingItem { id: number; title: string; task_id: number | null; anchor: string; }
+interface DayItemShape { id: number; title: string; task_id: number | null; anchor: string; position: number; state?: string; }
+interface SelectedItem { title: string; anchor: string; task_id: number | null; }
 interface Props {
     fecha: string;
     pool: PoolItem[];
     pendientesAyer: PendingItem[];
-    diaManana: { visible_items?: any[]; visibleItems?: any[] } | null;
+    diaManana: { visible_items?: DayItemShape[]; visibleItems?: DayItemShape[] } | null;
 }
 
 export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Props) {
-    const existentes: any[] = (diaManana as any)?.visible_items ?? (diaManana as any)?.visibleItems ?? [];
-    const [sel, setSel] = useState<Record<number, { title: string; anchor: string; task_id: number | null }>>(() => {
-        const m: any = {};
-        existentes.forEach((it: any, i: number) => { m[i] = { title: it.title, anchor: it.anchor, task_id: it.task_id }; });
+    const existentes: DayItemShape[] = diaManana?.visible_items ?? diaManana?.visibleItems ?? [];
+    const [sel, setSel] = useState<Record<number, SelectedItem>>(() => {
+        const m: Record<number, SelectedItem> = {};
+        existentes.forEach((it, i) => { m[i] = { title: it.title, anchor: it.anchor, task_id: it.task_id }; });
         return m;
     });
-    const count = Object.keys(sel).filter((k) => (sel as any)[k]?.title).length;
+    const count = Object.keys(sel).filter((k) => sel[Number(k)]?.title).length;
 
     const toggle = (t: PoolItem) => {
         const entries = Object.entries(sel);
-        const found = entries.find(([, v]: any) => v.task_id === t.id);
+        const found = entries.find(([, v]) => v.task_id === t.id);
         if (found) {
             const n = { ...sel };
-            delete (n as any)[found[0]];
+            delete n[Number(found[0])];
             setSel(n);
         } else if (count < 3) {
             const idx = [0, 1, 2].find((i) => !(i in sel)) ?? 0;
@@ -38,7 +41,7 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
     };
 
     const guardar = () => {
-        const items = Object.entries(sel).map(([k, v]: any, i) => ({
+        const items = Object.entries(sel).map(([k, v], i) => ({
             task_id: v.task_id, title: v.title, anchor: v.anchor, position: Number(k) + 1 > 3 ? i + 1 : Number(k) + 1,
         }));
         router.post('/today/tomorrow', { items });
@@ -72,7 +75,7 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
 
                 <div className="flex flex-col gap-2 rounded-xl bg-card border border-border p-4">
                     {pool.map((t) => {
-                        const active = Object.values(sel).some((v: any) => v.task_id === t.id);
+                        const active = Object.values(sel).some((v) => v.task_id === t.id);
                         return (
                             <button key={t.id} onClick={() => toggle(t)} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left ${active ? 'border-primary bg-primary/10' : 'border-border'}`}>
                                 <span className="text-sm font-bold text-foreground">{t.title}</span>
@@ -83,13 +86,13 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
                     {pool.length === 0 && <p className="text-sm text-muted-foreground">Pool vacío. Agregalo desde Week.</p>}
                 </div>
 
-                {Object.entries(sel).map(([k, v]: any) => (
+                {Object.entries(sel).map(([k, v]) => (
                     <div key={k} className="flex gap-2">
                         <span className="text-xs font-black text-muted-foreground pt-2">{Number(k) + 1}</span>
                         <span className="flex-1 text-sm font-bold text-foreground">{v.title}</span>
                         <Select value={v.anchor} onValueChange={(a) => setSel({ ...sel, [k]: { ...v, anchor: a } })}>
                             <SelectTrigger className="w-44 bg-card border-border"><SelectValue /></SelectTrigger>
-                            <SelectContent>{ANCHORS.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
+                            <SelectContent>{ANCHORS.map((a) => <SelectItem key={a} value={a}>{ANCHOR_LABELS[a] ?? a}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
                 ))}

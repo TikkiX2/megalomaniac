@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import MainLayout from '@/layouts/main-layout';
 import { Button } from '@/components/ui/button';
+import MainLayout from '@/layouts/main-layout';
 
 interface ArchivedItem {
     id: number;

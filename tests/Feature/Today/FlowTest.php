@@ -54,3 +54,12 @@ test('marcar hecho setea done_at y nota; volver a pendiente la limpia', function
     $this->patch("/today/items/{$item->id}", ['state' => 'pending'])->assertRedirect();
     expect($item->fresh()->done_at)->toBeNull();
 });
+
+test('smoke de todas las paginas today responden 200', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    foreach (['/dashboard', '/today', '/today/tomorrow', '/today/week', '/today/queue', '/today/archived', '/today/bulk-archive'] as $uri) {
+        $this->get($uri)->assertOk();
+    }
+});

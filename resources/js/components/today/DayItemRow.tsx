@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { TodayItem } from './TodayPanel';
 
-const ANCHOR_LABELS: Record<string, string> = {
+export const ANCHOR_LABELS: Record<string, string> = {
     wake_up: 'al levantarme',
     after_meal: 'después de comer',
     after_gym: 'después del gimnasio',

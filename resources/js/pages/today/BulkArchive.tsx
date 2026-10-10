@@ -1,9 +1,9 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import MainLayout from '@/layouts/main-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
 
 export default function BulkArchive() {

@@ -16,7 +16,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { Head, router } from '@inertiajs/react';
 import { GripVertical, Plus, Search, Trash } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import MainLayout from '@/layouts/main-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -26,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
 
 const TYPES = ['pelicula', 'serie', 'disco', 'libro', 'juego'];
@@ -103,7 +103,7 @@ function SortableRow({
 }
 
 export default function Queue({ items }: { items: QueueItem[] }) {
-    const [local, setLocal] = useState<QueueItem[]>(items);
+    const [localState, setLocalState] = useState<{ source: QueueItem[]; list: QueueItem[] }>({ source: items, list: items });
     const [title, setTitle] = useState('');
     const [tipo, setTipo] = useState('pelicula');
     const [q, setQ] = useState('');
@@ -113,8 +113,9 @@ export default function Queue({ items }: { items: QueueItem[] }) {
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const sensors = useSensors(useSensor(PointerSensor));
 
-    // Tras cada visita Inertia re-manda los items como los guardó el server.
-    useEffect(() => setLocal(items), [items]);
+    // Tras cada visita Inertia re-manda los items como los guardó el server:
+    // si cambió la prop, se descarta el orden local (derivado, sin effect de sync).
+    const local = localState.source === items ? localState.list : items;
 
     // Buscador externo con debounce de 300ms (mismo patrón que el de Semana).
     useEffect(() => {
@@ -161,7 +162,7 @@ export default function Queue({ items }: { items: QueueItem[] }) {
         const oldIndex = local.findIndex((i) => i.id === active.id);
         const newIndex = local.findIndex((i) => i.id === over.id);
         const next = arrayMove(local, oldIndex, newIndex);
-        setLocal(next);
+        setLocalState({ source: items, list: next });
         await fetch('/today/queue/reorder', {
             method: 'PATCH',
             headers: {
