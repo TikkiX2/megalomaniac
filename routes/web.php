@@ -32,6 +32,11 @@ use App\Http\Controllers\Grocery\GroceryController;
 use App\Http\Controllers\Gym\ExerciseController;
 use App\Http\Controllers\Gym\RoutineController;
 use App\Http\Controllers\Gym\WorkoutController;
+use App\Http\Controllers\Hoy\ArchivoController;
+use App\Http\Controllers\Hoy\ColaController;
+use App\Http\Controllers\Hoy\HoyController;
+use App\Http\Controllers\Hoy\MananaController;
+use App\Http\Controllers\Hoy\SemanaController;
 use App\Http\Controllers\Nutrition\NutritionController;
 use App\Http\Controllers\Personal\PersonalProjectController;
 use App\Http\Controllers\Personal\PersonalTaskController;
@@ -39,9 +44,7 @@ use App\Http\Controllers\Personal\TaskPropertyController;
 use App\Http\Controllers\Personal\TaskSavedViewController;
 use App\Http\Controllers\Supplement\SupplementController;
 use App\Http\Controllers\TaskBoardColumnController;
-use App\Models\MealLog;
 use App\Models\Supplement;
-use App\Models\Workout;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -52,127 +55,7 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', function () {
-    $userId = auth()->id();
-
-    // Weekly volume: last 7 days including today, sum(weight*reps) per day from completed or any sets
-    $start = now()->copy()->subDays(6)->startOfDay();
-    $weeklyWorkouts = Workout::with('exercises.sets')
-        ->where('user_id', $userId)
-        ->where('started_at', '>=', $start)
-        ->get();
-
-    // Build map date(Y-m-d) => volume
-    $volMap = [];
-    $labels = [];
-    for ($i = 0; $i < 7; $i++) {
-        $d = $start->copy()->addDays($i);
-        $key = $d->toDateString();
-        $volMap[$key] = 0;
-        $labels[$key] = $d->format('D');
-    }
-
-    $datesWithWorkout = [];
-    foreach ($weeklyWorkouts as $w) {
-        $key = $w->started_at->toDateString();
-        if (! isset($volMap[$key])) {
-            continue;
-        }
-        $vol = 0;
-        foreach ($w->exercises as $we) {
-            foreach ($we->sets as $set) {
-                $weight = is_numeric($set->weight) ? (float) $set->weight : 0;
-                $reps = is_numeric($set->reps) ? (int) $set->reps : 0;
-                if ($weight > 0 && $reps > 0) {
-                    $vol += $weight * $reps;
-                }
-            }
-        }
-        $volMap[$key] += $vol;
-        $datesWithWorkout[$key] = true;
-    }
-
-    $weeklyVolumeByDay = [];
-    $weeklyVolumes = [];
-    foreach ($volMap as $date => $vol) {
-        $weeklyVolumes[] = $vol;
-        $weeklyVolumeByDay[] = ['date' => $date, 'label' => $labels[$date], 'volume' => $vol];
-    }
-
-    // Streak: consecutive days with workout ending today backwards
-    $streakDays = [];
-    $currentStreak = 0;
-    $stillStreaking = true;
-    // Iterate from today backwards
-    for ($i = 6; $i >= 0; $i--) {
-        $d = $start->copy()->addDays($i);
-        $key = $d->toDateString();
-        $has = isset($datesWithWorkout[$key]);
-        array_unshift($streakDays, ['date' => $key, 'label' => $labels[$key], 'hasWorkout' => $has]);
-        // We'll compute currentStreak after building; simpler forward from today
-    }
-    // Compute currentStreak from today backwards
-    for ($i = 6; $i >= 0; $i--) {
-        $d = $start->copy()->addDays($i);
-        $key = $d->toDateString();
-        if (isset($datesWithWorkout[$key])) {
-            $currentStreak++;
-        } else {
-            if ($i === 6 && $currentStreak === 0) {
-                // today missing -> break, streak 0
-                break;
-            } elseif ($i !== 6) {
-                break;
-            } else {
-                break;
-            }
-        }
-        // If today missing, loop breaks immediately with 0
-        // If today present, continues
-        if ($i === 6 && ! isset($datesWithWorkout[$key])) {
-            $currentStreak = 0;
-            break;
-        }
-    }
-    // Correct if today missing, currentStreak should be 0; above handles
-    // But for incomplete above logic, re-evaluate cleanly:
-    $currentStreak = 0;
-    for ($i = 6; $i >= 0; $i--) {
-        $d = $start->copy()->addDays($i);
-        $key = $d->toDateString();
-        if (isset($datesWithWorkout[$key])) {
-            $currentStreak++;
-        } else {
-            break;
-        }
-    }
-
-    // Nutrition sync: sum across all MealLogs of today
-    $mealLogsToday = MealLog::with('items')->where('user_id', $userId)->where('date', now()->toDateString())->get();
-    $caloriesToday = $mealLogsToday->sum(fn ($log) => $log->total_calories ?? 0);
-    $macrosToday = ['protein' => 0, 'carbs' => 0, 'fats' => 0];
-    foreach ($mealLogsToday as $log) {
-        $macros = $log->total_macros ?? ['protein' => 0, 'carbs' => 0, 'fats' => 0];
-        $macrosToday['protein'] += (float) ($macros['protein'] ?? 0);
-        $macrosToday['carbs'] += (float) ($macros['carbs'] ?? 0);
-        $macrosToday['fats'] += (float) ($macros['fats'] ?? 0);
-    }
-    // Goals centralizados (sincronizados con nutrition)
-    $goals = ['calories' => 2400, 'protein' => 180, 'carbs' => 250, 'fats' => 70];
-
-    return Inertia::render('fitness/dashboard', [
-        'workoutCount' => Workout::where('user_id', $userId)->count(),
-        'recentWorkouts' => Workout::with('routine')->where('user_id', $userId)->orderByDesc('started_at')->limit(5)->get(),
-        'caloriesToday' => $caloriesToday,
-        'macrosToday' => $macrosToday,
-        'goals' => $goals,
-        'lowStockSupplements' => Supplement::where('user_id', $userId)->get()->filter->is_low_stock->values(),
-        'weeklyVolumeByDay' => $weeklyVolumeByDay,
-        'weeklyVolumes' => $weeklyVolumes,
-        'weeklyVolumeTotal' => array_sum($weeklyVolumes),
-        'streak' => ['current' => $currentStreak, 'days' => $streakDays],
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', [HoyController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/people.php';
@@ -383,5 +266,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('task-properties/{property}', [TaskPropertyController::class, 'update'])->name('task-properties.update');
         Route::delete('task-properties/{property}', [TaskPropertyController::class, 'destroy'])->name('task-properties.destroy');
         Route::resource('saved-views', TaskSavedViewController::class)->only(['index', 'store', 'destroy']);
+    });
+
+    // Hoy — sistema de ejecución diaria
+    Route::prefix('hoy')->name('hoy.')->group(function () {
+        Route::get('manana', [MananaController::class, 'show'])->name('manana');
+        Route::post('manana', [MananaController::class, 'store'])->name('manana.store');
+        Route::post('manana/{item}/poner-hoy', [MananaController::class, 'ponerHoy'])->name('manana.poner-hoy');
+        Route::patch('items/{item}', [HoyController::class, 'update'])->name('items.update');
+        Route::post('items/{item}/soltar', [HoyController::class, 'soltar'])->name('items.soltar');
+        Route::get('semana', [SemanaController::class, 'index'])->name('semana');
+        Route::post('semana', [SemanaController::class, 'store'])->name('semana.store');
+        Route::delete('semana/{task}', [SemanaController::class, 'destroy'])->name('semana.destroy');
+        Route::get('semana/buscar', [SemanaController::class, 'buscar'])->name('semana.buscar');
+        Route::get('cola', [ColaController::class, 'index'])->name('cola');
+        Route::post('cola', [ColaController::class, 'store'])->name('cola.store');
+        Route::post('cola/siguiente', [ColaController::class, 'siguiente'])->name('cola.siguiente');
+        Route::patch('cola/reordenar', [ColaController::class, 'reordenar'])->name('cola.reordenar');
+        Route::delete('cola/{item}', [ColaController::class, 'destroy'])->name('cola.destroy');
+        Route::get('archivadas', [ArchivoController::class, 'index'])->name('archivadas');
+        Route::post('archivadas/restaurar', [ArchivoController::class, 'restaurar'])->name('archivadas.restaurar');
+        Route::get('archivo-masivo', [ArchivoController::class, 'masivo'])->name('archivo-masivo');
+        Route::post('archivo-masivo/preview', [ArchivoController::class, 'preview'])->name('archivo-masivo.preview');
+        Route::post('archivo-masivo/ejecutar', [ArchivoController::class, 'ejecutar'])->name('archivo-masivo.ejecutar');
     });
 });

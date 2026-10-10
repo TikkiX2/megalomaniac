@@ -25,7 +25,7 @@ import type { NavItem, SharedData } from '@/types';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
-    { title: 'Panel', href: dashboard(), icon: LayoutGrid },
+    { title: 'Hoy', href: dashboard(), icon: CheckSquare },
     { title: 'Entrenamiento', href: '/fitness/gym', icon: Dumbbell },
     { title: 'Nutrición', href: '/fitness/nutrition', icon: Utensils },
     { title: 'Suplementos', href: '/fitness/supplements', icon: Pill },
@@ -45,6 +45,9 @@ const financeNavItems: NavItem[] = [
 ];
 
 const personalNavItems: NavItem[] = [
+    { title: 'Hoy', href: '/hoy/manana', icon: CheckSquare },
+    { title: 'Semana', href: '/hoy/semana', icon: FolderKanban },
+    { title: 'Cola', href: '/hoy/cola', icon: Library },
     { title: 'Tareas', href: '/personal/tasks', icon: CheckSquare },
     { title: 'Proyectos', href: '/personal/projects', icon: FolderKanban },
 ];
