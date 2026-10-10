@@ -32,11 +32,6 @@ use App\Http\Controllers\Grocery\GroceryController;
 use App\Http\Controllers\Gym\ExerciseController;
 use App\Http\Controllers\Gym\RoutineController;
 use App\Http\Controllers\Gym\WorkoutController;
-use App\Http\Controllers\Hoy\ArchivoController;
-use App\Http\Controllers\Hoy\ColaController;
-use App\Http\Controllers\Hoy\HoyController;
-use App\Http\Controllers\Hoy\MananaController;
-use App\Http\Controllers\Hoy\SemanaController;
 use App\Http\Controllers\Nutrition\NutritionController;
 use App\Http\Controllers\Personal\PersonalProjectController;
 use App\Http\Controllers\Personal\PersonalTaskController;
@@ -44,6 +39,12 @@ use App\Http\Controllers\Personal\TaskPropertyController;
 use App\Http\Controllers\Personal\TaskSavedViewController;
 use App\Http\Controllers\Supplement\SupplementController;
 use App\Http\Controllers\TaskBoardColumnController;
+use App\Http\Controllers\Today\ArchiveBulkController;
+use App\Http\Controllers\Today\ArchiveController;
+use App\Http\Controllers\Today\QueueController;
+use App\Http\Controllers\Today\TodayController;
+use App\Http\Controllers\Today\TomorrowController;
+use App\Http\Controllers\Today\WeekController;
 use App\Models\Supplement;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -55,7 +56,7 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('dashboard', [HoyController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', [TodayController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/people.php';
@@ -268,26 +269,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('saved-views', TaskSavedViewController::class)->only(['index', 'store', 'destroy']);
     });
 
-    // Hoy — sistema de ejecución diaria
-    Route::prefix('hoy')->name('hoy.')->group(function () {
-        Route::get('manana', [MananaController::class, 'show'])->name('manana');
-        Route::post('manana', [MananaController::class, 'store'])->name('manana.store');
-        Route::post('manana/{item}/poner-hoy', [MananaController::class, 'ponerHoy'])->name('manana.poner-hoy');
-        Route::patch('items/{item}', [HoyController::class, 'update'])->name('items.update');
-        Route::post('items/{item}/soltar', [HoyController::class, 'soltar'])->name('items.soltar');
-        Route::get('semana', [SemanaController::class, 'index'])->name('semana');
-        Route::post('semana', [SemanaController::class, 'store'])->name('semana.store');
-        Route::delete('semana/{task}', [SemanaController::class, 'destroy'])->name('semana.destroy');
-        Route::get('semana/buscar', [SemanaController::class, 'buscar'])->name('semana.buscar');
-        Route::get('cola', [ColaController::class, 'index'])->name('cola');
-        Route::post('cola', [ColaController::class, 'store'])->name('cola.store');
-        Route::post('cola/siguiente', [ColaController::class, 'siguiente'])->name('cola.siguiente');
-        Route::patch('cola/reordenar', [ColaController::class, 'reordenar'])->name('cola.reordenar');
-        Route::delete('cola/{item}', [ColaController::class, 'destroy'])->name('cola.destroy');
-        Route::get('archivadas', [ArchivoController::class, 'index'])->name('archivadas');
-        Route::post('archivadas/restaurar', [ArchivoController::class, 'restaurar'])->name('archivadas.restaurar');
-        Route::get('archivo-masivo', [ArchivoController::class, 'masivo'])->name('archivo-masivo');
-        Route::post('archivo-masivo/preview', [ArchivoController::class, 'preview'])->name('archivo-masivo.preview');
-        Route::post('archivo-masivo/ejecutar', [ArchivoController::class, 'ejecutar'])->name('archivo-masivo.ejecutar');
+    // Today — sistema de ejecución diaria
+    Route::prefix('today')->name('today.')->group(function () {
+        Route::get('/', [TodayController::class, 'index'])->name('index');
+        Route::get('tomorrow', [TomorrowController::class, 'show'])->name('tomorrow');
+        Route::post('tomorrow', [TomorrowController::class, 'store'])->name('tomorrow.store');
+        Route::post('tomorrow/{item}/put-today', [TomorrowController::class, 'putToday'])->name('tomorrow.put-today');
+        Route::patch('items/{item}', [TodayController::class, 'update'])->name('items.update');
+        Route::post('items/{item}/release', [TodayController::class, 'release'])->name('items.release');
+        Route::get('week', [WeekController::class, 'index'])->name('week');
+        Route::get('week/search', [WeekController::class, 'search'])->name('week.search');
+        Route::post('week', [WeekController::class, 'store'])->name('week.store');
+        Route::delete('week/{task}', [WeekController::class, 'destroy'])->name('week.destroy');
+        Route::get('queue', [QueueController::class, 'index'])->name('queue');
+        Route::post('queue', [QueueController::class, 'store'])->name('queue.store');
+        Route::post('queue/next', [QueueController::class, 'next'])->name('queue.next');
+        Route::patch('queue/reorder', [QueueController::class, 'reorder'])->name('queue.reorder');
+        Route::delete('queue/{item}', [QueueController::class, 'destroy'])->name('queue.destroy');
+        Route::get('archived', [ArchiveController::class, 'index'])->name('archived');
+        Route::post('archived/restore', [ArchiveController::class, 'restore'])->name('archived.restore');
+        Route::get('bulk-archive', [ArchiveBulkController::class, 'index'])->name('bulk-archive');
+        Route::post('bulk-archive/preview', [ArchiveBulkController::class, 'preview'])->name('bulk-archive.preview');
+        Route::post('bulk-archive/run', [ArchiveBulkController::class, 'run'])->name('bulk-archive.run');
+        Route::post('bulk-archive/undo', [ArchiveBulkController::class, 'undo'])->name('bulk-archive.undo');
     });
 });

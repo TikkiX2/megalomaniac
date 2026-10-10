@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Hoy;
+namespace App\Http\Requests\Today;
 
-use App\Models\DiaItem;
+use App\Models\DayItem;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreMananaRequest extends FormRequest
+class StoreTomorrowRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,10 +16,10 @@ class StoreMananaRequest extends FormRequest
     {
         return [
             'items' => ['nullable', 'array', 'max:3'],
-            'items.*.tarea_id' => ['nullable', 'exists:project_tasks,id'],
+            'items.*.task_id' => ['nullable', 'exists:project_tasks,id'],
             'items.*.titulo' => ['required_with:items', 'string', 'max:255'],
-            'items.*.ancla' => ['required_with:items', 'in:'.implode(',', DiaItem::ANCLAS)],
-            'items.*.posicion' => ['required_with:items', 'integer', 'min:1', 'max:3'],
+            'items.*.anchor' => ['required_with:items', 'in:'.implode(',', DayItem::ANCHORS)],
+            'items.*.position' => ['required_with:items', 'integer', 'min:1', 'max:3'],
         ];
     }
 
