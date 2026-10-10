@@ -1,5 +1,5 @@
 import { Head, usePage, Link } from '@inertiajs/react';
-import type { MediaPick } from '@/components/today/MediaLine';
+import type { MediaPick, PickTypeOption } from '@/components/today/MediaLine';
 import TodayPanel from '@/components/today/TodayPanel';
 import type { BlockPayload, DayPayload, RoutinePayload } from '@/components/today/TodayPanel';
 import MainLayout from '@/layouts/main-layout';
@@ -17,9 +17,10 @@ interface Props {
     block: BlockPayload | null;
     routine: RoutinePayload | null;
     pick: MediaPick | null;
+    pickTypes: PickTypeOption[];
 }
 
-export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday, macrosToday, goals, lowStockSupplements, date, day, block, routine, pick }: Props) {
+export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday, macrosToday, goals, lowStockSupplements, date, day, block, routine, pick, pickTypes }: Props) {
     const { auth } = usePage<SharedData>().props;
 
 
@@ -67,7 +68,7 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
                     </div>
                 </div>
 
-                <TodayPanel date={date} day={day} block={block} routine={routine} pick={pick} />
+                <TodayPanel date={date} day={day} block={block} routine={routine} pick={pick} pickTypes={pickTypes} />
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                     <div className="group relative overflow-hidden rounded-2xl bg-[#2b1a1a] p-6 shadow-xl border border-[#3e2121] md:col-span-2">

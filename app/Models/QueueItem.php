@@ -12,6 +12,15 @@ class QueueItem extends Model
 
     public const TYPES = ['pelicula', 'serie', 'disco', 'libro', 'juego'];
 
+    /** @var array<string, string> Labels en español por tipo (copy visible). */
+    public const TYPE_LABELS = [
+        'pelicula' => 'Película',
+        'serie' => 'Serie',
+        'disco' => 'Disco',
+        'libro' => 'Libro',
+        'juego' => 'Juego',
+    ];
+
     protected $table = 'queue_items';
 
     protected $fillable = [

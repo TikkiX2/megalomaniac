@@ -1,7 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { csrfHeaders } from '@/lib/csrf';
 import DayItemRow from './DayItemRow';
-import MediaLine, { type MediaPick } from './MediaLine';
+import MediaLine, { type MediaPick, type PickTypeOption } from './MediaLine';
 
 export interface TodayItem {
     id: number;
@@ -36,12 +36,13 @@ export interface TodayPanelProps {
     block: BlockPayload | null;
     routine: RoutinePayload | null;
     pick: MediaPick | null;
+    pickTypes: PickTypeOption[];
 }
 
 /** Se evalúa en cada request: la cookie XSRF rota en cada respuesta. */
 const jsonHeaders = () => ({ 'Content-Type': 'application/json', Accept: 'application/json', ...csrfHeaders() });
 
-export default function TodayPanel({ date, day, block, routine, pick }: TodayPanelProps) {
+export default function TodayPanel({ date, day, block, routine, pick, pickTypes }: TodayPanelProps) {
     const items = day?.items ?? [];
 
     const refresh = (only: string[]) => router.reload({ only });
@@ -112,7 +113,7 @@ export default function TodayPanel({ date, day, block, routine, pick }: TodayPan
                 </div>
             )}
 
-            <MediaLine pick={pick} onNext={nextInQueue} />
+            <MediaLine pick={pick} pickType={day?.pick_type ?? 'pelicula'} pickTypes={pickTypes} onNext={nextInQueue} />
 
             {(block || routine) && (
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">

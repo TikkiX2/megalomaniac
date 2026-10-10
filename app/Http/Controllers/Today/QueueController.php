@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Today;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Today\StoreQueueItemRequest;
 use App\Models\QueueItem;
+use App\Services\Media\DailyPickService;
 use App\Services\Media\MediaSearchResult;
 use App\Services\Media\MediaSearchService;
 use Illuminate\Http\Request;
@@ -35,6 +36,48 @@ class QueueController extends Controller
             fn (MediaSearchResult $result): array => $result->toArray(),
             $results,
         ));
+    }
+
+    /**
+     * "Sorprendeme" — elección determinística del día sobre los items del tipo.
+     * 🔒 Solo respuesta a un click explícito: nunca persiste ni notifica.
+     */
+    public function surprise(Request $request, DailyPickService $pickService)
+    {
+        $data = $request->validate([
+            'type' => ['required', 'in:'.implode(',', QueueItem::TYPES)],
+        ]);
+
+        $userId = $request->user()->id;
+        $type = $data['type'];
+
+        $items = QueueItem::where('user_id', $userId)
+            ->where('type', $type)
+            ->orderBy('position')
+            ->orderBy('id')
+            ->get();
+
+        if ($items->isEmpty()) {
+            return response()->noContent();
+        }
+
+        $date = now()->toDateString();
+        $daily = $pickService->pick($userId, $date, $type, $items);
+
+        // Con ≥2 items nunca repite el pick del día: sigue siendo determinístico
+        // por día, solo que sobre el resto del subset del tipo.
+        $subset = ($items->count() > 1 && $daily)
+            ? $items->reject(fn (QueueItem $item): bool => $item->id === $daily->id)->values()
+            : $items;
+
+        $item = $pickService->pick($userId, $date, $type, $subset);
+
+        return response()->json([
+            'title' => $item->title,
+            'type' => $item->type,
+            'cover_url' => $item->cover_url,
+            'source' => $item->source,
+        ]);
     }
 
     public function store(StoreQueueItemRequest $request)

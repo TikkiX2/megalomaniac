@@ -287,6 +287,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('queue/next', [QueueController::class, 'next'])->name('queue.next');
         Route::patch('queue/reorder', [QueueController::class, 'reorder'])->name('queue.reorder');
         Route::delete('queue/{item}', [QueueController::class, 'destroy'])->name('queue.destroy');
+        Route::get('surprise', [QueueController::class, 'surprise'])->name('surprise');
+        Route::post('pick-type', [TodayController::class, 'pickType'])->name('pick-type');
         Route::get('archived', [ArchiveController::class, 'index'])->name('archived');
         Route::post('archived/restore', [ArchiveController::class, 'restore'])->name('archived.restore');
         Route::get('bulk-archive', [ArchiveBulkController::class, 'index'])->name('bulk-archive');

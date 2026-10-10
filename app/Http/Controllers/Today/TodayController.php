@@ -12,12 +12,13 @@ use App\Models\QueueItem;
 use App\Models\Routine;
 use App\Models\Supplement;
 use App\Models\Workout;
+use App\Services\Media\DailyPickService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TodayController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, DailyPickService $pickService)
     {
         $userId = $request->user()->id;
         $today = now()->toDateString();
@@ -38,10 +39,12 @@ class TodayController extends Controller
             ->first();
 
         $pickType = $day?->pick_type ?? 'pelicula';
-        $queueItem = QueueItem::where('user_id', $userId)
+        $queueItems = QueueItem::where('user_id', $userId)
             ->where('type', $pickType)
             ->orderBy('position')
-            ->first();
+            ->orderBy('id')
+            ->get();
+        $pick = $pickService->pick($userId, $today, $pickType, $queueItems);
 
         return Inertia::render('fitness/dashboard', array_merge(
             $this->dashboardProps($userId),
@@ -50,13 +53,34 @@ class TodayController extends Controller
                 'day' => $this->dayPayload($day),
                 'block' => $block,
                 'routine' => $routine ? ['id' => $routine->id, 'name' => $routine->name, 'focus' => $routine->focus] : null,
-                'pick' => $queueItem ? [
-                    'title' => $queueItem->title,
-                    'type' => $queueItem->type,
-                    'cover_url' => $queueItem->cover_url,
+                'pick' => $pick ? [
+                    'title' => $pick->title,
+                    'type' => $pick->type,
+                    'cover_url' => $pick->cover_url,
                 ] : null,
+                'pickTypes' => $this->pickTypes(),
             ]
         ));
+    }
+
+    /**
+     * Persiste el tipo de media del día (crea el day de hoy si no existe).
+     */
+    public function pickType(Request $request)
+    {
+        $data = $request->validate([
+            'type' => ['required', 'in:'.implode(',', QueueItem::TYPES)],
+        ]);
+
+        $userId = $request->user()->id;
+        $today = now()->toDateString();
+
+        $day = Day::where('user_id', $userId)->whereDate('date', $today)->first()
+            ?? new Day(['user_id' => $userId, 'date' => $today]);
+        $day->pick_type = $data['type'];
+        $day->save();
+
+        return back()->with('success', 'Listo.');
     }
 
     public function update(UpdateDayItemRequest $request, DayItem $item)
@@ -77,6 +101,22 @@ class TodayController extends Controller
         $item->update(['state' => 'released']);
 
         return back()->with('success', 'Soltado.');
+    }
+
+    /**
+     * Opciones del selector de tipo de la línea de media.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function pickTypes(): array
+    {
+        return collect(QueueItem::TYPES)
+            ->map(fn (string $type): array => [
+                'value' => $type,
+                'label' => QueueItem::TYPE_LABELS[$type] ?? $type,
+            ])
+            ->values()
+            ->all();
     }
 
     /**
