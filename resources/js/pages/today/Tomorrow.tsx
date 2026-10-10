@@ -83,7 +83,7 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
                             </button>
                         );
                     })}
-                    {pool.length === 0 && <p className="text-sm text-muted-foreground">Pool vacío. Agregalo desde Week.</p>}
+                    {pool.length === 0 && <p className="text-sm text-muted-foreground">No hay tareas en la semana. Agregalas desde Semana.</p>}
                 </div>
 
                 {Object.entries(sel).map(([k, v]) => (

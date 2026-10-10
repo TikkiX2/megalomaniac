@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Activity, Archive, Bot, Brain, BrainCircuit, Briefcase, BriefcaseMedical, Cake, CalendarClock, CheckSquare, Contact, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, HeartPulse, LayoutGrid, Library, MessagesSquare, Newspaper, Palette, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Stethoscope, Tablets, Thermometer, Users, Utensils, Wallet } from 'lucide-react';
+import { Activity, Archive, Bot, Brain, BrainCircuit, Briefcase, BriefcaseMedical, Cake, CalendarClock, CheckSquare, Contact, CreditCard, Dumbbell, FileText, FolderKanban, HardDrive, HeartPulse, Library, MessagesSquare, Newspaper, Palette, Pill, Pin, PinOff, ShieldCheck, ShoppingCart, Stethoscope, Tablets, Thermometer, Users, Utensils, Wallet } from 'lucide-react';
 import * as React from 'react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
@@ -45,9 +45,9 @@ const financeNavItems: NavItem[] = [
 ];
 
 const personalNavItems: NavItem[] = [
-    { title: 'Week', href: '/today/week', icon: FolderKanban },
-    { title: 'Queue', href: '/today/queue', icon: Library },
-    { title: 'Archived', href: '/today/archived', icon: Archive },
+    { title: 'Semana', href: '/today/week', icon: FolderKanban },
+    { title: 'Cola', href: '/today/queue', icon: Library },
+    { title: 'Archivadas', href: '/today/archived', icon: Archive },
     { title: 'Tareas', href: '/personal/tasks', icon: CheckSquare },
     { title: 'Proyectos', href: '/personal/projects', icon: FolderKanban },
 ];

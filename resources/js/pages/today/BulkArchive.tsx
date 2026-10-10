@@ -81,7 +81,7 @@ export default function BulkArchive() {
                     </label>
                 )}
 
-                <Button variant="outline" onClick={ver}>Ver preview</Button>
+                <Button variant="outline" onClick={ver}>Ver vista previa</Button>
 
                 {preview && (
                     <div className="rounded-xl border border-border bg-card p-4">
