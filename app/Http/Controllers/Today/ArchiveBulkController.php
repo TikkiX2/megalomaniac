@@ -19,7 +19,7 @@ class ArchiveBulkController extends Controller
     {
         $data = $this->validateFilter($request);
 
-        if ($data['filtro'] === 'nunca') {
+        if ($data['filter'] === 'nunca') {
             return response()->json(['total' => 0, 'primeros' => []]);
         }
 
@@ -35,7 +35,7 @@ class ArchiveBulkController extends Controller
     {
         $data = $this->validateFilter($request, confirm: true);
 
-        if ($data['filtro'] === 'nunca') {
+        if ($data['filter'] === 'nunca') {
             return back()->with('success', 'Nada para archivar.');
         }
 
@@ -48,6 +48,9 @@ class ArchiveBulkController extends Controller
         return back()->with('success', "Archivadas {$ids->count()} tareas.");
     }
 
+    /**
+     * Restaura exactamente los ids archivados en el último run y limpia la sesión.
+     */
     public function undo(Request $request)
     {
         $ids = $request->session()->get('bulk_archive_undo', []);
@@ -60,31 +63,31 @@ class ArchiveBulkController extends Controller
     }
 
     /**
-     * @param  array{filtro: string, dias?: int|null, proyecto_id?: int|null}  $data
+     * @param  array{filter: string, days?: int|null, project_id?: int|null}  $data
      */
     private function filteredTasks(Request $request, array $data): Builder
     {
         $query = ProjectTask::where('user_id', $request->user()->id)->notArchived()->notDone();
-        if ($data['filtro'] === 'mas_n_dias') {
-            $query->where('created_at', '<', now()->subDays($data['dias'] ?? 30));
+        if ($data['filter'] === 'older_than') {
+            $query->where('created_at', '<', now()->subDays($data['days'] ?? 30));
         }
-        if ($data['filtro'] === 'proyecto' && ! empty($data['proyecto_id'])) {
-            $query->where('project_id', $data['proyecto_id']);
+        if ($data['filter'] === 'project' && ! empty($data['project_id'])) {
+            $query->where('project_id', $data['project_id']);
         }
 
         return $query;
     }
 
     /**
-     * @return array{filtro: string, dias?: int|null, proyecto_id?: int|null}
+     * @return array{filter: string, days?: int|null, project_id?: int|null}
      */
     private function validateFilter(Request $request, bool $confirm = false): array
     {
         return $request->validate([
-            'filtro' => ['required', 'in:nunca,mas_n_dias,proyecto,todas'],
-            'dias' => ['nullable', 'integer', 'min:1'],
-            'proyecto_id' => ['nullable', 'exists:projects,id'],
-            'confirmado' => $confirm ? ['required', 'accepted'] : ['nullable'],
+            'filter' => ['required', 'in:nunca,older_than,project,all'],
+            'days' => ['nullable', 'integer', 'min:1'],
+            'project_id' => ['nullable', 'exists:projects,id'],
+            'confirmed' => $confirm ? ['required', 'accepted'] : ['nullable'],
         ]);
     }
 }

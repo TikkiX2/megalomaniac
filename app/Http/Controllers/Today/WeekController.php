@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Today;
 
 use App\Http\Controllers\Controller;
+use App\Models\Block;
 use App\Models\ProjectTask;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,9 +19,15 @@ class WeekController extends Controller
             ->orderBy('sort_order')
             ->get(['id', 'title']);
 
+        $blocks = Block::where('user_id', $request->user()->id)
+            ->orderBy('weekday')
+            ->orderBy('start_time')
+            ->get(['id', 'label', 'weekday', 'start_time', 'duration_min', 'active']);
+
         return Inertia::render('today/Week', [
             'pool' => $pool,
             'overloaded' => $pool->count() > 7,
+            'blocks' => $blocks,
         ]);
     }
 

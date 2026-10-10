@@ -41,6 +41,7 @@ use App\Http\Controllers\Supplement\SupplementController;
 use App\Http\Controllers\TaskBoardColumnController;
 use App\Http\Controllers\Today\ArchiveBulkController;
 use App\Http\Controllers\Today\ArchiveController;
+use App\Http\Controllers\Today\BlockController;
 use App\Http\Controllers\Today\QueueController;
 use App\Http\Controllers\Today\TodayController;
 use App\Http\Controllers\Today\TomorrowController;
@@ -281,6 +282,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('week/search', [WeekController::class, 'search'])->name('week.search');
         Route::post('week', [WeekController::class, 'store'])->name('week.store');
         Route::delete('week/{task}', [WeekController::class, 'destroy'])->name('week.destroy');
+        Route::post('blocks', [BlockController::class, 'store'])->name('blocks.store');
+        Route::patch('blocks/{block}', [BlockController::class, 'update'])->name('blocks.update');
+        Route::delete('blocks/{block}', [BlockController::class, 'destroy'])->name('blocks.destroy');
         Route::get('queue', [QueueController::class, 'index'])->name('queue');
         Route::get('queue/search', [QueueController::class, 'search'])->name('queue.search');
         Route::post('queue', [QueueController::class, 'store'])->name('queue.store');
@@ -291,9 +295,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('pick-type', [TodayController::class, 'pickType'])->name('pick-type');
         Route::get('archived', [ArchiveController::class, 'index'])->name('archived');
         Route::post('archived/restore', [ArchiveController::class, 'restore'])->name('archived.restore');
+        Route::post('archived/undo', [ArchiveBulkController::class, 'undo'])->name('archived.undo');
         Route::get('bulk-archive', [ArchiveBulkController::class, 'index'])->name('bulk-archive');
         Route::post('bulk-archive/preview', [ArchiveBulkController::class, 'preview'])->name('bulk-archive.preview');
         Route::post('bulk-archive/run', [ArchiveBulkController::class, 'run'])->name('bulk-archive.run');
-        Route::post('bulk-archive/undo', [ArchiveBulkController::class, 'undo'])->name('bulk-archive.undo');
     });
 });

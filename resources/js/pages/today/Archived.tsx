@@ -9,7 +9,7 @@ interface ArchivedItem {
     archived_at: string | null;
 }
 
-export default function Archived({ items }: { items: ArchivedItem[] }) {
+export default function Archived({ items, undoable = 0 }: { items: ArchivedItem[]; undoable?: number }) {
     const [sel, setSel] = useState<number[]>([]);
     const toggle = (id: number) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
@@ -18,6 +18,12 @@ export default function Archived({ items }: { items: ArchivedItem[] }) {
             <Head title="Archivadas" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-4">
                 <h2 className="text-xl font-black text-white">Archivadas</h2>
+                {undoable > 0 && (
+                    <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+                        <p className="text-sm text-foreground">Se archivaron {undoable} tareas.</p>
+                        <Button size="sm" variant="outline" onClick={() => router.post('/today/archived/undo')}>Deshacer</Button>
+                    </div>
+                )}
                 {items.length === 0 && <p className="text-sm text-muted-foreground">No hay tareas archivadas.</p>}
                 {items.map((t) => (
                     <label key={t.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">

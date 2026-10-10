@@ -13,5 +13,5 @@ Schedule::command('integrations:prune-activity')->daily();
 Schedule::command('agents:dispatch-due')->everyMinute();
 Schedule::command('feed:ingest')->everyThirtyMinutes();
 Schedule::command('feed:digest')->hourly();
-Schedule::command('hoy:avisar')->dailyAt('21:00');
-Schedule::command('hoy:cerrar')->dailyAt('00:05');
+Schedule::command('today:notify')->dailyAt('21:00');
+Schedule::command('today:close')->dailyAt('00:05');

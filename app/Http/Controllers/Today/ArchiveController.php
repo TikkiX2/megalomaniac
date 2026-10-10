@@ -17,7 +17,9 @@ class ArchiveController extends Controller
             ->limit(100)
             ->get(['id', 'title', 'archived_at']);
 
-        return Inertia::render('today/Archived', ['items' => $items]);
+        $undoable = count($request->session()->get('bulk_archive_undo', []));
+
+        return Inertia::render('today/Archived', ['items' => $items, 'undoable' => $undoable]);
     }
 
     public function restore(Request $request)
