@@ -6,25 +6,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ColaMediaItem extends Model
+class QueueItem extends Model
 {
     use HasFactory;
 
-    public const TIPOS = ['serie', 'pelicula', 'libro', 'juego'];
-
-    protected $table = 'cola_media';
+    protected $table = 'queue_items';
 
     protected $fillable = [
         'user_id',
-        'titulo',
-        'tipo',
-        'posicion',
+        'title',
+        'type',
+        'position',
+        'source',
+        'external_id',
+        'cover_url',
+        'year',
+        'creator',
     ];
 
     protected function casts(): array
     {
         return [
-            'posicion' => 'integer',
+            'position' => 'integer',
+            'year' => 'integer',
         ];
     }
 

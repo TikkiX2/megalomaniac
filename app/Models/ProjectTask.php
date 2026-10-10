@@ -32,8 +32,8 @@ class ProjectTask extends Model
         'sort_order',
         'is_archived',
         'is_done',
-        'en_semana',
-        'archivada_at',
+        'in_week',
+        'archived_at',
         'notion_page_id',
         'notion_last_sync',
     ];
@@ -45,8 +45,8 @@ class ProjectTask extends Model
         'start_date' => 'date',
         'is_archived' => 'boolean',
         'is_done' => 'boolean',
-        'en_semana' => 'boolean',
-        'archivada_at' => 'datetime',
+        'in_week' => 'boolean',
+        'archived_at' => 'datetime',
         'notion_last_sync' => 'datetime',
     ];
 
@@ -85,18 +85,23 @@ class ProjectTask extends Model
         return $query->where('status', $status);
     }
 
-    public function scopeEnSemana($query)
+    public function scopeInWeek($query)
     {
-        return $query->where('en_semana', true)->whereNull('archivada_at');
+        return $query->where('in_week', true)->whereNull('archived_at');
     }
 
-    public function scopeNoArchivadas($query)
+    public function scopeNotArchived($query)
     {
-        return $query->whereNull('archivada_at');
+        return $query->whereNull('archived_at');
     }
 
-    public function scopeArchivadas($query)
+    public function scopeArchived($query)
     {
-        return $query->whereNotNull('archivada_at');
+        return $query->whereNotNull('archived_at');
+    }
+
+    public function scopeNotDone($query)
+    {
+        return $query->where('is_done', false);
     }
 }

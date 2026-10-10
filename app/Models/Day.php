@@ -7,21 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Dia extends Model
+class Day extends Model
 {
     use HasFactory;
 
-    protected $table = 'dias';
+    protected $table = 'days';
 
     protected $fillable = [
         'user_id',
-        'fecha',
+        'date',
+        'pick_type',
     ];
 
     protected function casts(): array
     {
         return [
-            'fecha' => 'date',
+            'date' => 'date',
         ];
     }
 
@@ -32,13 +33,13 @@ class Dia extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(DiaItem::class, 'dia_id')->orderBy('posicion');
+        return $this->hasMany(DayItem::class, 'day_id')->orderBy('position');
     }
 
-    public function itemsVisibles(): HasMany
+    public function visibleItems(): HasMany
     {
-        return $this->hasMany(DiaItem::class, 'dia_id')
-            ->where('estado', '!=', 'soltado')
-            ->orderBy('posicion');
+        return $this->hasMany(DayItem::class, 'day_id')
+            ->where('state', '!=', 'released')
+            ->orderBy('position');
     }
 }

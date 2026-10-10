@@ -6,28 +6,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Bloque extends Model
+class Block extends Model
 {
     use HasFactory;
 
-    protected $table = 'bloques';
+    protected $table = 'blocks';
 
     protected $fillable = [
         'user_id',
-        'etiqueta',
-        'dia_semana',
-        'hora_inicio',
-        'duracion_min',
-        'activo',
+        'label',
+        'weekday',
+        'start_time',
+        'duration_min',
+        'active',
     ];
 
     protected function casts(): array
     {
         return [
-            'dia_semana' => 'integer',
-            'duracion_min' => 'integer',
-            'activo' => 'boolean',
-            'hora_inicio' => 'string',
+            'weekday' => 'integer',
+            'duration_min' => 'integer',
+            'active' => 'boolean',
+            'start_time' => 'string',
         ];
     }
 
