@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Today;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Today\StoreQueueItemRequest;
 use App\Models\QueueItem;
+use App\Services\Media\MediaSearchResult;
+use App\Services\Media\MediaSearchService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -16,14 +19,52 @@ class QueueController extends Controller
         return Inertia::render('today/Queue', ['items' => $items]);
     }
 
-    public function store(Request $request)
+    /**
+     * Búsqueda externa keyless (wikidata/openlibrary/musicbrainz).
+     */
+    public function search(Request $request, MediaSearchService $search)
     {
         $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'in:'.implode(',', QueueItem::TYPES)],
+            'q' => ['nullable', 'string', 'max:255'],
         ]);
-        $max = QueueItem::where('user_id', $request->user()->id)->max('position') ?? 0;
-        QueueItem::create([...$data, 'user_id' => $request->user()->id, 'position' => $max + 1]);
+
+        $results = $search->search($data['type'], (string) ($data['q'] ?? ''));
+
+        return response()->json(array_map(
+            fn (MediaSearchResult $result): array => $result->toArray(),
+            $results,
+        ));
+    }
+
+    public function store(StoreQueueItemRequest $request)
+    {
+        $userId = $request->user()->id;
+        $data = $request->validated();
+
+        if (filled($data['source'] ?? null) && filled($data['external_id'] ?? null)) {
+            $alreadyQueued = QueueItem::where('user_id', $userId)
+                ->where('source', $data['source'])
+                ->where('external_id', $data['external_id'])
+                ->exists();
+
+            if ($alreadyQueued) {
+                return back()->with('success', 'Ya estaba en la cola.');
+            }
+        }
+
+        $max = QueueItem::where('user_id', $userId)->max('position') ?? 0;
+        QueueItem::create([
+            'user_id' => $userId,
+            'title' => $data['title'],
+            'type' => $data['type'],
+            'position' => $max + 1,
+            'source' => $data['source'] ?? null,
+            'external_id' => $data['external_id'] ?? null,
+            'cover_url' => $data['cover_url'] ?? null,
+            'year' => $data['year'] ?? null,
+            'creator' => $data['creator'] ?? null,
+        ]);
 
         return back()->with('success', 'Agregado.');
     }

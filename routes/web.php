@@ -282,6 +282,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('week', [WeekController::class, 'store'])->name('week.store');
         Route::delete('week/{task}', [WeekController::class, 'destroy'])->name('week.destroy');
         Route::get('queue', [QueueController::class, 'index'])->name('queue');
+        Route::get('queue/search', [QueueController::class, 'search'])->name('queue.search');
         Route::post('queue', [QueueController::class, 'store'])->name('queue.store');
         Route::post('queue/next', [QueueController::class, 'next'])->name('queue.next');
         Route::patch('queue/reorder', [QueueController::class, 'reorder'])->name('queue.reorder');

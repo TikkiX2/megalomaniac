@@ -24,14 +24,14 @@ class TomorrowController extends Controller
             ->limit(10)
             ->get(['id', 'title']);
 
-        $pendingYesterday = DayItem::whereHas('day', fn ($q) => $q->where('user_id', $userId)->where('date', $yesterday))
+        $pendingYesterday = DayItem::whereHas('day', fn ($q) => $q->where('user_id', $userId)->whereDate('date', $yesterday))
             ->where('state', 'pending')
             ->with('day')
             ->get();
 
         $tomorrowDay = Day::with('visibleItems')
             ->where('user_id', $userId)
-            ->where('date', $tomorrow)
+            ->whereDate('date', $tomorrow)
             ->first();
 
         return Inertia::render('today/Tomorrow', [

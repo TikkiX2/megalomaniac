@@ -24,6 +24,23 @@ test('dashboard incluye dia, rutina, block y pick sin backlog', function () {
     expect($props['pick']['title'])->toBe('Dune');
 });
 
+test('tomorrow muestra el dia de manana ya creado y los pendientes de ayer', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $manana = Day::factory()->create(['user_id' => $user->id, 'date' => now()->addDay()->toDateString()]);
+    DayItem::factory()->create(['day_id' => $manana->id, 'title' => 'Lavar', 'position' => 1]);
+
+    $ayer = Day::factory()->create(['user_id' => $user->id, 'date' => now()->subDay()->toDateString()]);
+    DayItem::factory()->create(['day_id' => $ayer->id, 'title' => 'Colgar', 'position' => 1, 'state' => 'pending']);
+
+    $props = $this->get('/today/tomorrow')->assertOk()->viewData('page')['props'];
+
+    expect($props['diaManana'])->not->toBeNull();
+    expect($props['diaManana']['id'])->toBe($manana->id);
+    expect(collect($props['pendientesAyer'])->pluck('title')->all())->toContain('Colgar');
+});
+
 test('marcar hecho setea done_at y nota; volver a pendiente la limpia', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
