@@ -104,4 +104,34 @@ class ProjectTask extends Model
     {
         return $query->where('is_done', false);
     }
+
+    /**
+     * Aplica el grupo de filtros activos de la semana (claves ya sanitizadas).
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function scopeApplyFilters($query, array $filters)
+    {
+        if (! empty($filters['project_id'])) {
+            $query->where('project_id', $filters['project_id']);
+        }
+
+        if (! empty($filters['priority'])) {
+            $query->whereRaw('LOWER(priority) = ?', [strtolower($filters['priority'])]);
+        }
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['tag'])) {
+            $query->whereJsonContains('tags', $filters['tag']);
+        }
+
+        if (! empty($filters['type'])) {
+            $query->whereHas('project', fn ($q) => $q->where('type', $filters['type']));
+        }
+
+        return $query;
+    }
 }

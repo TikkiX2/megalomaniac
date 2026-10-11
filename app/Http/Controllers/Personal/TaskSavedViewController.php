@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Personal;
 
 use App\Http\Controllers\Controller;
 use App\Models\TaskSavedView;
+use App\Services\Today\TaskFilterService;
 use Illuminate\Http\Request;
 
 class TaskSavedViewController extends Controller
 {
     public function index(Request $request)
     {
-        $views = TaskSavedView::where('user_id', $request->user()->id)->orderBy('name')->get();
+        $views = TaskSavedView::where('user_id', $request->user()->id)
+            ->whereNotIn('view_type', array_values(TaskFilterService::VIEW_TYPES))
+            ->orderBy('name')
+            ->get();
 
         return response()->json($views);
     }
