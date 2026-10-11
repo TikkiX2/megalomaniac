@@ -1,10 +1,13 @@
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import ProjectCards from '@/components/today/ProjectCards';
+import TaskFilterBar from '@/components/today/TaskFilterBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
+import type { ActiveFilters, FilterOption, TaskRow } from '@/types/today';
 
 interface BlockPayload {
     id: number;
@@ -16,19 +19,48 @@ interface BlockPayload {
 }
 
 interface Props {
-    pool: { id: number; title: string }[];
+    pool: TaskRow[];
     overloaded: boolean;
-    candidates: { id: number; title: string }[];
+    candidates: TaskRow[];
     blocks: BlockPayload[];
+    projects: FilterOption[];
+    availableTags: string[];
+    filters: ActiveFilters;
+    limit: number;
+    hasMoreCandidates: boolean;
 }
 
 const WEEKDAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const EMPTY_BLOCK = { label: '', weekday: 0, start_time: '19:00', duration_min: 60, active: true };
 
-export default function Week({ pool, overloaded, candidates, blocks }: Props) {
+const NO_FILTER_MATCHES = 'No hay tareas que coincidan con los filtros.';
+
+/** Quita claves undefined o vacías para no mandar params de filtro inútiles. */
+function cleanFilters(params: ActiveFilters): Record<string, string | number> {
+    const cleaned: Record<string, string | number> = {};
+    (Object.keys(params) as (keyof ActiveFilters)[]).forEach((key) => {
+        const value = params[key];
+        if (value !== undefined && value !== '') {
+            cleaned[key] = value;
+        }
+    });
+    return cleaned;
+}
+
+export default function Week({
+    pool,
+    overloaded,
+    candidates,
+    blocks,
+    projects,
+    availableTags,
+    filters,
+    limit,
+    hasMoreCandidates,
+}: Props) {
     const [q, setQ] = useState('');
-    const [res, setRes] = useState<{ id: number; title: string }[]>([]);
+    const [res, setRes] = useState<TaskRow[]>([]);
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [form, setForm] = useState(EMPTY_BLOCK);
@@ -57,8 +89,47 @@ export default function Week({ pool, overloaded, candidates, blocks }: Props) {
         });
         setQ('');
         setRes([]);
-        router.reload({ only: ['pool', 'overloaded', 'candidates'] });
+        router.reload({ only: ['pool', 'overloaded', 'candidates', 'limit', 'hasMoreCandidates'] });
     };
+
+    const applyFilters = (next: ActiveFilters) => {
+        const cleaned = cleanFilters(next);
+        // Sin claves activas hay que mandar cleared=1: si mandamos params vacíos, el server
+        // relee su memoria y los filtros viejos reaparecerían.
+        router.get('/today/week', Object.keys(cleaned).length > 0 ? cleaned : { cleared: 1 }, { preserveState: true, replace: true });
+    };
+
+    const clearFilters = () => {
+        router.get('/today/week', { cleared: 1 }, { preserveState: true, replace: true });
+    };
+
+    const showMore = () => {
+        router.get('/today/week', { ...cleanFilters(filters), limit: limit + 20 }, { preserveState: true, replace: true });
+    };
+
+    const hasActiveFilters = Object.keys(filters).length > 0;
+    const searching = q.trim() !== '';
+    const pendingTasks = searching ? res : candidates;
+
+    const renderPoolRow = (task: TaskRow) => (
+        <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{task.title}</span>
+            <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => router.delete(`/today/week/${task.id}`, { only: ['pool', 'overloaded', 'candidates', 'limit', 'hasMoreCandidates'] })}
+            >
+                Sacar
+            </Button>
+        </div>
+    );
+
+    const renderAddRow = (task: TaskRow) => (
+        <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <span className="min-w-0 flex-1 truncate text-sm text-foreground">{task.title}</span>
+            <Button size="sm" onClick={() => add(task.id)}>Agregar</Button>
+        </div>
+    );
 
     const submitBlock = async () => {
         const url = editingId === null ? '/today/blocks' : `/today/blocks/${editingId}`;
@@ -106,26 +177,30 @@ export default function Week({ pool, overloaded, candidates, blocks }: Props) {
             <Head title="Semana" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4">
                 <h2 className="text-xl font-black text-white">Pool semanal</h2>
+                <TaskFilterBar
+                    filters={filters}
+                    projects={projects}
+                    tags={availableTags}
+                    onChange={applyFilters}
+                    onClear={clearFilters}
+                />
                 {overloaded && <p className="text-sm text-muted-foreground">El pool funciona con 5-7. ¿Sacamos alguna?</p>}
-                {pool.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2">
-                        <span className="text-sm font-bold text-foreground">{t.title}</span>
-                        <Button size="sm" variant="ghost" onClick={() => router.delete(`/today/week/${t.id}`)}>Sacar</Button>
-                    </div>
-                ))}
+                {pool.length === 0 && hasActiveFilters && <p className="text-sm text-muted-foreground">{NO_FILTER_MATCHES}</p>}
+                {pool.length > 0 && <ProjectCards items={pool} renderRow={renderPoolRow} showCount collapsible order="count" />}
                 <div className="flex gap-2">
                     <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar en backlog…" className="bg-card border-border" />
                 </div>
                 <h3 className="text-sm font-black text-foreground">Pendientes para agregar</h3>
-                {q.trim() === '' && candidates.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No hay pendientes para agregar.</p>
+                {!searching && candidates.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                        {hasActiveFilters ? NO_FILTER_MATCHES : 'No hay pendientes para agregar.'}
+                    </p>
                 )}
-                {(q.trim() === '' ? candidates : res).map((t) => (
-                    <div key={t.id} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
-                        <span className="min-w-0 flex-1 truncate text-sm text-foreground">{t.title}</span>
-                        <Button size="sm" onClick={() => add(t.id)}>Agregar</Button>
-                    </div>
-                ))}
+                {searching && res.length === 0 && hasActiveFilters && (
+                    <p className="text-sm text-muted-foreground">{NO_FILTER_MATCHES}</p>
+                )}
+                {pendingTasks.length > 0 && <ProjectCards items={pendingTasks} renderRow={renderAddRow} showCount collapsible order="count" />}
+                {hasMoreCandidates && !searching && <Button variant="outline" onClick={showMore}>Mostrar más</Button>}
 
                 <h2 className="mt-4 text-xl font-black text-white">Bloques</h2>
                 {blocks.length === 0 && <p className="text-sm text-muted-foreground">No hay bloques cargados.</p>}
