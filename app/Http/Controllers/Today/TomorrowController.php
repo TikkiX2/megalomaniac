@@ -7,22 +7,30 @@ use App\Http\Requests\Today\StoreTomorrowRequest;
 use App\Models\Day;
 use App\Models\DayItem;
 use App\Models\ProjectTask;
+use App\Services\Today\TaskFilterService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TomorrowController extends Controller
 {
-    public function show(Request $request)
+    public function show(Request $request, TaskFilterService $taskFilters)
     {
         $userId = $request->user()->id;
         $tomorrow = now()->addDay()->toDateString();
         $yesterday = now()->subDay()->toDateString();
 
+        $filters = $taskFilters->resolve($request, 'tomorrow');
+        $options = $taskFilters->options($userId);
+
         $pool = ProjectTask::where('user_id', $userId)
             ->inWeek()
-            ->orderBy('sort_order')
+            ->notDone()
+            ->applyFilters($filters)
+            ->with('project:id,name,color')
+            ->orderBy('created_at')
+            ->orderBy('id')
             ->limit(10)
-            ->get(['id', 'title']);
+            ->get(['id', 'title', 'project_id']);
 
         $pendingYesterday = DayItem::whereHas('day', fn ($q) => $q->where('user_id', $userId)->whereDate('date', $yesterday))
             ->where('state', 'pending')
@@ -39,6 +47,9 @@ class TomorrowController extends Controller
             'pool' => $pool,
             'pendientesAyer' => $pendingYesterday,
             'diaManana' => $tomorrowDay,
+            'projects' => $options['projects'],
+            'availableTags' => $options['tags'],
+            'filters' => $filters,
         ]);
     }
 
