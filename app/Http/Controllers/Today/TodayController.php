@@ -23,7 +23,10 @@ class TodayController extends Controller
         $userId = $request->user()->id;
         $today = now()->toDateString();
 
-        $day = Day::with('visibleItems')
+        $day = Day::with([
+            'visibleItems' => fn ($q) => $q->orderBy('position'),
+            'visibleItems.task.project',
+        ])
             ->where('user_id', $userId)
             ->whereDate('date', $today)
             ->first();
@@ -120,7 +123,7 @@ class TodayController extends Controller
     }
 
     /**
-     * @return array{id: int, pick_type: string, items: array<int, array{id: int, title: string, anchor: string, position: int, state: string, closing_note: string|null}>}|null
+     * @return array{id: int, pick_type: string, items: array<int, array{id: int, title: string, anchor: string, position: int, state: string, closing_note: string|null, project: array{id: int, name: string, color: string|null}|null}>}|null
      */
     private function dayPayload(?Day $day): ?array
     {
@@ -138,6 +141,11 @@ class TodayController extends Controller
                 'position' => $item->position,
                 'state' => $item->state,
                 'closing_note' => $item->closing_note,
+                'project' => $item->task?->project ? [
+                    'id' => $item->task->project->id,
+                    'name' => $item->task->project->name,
+                    'color' => $item->task->project->color,
+                ] : null,
             ])->values()->all(),
         ];
     }

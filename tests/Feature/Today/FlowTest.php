@@ -3,6 +3,8 @@
 use App\Models\Block;
 use App\Models\Day;
 use App\Models\DayItem;
+use App\Models\Project;
+use App\Models\ProjectTask;
 use App\Models\QueueItem;
 use App\Models\Routine;
 use App\Models\User;
@@ -22,6 +24,27 @@ test('dashboard incluye dia, rutina, block y pick sin backlog', function () {
     expect($props['routine']['name'])->toBe('Push');
     expect($props['block']['label'])->toBe('Proyecto');
     expect($props['pick']['title'])->toBe('Dune');
+});
+
+test('items de hoy incluyen el proyecto de su tarea', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $day = Day::factory()->create(['user_id' => $user->id, 'date' => now()->toDateString()]);
+
+    $project = Project::factory()->for($user)->create(['name' => 'Rediseño web', 'color' => '#EF4444']);
+    $task = ProjectTask::factory()->create(['project_id' => $project->id]);
+    DayItem::factory()->create(['day_id' => $day->id, 'task_id' => $task->id, 'title' => 'Diseñar home', 'position' => 1]);
+    DayItem::factory()->create(['day_id' => $day->id, 'task_id' => null, 'title' => 'Lavar', 'position' => 2]);
+
+    $props = $this->get(route('dashboard'))->assertOk()->viewData('page')['props'];
+
+    expect($props['day']['items'][0]['project'])->toBe([
+        'id' => $project->id,
+        'name' => 'Rediseño web',
+        'color' => '#EF4444',
+    ]);
+    expect($props['day']['items'][1]['project'])->toBeNull();
 });
 
 test('tomorrow muestra el dia de manana ya creado y los pendientes de ayer', function () {
