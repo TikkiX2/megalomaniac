@@ -598,3 +598,32 @@ Eliminados al cierre: 5 hilos QA (2 de módulo + 1 general + 2 de insights dispa
 - `docs/qa/qa-task15-prompts.png` — pestaña **Prompts** con contador y preview del prompt compuesto.
 - `docs/qa/qa-task15-module-button.png` — botón «Asistente IA» en el header de `/fitness/gym`.
 - `docs/qa/qa-task15-fallback-badge.png` — hilo de `/ai/gym` con el chip **`Fallback: 2.º proveedor`**.
+
+---
+
+## Cartas por proyecto con filtros con memoria — 2026-10-11
+
+> **Rama:** `main` (`a11030b..0f7c0b5`, 11 commits) · **Entorno:** prod desplegado (`/root/docker/megalomaniac/deploy.sh`, app/worker/scheduler healthy), Playwright MCP, usuario `test@example.com / password`, desktop 1280×720 + móvil 375×720. Spec `docs/superpowers/specs/2026-10-11-project-cards-design.md`, plan `docs/superpowers/plans/2026-10-11-project-cards.md`.
+
+### Escenario ejecutado
+1. **Login** → `test@example.com/password` fallaba ("These credentials…"): hash restaurado en prod (user id 2) → login OK. **PASS (fix de entorno)**
+2. **Semana `/today/week`** → barra PROYECTO/PRIORIDAD/ESTADO/ETIQUETA/TIPO + buscador; pendientes agrupados en cartas por proyecto con dot de color, badge de cantidad y chevron (Renovar Departamento 7, Aprender Guitarra 6…); filas "Agregar"; sin filtros hay 22 candidatas y "Mostrar más" presente. **PASS**
+3. **Filtro en vivo** → Prioridad=Alta → URL `?priority=High`; pool vacío muestra "No hay tareas que coincidan con los filtros."; candidatas = 8 (7 `High` + 1 `high` → **match case-insensitive OK**); "Limpiar filtros" aparece. **PASS**
+4. **Memoria servidor** → visita a `/today/week` sin params rehidrata Prioridad=Alta (fila reservada `today_week`); "Limpiar filtros" → sin filtro ni botón. **PASS**
+5. **Mañana `/today/tomorrow`** → con 3 tareas `in_week` QA: cartas con cantidad/colapso y toggle "Elegir/Elegida"; filtro Normal → `?priority=Normal` acota pool 3→1 y limpiar borra la memoria `today_tomorrow`; vacío sin filtros conserva el mensaje original. **PASS**
+6. **Hoy `/dashboard`** → con day+2 items QA: cartas "APP TITAN REDESIGN" y "SIN PROYECTO" **sin contador ni colapso (§4)**; `DayItemRow` (Marcar hecho/Soltar/sin ancla) intacto. **PASS**
+7. **Responsive 375px** → `scrollWidth == clientWidth == 375` en Semana/Mañana/Hoy; capturas sin clipping. **PASS**
+8. **Consola** → 0 errors en las 3 rutas (los 2 del arranque fueron CDN de fuentes `ERR_NETWORK_CHANGED`, ajenos a la app). **PASS**
+
+### Hallazgos del finish gate y correcciones
+- **[P1, FIXED `0f7c0b5`]** Los 5 selects no tenían etiqueta visible (solo `aria-label`): cinco cajas "Todos" indistinguibles → etiquetas visibles `PROYECTO · PRIORIDAD · ESTADO · ETIQUETA · TIPO` (estilo micro del proyecto); re-verificado con capturas en 1280×720 y 375px.
+- **[entorno, FIXED]** password de `test@example.com` desactualizado en prod (bloqueaba el crawl diario) → restaurado a `password`.
+
+### Datos de QA
+Temporales creados y **revertidos**: 3 tareas a `in_week=true` (ids 1,7,8 → false) y 1 `day` + 2 `day_items` del usuario QA (borrados; `days` del usuario = 0 al cierre).
+
+### Screenshots
+`qa-2026-10-11-{week,tomorrow,hoy}-{desktop,mobile}.png` + `*-v2.png` (barra con etiquetas), locales en la raíz del repo, no commiteados.
+
+### Estáticos
+`php artisan test --compact` **1941 passed** (9107 assertions) / 0 failed · `vendor/bin/pint --dirty` OK · `npm run types` 0 · eslint archivos tocados 0 · `npm run build` OK · push `origin/main` OK · deploy `EXIT=0`.
