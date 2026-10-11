@@ -1,7 +1,9 @@
 import { Link, router } from '@inertiajs/react';
 import { csrfHeaders } from '@/lib/csrf';
+import type { ProjectBrief } from '@/types/today';
 import DayItemRow from './DayItemRow';
 import MediaLine, { type MediaPick, type PickTypeOption } from './MediaLine';
+import ProjectCards from './ProjectCards';
 
 export interface TodayItem {
     id: number;
@@ -10,6 +12,7 @@ export interface TodayItem {
     position: number;
     state: 'pending' | 'done' | 'released';
     closing_note: string | null;
+    project: ProjectBrief | null;
 }
 
 export interface DayPayload {
@@ -101,16 +104,17 @@ export default function TodayPanel({ date, day, block, routine, pick, pickTypes 
                     </Link>
                 </div>
             ) : (
-                <div className="flex flex-col divide-y divide-border">
-                    {items.map((item) => (
+                <ProjectCards
+                    items={items}
+                    order="appearance"
+                    renderRow={(item) => (
                         <DayItemRow
-                            key={item.id}
                             item={item}
                             onPatch={(body) => patchItem(item.id, body)}
                             onRelease={() => releaseItem(item.id)}
                         />
-                    ))}
-                </div>
+                    )}
+                />
             )}
 
             <MediaLine pick={pick} pickType={day?.pick_type ?? 'pelicula'} pickTypes={pickTypes} onNext={nextInQueue} />
