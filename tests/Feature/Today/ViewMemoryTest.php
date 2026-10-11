@@ -14,6 +14,7 @@ test('week recuerda filtros aplicados en vista reservada', function () {
     $fila = TaskSavedView::where('user_id', $user->id)->where('view_type', 'today_week')->first();
 
     expect($fila)->not->toBeNull();
+    expect($fila->name)->toBe('Semana (automática)');
     expect($fila->filters)->toBe(['priority' => 'High']);
 });
 

@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { ActiveFilters, FilterOption } from '@/types/today';
 
-/** Radix Select no acepta `value=""`; 'todos' es el sentinel de "sin filtro". */
-const ALL = 'todos';
+/** Radix Select no acepta `value=""`; '__todos__' es el sentinel de "sin filtro" (imposible como etiqueta literal). */
+const ALL = '__todos__';
 
 const PRIORITIES: { value: string; label: string }[] = [
     { value: 'Low', label: 'Baja' },

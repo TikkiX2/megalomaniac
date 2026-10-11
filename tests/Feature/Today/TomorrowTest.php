@@ -73,6 +73,19 @@ test('tomorrow pool incluye proyecto con color', function () {
     expect($props)->toHaveKeys(['projects', 'availableTags', 'filters']);
 });
 
+test('tomorrow recuerda filtros con nombre del spec en la vista reservada', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->get('/today/tomorrow?priority=High')->assertOk();
+
+    $fila = TaskSavedView::where('user_id', $user->id)->where('view_type', 'today_tomorrow')->first();
+
+    expect($fila)->not->toBeNull();
+    expect($fila->name)->toBe('Mañana (automática)');
+    expect($fila->filters)->toBe(['priority' => 'High']);
+});
+
 test('tomorrow pool aplica filtros recordados', function () {
     $user = User::factory()->create();
     $this->actingAs($user);

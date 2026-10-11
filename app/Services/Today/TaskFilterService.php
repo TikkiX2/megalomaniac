@@ -20,6 +20,9 @@ class TaskFilterService
 
     public const VIEW_TYPES = ['week' => 'today_week', 'tomorrow' => 'today_tomorrow'];
 
+    /** Nombres de la vista reservada por sección (spec §3.4). */
+    public const VIEW_NAMES = ['week' => 'Semana (automática)', 'tomorrow' => 'Mañana (automática)'];
+
     /**
      * Devuelve los filtros activos de la sección: si el request trae claves de filtro,
      * los sanitiza y los recuerda; si no, lee la memoria previa (sanitizándola);
@@ -116,7 +119,7 @@ class TaskFilterService
 
         TaskSavedView::updateOrCreate(
             ['user_id' => $userId, 'view_type' => self::VIEW_TYPES[$section]],
-            ['name' => 'Filtros guardados', 'filters' => $filters],
+            ['name' => self::VIEW_NAMES[$section], 'filters' => $filters],
         );
     }
 

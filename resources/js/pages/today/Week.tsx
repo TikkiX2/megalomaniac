@@ -66,6 +66,11 @@ export default function Week({
     const [form, setForm] = useState(EMPTY_BLOCK);
     const [editingId, setEditingId] = useState<number | null>(null);
 
+    // Clave derivada de filters: cambia cuando cambia un filtro, así el efecto de búsqueda
+    // re-fetchea (el server aplica los filtros recordados en /today/week/search) y sirve
+    // como cache-buster para no reusar la respuesta HTTP de filtros anteriores.
+    const filtersKey = JSON.stringify(filters);
+
     useEffect(() => {
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(async () => {
@@ -73,13 +78,14 @@ export default function Week({
                 setRes([]);
                 return;
             }
-            const r = await fetch(`/today/week/search?q=${encodeURIComponent(q)}`, { headers: csrfHeaders() });
+            const url = `/today/week/search?q=${encodeURIComponent(q)}&f=${encodeURIComponent(filtersKey)}`;
+            const r = await fetch(url, { headers: csrfHeaders() });
             if (r.ok) setRes(await r.json());
         }, 300);
         return () => {
             if (timer.current) clearTimeout(timer.current);
         };
-    }, [q]);
+    }, [q, filtersKey]);
 
     const add = async (taskId: number) => {
         await fetch('/today/week', {
@@ -94,9 +100,16 @@ export default function Week({
 
     const applyFilters = (next: ActiveFilters) => {
         const cleaned = cleanFilters(next);
+        // El limit no se persiste en memoria server, pero sí se preserva en el GET para que
+        // una lista expandida no colapse a 20 al ajustar un filtro.
+        const limitParam = limit > 20 ? { limit } : {};
         // Sin claves activas hay que mandar cleared=1: si mandamos params vacíos, el server
         // relee su memoria y los filtros viejos reaparecerían.
-        router.get('/today/week', Object.keys(cleaned).length > 0 ? cleaned : { cleared: 1 }, { preserveState: true, replace: true });
+        router.get(
+            '/today/week',
+            Object.keys(cleaned).length > 0 ? { ...cleaned, ...limitParam } : { cleared: 1, ...limitParam },
+            { preserveState: true, replace: true },
+        );
     };
 
     const clearFilters = () => {
@@ -200,7 +213,7 @@ export default function Week({
                     <p className="text-sm text-muted-foreground">{NO_FILTER_MATCHES}</p>
                 )}
                 {pendingTasks.length > 0 && <ProjectCards items={pendingTasks} renderRow={renderAddRow} showCount collapsible order="count" />}
-                {hasMoreCandidates && !searching && <Button variant="outline" onClick={showMore}>Mostrar más</Button>}
+                {hasMoreCandidates && limit < 100 && !searching && <Button variant="outline" onClick={showMore}>Mostrar más</Button>}
 
                 <h2 className="mt-4 text-xl font-black text-white">Bloques</h2>
                 {blocks.length === 0 && <p className="text-sm text-muted-foreground">No hay bloques cargados.</p>}
