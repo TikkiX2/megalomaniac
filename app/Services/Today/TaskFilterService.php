@@ -67,7 +67,7 @@ class TaskFilterService
 
     /**
      * Mantiene solo claves válidas: project_id propio y no borrado, priority/status/type
-     * dentro de sus enums y tag como string no vacío.
+     * dentro de sus enums y tag como string no vacío de hasta 64 caracteres.
      *
      * @param  array<string, mixed>  $input
      * @return array<string, mixed>
@@ -90,7 +90,7 @@ class TaskFilterService
         }
 
         $tag = $input['tag'] ?? null;
-        if (is_string($tag) && trim($tag) !== '') {
+        if (is_string($tag) && trim($tag) !== '' && strlen(trim($tag)) <= 64) {
             $filters['tag'] = trim($tag);
         }
 

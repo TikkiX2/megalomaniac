@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\TaskSavedView;
 use App\Services\TaskBoardColumnService;
+use App\Services\Today\TaskFilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +59,10 @@ class PersonalTaskController extends Controller
             ->get()
             ->each(fn ($p) => $p->append('progress'));
 
-        $savedViews = TaskSavedView::where('user_id', $request->user()->id)->orderBy('name')->get();
+        $savedViews = TaskSavedView::where('user_id', $request->user()->id)
+            ->whereNotIn('view_type', array_values(TaskFilterService::VIEW_TYPES))
+            ->orderBy('name')
+            ->get();
 
         $projectFilter = $request->project_id
             ? Project::where('id', $request->project_id)->where('user_id', $request->user()->id)->first()

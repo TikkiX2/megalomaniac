@@ -133,6 +133,37 @@ test('week sanitiza memoria con proyecto borrado', function () {
     expect(TaskSavedView::where('user_id', $user->id)->where('view_type', 'today_week')->exists())->toBeFalse();
 });
 
+test('week descarta tag que supera el maximo de 64 caracteres', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $tagLargo = str_repeat('a', 65);
+
+    ProjectTask::factory()->create(['user_id' => $user->id, 'project_id' => null, 'title' => 'ConTagLargo', 'tags' => [$tagLargo], 'in_week' => false]);
+    ProjectTask::factory()->create(['user_id' => $user->id, 'project_id' => null, 'title' => 'Otra', 'tags' => ['corta'], 'in_week' => false]);
+
+    $props = $this->get('/today/week?tag='.urlencode($tagLargo))->assertOk()->viewData('page')['props'];
+    $titles = collect($props['candidates'])->pluck('title')->all();
+
+    expect($props['filters'])->toBe([]);
+    expect(TaskSavedView::where('user_id', $user->id)->where('view_type', 'today_week')->exists())->toBeFalse();
+    expect($titles)->toContain('ConTagLargo', 'Otra');
+});
+
+test('pagina de tareas personales excluye vistas reservadas', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    TaskSavedView::create(['user_id' => $user->id, 'name' => 'Reservada Semana', 'view_type' => 'today_week', 'filters' => ['priority' => 'High']]);
+    TaskSavedView::create(['user_id' => $user->id, 'name' => 'Mi Vista Personal', 'view_type' => 'table', 'filters' => ['status' => 'Pending']]);
+
+    $props = $this->get('/personal/tasks')->assertOk()->viewData('page')['props'];
+    $nombres = collect($props['savedViews'])->pluck('name')->all();
+
+    expect($nombres)->toContain('Mi Vista Personal');
+    expect($nombres)->not->toContain('Reservada Semana');
+});
+
 test('saved views del modulo personal excluye vistas reservadas', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
