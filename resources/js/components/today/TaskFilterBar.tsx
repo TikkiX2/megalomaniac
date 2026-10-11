@@ -36,85 +36,106 @@ export default function TaskFilterBar({ filters, projects, tags, onChange, onCle
         filters.project_id !== undefined || !!filters.priority || !!filters.status || !!filters.tag || !!filters.type;
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
-            <Select
-                value={filters.project_id !== undefined ? String(filters.project_id) : ALL}
-                onValueChange={v => onChange({ ...filters, project_id: v === ALL ? undefined : Number(v) })}
-            >
-                <SelectTrigger className="h-9 w-44 border-border bg-card" aria-label="Filtrar por proyecto">
-                    <SelectValue placeholder="Proyecto" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={ALL}>Todos</SelectItem>
-                    {projects.map(project => (
-                        <SelectItem key={project.id} value={String(project.id)}>
-                            {project.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+        <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Proyecto</span>
+                <Select
+                    value={filters.project_id !== undefined ? String(filters.project_id) : ALL}
+                    onValueChange={v => onChange({ ...filters, project_id: v === ALL ? undefined : Number(v) })}
+                >
+                    <SelectTrigger className="h-9 w-44 border-border bg-card" aria-label="Filtrar por proyecto">
+                        <SelectValue placeholder="Proyecto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={ALL}>Todos</SelectItem>
+                        {projects.map(project => (
+                            <SelectItem key={project.id} value={String(project.id)}>
+                                {project.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
 
-            <Select
-                value={filters.priority ?? ALL}
-                onValueChange={v => onChange({ ...filters, priority: v === ALL ? undefined : v })}
-            >
-                <SelectTrigger className="h-9 w-36 border-border bg-card" aria-label="Filtrar por prioridad">
-                    <SelectValue placeholder="Prioridad" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={ALL}>Todos</SelectItem>
-                    {PRIORITIES.map(priority => (
-                        <SelectItem key={priority.value} value={priority.value}>
-                            {priority.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Prioridad</span>
+                <Select
+                    value={filters.priority ?? ALL}
+                    onValueChange={v => onChange({ ...filters, priority: v === ALL ? undefined : v })}
+                >
+                    <SelectTrigger className="h-9 w-36 border-border bg-card" aria-label="Filtrar por prioridad">
+                        <SelectValue placeholder="Prioridad" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={ALL}>Todos</SelectItem>
+                        {PRIORITIES.map(priority => (
+                            <SelectItem key={priority.value} value={priority.value}>
+                                {priority.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
 
-            <Select
-                value={filters.status ?? ALL}
-                onValueChange={v => onChange({ ...filters, status: v === ALL ? undefined : v })}
-            >
-                <SelectTrigger className="h-9 w-36 border-border bg-card" aria-label="Filtrar por estado">
-                    <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={ALL}>Todos</SelectItem>
-                    {STATUSES.map(status => (
-                        <SelectItem key={status.value} value={status.value}>
-                            {status.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estado</span>
+                <Select
+                    value={filters.status ?? ALL}
+                    onValueChange={v => onChange({ ...filters, status: v === ALL ? undefined : v })}
+                >
+                    <SelectTrigger className="h-9 w-36 border-border bg-card" aria-label="Filtrar por estado">
+                        <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={ALL}>Todos</SelectItem>
+                        {STATUSES.map(status => (
+                            <SelectItem key={status.value} value={status.value}>
+                                {status.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
 
-            <Select value={filters.tag ?? ALL} onValueChange={v => onChange({ ...filters, tag: v === ALL ? undefined : v })}>
-                <SelectTrigger className="h-9 w-36 border-border bg-card" aria-label="Filtrar por etiqueta">
-                    <SelectValue placeholder="Etiqueta" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={ALL}>Todos</SelectItem>
-                    {tags.map(tag => (
-                        <SelectItem key={tag} value={tag}>
-                            {tag}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Etiqueta</span>
+                <Select
+                    value={filters.tag ?? ALL}
+                    onValueChange={v => onChange({ ...filters, tag: v === ALL ? undefined : v })}
+                >
+                    <SelectTrigger className="h-9 w-36 border-border bg-card" aria-label="Filtrar por etiqueta">
+                        <SelectValue placeholder="Etiqueta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={ALL}>Todos</SelectItem>
+                        {tags.map(tag => (
+                            <SelectItem key={tag} value={tag}>
+                                {tag}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
 
-            <Select value={filters.type ?? ALL} onValueChange={v => onChange({ ...filters, type: v === ALL ? undefined : v })}>
-                <SelectTrigger className="h-9 w-36 border-border bg-card" aria-label="Filtrar por tipo">
-                    <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={ALL}>Todos</SelectItem>
-                    {TYPES.map(type => (
-                        <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo</span>
+                <Select
+                    value={filters.type ?? ALL}
+                    onValueChange={v => onChange({ ...filters, type: v === ALL ? undefined : v })}
+                >
+                    <SelectTrigger className="h-9 w-36 border-border bg-card" aria-label="Filtrar por tipo">
+                        <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={ALL}>Todos</SelectItem>
+                        {TYPES.map(type => (
+                            <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
 
             {hasActiveFilters && (
                 <Button variant="outline" size="sm" onClick={onClear}>
