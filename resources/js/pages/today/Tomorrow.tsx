@@ -1,24 +1,51 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { ANCHOR_LABELS } from '@/components/today/DayItemRow';
+import ProjectCards from '@/components/today/ProjectCards';
+import TaskFilterBar from '@/components/today/TaskFilterBar';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MainLayout from '@/layouts/main-layout';
+import type { ActiveFilters, FilterOption, TaskRow } from '@/types/today';
 
 const ANCHORS = ['wake_up', 'after_meal', 'after_gym', 'after_shower', 'before_sleep', 'no_anchor'];
 
-interface PoolItem { id: number; title: string; }
+const NO_FILTER_MATCHES = 'No hay tareas que coincidan con los filtros.';
+
 interface PendingItem { id: number; title: string; task_id: number | null; anchor: string; }
 interface DayItemShape { id: number; title: string; task_id: number | null; anchor: string; position: number; state?: string; }
 interface SelectedItem { title: string; anchor: string; task_id: number | null; }
 interface Props {
     fecha: string;
-    pool: PoolItem[];
+    pool: TaskRow[];
     pendientesAyer: PendingItem[];
     diaManana: { visible_items?: DayItemShape[]; visibleItems?: DayItemShape[] } | null;
+    projects: FilterOption[];
+    availableTags: string[];
+    filters: ActiveFilters;
 }
 
-export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Props) {
+/** Quita claves undefined o vacías para no mandar params de filtro inútiles. */
+function cleanFilters(params: ActiveFilters): Record<string, string | number> {
+    const cleaned: Record<string, string | number> = {};
+    (Object.keys(params) as (keyof ActiveFilters)[]).forEach((key) => {
+        const value = params[key];
+        if (value !== undefined && value !== '') {
+            cleaned[key] = value;
+        }
+    });
+    return cleaned;
+}
+
+export default function Tomorrow({
+    fecha,
+    pool,
+    pendientesAyer,
+    diaManana,
+    projects,
+    availableTags,
+    filters,
+}: Props) {
     const existentes: DayItemShape[] = diaManana?.visible_items ?? diaManana?.visibleItems ?? [];
     const [sel, setSel] = useState<Record<number, SelectedItem>>(() => {
         const m: Record<number, SelectedItem> = {};
@@ -27,7 +54,7 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
     });
     const count = Object.keys(sel).filter((k) => sel[Number(k)]?.title).length;
 
-    const toggle = (t: PoolItem) => {
+    const toggle = (t: TaskRow) => {
         const entries = Object.entries(sel);
         const found = entries.find(([, v]) => v.task_id === t.id);
         if (found) {
@@ -49,6 +76,33 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
 
     const dejarVacio = () => router.post('/today/tomorrow', { items: [] });
 
+    const applyFilters = (next: ActiveFilters) => {
+        const cleaned = cleanFilters(next);
+        // Sin claves activas hay que mandar cleared=1: si mandamos params vacíos, el server
+        // relee su memoria y los filtros viejos reaparecerían.
+        router.get('/today/tomorrow', Object.keys(cleaned).length > 0 ? cleaned : { cleared: 1 }, { preserveState: true, replace: true });
+    };
+
+    const clearFilters = () => {
+        router.get('/today/tomorrow', { cleared: 1 }, { preserveState: true, replace: true });
+    };
+
+    const hasActiveFilters = Object.keys(filters).length > 0;
+
+    const renderPoolRow = (task: TaskRow) => {
+        const active = Object.values(sel).some((v) => v.task_id === task.id);
+        return (
+            <button
+                type="button"
+                onClick={() => toggle(task)}
+                className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left ${active ? 'border-primary bg-primary/10' : 'border-border'}`}
+            >
+                <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{task.title}</span>
+                <span className="text-xs text-muted-foreground">{active ? 'Elegida' : 'Elegir'}</span>
+            </button>
+        );
+    };
+
     return (
         <MainLayout>
             <Head title="Mañana" />
@@ -57,6 +111,14 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
                     <h2 className="text-xl font-black text-white">Elegí hasta 3 <span className="text-sm font-bold text-muted-foreground">· {fecha}</span></h2>
                     <span className="text-xs font-bold text-muted-foreground">{count} de 3 elegidas</span>
                 </div>
+
+                <TaskFilterBar
+                    filters={filters}
+                    projects={projects}
+                    tags={availableTags}
+                    onChange={applyFilters}
+                    onClear={clearFilters}
+                />
 
                 {pendientesAyer.length > 0 && (
                     <div className="flex flex-col gap-2 rounded-xl bg-card border border-border p-4">
@@ -73,18 +135,12 @@ export default function Tomorrow({ fecha, pool, pendientesAyer, diaManana }: Pro
                     </div>
                 )}
 
-                <div className="flex flex-col gap-2 rounded-xl bg-card border border-border p-4">
-                    {pool.map((t) => {
-                        const active = Object.values(sel).some((v) => v.task_id === t.id);
-                        return (
-                            <button key={t.id} onClick={() => toggle(t)} className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left ${active ? 'border-primary bg-primary/10' : 'border-border'}`}>
-                                <span className="text-sm font-bold text-foreground">{t.title}</span>
-                                <span className="text-xs text-muted-foreground">{active ? 'Elegida' : 'Elegir'}</span>
-                            </button>
-                        );
-                    })}
-                    {pool.length === 0 && <p className="text-sm text-muted-foreground">No hay tareas en la semana. Agregalas desde Semana.</p>}
-                </div>
+                {pool.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                        {hasActiveFilters ? NO_FILTER_MATCHES : 'No hay tareas en la semana. Agregalas desde Semana.'}
+                    </p>
+                )}
+                {pool.length > 0 && <ProjectCards items={pool} renderRow={renderPoolRow} showCount collapsible order="count" />}
 
                 {Object.entries(sel).map(([k, v]) => (
                     <div key={k} className="flex gap-2">
