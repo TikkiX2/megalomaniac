@@ -7,6 +7,7 @@ use App\Http\Requests\Finance\StoreDebtRequest;
 use App\Models\CreditCard;
 use App\Models\Currency;
 use App\Models\Debt;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -156,8 +157,8 @@ class DebtController extends Controller
         ]);
 
         $debt->addPayment(
-            $request->amount,
-            $request->payment_date,
+            (float) $request->amount,
+            Carbon::parse($request->payment_date),
             $request->notes
         );
 

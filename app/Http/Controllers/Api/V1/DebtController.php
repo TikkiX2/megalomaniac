@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Requests\Api\StoreDebtRequest;
 use App\Http\Resources\DebtResource;
 use App\Models\Debt;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -83,8 +84,8 @@ class DebtController extends Controller
         ]);
 
         $payment = $debt->addPayment(
-            $validated['amount'],
-            $validated['payment_date'],
+            (float) $validated['amount'],
+            Carbon::parse($validated['payment_date']),
             $validated['notes'] ?? null
         );
 
