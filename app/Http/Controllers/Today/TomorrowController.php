@@ -38,7 +38,7 @@ class TomorrowController extends Controller
             ->with('day')
             ->get();
 
-        $tomorrowDay = Day::with('visibleItems')
+        $targetDay = Day::with('visibleItems')
             ->where('user_id', $userId)
             ->whereDate('date', $date)
             ->first();
@@ -48,7 +48,7 @@ class TomorrowController extends Controller
             'target' => $target,
             'pool' => $pool,
             'pendientesAyer' => $pendingYesterday,
-            'dia' => $tomorrowDay,
+            'dia' => $targetDay,
             'projects' => $options['projects'],
             'availableTags' => $options['tags'],
             'filters' => $filters,
