@@ -627,3 +627,25 @@ Temporales creados y **revertidos**: 3 tareas a `in_week=true` (ids 1,7,8 → fa
 
 ### Estáticos
 `php artisan test --compact` **1941 passed** (9107 assertions) / 0 failed · `vendor/bin/pint --dirty` OK · `npm run types` 0 · eslint archivos tocados 0 · `npm run build` OK · push `origin/main` OK · deploy `EXIT=0`.
+
+---
+
+## Planificar el mismo día (selector Hoy|Mañana) — 2026-10-13
+
+> **Rama:** `main` (`90e6b16`) · **Entorno:** prod desplegado (`deploy.sh`, EXIT=0), Playwright MCP, usuario `test@example.com`, desktop 1280×720 + móvil 375×720. Cambio bounded (sin spec): filtros/memoria siguen intactos.
+
+### Verificado en vivo
+1. **Default por hora en prod** — a las ~03:30 UTC, `GET /today/tomorrow` abrió en **Hoy** (`2026-10-13`, `Head` "Hoy", chip "Hoy" presionado, botón "Guardar hoy") sin parámetros. **PASS**
+2. **Selector** — "Mañana" → URL `?target=tomorrow`, fecha `2026-10-14`, `Head` "Mañana", "Guardar mañana" y chip "Mañana" presionado; volver a "Hoy" idem. **PASS**
+3. **Guardar hoy end-to-end** — tarea del pool elegida → "Guardar hoy" (redirect al dashboard con la tarea en el panel Hoy, card "App Titan Redesign"); reabrir el planner muestra "1 de 3 elegidas" con el plan de hoy cargado. **PASS**
+4. **CTA del dashboard** — con "Hoy no hay nada elegido", "Elegir" ahora enlaza `/today/tomorrow?target=today`. **PASS**
+5. **Responsive y consola** — 375px sin overflow (`scrollWidth == clientWidth == 375`); 0 errores de consola. **PASS**
+
+### Hallazgo de implementación (cubierto con test)
+`Day::firstOrCreate(['date' => ...])` no encontraba días existentes cuando la fecha se guarda con componente hora (SQLite de tests), produciendo violación del índice único al re-guardar el mismo día; se alineó el lookup del `store` al patrón `whereDate` que ya usa el resto de la app.
+
+### Datos de QA
+Temporales creados y **revertidos**: 1 tarea a `in_week=true` (id 1 → false) y día `2026-10-13` + 1 item del usuario QA (borrados; `days` del usuario = 0 al cierre).
+
+### Estáticos
+`php artisan test --compact` **1949 passed** (9136 assertions; 8 tests nuevos de `target`) · Pint OK · `npm run types` 0 · eslint OK · `npm run build` OK. Deploy `EXIT=0` (~12 min: el build se relanzó en background con log a `/tmp/opencode/deploy-90e6b16.log`). Screenshots: `qa-2026-10-13-planner-hoy-{desktop,mobile}.png` (locales, no commiteados).
