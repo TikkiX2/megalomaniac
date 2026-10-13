@@ -97,7 +97,7 @@ export default function TodayPanel({ date, day, block, routine, pick, pickTypes 
                 <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-background/60 px-4 py-6 text-center">
                     <p className="text-sm font-medium text-muted-foreground">Hoy no hay nada elegido.</p>
                     <Link
-                        href="/today/tomorrow"
+                        href="/today/tomorrow?target=today"
                         className="flex h-11 items-center rounded-lg bg-primary px-5 text-sm font-black text-white transition hover:bg-primary/90 active:scale-95"
                     >
                         Elegir

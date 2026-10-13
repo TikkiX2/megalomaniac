@@ -16,7 +16,8 @@ class TomorrowController extends Controller
     public function show(Request $request, TaskFilterService $taskFilters)
     {
         $userId = $request->user()->id;
-        $tomorrow = now()->addDay()->toDateString();
+        $target = $this->resolveTarget($request->query('target'));
+        $date = $target === 'today' ? now()->toDateString() : now()->addDay()->toDateString();
         $yesterday = now()->subDay()->toDateString();
 
         $filters = $taskFilters->resolve($request, 'tomorrow');
@@ -39,14 +40,15 @@ class TomorrowController extends Controller
 
         $tomorrowDay = Day::with('visibleItems')
             ->where('user_id', $userId)
-            ->whereDate('date', $tomorrow)
+            ->whereDate('date', $date)
             ->first();
 
         return Inertia::render('today/Tomorrow', [
-            'fecha' => $tomorrow,
+            'fecha' => $date,
+            'target' => $target,
             'pool' => $pool,
             'pendientesAyer' => $pendingYesterday,
-            'diaManana' => $tomorrowDay,
+            'dia' => $tomorrowDay,
             'projects' => $options['projects'],
             'availableTags' => $options['tags'],
             'filters' => $filters,
@@ -56,7 +58,8 @@ class TomorrowController extends Controller
     public function store(StoreTomorrowRequest $request)
     {
         $userId = $request->user()->id;
-        $tomorrow = now()->addDay()->toDateString();
+        $target = $request->validated()['target'] ?? 'tomorrow';
+        $date = $target === 'today' ? now()->toDateString() : now()->addDay()->toDateString();
         $items = $request->validated()['items'] ?? [];
 
         foreach ($items as $it) {
@@ -68,7 +71,8 @@ class TomorrowController extends Controller
             }
         }
 
-        $day = Day::firstOrCreate(['user_id' => $userId, 'date' => $tomorrow]);
+        $day = Day::where('user_id', $userId)->whereDate('date', $date)->first()
+            ?? Day::create(['user_id' => $userId, 'date' => $date]);
         // Reemplaza visibles (released queda como rastro invisible, no ocupa slot).
         $day->items()->where('state', '!=', 'released')->delete();
         foreach ($items as $it) {
@@ -82,7 +86,7 @@ class TomorrowController extends Controller
         }
 
         // "Dejarlo vacío": items vacío deja el día vacío sin fricción.
-        return redirect()->route('dashboard')->with('success', 'Mañana listo.');
+        return redirect()->route('dashboard')->with('success', $target === 'today' ? 'Hoy listo.' : 'Mañana listo.');
     }
 
     public function putToday(Request $request, DayItem $item)
@@ -110,5 +114,18 @@ class TomorrowController extends Controller
         $item->update(['state' => 'released']);
 
         return back()->with('success', 'Puesto hoy.');
+    }
+
+    /**
+     * Resuelve el destino de la planificación: `?target=today|tomorrow` explícito
+     * o, sin parámetro, por hora (madrugada 00–05 → hoy, resto → mañana).
+     */
+    private function resolveTarget(mixed $requested): string
+    {
+        if (in_array($requested, ['today', 'tomorrow'], true)) {
+            return $requested;
+        }
+
+        return now()->hour < 5 ? 'today' : 'tomorrow';
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Day;
+use App\Models\DayItem;
 use App\Models\Project;
 use App\Models\ProjectTask;
 use App\Models\TaskSavedView;
@@ -107,4 +109,103 @@ test('tomorrow pool aplica filtros recordados', function () {
     expect($titles)->toContain('Alta');
     expect($titles)->not->toContain('Baja');
     expect($props['filters'])->toBe(['priority' => 'High']);
+});
+
+test('tomorrow planifica el dia en curso con target=today', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->post('/today/tomorrow', [
+        'target' => 'today',
+        'items' => [
+            ['title' => 'Hoy mismo', 'anchor' => 'no_anchor', 'position' => 1],
+        ],
+    ])->assertRedirect(route('dashboard'))->assertSessionHas('success', 'Hoy listo.');
+
+    $hoy = Day::where('user_id', $user->id)->whereDate('date', now()->toDateString())->first();
+
+    expect($hoy)->not->toBeNull();
+    expect($hoy->items()->where('state', '!=', 'released')->pluck('title')->all())->toBe(['Hoy mismo']);
+    expect(Day::where('user_id', $user->id)->whereDate('date', now()->addDay()->toDateString())->exists())->toBeFalse();
+});
+
+test('tomorrow con target=today reemplaza el plan visible de hoy', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $hoy = Day::factory()->create(['user_id' => $user->id, 'date' => now()->toDateString()]);
+    DayItem::factory()->create(['day_id' => $hoy->id, 'title' => 'Viejo', 'position' => 1]);
+
+    $this->post('/today/tomorrow', [
+        'target' => 'today',
+        'items' => [['title' => 'Nuevo', 'anchor' => 'no_anchor', 'position' => 1]],
+    ])->assertRedirect(route('dashboard'));
+
+    expect($hoy->items()->where('state', '!=', 'released')->pluck('title')->all())->toBe(['Nuevo']);
+});
+
+test('tomorrow sin target sigue guardando manana', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->post('/today/tomorrow', ['items' => []])
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('success', 'Mañana listo.');
+
+    expect(Day::where('user_id', $user->id)->whereDate('date', now()->addDay()->toDateString())->exists())->toBeTrue();
+    expect(Day::where('user_id', $user->id)->whereDate('date', now()->toDateString())->exists())->toBeFalse();
+});
+
+test('tomorrow show con target=today carga el dia de hoy', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $hoy = Day::factory()->create(['user_id' => $user->id, 'date' => now()->toDateString()]);
+    DayItem::factory()->create(['day_id' => $hoy->id, 'title' => 'Plan de hoy', 'position' => 1]);
+
+    $props = $this->get('/today/tomorrow?target=today')->assertOk()->viewData('page')['props'];
+
+    expect($props['target'])->toBe('today');
+    expect($props['fecha'])->toBe(now()->toDateString());
+    expect($props['dia'])->not->toBeNull();
+    expect($props['dia']['id'])->toBe($hoy->id);
+});
+
+test('tomorrow de madrugada (00 a 05) apunta a hoy por defecto', function () {
+    $this->travelTo(now()->setTime(1, 30));
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $props = $this->get('/today/tomorrow')->assertOk()->viewData('page')['props'];
+
+    expect($props['target'])->toBe('today');
+    expect($props['fecha'])->toBe(now()->toDateString());
+});
+
+test('tomorrow de dia apunta a manana por defecto', function () {
+    $this->travelTo(now()->setTime(15, 0));
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $props = $this->get('/today/tomorrow')->assertOk()->viewData('page')['props'];
+
+    expect($props['target'])->toBe('tomorrow');
+    expect($props['fecha'])->toBe(now()->addDay()->toDateString());
+});
+
+test('tomorrow target invalido en el get cae al default por hora', function () {
+    $this->travelTo(now()->setTime(15, 0));
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $props = $this->get('/today/tomorrow?target=pasado')->assertOk()->viewData('page')['props'];
+
+    expect($props['target'])->toBe('tomorrow');
+});
+
+test('tomorrow target invalido en el post es rechazado', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $this->post('/today/tomorrow', ['target' => 'pasado', 'items' => []])->assertSessionHasErrors('target');
 });

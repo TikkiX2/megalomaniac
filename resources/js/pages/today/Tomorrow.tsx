@@ -10,6 +10,11 @@ import type { ActiveFilters, FilterOption, TaskRow } from '@/types/today';
 
 const ANCHORS = ['wake_up', 'after_meal', 'after_gym', 'after_shower', 'before_sleep', 'no_anchor'];
 
+const TARGETS = [
+    { value: 'today', label: 'Hoy' },
+    { value: 'tomorrow', label: 'Mañana' },
+] as const;
+
 const NO_FILTER_MATCHES = 'No hay tareas que coincidan con los filtros.';
 
 interface PendingItem { id: number; title: string; task_id: number | null; anchor: string; }
@@ -17,9 +22,10 @@ interface DayItemShape { id: number; title: string; task_id: number | null; anch
 interface SelectedItem { title: string; anchor: string; task_id: number | null; }
 interface Props {
     fecha: string;
+    target: 'today' | 'tomorrow';
     pool: TaskRow[];
     pendientesAyer: PendingItem[];
-    diaManana: { visible_items?: DayItemShape[]; visibleItems?: DayItemShape[] } | null;
+    dia: { visible_items?: DayItemShape[]; visibleItems?: DayItemShape[] } | null;
     projects: FilterOption[];
     availableTags: string[];
     filters: ActiveFilters;
@@ -39,14 +45,15 @@ function cleanFilters(params: ActiveFilters): Record<string, string | number> {
 
 export default function Tomorrow({
     fecha,
+    target,
     pool,
     pendientesAyer,
-    diaManana,
+    dia,
     projects,
     availableTags,
     filters,
 }: Props) {
-    const existentes: DayItemShape[] = diaManana?.visible_items ?? diaManana?.visibleItems ?? [];
+    const existentes: DayItemShape[] = dia?.visible_items ?? dia?.visibleItems ?? [];
     const [sel, setSel] = useState<Record<number, SelectedItem>>(() => {
         const m: Record<number, SelectedItem> = {};
         existentes.forEach((it, i) => { m[i] = { title: it.title, anchor: it.anchor, task_id: it.task_id }; });
@@ -71,10 +78,18 @@ export default function Tomorrow({
         const items = Object.entries(sel).map(([k, v], i) => ({
             task_id: v.task_id, title: v.title, anchor: v.anchor, position: Number(k) + 1 > 3 ? i + 1 : Number(k) + 1,
         }));
-        router.post('/today/tomorrow', { items });
+        router.post('/today/tomorrow', { items, target });
     };
 
-    const dejarVacio = () => router.post('/today/tomorrow', { items: [] });
+    const dejarVacio = () => router.post('/today/tomorrow', { items: [], target });
+
+    /** Cambiar de día remonta el planner (sin preserveState) y reinicia la selección desde el día destino. */
+    const cambiarTarget = (next: 'today' | 'tomorrow') => {
+        if (next === target) {
+            return;
+        }
+        router.get('/today/tomorrow', { target: next });
+    };
 
     const applyFilters = (next: ActiveFilters) => {
         const cleaned = cleanFilters(next);
@@ -105,11 +120,25 @@ export default function Tomorrow({
 
     return (
         <MainLayout>
-            <Head title="Mañana" />
+            <Head title={target === 'today' ? 'Hoy' : 'Mañana'} />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4 md:p-6">
                 <div className="flex items-baseline justify-between">
                     <h2 className="text-xl font-black text-white">Elegí hasta 3 <span className="text-sm font-bold text-muted-foreground">· {fecha}</span></h2>
                     <span className="text-xs font-bold text-muted-foreground">{count} de 3 elegidas</span>
+                </div>
+
+                <div className="flex gap-2" role="group" aria-label="Día a planificar">
+                    {TARGETS.map((t) => (
+                        <Button
+                            key={t.value}
+                            size="sm"
+                            variant={target === t.value ? 'default' : 'outline'}
+                            aria-pressed={target === t.value}
+                            onClick={() => cambiarTarget(t.value)}
+                        >
+                            {t.label}
+                        </Button>
+                    ))}
                 </div>
 
                 <TaskFilterBar
@@ -154,7 +183,7 @@ export default function Tomorrow({
                 ))}
 
                 <div className="flex gap-3">
-                    <Button onClick={guardar} className="bg-primary font-black">Guardar mañana</Button>
+                    <Button onClick={guardar} className="bg-primary font-black">{target === 'today' ? 'Guardar hoy' : 'Guardar mañana'}</Button>
                     <Button variant="ghost" onClick={dejarVacio}>Dejarlo vacío</Button>
                 </div>
             </div>

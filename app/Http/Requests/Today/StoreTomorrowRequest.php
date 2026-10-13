@@ -15,6 +15,7 @@ class StoreTomorrowRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'target' => ['nullable', 'in:today,tomorrow'],
             'items' => ['nullable', 'array', 'max:3'],
             'items.*.task_id' => ['nullable', 'exists:project_tasks,id'],
             'items.*.title' => ['required_with:items', 'string', 'max:255'],
