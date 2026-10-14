@@ -153,16 +153,36 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
     public function messages(): array
     {
         return $this->hydrateReasoning(
-            $this->trimHistoricalImages(array_values((array) $this->conversationMessages()))
+            $this->dropEmptyAssistants(
+                $this->trimHistoricalImages(array_values((array) $this->conversationMessages()))
+            )
         );
     }
 
     /**
+     * An assistant row with no text and no tool calls (for example a turn that
+     * only produced reasoning) carries nothing the provider can use and makes
+     * DeepSeek reject the request, so it never reaches the payload.
+     *
+     * @param  array<int, object>  $messages
+     * @return array<int, object>
+     */
+    protected function dropEmptyAssistants(array $messages): array
+    {
+        return array_values(array_filter(
+            $messages,
+            fn (object $message): bool => ! $message instanceof AssistantMessage
+                || filled($message->content)
+                || $message->toolCalls->isNotEmpty(),
+        ));
+    }
+
+    /**
      * DeepSeek's thinking mode requires the raw `reasoning_content` of the
-     * assistant turns with tool calls to be passed back on the next request.
-     * The SDK only persists the paused turn's provider blocks; the display
-     * reasoning accumulated by the app (meta.reasoning.text) is re-attached
-     * here for every matching message.
+     * assistant turns to be passed back on the next request. The SDK only
+     * persists the paused turn's provider blocks; the display reasoning
+     * accumulated by the app (meta.reasoning.text) is re-attached here for
+     * every matching message.
      *
      * @param  array<int, object>  $messages
      * @return array<int, object>
@@ -191,7 +211,7 @@ class MegalomaniacAgent implements Agent, Conversational, HasMiddleware, HasTool
         }
 
         foreach ($messages as $message) {
-            if (! $message instanceof AssistantMessage || $message->toolCalls->isEmpty()) {
+            if (! $message instanceof AssistantMessage) {
                 continue;
             }
 

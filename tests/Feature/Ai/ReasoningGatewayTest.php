@@ -5,6 +5,8 @@ use App\Ai\Providers\ReasoningOpenAiCompatibleProvider;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Contracts\Events\Dispatcher;
 use Laravel\Ai\AiManager;
+use Laravel\Ai\Messages\AssistantMessage;
+use Laravel\Ai\Responses\Data\ToolCall;
 use Laravel\Ai\Streaming\Events\ReasoningDelta;
 use Laravel\Ai\Streaming\Events\TextDelta;
 
@@ -71,4 +73,27 @@ test('gateway keeps the raw reasoning content for the next request', function ()
 
     expect($step->providerContentBlocks['reasoning_content'] ?? null)->toBe('Pienso mucho')
         ->and($step->toArray()['provider_content_blocks'])->toBe(['reasoning_content' => 'Pienso mucho']);
+});
+
+test('maps the stored reasoning back on text and tool assistant messages', function () {
+    $gateway = new class(app(Dispatcher::class)) extends ReasoningOpenAiCompatibleGateway
+    {
+        public function exposeMap(array $messages): array
+        {
+            return $this->mapMessagesToChat($messages);
+        }
+    };
+
+    $mapped = $gateway->exposeMap([
+        new AssistantMessage('hola', collect([]), ['reasoning_content' => 'RAZON_X']),
+        new AssistantMessage('', collect([
+            ToolCall::fromArray(['id' => 'call_1', 'name' => 'X', 'arguments' => []]),
+        ]), ['reasoning_content' => 'RAZON_TOOL']),
+        new AssistantMessage('sin razon'),
+    ]);
+
+    expect($mapped[0]['reasoning_content'] ?? null)->toBe('RAZON_X')
+        ->and($mapped[1]['reasoning_content'] ?? null)->toBe('RAZON_TOOL')
+        ->and($mapped[1]['tool_calls'])->toHaveCount(1)
+        ->and($mapped[2])->not->toHaveKey('reasoning_content');
 });

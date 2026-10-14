@@ -258,8 +258,12 @@ class ReasoningOpenAiCompatibleGateway extends OpenAiCompatibleGateway
             $msg['tool_calls'] = $message->toolCalls->map(
                 fn (ToolCall $toolCall) => $this->serializeToolCallToChat($toolCall)
             )->all();
+        }
 
-            $msg['reasoning_content'] = $message->providerContentBlocks['reasoning_content'] ?? '';
+        // Thinking mode requires every assistant turn that reasons to hand its
+        // raw reasoning back, with or without tool calls.
+        if (filled($message->providerContentBlocks['reasoning_content'] ?? null)) {
+            $msg['reasoning_content'] = $message->providerContentBlocks['reasoning_content'];
         }
 
         $chatMessages[] = $msg;

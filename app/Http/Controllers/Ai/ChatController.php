@@ -817,37 +817,30 @@ class ChatController extends Controller
      */
     protected function logProviderFailure(Throwable $exception, string $threadId): void
     {
-        $exceptions = $exception instanceof AiAllProvidersFailedException
-            ? array_values($exception->errors())
-            : [$exception];
+        $providers = [];
 
-        foreach ($exceptions as $candidate) {
-            if ($candidate instanceof RequestException) {
-                Log::warning('ai.provider_request_failed', [
-                    'thread' => $threadId,
-                    'status' => $candidate->response?->status(),
-                    'response' => substr((string) $candidate->response?->body(), 0, 6000),
-                    'request' => substr((string) (self::$lastProviderRequest ?? ''), 0, 12000),
-                ]);
+        if ($exception instanceof AiAllProvidersFailedException) {
+            $providers = array_map(
+                fn (mixed $error): string => is_string($error) ? $error : $error::class,
+                array_values($exception->errors()),
+            );
 
-                continue;
-            }
-
-            $previous = $candidate instanceof Throwable ? $candidate->getPrevious() : null;
-
-            while ($previous !== null && ! $previous instanceof RequestException) {
-                $previous = $previous->getPrevious();
-            }
-
-            if ($previous instanceof RequestException) {
-                Log::warning('ai.provider_request_failed', [
-                    'thread' => $threadId,
-                    'status' => $previous->response?->status(),
-                    'response' => substr((string) $previous->response?->body(), 0, 6000),
-                    'request' => substr((string) (self::$lastProviderRequest ?? ''), 0, 12000),
-                ]);
-            }
+            $exception = $exception->lastException();
         }
+
+        $request = $exception;
+
+        while ($request !== null && ! $request instanceof RequestException) {
+            $request = $request->getPrevious();
+        }
+
+        Log::warning('ai.provider_request_failed', [
+            'thread' => $threadId,
+            'providers' => $providers,
+            'status' => $request instanceof RequestException ? $request->response?->status() : null,
+            'response' => $request instanceof RequestException ? substr((string) $request->response?->body(), 0, 6000) : null,
+            'request' => substr((string) (self::$lastProviderRequest ?? ''), 0, 12000),
+        ]);
     }
 
     protected function errorMessageFor(Throwable $exception): string

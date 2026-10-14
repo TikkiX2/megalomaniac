@@ -299,3 +299,51 @@ test('re-attaches the stored reasoning to assistant tool messages for deepseek e
         ->and($assistant->providerContentBlocks['reasoning_content'] ?? null)
         ->toBe('PENSAMIENTO_DE_DIAGNOSTICO');
 });
+
+test('re-attaches reasoning to text assistant messages too', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    ChatMessage::factory()->create([
+        'conversation_id' => $thread->id,
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+        'role' => 'assistant',
+        'content' => 'Respuesta con texto',
+        'meta' => ['reasoning' => ['text' => 'RAZONAMIENTO_TEXTO']],
+    ]);
+
+    $agent = (new MegalomaniacAgent($user))->continue($thread->id, as: $user);
+
+    $assistant = collect($agent->messages())
+        ->first(fn ($message) => $message instanceof AssistantMessage);
+
+    expect($assistant->providerContentBlocks['reasoning_content'] ?? null)->toBe('RAZONAMIENTO_TEXTO');
+});
+
+test('drops assistant messages with no text and no tool calls from the payload', function () {
+    $user = User::factory()->withAiProvider()->create();
+    $thread = ChatThread::factory()->create([
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+    ]);
+
+    ChatMessage::factory()->create([
+        'conversation_id' => $thread->id,
+        'participant_type' => $user->getMorphClass(),
+        'participant_id' => $user->id,
+        'role' => 'assistant',
+        'content' => '',
+        'meta' => ['reasoning' => ['text' => 'SOLO_PENSAMIENTO']],
+    ]);
+
+    $agent = (new MegalomaniacAgent($user))->continue($thread->id, as: $user);
+
+    $assistants = collect($agent->messages())
+        ->filter(fn ($message) => $message instanceof AssistantMessage);
+
+    expect($assistants)->toHaveCount(0);
+});
