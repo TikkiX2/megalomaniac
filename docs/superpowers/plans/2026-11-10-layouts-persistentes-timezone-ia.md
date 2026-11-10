@@ -648,7 +648,24 @@ git commit -m "refactor(layouts): completar layouts persistentes en toda la app"
 - Consumes: `AuthLayout` con props `title` y `description`.
 - Produces: páginas de auth sin wrapper interno y con `layout` estático.
 
-- [ ] **Step 1: Convertir cada página de auth**
+- [ ] **Step 1: Crear el helper `withLayout`**
+
+`resources/js/lib/with-layout.tsx`:
+
+```tsx
+import type { ComponentType, ReactNode } from 'react';
+
+export type LayoutFunction = (page: ReactNode) => ReactNode;
+
+export function withLayout<P extends object>(
+    component: ComponentType<P>,
+    layout: LayoutFunction,
+): ComponentType<P> & { layout: LayoutFunction } {
+    return Object.assign(component, { layout });
+}
+```
+
+- [ ] **Step 2: Convertir cada página de auth**
 
 Para cada archivo listado, reemplazar el `export default function X(...) { return (<AuthLayout ...>...</AuthLayout>); }` por:
 
@@ -661,17 +678,15 @@ function Login(props: Props) {
     );
 }
 
-Login.layout = (page: ReactNode) => (
+export default withLayout(Login, (page) => (
     <AuthLayout title="Log in to your account" description="Enter your email and password below to log in">
         {page}
     </AuthLayout>
-);
-
-export default Login;
+));
 ```
 
 - Mantener los textos exactos de `title` y `description` que hoy tiene cada página.
-- Importar `ReactNode` desde `react`.
+- Importar `withLayout` desde `@/lib/with-layout`.
 - Para páginas sin `Props`, tipar con el tipo de props existente o `Record<string, never>`.
 - `two-factor-challenge.tsx` no se toca.
 
