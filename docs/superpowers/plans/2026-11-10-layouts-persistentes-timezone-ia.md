@@ -690,18 +690,18 @@ export default withLayout(Login, (page) => (
 - Para páginas sin `Props`, tipar con el tipo de props existente o `Record<string, never>`.
 - `two-factor-challenge.tsx` no se toca.
 
-- [ ] **Step 2: Verificar tipos y build**
+- [ ] **Step 3: Verificar tipos y build**
 
 Run: `npm run types`
 Expected: sin errores.
 
 Run: `npm run build`
-Expected: build exitoso.
+Expected: build exitoso. Si `node_modules` no existe, dejar constancia y el controller lo corre.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add resources/js/pages/auth
+git add resources/js/lib/with-layout.tsx resources/js/pages/auth
 git commit -m "refactor(auth): layout persistente por página"
 ```
 
