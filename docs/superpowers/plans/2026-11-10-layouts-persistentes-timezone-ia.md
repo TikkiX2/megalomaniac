@@ -223,9 +223,9 @@ it('buckets late workouts in the user timezone', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('streak.current', 3)
-            ->where('streak.days.6.date', '2026-11-09')
-            ->where('streak.days.6.hasWorkout', true)
-            ->where('weeklyVolumeByDay.6.date', '2026-11-09'));
+            ->where('streak.days.5.date', '2026-11-09')
+            ->where('streak.days.5.hasWorkout', true)
+            ->where('weeklyVolumeByDay.5.date', '2026-11-09'));
 });
 
 it('keeps the streak alive when today has no workout yet', function () {
