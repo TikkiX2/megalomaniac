@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import MainLayout from '@/layouts/main-layout';
 import type { Currency } from '@/types/finance';
@@ -21,15 +21,16 @@ interface Props {
 
 export default function StatisticsIndex({ currencies, currentCurrencyId, filters, stats }: Props) {
     const [financeInsight, setFinanceInsight] = useState<string | null>(null);
-    const [insightLoading, setInsightLoading] = useState(true);
+    const [insightLoading, setInsightLoading] = useState(false);
 
-    useEffect(() => {
+    const fetchInsight = () => {
+        setInsightLoading(true);
         fetch('/ai/insights/finance')
             .then((res) => (res.ok ? res.json() : { insight: null }))
             .then((data) => setFinanceInsight(data.insight))
             .catch(() => {})
             .finally(() => setInsightLoading(false));
-    }, []);
+    };
 
     return (
         <MainLayout>
@@ -61,15 +62,15 @@ export default function StatisticsIndex({ currencies, currentCurrencyId, filters
                 </div>
 
                 {/* AI Analysis Section */}
-                {(financeInsight || insightLoading) && (
-                    <AiInsightCard
-                        title="AI Financial Analysis"
-                        insight={financeInsight}
-                        loading={insightLoading}
-                        icon="account_balance"
-                        className="lg:col-span-2"
-                    />
-                )}
+                <AiInsightCard
+                    title="AI Financial Analysis"
+                    insight={financeInsight}
+                    loading={insightLoading}
+                    icon="account_balance"
+                    className="lg:col-span-2"
+                    onRequest={fetchInsight}
+                    requestLabel="Analizar con IA"
+                />
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* Expenses by Category List (Basic for now) */}

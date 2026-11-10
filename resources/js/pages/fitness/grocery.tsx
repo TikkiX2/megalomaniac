@@ -1,5 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -42,7 +42,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
     const [groceryInsight, setGroceryInsight] = useState<string | null>(null);
-    const [insightLoading, setInsightLoading] = useState(true);
+    const [insightLoading, setInsightLoading] = useState(false);
     const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
         name: '',
         category: '',
@@ -54,13 +54,14 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
 
     const [restockData, setRestockData] = useState<{ id: number; quantity: number; price: number }[]>([]);
 
-    useEffect(() => {
+    const fetchInsight = () => {
+        setInsightLoading(true);
         fetch('/ai/insights/grocery')
             .then((res) => (res.ok ? res.json() : { insight: null }))
             .then((data) => setGroceryInsight(data.insight))
             .catch(() => {})
             .finally(() => setInsightLoading(false));
-    }, []);
+    };
 
     const deficitItems = items.filter(item => item.current_stock < item.target_stock);
 
@@ -182,13 +183,9 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                     <div className="flex flex-wrap gap-3">
                         <ModuleAiButton module="grocery" className="w-full sm:w-auto justify-center min-h-[44px] shrink-0 text-muted-foreground hover:text-primary" />
                         <button
-                            onClick={() => {
-                                fetch('/ai/insights/grocery')
-                                    .then((res) => (res.ok ? res.json() : { insight: null }))
-                                    .then((data) => setGroceryInsight(data.insight))
-                                    .catch(() => {});
-                            }}
-                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all"
+                            onClick={fetchInsight}
+                            disabled={insightLoading}
+                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <span className="material-symbols-outlined text-lg">psychology</span>
                             AI Shopping List

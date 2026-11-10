@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import MainLayout from '@/layouts/main-layout';
@@ -68,15 +68,16 @@ interface Props {
 
 export default function FinanceDashboard({ balances, pendingDebts, recentTransactions, overdueDebts, stats, monthlyBudget, savingsGoals }: Props) {
     const [financeInsight, setFinanceInsight] = useState<string | null>(null);
-    const [insightLoading, setInsightLoading] = useState(true);
+    const [insightLoading, setInsightLoading] = useState(false);
 
-    useEffect(() => {
+    const fetchInsight = () => {
+        setInsightLoading(true);
         fetch('/ai/insights/finance')
             .then((res) => (res.ok ? res.json() : { insight: null }))
             .then((data) => setFinanceInsight(data.insight))
             .catch(() => {})
             .finally(() => setInsightLoading(false));
-    }, []);
+    };
 
     return (
         <MainLayout>
@@ -361,6 +362,8 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                         insight={financeInsight}
                         loading={insightLoading}
                         icon="account_balance"
+                        onRequest={fetchInsight}
+                        requestLabel="Analizar con IA"
                     />
 
                     {/* Recent Transactions */}
