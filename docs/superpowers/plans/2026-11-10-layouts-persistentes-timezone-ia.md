@@ -710,23 +710,52 @@ git commit -m "refactor(auth): layout persistente por página"
 ### Task 7: Chat persistente
 
 **Files:**
+- Create: `resources/js/components/ai/chat/MobileThreadRail.tsx`
 - Modify: `resources/js/layouts/chat-layout.tsx`
 - Modify: `resources/js/pages/ai/chat.tsx`
 - Modify: `resources/js/pages/ai/thread.tsx`
 - Modify: `resources/js/lib/page-layout.tsx`
 
 **Interfaces:**
-- Consumes: `ChatLayout` persistente y props de página `threads`, `thread`.
-- Produces: `[MainLayout, ChatLayout]` para `ai/chat`, `ai/module` y `ai/thread`.
+- Consumes: `ChatLayout`, `ThreadRail`, props de página `threads` y `thread`.
+- Produces: `[MainLayout, ChatLayout]` para `ai/chat`, `ai/module` y `ai/thread`; `ChatLayout` solo renderiza el rail y la columna.
 
-- [ ] **Step 1: Convertir `ChatLayout` en layout de rail**
+- [ ] **Step 1: Extraer el botón móvil del rail**
+
+Crear `resources/js/components/ai/chat/MobileThreadRail.tsx` con el `Sheet` que hoy vive en `ChatLayout`:
+
+```tsx
+import { History } from 'lucide-react';
+import { ThreadRail } from '@/components/ai/chat/ThreadRail';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import type { ChatThread } from '@/types/chat';
+
+export function MobileThreadRail({ threads, activeThreadId }: { threads: ChatThread[]; activeThreadId: string | null }) {
+    return (
+        <Sheet>
+            <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Abrir historial de hilos">
+                    <History className="h-4 w-4" />
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 border-border bg-background p-0">
+                <SheetTitle className="sr-only">Historial de hilos</SheetTitle>
+                <ThreadRail threads={threads} activeThreadId={activeThreadId} />
+            </SheetContent>
+        </Sheet>
+    );
+}
+```
+
+- [ ] **Step 2: Convertir `ChatLayout` en layout de rail**
 
 En `resources/js/layouts/chat-layout.tsx`:
-- Quitar `MainLayout` y el prop `header`.
+- Quitar `MainLayout`, el prop `header`, los imports del `Sheet` y del botón móvil.
 - Recibir solo `children: ReactNode`.
 - Leer `threads` y `thread` desde `usePage().props` (`threads` es `ChatThread[]`; `thread` puede faltar).
 - `activeThreadId` = `(props.thread as ChatThread | undefined)?.id ?? null`.
-- Mantener el rail de escritorio, el `Sheet` móvil y la columna derecha:
+- Renderizar:
 
 ```tsx
 <div className="flex h-[calc(100dvh-3rem)]">
@@ -739,21 +768,22 @@ En `resources/js/layouts/chat-layout.tsx`:
 </div>
 ```
 
-- No renderizar `<MainLayout>`.
-
-- [ ] **Step 2: Quitar `ChatLayout` de las páginas**
+- [ ] **Step 3: Quitar `ChatLayout` de las páginas y reubicar el header**
 
 En `resources/js/pages/ai/chat.tsx`:
 - Devolver solo el contenido interior (el `Head`, el contenedor scrolleable y el composer), sin `<ChatLayout>`.
+- Agregar arriba del contenedor scrolleable un header solo-móvil con `<MobileThreadRail threads={threads} activeThreadId={null} />`:
+  `<header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 lg:hidden">`.
 - No tocar la lógica de envío ni el estado.
 
 En `resources/js/pages/ai/thread.tsx`:
 - Quitar `<ChatLayout threads={threads} activeThreadId={thread.id} header={...}>`.
-- Mover el JSX del `header` al comienzo del contenido, dentro de un `<header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 sm:px-4">` (o las clases equivalentes que tenía `ChatLayout`).
-- Mantener el `Sheet` móvil: si el botón de historial estaba en el header de `ChatLayout`, replicarlo dentro del header de la página o dejar que el rail móvil se abra desde `ChatLayout`; no duplicar el `Sheet`.
-- Ajustar el contenedor para que el header y el resto sigan en columna y el composer quede abajo.
+- Mover el JSX del `header` al comienzo del contenido, dentro de un `<header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 sm:px-4">`.
+- Incluir `<MobileThreadRail threads={threads} activeThreadId={thread.id} />` como primer hijo del header.
+- Mantener el resto del header (renombrar, pin, memoria, back de módulo, ProviderBadge, dropdown de acciones) y el `Head` del hilo.
+- Ajustar el contenedor para que header, `MessageList` y composer sigan en columna con el composer abajo.
 
-- [ ] **Step 3: Activar el layout persistente para chat**
+- [ ] **Step 4: Activar el layout persistente para chat**
 
 En `resources/js/lib/page-layout.tsx`, reemplazar el `return null` de chat por:
 
@@ -763,7 +793,7 @@ if (name.startsWith('ai/chat') || name.startsWith('ai/thread') || name === 'ai/m
 }
 ```
 
-- [ ] **Step 4: Verificar tipos, lint y build**
+- [ ] **Step 5: Verificar tipos, lint y build**
 
 Run: `npm run types`
 Expected: sin errores.
@@ -772,16 +802,16 @@ Run: `npm run lint`
 Expected: sin errores.
 
 Run: `npm run build`
-Expected: build exitoso.
+Expected: build exitoso. Si `node_modules` no existe, dejar constancia y el controller lo corre.
 
-- [ ] **Step 5: Verificación manual rápida (si hay servidor)**
+- [ ] **Step 6: Verificación manual rápida (si hay servidor)**
 
-Si el servidor está disponible, abrir `/ai/chat`, crear o abrir un hilo, cambiar a otro hilo del rail y confirmar que el rail no se remonta y que renombrar/fijar/eliminar siguen funcionando. Si no hay servidor, dejar constancia en el reporte.
+Si el servidor está disponible, abrir `/ai/chat`, abrir un hilo, cambiar a otro hilo del rail y confirmar que el rail no se remonta y que renombrar/fijar/eliminar siguen funcionando. Si no hay servidor, dejar constancia en el reporte.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add resources/js/layouts/chat-layout.tsx resources/js/pages/ai/chat.tsx resources/js/pages/ai/thread.tsx resources/js/lib/page-layout.tsx
+git add resources/js/components/ai/chat/MobileThreadRail.tsx resources/js/layouts/chat-layout.tsx resources/js/pages/ai/chat.tsx resources/js/pages/ai/thread.tsx resources/js/lib/page-layout.tsx
 git commit -m "refactor(chat): layout persistente del rail de hilos"
 ```
 
