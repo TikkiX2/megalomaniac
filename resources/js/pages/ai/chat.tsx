@@ -3,12 +3,12 @@ import { Bot, RotateCcw } from 'lucide-react';
 import { useRef, useState } from 'react';
 import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
 import { Composer } from '@/components/ai/chat/Composer';
+import { MobileThreadRail } from '@/components/ai/chat/MobileThreadRail';
 import { ProviderBadge } from '@/components/ai/chat/ProviderBadge';
 import { ProviderNotice } from '@/components/ai/chat/ProviderNotice';
 import { Button } from '@/components/ui/button';
 import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
-import ChatLayout from '@/layouts/chat-layout';
 import { aiModuleLabel } from '@/lib/ai-modules';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from '@/lib/chat-draft';
 import type { AiChatState, ChatThread, ToolPolicy } from '@/types/chat';
@@ -142,7 +142,7 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
     };
 
     return (
-        <ChatLayout threads={threads} activeThreadId={null}>
+        <>
             <Head
                 title={
                     moduleTitle !== null
@@ -150,6 +150,10 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                         : 'Chat IA'
                 }
             />
+
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 lg:hidden">
+                <MobileThreadRail threads={threads} activeThreadId={null} />
+            </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
                 <div className="mx-auto flex w-full max-w-2xl flex-col px-4 pb-10 pt-10 sm:pt-16">
@@ -318,6 +322,6 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                     )}
                 </div>
             </div>
-        </ChatLayout>
+        </>
     );
 }

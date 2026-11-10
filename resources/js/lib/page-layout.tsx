@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
+import ChatLayout from '@/layouts/chat-layout';
 import GroceryLayout from '@/layouts/grocery-layout';
 import GymLayout from '@/layouts/gym-layout';
 import HealthLayout from '@/layouts/health-layout';
@@ -15,8 +16,8 @@ export function resolvePageLayout(name: string): LayoutComponent[] | null {
         return null;
     }
 
-    if (name === 'ai/chat' || name === 'ai/thread' || name === 'ai/module') {
-        return null; // todavía se envuelven solas; Task 7 las convierte
+    if (name.startsWith('ai/chat') || name.startsWith('ai/thread') || name === 'ai/module') {
+        return [MainLayout, ChatLayout];
     }
 
     if (name === 'settings' || name.startsWith('settings/')) {
