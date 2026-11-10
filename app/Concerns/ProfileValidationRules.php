@@ -20,6 +20,7 @@ trait ProfileValidationRules
             'weight' => ['nullable', 'numeric', 'min:20', 'max:500'],
             'height' => ['nullable', 'numeric', 'min:50', 'max:300'],
             'target_weight' => ['nullable', 'numeric', 'min:20', 'max:500'],
+            'timezone' => ['nullable', 'string', 'timezone'],
         ];
     }
 

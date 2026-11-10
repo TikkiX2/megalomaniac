@@ -8,6 +8,7 @@ export type User = {
     weight?: number | string | null;
     height?: number | string | null;
     target_weight?: number | string | null;
+    timezone?: string | null;
     created_at: string;
     updated_at: string;
     [key: string]: unknown;
