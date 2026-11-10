@@ -411,7 +411,7 @@ git commit -m "fix(ai): pedir insights solo cuando la persona lo pide"
 
 ---
 
-### Task 4: Layouts persistentes de la app
+### Task 4: Layouts persistentes — infraestructura y grupos de módulos
 
 **Files:**
 - Create: `resources/js/lib/page-layout.tsx`
@@ -424,11 +424,12 @@ git commit -m "fix(ai): pedir insights solo cuando la persona lo pide"
 - Modify: `resources/js/layouts/people-layout.tsx`
 - Modify: `resources/js/app.tsx`
 - Modify: `resources/js/ssr.tsx`
-- Modify: todas las páginas bajo `resources/js/pages/` que importen `@/layouts/main-layout` o un layout de módulo, excepto `resources/js/pages/auth/*` y `resources/js/pages/ai/{chat,thread}.tsx`.
+- Modify: todas las páginas bajo `resources/js/pages/fitness/`, `resources/js/pages/health/`, `resources/js/pages/people/` y `resources/js/pages/settings/` que importen un layout.
+- Not modified: `resources/js/pages/auth/*`, `resources/js/pages/ai/*`, y el resto de los módulos (se convierten en Task 5).
 
 **Interfaces:**
 - Consumes: `MainLayout`, layouts de módulo y `SettingsLayout` existentes.
-- Produces: `resolvePageLayout(name: string)` y `resolvePage(name: string)`; cada página deja de envolverse a sí misma.
+- Produces: `resolvePageLayout(name: string)` y `resolvePage(name: string)`; los grupos convertidos dejan de envolverse a sí mismos.
 
 - [ ] **Step 1: Convertir los layouts de módulo en contenido puro**
 
@@ -450,7 +451,6 @@ Repetir para cada layout con su nombre. `MainLayout` no se toca.
 
 ```tsx
 import type { ComponentType, ReactNode } from 'react';
-import ChatLayout from '@/layouts/chat-layout';
 import GroceryLayout from '@/layouts/grocery-layout';
 import GymLayout from '@/layouts/gym-layout';
 import HealthLayout from '@/layouts/health-layout';
@@ -467,8 +467,11 @@ export function resolvePageLayout(name: string): LayoutComponent[] | null {
         return null;
     }
 
-    if (name.startsWith('ai/chat') || name.startsWith('ai/thread') || name === 'ai/module') {
-        return null;
+    if (name.startsWith('ai/') || name.startsWith('finance/') || name.startsWith('freelance/')
+        || name.startsWith('personal/') || name.startsWith('today/') || name.startsWith('agents/')
+        || name.startsWith('feed/') || name.startsWith('inspiration/') || name.startsWith('integrations/')
+        || name.startsWith('storage/')) {
+        return null; // todavía se envuelven solas; Task 5 las convierte
     }
 
     if (name === 'settings' || name.startsWith('settings/')) {
@@ -499,11 +502,13 @@ export function resolvePageLayout(name: string): LayoutComponent[] | null {
         return [MainLayout, SupplementLayout];
     }
 
-    return [MainLayout];
+    if (name.startsWith('fitness/')) {
+        return [MainLayout];
+    }
+
+    return null;
 }
 ```
-
-Nota: los `return null` de chat son temporales; Task 6 los cambia.
 
 - [ ] **Step 3: Crear el resolver de páginas compartido**
 
@@ -544,53 +549,91 @@ export async function resolvePage(name: string): Promise<PageModule> {
 
 - [ ] **Step 4: Usar el resolver compartido en `app.tsx` y `ssr.tsx`**
 
-En `resources/js/app.tsx`:
-- Reemplazar `resolvePageComponent` por `resolvePage`.
-- Quitar el import de `resolvePageComponent`.
-- `resolve: resolvePage`.
-
+En `resources/js/app.tsx`: reemplazar `resolvePageComponent` por `resolvePage`, quitar el import y usar `resolve: resolvePage`.
 En `resources/js/ssr.tsx`: mismo cambio.
 
-- [ ] **Step 5: Quitar los wrappers de las páginas**
+- [ ] **Step 5: Quitar los wrappers de los grupos convertidos**
 
-Para cada página que importe `@/layouts/main-layout`, `@/layouts/gym-layout`, `@/layouts/nutrition-layout`, `@/layouts/grocery-layout`, `@/layouts/supplement-layout`, `@/layouts/health-layout` o `@/layouts/people-layout` (excepto `auth/*` y `ai/chat.tsx`/`ai/thread.tsx`):
+Para cada página bajo `fitness/`, `health/`, `people/` y `settings/` que importe `@/layouts/main-layout`, un layout de módulo o `@/layouts/settings/layout`:
 - Borrar la línea de import del layout.
-- Reemplazar la etiqueta de apertura `<MainLayout>` (o el layout de módulo) por `<>` y la de cierre `</MainLayout>` por `</>`.
-- En páginas de settings, quitar también los wrappers `<SettingsLayout>` y su import; el resolver los agrega.
+- Reemplazar la etiqueta de apertura `<MainLayout>` (o el layout de módulo) por `<>` y la de cierre por `</>`.
+- En settings, quitar también `<SettingsLayout>` y su import.
 - Mantener `<Head>` y todo el contenido interior sin cambios.
-- No tocar `resources/js/pages/welcome.tsx`, `resources/js/pages/auth/two-factor-challenge.tsx` ni `resources/js/pages/ai/module.tsx`.
 
-Sugerencia para el implementador: escribir un script Node descartable en `/tmp` que haga los reemplazos por regex, ejecutarlo y luego correr `npx prettier --write resources/js/pages` para normalizar. No commitear el script.
+Sugerencia: script Node descartable en `/tmp` con regex, luego `npx prettier --write resources/js/pages`. No commitear el script.
 
-- [ ] **Step 6: Verificar que no quedan wrappers**
+- [ ] **Step 6: Verificar el grupo convertido**
 
-Run: `grep -rn "@/layouts/main-layout\|GymLayout\|NutritionLayout\|GroceryLayout\|SupplementLayout\|HealthLayout\|PeopleLayout\|SettingsLayout" resources/js/pages`
-Expected: solo aparecen en `auth/*` (AuthLayout) y en los imports que Task 5/Task 6 todavía manejan; ninguna página no-auth/no-chat debe importar los layouts anteriores.
+Run: `grep -rn "@/layouts/main-layout\|GymLayout\|NutritionLayout\|GroceryLayout\|SupplementLayout\|HealthLayout\|PeopleLayout\|SettingsLayout" resources/js/pages/fitness resources/js/pages/health resources/js/pages/people resources/js/pages/settings`
+Expected: sin resultados.
 
-Run: `grep -rn "<MainLayout" resources/js/pages`
+Run: `grep -rn "<MainLayout" resources/js/pages/fitness resources/js/pages/health resources/js/pages/people resources/js/pages/settings`
 Expected: sin resultados.
 
 - [ ] **Step 7: Verificar frontend**
 
-Run: `npm run types`
-Expected: sin errores.
-
-Run: `npm run lint`
-Expected: sin errores.
-
-Run: `npm run build`
-Expected: build exitoso.
+Run (si `node_modules` existe): `npm run types`, `npm run lint`, `npm run build`.
+Expected: sin errores. Si `node_modules` no existe, dejar constancia y el controller lo corre.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add resources/js/lib/page-layout.tsx resources/js/lib/resolve-page.tsx resources/js/layouts resources/js/app.tsx resources/js/ssr.tsx resources/js/pages
-git commit -m "refactor(layouts): layouts persistentes de Inertia en toda la app"
+git add resources/js/lib/page-layout.tsx resources/js/lib/resolve-page.tsx resources/js/layouts resources/js/app.tsx resources/js/ssr.tsx resources/js/pages/fitness resources/js/pages/health resources/js/pages/people resources/js/pages/settings
+git commit -m "refactor(layouts): layouts persistentes en módulos y ajustes"
 ```
 
 ---
 
-### Task 5: Layout persistente en auth
+### Task 5: Layouts persistentes — resto de la app
+
+**Files:**
+- Modify: todas las páginas bajo `resources/js/pages/agents/`, `ai/` (excepto `chat.tsx` y `thread.tsx`), `feed/`, `finance/`, `freelance/`, `inspiration/`, `integrations/`, `personal/`, `storage/` y `today/` que importen `@/layouts/main-layout`.
+- Modify: `resources/js/lib/page-layout.tsx` (default final).
+
+**Interfaces:**
+- Consumes: `resolvePageLayout` de Task 4.
+- Produces: todas las páginas no-auth/no-chat usan layouts persistentes; `MainLayout` queda como default.
+
+- [ ] **Step 1: Quitar los wrappers restantes**
+
+Para cada página de los grupos listados que importe `@/layouts/main-layout`:
+- Borrar el import.
+- Reemplazar `<MainLayout>` por `<>` y `</MainLayout>` por `</>`.
+- Mantener `<Head>` y el contenido.
+
+No tocar `ai/chat.tsx`, `ai/thread.tsx`, `ai/module.tsx` ni `auth/*`.
+
+- [ ] **Step 2: Completar el resolver**
+
+En `resources/js/lib/page-layout.tsx`:
+- Borrar el bloque que devuelve `null` para `ai/`, `finance/`, `freelance/`, `personal/`, `today/`, `agents/`, `feed/`, `inspiration/`, `integrations/` y `storage/`.
+- Dejar `return null` solo para `welcome` y `auth/`.
+- Para `ai/chat`, `ai/thread` y `ai/module` seguir devolviendo `null` hasta Task 7.
+- El `return` final pasa a ser `return [MainLayout];`.
+
+- [ ] **Step 3: Verificar que ya no quedan wrappers fuera de auth/chat**
+
+Run: `grep -rn "@/layouts/main-layout\|GymLayout\|NutritionLayout\|GroceryLayout\|SupplementLayout\|HealthLayout\|PeopleLayout\|SettingsLayout" resources/js/pages`
+Expected: solo `auth/*` (AuthLayout), `ai/chat.tsx` y `ai/thread.tsx` (ChatLayout).
+
+Run: `grep -rn "<MainLayout" resources/js/pages`
+Expected: sin resultados.
+
+- [ ] **Step 4: Verificar frontend**
+
+Run (si `node_modules` existe): `npm run types`, `npm run lint`, `npm run build`.
+Expected: sin errores.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add resources/js/pages resources/js/lib/page-layout.tsx
+git commit -m "refactor(layouts): completar layouts persistentes en toda la app"
+```
+
+---
+
+### Task 6: Layout persistente en auth
 
 **Files:**
 - Modify: `resources/js/pages/auth/login.tsx`
@@ -649,7 +692,7 @@ git commit -m "refactor(auth): layout persistente por página"
 
 ---
 
-### Task 6: Chat persistente
+### Task 7: Chat persistente
 
 **Files:**
 - Modify: `resources/js/layouts/chat-layout.tsx`
@@ -729,7 +772,7 @@ git commit -m "refactor(chat): layout persistente del rail de hilos"
 
 ---
 
-### Task 7: Verificación final
+### Task 8: Verificación final
 
 **Files:** ninguno (solo verificación).
 
