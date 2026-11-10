@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import GymLayout from '@/layouts/gym-layout';
 
 interface Set {
     id: number;
@@ -447,7 +446,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 
     return (
-        <GymLayout>
+        <>
             <Head title="Today's Session - Gym Tracker" />
 
             <div className="flex h-full flex-col overflow-hidden relative">
@@ -1192,6 +1191,6 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                     scrollbar-width: none;
                 }
             `}} />
-        </GymLayout>
+        </>
     );
 }

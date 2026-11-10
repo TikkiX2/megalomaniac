@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import NutritionLayout from '@/layouts/nutrition-layout';
 import type { SharedData } from '@/types';
 
 interface MealSuggestion {
@@ -272,7 +271,7 @@ export default function Nutrition({ logs, currentDate }: Props) {
     const imcInfo = calcIMC(weightNum, heightNum);
 
     return (
-        <NutritionLayout>
+        <>
             <Head title="Nutrición" />
             <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <header className="flex flex-col flex-wrap md:flex-row md:items-end justify-between gap-6 mb-10">
@@ -861,6 +860,6 @@ export default function Nutrition({ logs, currentDate }: Props) {
                     )}
                 </DialogContent>
             </Dialog>
-        </NutritionLayout>
+        </>
     );
 }

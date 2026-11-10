@@ -5,7 +5,6 @@ import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import GroceryLayout from '@/layouts/grocery-layout';
 import groceryItems from '@/routes/grocery/items';
 
 interface GroceryItem {
@@ -177,7 +176,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
     };
 
     return (
-        <GroceryLayout>
+        <>
             <Head title="Groceries & Stock" />
             <div className="flex-1 w-full max-w-[1200px] mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-white">
                 {/* Page Header */}
@@ -747,6 +746,6 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                     </div>
                 )}
             </div>
-        </GroceryLayout>
+        </>
     );
 }

@@ -16,7 +16,6 @@ import {
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import PeopleLayout from '@/layouts/people-layout';
 import people from '@/routes/people';
 
 const CLOSENESS_LABELS: Record<string, string> = {
@@ -53,7 +52,7 @@ export default function PeopleIndex({ people: paginator, filters, closenessOptio
     };
 
     return (
-        <PeopleLayout>
+        <>
             <Head title="Personas" />
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -203,6 +202,6 @@ export default function PeopleIndex({ people: paginator, filters, closenessOptio
                     </div>
                 )}
             </div>
-        </PeopleLayout>
+        </>
     );
 }

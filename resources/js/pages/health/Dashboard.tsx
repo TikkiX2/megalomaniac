@@ -4,7 +4,6 @@ import React from 'react';
 import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import HealthLayout from '@/layouts/health-layout';
 import health from '@/routes/health';
 
 interface HealthConditionItem {
@@ -76,7 +75,7 @@ export default function HealthDashboard({ summary }: { summary: HealthSummary })
     ];
 
     return (
-        <HealthLayout>
+        <>
             <Head title="Salud" />
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -124,6 +123,6 @@ export default function HealthDashboard({ summary }: { summary: HealthSummary })
                     </div>
                 </div>
             </div>
-        </HealthLayout>
+        </>
     );
 }

@@ -2,7 +2,6 @@ import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Download, Paperclip, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import HealthLayout from '@/layouts/health-layout';
 import health from '@/routes/health';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -17,7 +16,7 @@ export default function AppointmentShow({ appointment: appointmentProp }: any) {
     const media = appointment.media ?? [];
 
     return (
-        <HealthLayout>
+        <>
             <Head title={appointment.title} />
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-6">
                 <div className="flex items-center gap-4">
@@ -107,6 +106,6 @@ export default function AppointmentShow({ appointment: appointmentProp }: any) {
                     </Button>
                 </div>
             </div>
-        </HealthLayout>
+        </>
     );
 }

@@ -5,8 +5,6 @@ import ConnectionCard from '@/components/integrations/ConnectionCard';
 import ConnectionWizard from '@/components/integrations/ConnectionWizard';
 import EmptyState from '@/components/integrations/EmptyState';
 import { Button } from '@/components/ui/button';
-import MainLayout from '@/layouts/main-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 import type { SharedData } from '@/types';
 import type {
     ConnectionCatalogItem,
@@ -55,12 +53,12 @@ export default function ConnectionsSettings() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Conexiones" />
 
             <h1 className="sr-only">Conexiones</h1>
 
-            <SettingsLayout>
+            <>
                 <div className="space-y-6">
                     <div className="flex flex-wrap items-end justify-between gap-3">
                         <Heading
@@ -146,7 +144,7 @@ export default function ConnectionsSettings() {
                     open={wizardOpen}
                     onOpenChange={setWizardOpen}
                 />
-            </SettingsLayout>
-        </MainLayout>
+            </>
+        </>
     );
 }

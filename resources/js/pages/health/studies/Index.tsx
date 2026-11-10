@@ -10,7 +10,6 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import HealthLayout from '@/layouts/health-layout';
 import health from '@/routes/health';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -42,7 +41,7 @@ export default function StudiesIndex({ studies: paginator, filters, typeOptions 
     };
 
     return (
-        <HealthLayout>
+        <>
             <Head title="Estudios" />
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -143,6 +142,6 @@ export default function StudiesIndex({ studies: paginator, filters, typeOptions 
                     </div>
                 )}
             </div>
-        </HealthLayout>
+        </>
     );
 }

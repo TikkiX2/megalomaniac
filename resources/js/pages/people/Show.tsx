@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import PeopleLayout from '@/layouts/people-layout';
 import people from '@/routes/people';
 
 const CLOSENESS_LABELS: Record<string, string> = {
@@ -90,7 +89,7 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
     };
 
     return (
-        <PeopleLayout>
+        <>
             <Head title={person.full_name} />
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -352,6 +351,6 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                     </div>
                 </div>
             </div>
-        </PeopleLayout>
+        </>
     );
 }

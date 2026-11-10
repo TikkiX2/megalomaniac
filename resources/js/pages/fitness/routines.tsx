@@ -1,6 +1,5 @@
 import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import GymLayout from '@/layouts/gym-layout';
 import type { SharedData } from '@/types';
 
 interface AiRoutine {
@@ -185,7 +184,7 @@ export default function Routines({ routines, exercises }: Props) {
     };
 
     return (
-        <GymLayout>
+        <>
             <Head title="Workout Routines" />
 
             <div className="p-6 lg:p-10 max-w-7xl mx-auto h-full overflow-y-auto custom-scrollbar">
@@ -603,6 +602,6 @@ export default function Routines({ routines, exercises }: Props) {
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #3e2121; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ef4444; }
             `}} />
-        </GymLayout>
+        </>
     );
 }

@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 
 interface AiEnabled {
@@ -233,7 +232,7 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Historial — Entrenamientos" />
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6 lg:p-8 animate-in fade-in duration-500">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -669,6 +668,6 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                     </form>
                 </DialogContent>
             </Dialog>
-        </MainLayout>
+        </>
     );
 }

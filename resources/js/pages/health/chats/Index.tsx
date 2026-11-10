@@ -14,7 +14,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import HealthLayout from '@/layouts/health-layout';
 import health from '@/routes/health';
 import type { ChatThread } from '@/types/chat';
 
@@ -71,7 +70,7 @@ export default function HealthChatsIndex({
     };
 
     return (
-        <HealthLayout>
+        <>
             <Head title="Chats de salud" />
             <div className="flex h-full animate-in flex-col gap-6 p-4 duration-700 fade-in md:p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -196,6 +195,6 @@ export default function HealthChatsIndex({
                     )}
                 </div>
             </div>
-        </HealthLayout>
+        </>
     );
 }
