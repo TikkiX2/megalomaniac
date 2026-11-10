@@ -1,6 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { csrfHeaders } from '@/lib/csrf';
 import { Download, FolderPlus, Link2, Pencil, Trash2, Upload } from 'lucide-react';
 import EmptyState from '@/components/integrations/EmptyState';
 import Heading from '@/components/heading';
@@ -116,7 +115,7 @@ export default function StorageIndex() {
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-                ...csrfHeaders(),
+                'X-CSRF-TOKEN': decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? ''),
             },
             body: JSON.stringify({ disk_id: selectedDisk, path: entry.path }),
         });

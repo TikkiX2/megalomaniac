@@ -2,6 +2,10 @@
 
 FROM php:8.4-fpm AS php-base
 
+# Kernel con red paranoica Android: solo root/gid-3003 crea sockets.
+# apt baja paquetes como _apt -> deshabilitar sandbox.
+RUN printf 'APT::Sandbox::User "root";\n' > /etc/apt/apt.conf.d/99-no-sandbox
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpq-dev libzip-dev libpng-dev libonig-dev \
         libxml2-dev libicu-dev libsqlite3-dev libfreetype6-dev libjpeg62-turbo-dev \
@@ -12,6 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 FROM php-base AS builder
+
+# Ver nota sandbox en stage php-base (este stage parte de php-base, ya lo trae,
+# pero si se reconstruye aislado lo necesita de nuevo).
+RUN printf 'APT::Sandbox::User "root";\n' > /etc/apt/apt.conf.d/99-no-sandbox
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git curl unzip nodejs npm \
