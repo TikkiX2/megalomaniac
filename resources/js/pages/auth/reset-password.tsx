@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
+import { withLayout } from '@/lib/with-layout';
 import { update } from '@/routes/password';
 
 type Props = {
@@ -12,12 +13,9 @@ type Props = {
     email: string;
 };
 
-export default function ResetPassword({ token, email }: Props) {
+function ResetPassword({ token, email }: Props) {
     return (
-        <AuthLayout
-            title="Reset password"
-            description="Please enter your new password below"
-        >
+        <>
             <Head title="Reset password" />
 
             <Form
@@ -88,6 +86,15 @@ export default function ResetPassword({ token, email }: Props) {
                     </div>
                 )}
             </Form>
-        </AuthLayout>
+        </>
     );
 }
+
+export default withLayout(ResetPassword, (page) => (
+    <AuthLayout
+        title="Reset password"
+        description="Please enter your new password below"
+    >
+        {page}
+    </AuthLayout>
+));

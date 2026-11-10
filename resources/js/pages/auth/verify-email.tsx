@@ -4,15 +4,17 @@ import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
+import { withLayout } from '@/lib/with-layout';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 
-export default function VerifyEmail({ status }: { status?: string }) {
+type Props = {
+    status?: string;
+};
+
+function VerifyEmail({ status }: Props) {
     return (
-        <AuthLayout
-            title="Verify email"
-            description="Please verify your email address by clicking on the link we just emailed to you."
-        >
+        <>
             <Head title="Email verification" />
 
             {status === 'verification-link-sent' && (
@@ -39,6 +41,15 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     </>
                 )}
             </Form>
-        </AuthLayout>
+        </>
     );
 }
+
+export default withLayout(VerifyEmail, (page) => (
+    <AuthLayout
+        title="Verify email"
+        description="Please verify your email address by clicking on the link we just emailed to you."
+    >
+        {page}
+    </AuthLayout>
+));
