@@ -85,7 +85,9 @@ export default function ChatThread({
     const [skillKeys, setSkillKeys] = useState<string[]>([]);
     const [forceWeb, setForceWeb] = useState(false);
     const [sourceMode, setSourceMode] = useState<SourceMode>(thread.mode);
-    const [deepContext, setDeepContext] = useState(thread.deep_context ?? false);
+    const [deepContext, setDeepContext] = useState(
+        thread.deep_context ?? false,
+    );
     const [renaming, setRenaming] = useState(false);
     const [title, setTitle] = useState(thread.title);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -525,7 +527,10 @@ export default function ChatThread({
             <Head title={thread.title} />
 
             <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 sm:px-4">
-                <MobileThreadRail threads={threads} activeThreadId={thread.id} />
+                <MobileThreadRail
+                    threads={threads}
+                    activeThreadId={thread.id}
+                />
                 {renaming ? (
                     <Input
                         autoFocus
@@ -565,9 +570,7 @@ export default function ChatThread({
                 >
                     <BrainCircuit className="h-3 w-3" />
                     Memoria
-                    {thread.memories_count
-                        ? ` · ${thread.memories_count}`
-                        : ''}
+                    {thread.memories_count ? ` · ${thread.memories_count}` : ''}
                 </Link>
 
                 {threadModule !== null && moduleTitle !== null && (

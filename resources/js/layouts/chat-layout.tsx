@@ -22,9 +22,7 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
                 <ThreadRail threads={threads} activeThreadId={activeThreadId} />
             </aside>
 
-            <div className="flex min-w-0 flex-1 flex-col">
-                {children}
-            </div>
+            <div className="flex min-w-0 flex-1 flex-col">{children}</div>
         </div>
     );
 }

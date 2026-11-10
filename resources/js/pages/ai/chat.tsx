@@ -33,14 +33,30 @@ const SUGGESTIONS = [
     '¿Qué tareas tengo pendientes con fecha límite próxima?',
 ];
 
-export default function ChatIndex({ threads, models, agents, toolGroups, skills, ai, module, suggestions = [] }: ChatIndexProps) {
-    const [model, setModel] = useState<string | null>(ai.defaultModel ?? models[0] ?? null);
+export default function ChatIndex({
+    threads,
+    models,
+    agents,
+    toolGroups,
+    skills,
+    ai,
+    module,
+    suggestions = [],
+}: ChatIndexProps) {
+    const [model, setModel] = useState<string | null>(
+        ai.defaultModel ?? models[0] ?? null,
+    );
     const [agent, setAgent] = useState('megalomaniac');
-    const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>({ mode: 'auto', groups: [] });
+    const [toolsPolicy, setToolsPolicy] = useState<ToolPolicy>({
+        mode: 'auto',
+        groups: [],
+    });
     const [skillKeys, setSkillKeys] = useState<string[]>([]);
     const [forceWeb, setForceWeb] = useState(false);
     const [pendingMessage, setPendingMessage] = useState<string | null>(null);
-    const [composerSeed, setComposerSeed] = useState(() => loadChatDraft('home'));
+    const [composerSeed, setComposerSeed] = useState(() =>
+        loadChatDraft('home'),
+    );
     const [draftToken, setDraftToken] = useState(0);
 
     const createdThreadRef = useRef<string | null>(null);
@@ -62,7 +78,12 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
             // eat the user's message. Later errors keep the user's edits.
             const retried = pendingMessageRef.current;
 
-            if (retried === null || recoverable || seededMessageRef.current === retried) return;
+            if (
+                retried === null ||
+                recoverable ||
+                seededMessageRef.current === retried
+            )
+                return;
 
             seededMessageRef.current = retried;
             setComposerSeed(retried);
@@ -75,7 +96,9 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
             upload.clearImages();
 
             if (threadId) {
-                router.visit(ChatController.show.url(threadId), { replace: true });
+                router.visit(ChatController.show.url(threadId), {
+                    replace: true,
+                });
             }
         },
         onPaused: () => {
@@ -86,7 +109,9 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
             clearChatDraft('home');
 
             if (threadId) {
-                router.visit(ChatController.show.url(threadId), { replace: true });
+                router.visit(ChatController.show.url(threadId), {
+                    replace: true,
+                });
             }
         },
     });
@@ -123,7 +148,8 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                     ? { mode: 'auto', groups: [] }
                     : toolsPolicy,
             force_web: forceWeb ? true : undefined,
-            attachment_ids: attachmentIds.length > 0 ? attachmentIds : undefined,
+            attachment_ids:
+                attachmentIds.length > 0 ? attachmentIds : undefined,
             skill_keys: skillKeys.length > 0 ? skillKeys : undefined,
         });
         setForceWeb(false);
@@ -234,8 +260,13 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                     />
 
                     {stream.error && (
-                        <div className="mt-2 flex items-center justify-center gap-3" role="alert">
-                            <p className="text-xs text-destructive">{stream.error}</p>
+                        <div
+                            className="mt-2 flex items-center justify-center gap-3"
+                            role="alert"
+                        >
+                            <p className="text-xs text-destructive">
+                                {stream.error}
+                            </p>
 
                             {pendingMessage !== null && (
                                 <Button
@@ -253,12 +284,19 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                     )}
 
                     {suggestions.length > 0 ? (
-                        <div className="mt-4 flex flex-wrap justify-center gap-2" data-test="module-suggestions">
+                        <div
+                            className="mt-4 flex flex-wrap justify-center gap-2"
+                            data-test="module-suggestions"
+                        >
                             {suggestions.map((suggestion) => (
                                 <button
                                     key={suggestion}
                                     type="button"
-                                    disabled={!ai.configured || stream.status === 'streaming' || paused}
+                                    disabled={
+                                        !ai.configured ||
+                                        stream.status === 'streaming' ||
+                                        paused
+                                    }
                                     onClick={() => fillComposer(suggestion)}
                                     className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-40"
                                 >
@@ -272,7 +310,11 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                                 <button
                                     key={suggestion}
                                     type="button"
-                                    disabled={!ai.configured || stream.status === 'streaming' || paused}
+                                    disabled={
+                                        !ai.configured ||
+                                        stream.status === 'streaming' ||
+                                        paused
+                                    }
                                     onClick={() => submit(suggestion)}
                                     className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-40"
                                 >
@@ -292,7 +334,9 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
 
                     {stream.status === 'streaming' && stream.text !== '' && (
                         <div className="mt-3 rounded-2xl border border-border bg-card p-4">
-                            <p className="whitespace-pre-wrap text-sm text-foreground">{stream.text}</p>
+                            <p className="whitespace-pre-wrap text-sm text-foreground">
+                                {stream.text}
+                            </p>
 
                             {stream.meta !== null && (
                                 <div className="mt-3 flex justify-end">
@@ -311,7 +355,9 @@ export default function ChatIndex({ threads, models, agents, toolGroups, skills,
                                 {threads.slice(0, 6).map((thread) => (
                                     <Link
                                         key={thread.id}
-                                        href={ChatController.show(thread.id).url}
+                                        href={
+                                            ChatController.show(thread.id).url
+                                        }
                                         className="truncate rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground transition-colors hover:border-primary/40"
                                     >
                                         {thread.title}

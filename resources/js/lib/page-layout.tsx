@@ -16,7 +16,11 @@ export function resolvePageLayout(name: string): LayoutComponent[] | null {
         return null;
     }
 
-    if (name.startsWith('ai/chat') || name.startsWith('ai/thread') || name === 'ai/module') {
+    if (
+        name.startsWith('ai/chat') ||
+        name.startsWith('ai/thread') ||
+        name === 'ai/module'
+    ) {
         return [MainLayout, ChatLayout];
     }
 
