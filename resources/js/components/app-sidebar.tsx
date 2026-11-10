@@ -139,11 +139,15 @@ function SidebarPinToggle() {
 }
 
 export function AppSidebar() {
-    const { state } = useSidebar();
+    const { state, setOpenMobile } = useSidebar();
     const isCollapsed = state === 'collapsed';
-    const { approvals_pending_count } = usePage<
-        SharedData & { approvals_pending_count: number }
-    >().props;
+    const { props, url } = usePage<SharedData & { approvals_pending_count: number }>();
+    const { approvals_pending_count } = props;
+
+    React.useEffect(() => {
+        setOpenMobile(false);
+    }, [url, setOpenMobile]);
+
     return (
         <Sidebar collapsible="icon" variant="sidebar">
             <SidebarHeader>

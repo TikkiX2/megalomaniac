@@ -80,7 +80,11 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                 return;
             }
             const data = await res.json();
-            setFinanceInsight(data.insight ?? null);
+            if (!data.insight) {
+                setInsightError(data.message ?? 'No se pudo generar el análisis.');
+                return;
+            }
+            setFinanceInsight(data.insight);
         } catch {
             setInsightError('Error de red. Reintentá.');
         } finally {

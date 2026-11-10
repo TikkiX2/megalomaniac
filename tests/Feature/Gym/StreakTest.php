@@ -99,6 +99,29 @@ it('breaks the streak after two days without training', function () {
         ->assertInertia(fn ($page) => $page->where('streak.current', 0));
 });
 
+it('stores the log-past wall time as UTC in the user timezone', function () {
+    freezeAt('2026-11-10 12:00:00');
+
+    $user = User::factory()->create(['timezone' => 'America/Argentina/Buenos_Aires']);
+
+    // 23:30 del 9/11 en Buenos Aires == 02:30 UTC del 10/11.
+    $this->actingAs($user)->post('/gym/workouts/log-past', [
+        'started_at' => '2026-11-09T23:30',
+    ])->assertRedirect();
+
+    $this->assertDatabaseHas('workouts', [
+        'user_id' => $user->id,
+        'started_at' => '2026-11-10 02:30:00',
+        'ended_at' => '2026-11-10 02:30:00',
+    ]);
+
+    $this->actingAs($user)->get('/fitness/gym')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('streak.days.5.date', '2026-11-09')
+            ->where('streak.days.5.hasWorkout', true));
+});
+
 it('counts a workout started after local midnight as today', function () {
     freezeAt('2026-11-10 12:00:00');
 

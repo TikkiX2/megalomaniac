@@ -64,7 +64,11 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                 return;
             }
             const data = await res.json();
-            setGroceryInsight(data.insight ?? null);
+            if (!data.insight) {
+                setInsightError(data.message ?? 'No se pudo generar el análisis.');
+                return;
+            }
+            setGroceryInsight(data.insight);
         } catch {
             setInsightError('Error de red. Reintentá.');
         } finally {

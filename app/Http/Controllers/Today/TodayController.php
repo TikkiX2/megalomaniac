@@ -21,7 +21,8 @@ class TodayController extends Controller
     public function index(Request $request, DailyPickService $pickService)
     {
         $userId = $request->user()->id;
-        $today = now()->toDateString();
+        $timezone = $request->user()->localTimezone();
+        $today = now($timezone)->toDateString();
 
         $day = Day::with([
             'visibleItems' => fn ($q) => $q->orderBy('position'),
@@ -32,13 +33,13 @@ class TodayController extends Controller
             ->first();
 
         $block = Block::where('user_id', $userId)
-            ->where('weekday', now()->dayOfWeek)
+            ->where('weekday', now($timezone)->dayOfWeek)
             ->where('active', true)
             ->orderBy('start_time')
             ->first();
 
         $routine = Routine::where('user_id', $userId)
-            ->where('scheduled_date', now()->format('l'))
+            ->where('scheduled_date', now($timezone)->format('l'))
             ->first();
 
         $pickType = $day?->pick_type ?? 'pelicula';
@@ -76,7 +77,8 @@ class TodayController extends Controller
         ]);
 
         $userId = $request->user()->id;
-        $today = now()->toDateString();
+        $timezone = $request->user()->localTimezone();
+        $today = now($timezone)->toDateString();
 
         $day = Day::where('user_id', $userId)->whereDate('date', $today)->first()
             ?? new Day(['user_id' => $userId, 'date' => $today]);

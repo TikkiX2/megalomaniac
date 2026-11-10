@@ -33,7 +33,11 @@ export default function StatisticsIndex({ currencies, currentCurrencyId, filters
                 return;
             }
             const data = await res.json();
-            setFinanceInsight(data.insight ?? null);
+            if (!data.insight) {
+                setInsightError(data.message ?? 'No se pudo generar el análisis.');
+                return;
+            }
+            setFinanceInsight(data.insight);
         } catch {
             setInsightError('Error de red. Reintentá.');
         } finally {
