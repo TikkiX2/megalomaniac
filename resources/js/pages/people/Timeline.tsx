@@ -1,7 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { CalendarClock } from 'lucide-react';
 import React from 'react';
-import PeopleLayout from '@/layouts/people-layout';
 import people from '@/routes/people';
 
 function monthLabel(value: string): string {
@@ -16,7 +15,7 @@ export default function PeopleTimeline({ interactions }: any) {
     }, {});
 
     return (
-        <PeopleLayout>
+        <>
             <Head title="Historial social" />
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
                 <div>
@@ -59,6 +58,6 @@ export default function PeopleTimeline({ interactions }: any) {
                     </div>
                 )}
             </div>
-        </PeopleLayout>
+        </>
     );
 }

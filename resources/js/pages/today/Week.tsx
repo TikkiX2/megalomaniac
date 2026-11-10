@@ -5,7 +5,6 @@ import TaskFilterBar from '@/components/today/TaskFilterBar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
 import type { ActiveFilters, FilterOption, TaskRow } from '@/types/today';
 
@@ -186,7 +185,7 @@ export default function Week({
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Semana" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4">
                 <h2 className="text-xl font-black text-white">Pool semanal</h2>
@@ -284,6 +283,6 @@ export default function Week({
                     </div>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

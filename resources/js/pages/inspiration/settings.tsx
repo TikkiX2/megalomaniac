@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import AuthModal from '@/components/inspiration/AuthModal';
 import { sourceLabel } from '@/components/inspiration/shared';
 import { Spinner } from '@/components/ui/spinner';
-import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
 import { cn } from '@/lib/utils';
 import inspiration from '@/routes/inspiration';
@@ -304,7 +303,7 @@ export default function InspirationSettings() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Ajustes de inspiración" />
 
             <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6">
@@ -773,6 +772,6 @@ export default function InspirationSettings() {
                     onClose={() => setAuthSource(null)}
                 />
             )}
-        </MainLayout>
+        </>
     );
 }

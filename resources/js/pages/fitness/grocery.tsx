@@ -1,11 +1,10 @@
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import GroceryLayout from '@/layouts/grocery-layout';
 import groceryItems from '@/routes/grocery/items';
 
 interface GroceryItem {
@@ -42,7 +41,8 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
     const [groceryInsight, setGroceryInsight] = useState<string | null>(null);
-    const [insightLoading, setInsightLoading] = useState(true);
+    const [insightLoading, setInsightLoading] = useState(false);
+    const [insightError, setInsightError] = useState<string | null>(null);
     const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
         name: '',
         category: '',
@@ -54,13 +54,27 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
 
     const [restockData, setRestockData] = useState<{ id: number; quantity: number; price: number }[]>([]);
 
-    useEffect(() => {
-        fetch('/ai/insights/grocery')
-            .then((res) => (res.ok ? res.json() : { insight: null }))
-            .then((data) => setGroceryInsight(data.insight))
-            .catch(() => {})
-            .finally(() => setInsightLoading(false));
-    }, []);
+    const fetchInsight = async () => {
+        setInsightError(null);
+        setInsightLoading(true);
+        try {
+            const res = await fetch('/ai/insights/grocery');
+            if (!res.ok) {
+                setInsightError('No se pudo generar el análisis.');
+                return;
+            }
+            const data = await res.json();
+            if (!data.insight) {
+                setInsightError(data.message ?? 'No se pudo generar el análisis.');
+                return;
+            }
+            setGroceryInsight(data.insight);
+        } catch {
+            setInsightError('Error de red. Reintentá.');
+        } finally {
+            setInsightLoading(false);
+        }
+    };
 
     const deficitItems = items.filter(item => item.current_stock < item.target_stock);
 
@@ -166,7 +180,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
     };
 
     return (
-        <GroceryLayout>
+        <>
             <Head title="Groceries & Stock" />
             <div className="flex-1 w-full max-w-[1200px] mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 text-white">
                 {/* Page Header */}
@@ -182,13 +196,9 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                     <div className="flex flex-wrap gap-3">
                         <ModuleAiButton module="grocery" className="w-full sm:w-auto justify-center min-h-[44px] shrink-0 text-muted-foreground hover:text-primary" />
                         <button
-                            onClick={() => {
-                                fetch('/ai/insights/grocery')
-                                    .then((res) => (res.ok ? res.json() : { insight: null }))
-                                    .then((data) => setGroceryInsight(data.insight))
-                                    .catch(() => {});
-                            }}
-                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all"
+                            onClick={fetchInsight}
+                            disabled={insightLoading}
+                            className="flex w-full sm:w-auto justify-center min-h-[44px] items-center gap-2 px-5 h-12 rounded-xl border border-[#3e2121] bg-[#2b1a1a] hover:bg-[#2a4d35] text-white text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <span className="material-symbols-outlined text-lg">psychology</span>
                             AI Shopping List
@@ -462,12 +472,14 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                         </section>
 
                         {/* AI Restock Suggestions */}
-                        {(groceryInsight || insightLoading) && (
+                        {(groceryInsight || insightLoading || insightError) && (
                             <AiInsightCard
                                 title="AI Restock Suggestions"
                                 insight={groceryInsight}
                                 loading={insightLoading}
                                 icon="shopping_cart"
+                                onRequest={fetchInsight}
+                                error={insightError}
                             />
                         )}
 
@@ -738,6 +750,6 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                     </div>
                 )}
             </div>
-        </GroceryLayout>
+        </>
     );
 }

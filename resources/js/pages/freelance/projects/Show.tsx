@@ -34,7 +34,6 @@ import {
     TabsList,
     TabsTrigger
 } from '@/components/ui/tabs';
-import MainLayout from '@/layouts/main-layout';
 import freelance from '@/routes/freelance';
 
 export default function ProjectShow({ project, tasks, comments, currencies, clients, boardColumns }: any) {
@@ -61,7 +60,7 @@ export default function ProjectShow({ project, tasks, comments, currencies, clie
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={`Proyecto: ${project.name}`} />
 
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
@@ -198,6 +197,6 @@ export default function ProjectShow({ project, tasks, comments, currencies, clie
                     </div>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

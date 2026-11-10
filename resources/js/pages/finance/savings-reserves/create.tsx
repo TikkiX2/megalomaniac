@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { Currency } from '@/types/finance';
 
@@ -29,7 +28,7 @@ export default function SavingsReserveCreate({ currencies }: Props) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="New Reserve" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="flex items-center gap-4">
@@ -167,6 +166,6 @@ export default function SavingsReserveCreate({ currencies }: Props) {
                     </Button>
                 </form>
             </div>
-        </MainLayout>
+        </>
     );
 }

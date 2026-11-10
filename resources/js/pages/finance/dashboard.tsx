@@ -1,8 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import { ModuleAiButton } from '@/components/ai/module-ai-button';
-import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { Currency, Debt } from '@/types/finance';
 
@@ -68,18 +67,33 @@ interface Props {
 
 export default function FinanceDashboard({ balances, pendingDebts, recentTransactions, overdueDebts, stats, monthlyBudget, savingsGoals }: Props) {
     const [financeInsight, setFinanceInsight] = useState<string | null>(null);
-    const [insightLoading, setInsightLoading] = useState(true);
+    const [insightLoading, setInsightLoading] = useState(false);
+    const [insightError, setInsightError] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetch('/ai/insights/finance')
-            .then((res) => (res.ok ? res.json() : { insight: null }))
-            .then((data) => setFinanceInsight(data.insight))
-            .catch(() => {})
-            .finally(() => setInsightLoading(false));
-    }, []);
+    const fetchInsight = async () => {
+        setInsightError(null);
+        setInsightLoading(true);
+        try {
+            const res = await fetch('/ai/insights/finance');
+            if (!res.ok) {
+                setInsightError('No se pudo generar el análisis.');
+                return;
+            }
+            const data = await res.json();
+            if (!data.insight) {
+                setInsightError(data.message ?? 'No se pudo generar el análisis.');
+                return;
+            }
+            setFinanceInsight(data.insight);
+        } catch {
+            setInsightError('Error de red. Reintentá.');
+        } finally {
+            setInsightLoading(false);
+        }
+    };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Finance Dashboard" />
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-4 md:p-6 lg:p-8 animate-in fade-in duration-700">
                 {/* Header Section */}
@@ -361,6 +375,9 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                         insight={financeInsight}
                         loading={insightLoading}
                         icon="account_balance"
+                        onRequest={fetchInsight}
+                        requestLabel="Analizar con IA"
+                        error={insightError}
                     />
 
                     {/* Recent Transactions */}
@@ -481,6 +498,6 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                     </div>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

@@ -28,7 +28,6 @@ import {
     TableHeader,
     TableRow
 } from '@/components/ui/table';
-import MainLayout from '@/layouts/main-layout';
 import freelance from '@/routes/freelance';
 
 export default function ProjectsIndex({ projects, filters }: any) {
@@ -62,7 +61,7 @@ export default function ProjectsIndex({ projects, filters }: any) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Proyectos" />
 
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
@@ -167,6 +166,6 @@ export default function ProjectsIndex({ projects, filters }: any) {
                     </Table>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

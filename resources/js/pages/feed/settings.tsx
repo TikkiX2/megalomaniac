@@ -13,7 +13,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 import type { FlashProps } from '@/types/integrations';
 
@@ -97,7 +96,7 @@ export default function FeedSettings() {
     const needsConnection = form.data.kind === 'reddit' || form.data.kind === 'youtube';
 
     return (
-        <MainLayout>
+        <>
             <Head title="Fuentes del feed" />
 
             <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
@@ -274,6 +273,6 @@ export default function FeedSettings() {
                     </div>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

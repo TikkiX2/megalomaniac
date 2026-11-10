@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import HealthLayout from '@/layouts/health-layout';
 import health from '@/routes/health';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -42,7 +41,7 @@ export default function AppointmentForm({ appointment: appointmentProp, people, 
     };
 
     return (
-        <HealthLayout>
+        <>
             <Head title={isEditing ? `Editar ${appointment.title}` : 'Nueva cita'} />
             <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 md:p-6">
                 <div className="flex items-center gap-4">
@@ -175,6 +174,6 @@ export default function AppointmentForm({ appointment: appointmentProp, people, 
                     </div>
                 </form>
             </div>
-        </HealthLayout>
+        </>
     );
 }

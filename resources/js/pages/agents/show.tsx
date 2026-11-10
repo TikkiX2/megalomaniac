@@ -3,7 +3,6 @@ import EmptyState from '@/components/integrations/EmptyState';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 
 interface AgentRunRow {
@@ -51,7 +50,7 @@ export default function AgentShow() {
     const { agent, runs } = usePage<SharedData & ShowPageProps>().props;
 
     return (
-        <MainLayout>
+        <>
             <Head title={agent.name} />
 
             <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
@@ -133,6 +132,6 @@ export default function AgentShow() {
                     )}
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

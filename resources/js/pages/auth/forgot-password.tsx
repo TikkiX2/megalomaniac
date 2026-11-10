@@ -7,15 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { withLayout } from '@/lib/with-layout';
 import { login } from '@/routes';
 import { email } from '@/routes/password';
 
-export default function ForgotPassword({ status }: { status?: string }) {
+type Props = {
+    status?: string;
+};
+
+function ForgotPassword({ status }: Props) {
     return (
-        <AuthLayout
-            title="Forgot password"
-            description="Enter your email to receive a password reset link"
-        >
+        <>
             <Head title="Forgot password" />
 
             {status && (
@@ -63,6 +65,15 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     <TextLink href={login()}>log in</TextLink>
                 </div>
             </div>
-        </AuthLayout>
+        </>
     );
 }
+
+export default withLayout(ForgotPassword, (page) => (
+    <AuthLayout
+        title="Forgot password"
+        description="Enter your email to receive a password reset link"
+    >
+        {page}
+    </AuthLayout>
+));

@@ -13,6 +13,7 @@ import ChatController from '@/actions/App/Http/Controllers/Ai/ChatController';
 import SourcesController from '@/actions/App/Http/Controllers/Ai/SourcesController';
 import { Composer } from '@/components/ai/chat/Composer';
 import { MessageList } from '@/components/ai/chat/MessageList';
+import { MobileThreadRail } from '@/components/ai/chat/MobileThreadRail';
 import { ProviderBadge } from '@/components/ai/chat/ProviderBadge';
 import { ThreadSourcesPanel } from '@/components/ai/chat/ThreadSourcesPanel';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,6 @@ import {
     useAttachmentUpload,
 } from '@/hooks/use-attachment-upload';
 import { useChatStream } from '@/hooks/use-chat-stream';
-import ChatLayout from '@/layouts/chat-layout';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from '@/lib/chat-draft';
 import { aiModuleLabel, aiModuleUrl } from '@/lib/ai-modules';
 import { csrfHeaders } from '@/lib/csrf';
@@ -85,7 +85,9 @@ export default function ChatThread({
     const [skillKeys, setSkillKeys] = useState<string[]>([]);
     const [forceWeb, setForceWeb] = useState(false);
     const [sourceMode, setSourceMode] = useState<SourceMode>(thread.mode);
-    const [deepContext, setDeepContext] = useState(thread.deep_context ?? false);
+    const [deepContext, setDeepContext] = useState(
+        thread.deep_context ?? false,
+    );
     const [renaming, setRenaming] = useState(false);
     const [title, setTitle] = useState(thread.title);
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -521,111 +523,109 @@ export default function ChatThread({
     const turnMeta = stream.meta ?? persistedMeta;
 
     return (
-        <ChatLayout
-            threads={threads}
-            activeThreadId={thread.id}
-            header={
-                <>
-                    {renaming ? (
-                        <Input
-                            autoFocus
-                            maxLength={120}
-                            value={title}
-                            onChange={(event) => setTitle(event.target.value)}
-                            onBlur={commitRename}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter') commitRename();
-                                if (event.key === 'Escape') {
-                                    setTitle(thread.title);
-                                    setRenaming(false);
-                                }
-                            }}
-                            className="h-8 max-w-sm border-border bg-card text-sm"
-                            aria-label="Renombrar hilo"
-                        />
-                    ) : (
-                        <button
-                            type="button"
-                            onClick={() => setRenaming(true)}
-                            className="min-w-0 truncate text-sm font-bold text-foreground hover:text-primary"
-                            title={thread.title}
-                        >
-                            {thread.title}
-                        </button>
-                    )}
-
-                    {thread.is_pinned && (
-                        <Pin className="h-3.5 w-3.5 shrink-0 text-primary" />
-                    )}
-
-                    <Link
-                        href={memoryIndex.url({ query: { thread: thread.id } })}
-                        className="ml-1 flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                        title="Ver la memoria de este hilo"
-                    >
-                        <BrainCircuit className="h-3 w-3" />
-                        Memoria
-                        {thread.memories_count
-                            ? ` · ${thread.memories_count}`
-                            : ''}
-                    </Link>
-
-                    {threadModule !== null && moduleTitle !== null && (
-                        <Link
-                            href={aiModuleUrl(threadModule)}
-                            className="shrink-0 text-xs text-muted-foreground hover:text-primary"
-                            data-test="thread-module-back"
-                        >
-                            ← Asistente de {moduleTitle}
-                        </Link>
-                    )}
-
-                    {turnMeta !== null && <ProviderBadge meta={turnMeta} />}
-
-                    <div className="ml-auto flex items-center gap-1">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                    aria-label="Acciones del hilo"
-                                >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                className="border-border bg-card"
-                            >
-                                <DropdownMenuItem
-                                    onSelect={() => setRenaming(true)}
-                                >
-                                    Renombrar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={togglePinned}>
-                                    {thread.is_pinned ? (
-                                        <PinOff className="mr-2 h-3.5 w-3.5" />
-                                    ) : (
-                                        <Pin className="mr-2 h-3.5 w-3.5" />
-                                    )}
-                                    {thread.is_pinned ? 'Desfijar' : 'Fijar'}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onSelect={() => setConfirmOpen(true)}
-                                    className="text-destructive focus:text-destructive"
-                                >
-                                    <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                    Eliminar
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </>
-            }
-        >
+        <>
             <Head title={thread.title} />
+
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 sm:px-4">
+                <MobileThreadRail
+                    threads={threads}
+                    activeThreadId={thread.id}
+                />
+                {renaming ? (
+                    <Input
+                        autoFocus
+                        maxLength={120}
+                        value={title}
+                        onChange={(event) => setTitle(event.target.value)}
+                        onBlur={commitRename}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') commitRename();
+                            if (event.key === 'Escape') {
+                                setTitle(thread.title);
+                                setRenaming(false);
+                            }
+                        }}
+                        className="h-8 max-w-sm border-border bg-card text-sm"
+                        aria-label="Renombrar hilo"
+                    />
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => setRenaming(true)}
+                        className="min-w-0 truncate text-sm font-bold text-foreground hover:text-primary"
+                        title={thread.title}
+                    >
+                        {thread.title}
+                    </button>
+                )}
+
+                {thread.is_pinned && (
+                    <Pin className="h-3.5 w-3.5 shrink-0 text-primary" />
+                )}
+
+                <Link
+                    href={memoryIndex.url({ query: { thread: thread.id } })}
+                    className="ml-1 flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                    title="Ver la memoria de este hilo"
+                >
+                    <BrainCircuit className="h-3 w-3" />
+                    Memoria
+                    {thread.memories_count ? ` · ${thread.memories_count}` : ''}
+                </Link>
+
+                {threadModule !== null && moduleTitle !== null && (
+                    <Link
+                        href={aiModuleUrl(threadModule)}
+                        className="shrink-0 text-xs text-muted-foreground hover:text-primary"
+                        data-test="thread-module-back"
+                    >
+                        ← Asistente de {moduleTitle}
+                    </Link>
+                )}
+
+                {turnMeta !== null && <ProviderBadge meta={turnMeta} />}
+
+                <div className="ml-auto flex items-center gap-1">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                aria-label="Acciones del hilo"
+                            >
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className="border-border bg-card"
+                        >
+                            <DropdownMenuItem
+                                onSelect={() => setRenaming(true)}
+                            >
+                                Renombrar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={togglePinned}>
+                                {thread.is_pinned ? (
+                                    <PinOff className="mr-2 h-3.5 w-3.5" />
+                                ) : (
+                                    <Pin className="mr-2 h-3.5 w-3.5" />
+                                )}
+                                {thread.is_pinned ? 'Desfijar' : 'Fijar'}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onSelect={() => setConfirmOpen(true)}
+                                className="text-destructive focus:text-destructive"
+                            >
+                                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                Eliminar
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </header>
 
             <MessageList
                 messages={messages}
@@ -762,6 +762,6 @@ export default function ChatThread({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </ChatLayout>
+        </>
     );
 }

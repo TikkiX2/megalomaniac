@@ -30,7 +30,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import { cn } from '@/lib/utils';
 import { destroy, promote, store, update } from '@/routes/ai/memory';
 import type { SharedData } from '@/types';
@@ -287,7 +286,7 @@ export default function MemoryPage() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Memoria" />
 
             <div className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6">
@@ -503,6 +502,6 @@ export default function MemoryPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </MainLayout>
+        </>
     );
 }

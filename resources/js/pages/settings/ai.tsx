@@ -41,8 +41,6 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 import { csrfHeaders } from '@/lib/csrf';
 import { preview as previewPrompt } from '@/routes/settings/ai/prompts';
 import { destroy, store, test as testRoute, update } from '@/routes/settings/ai/providers';
@@ -1111,12 +1109,12 @@ export default function AiSettings({ ai, providers, scopes }: AiSettingsPageProp
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="AI settings" />
 
             <h1 className="sr-only">AI Settings</h1>
 
-            <SettingsLayout>
+            <>
                 <div className="space-y-6">
                     <Heading
                         variant="small"
@@ -1424,7 +1422,7 @@ export default function AiSettings({ ai, providers, scopes }: AiSettingsPageProp
                         </TabsContent>
                     </Tabs>
                 </div>
-            </SettingsLayout>
+            </>
 
             <Sheet
                 open={sheet.open}
@@ -1453,6 +1451,6 @@ export default function AiSettings({ ai, providers, scopes }: AiSettingsPageProp
                     />
                 </SheetContent>
             </Sheet>
-        </MainLayout>
+        </>
     );
 }

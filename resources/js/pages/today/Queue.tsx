@@ -25,7 +25,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
 
 const TYPES = ['pelicula', 'serie', 'disco', 'libro', 'juego'];
@@ -207,7 +206,7 @@ export default function Queue({ items }: { items: QueueItem[] }) {
     const showResults = q.trim().length >= 2;
 
     return (
-        <MainLayout>
+        <>
             <Head title="Cola" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-4">
                 <h2 className="text-xl font-black text-foreground">Cola</h2>
@@ -350,6 +349,6 @@ export default function Queue({ items }: { items: QueueItem[] }) {
                     </Button>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

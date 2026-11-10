@@ -5,7 +5,6 @@ import EmptyState from '@/components/integrations/EmptyState';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 import type { FlashProps } from '@/types/integrations';
 
@@ -77,7 +76,7 @@ export default function AgentsIndex() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Agentes" />
 
             <div className="mx-auto max-w-5xl space-y-6 px-4 py-6">
@@ -183,6 +182,6 @@ export default function AgentsIndex() {
                 internalTools={internalTools}
                 integrations={integrations}
             />
-        </MainLayout>
+        </>
     );
 }

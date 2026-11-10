@@ -13,7 +13,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 import type { FlashProps } from '@/types/integrations';
 
@@ -128,7 +127,7 @@ export default function StorageIndex() {
     const segments = path.split('/').filter(Boolean);
 
     return (
-        <MainLayout>
+        <>
             <Head title="Archivos" />
 
             <div className="mx-auto max-w-4xl space-y-5 px-4 py-6">
@@ -272,6 +271,6 @@ export default function StorageIndex() {
                     </>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

@@ -5,7 +5,6 @@ import ProjectCards from '@/components/today/ProjectCards';
 import TaskFilterBar from '@/components/today/TaskFilterBar';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import MainLayout from '@/layouts/main-layout';
 import type { ActiveFilters, FilterOption, TaskRow } from '@/types/today';
 
 const ANCHORS = ['wake_up', 'after_meal', 'after_gym', 'after_shower', 'before_sleep', 'no_anchor'];
@@ -119,7 +118,7 @@ export default function Tomorrow({
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={target === 'today' ? 'Hoy' : 'Mañana'} />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 p-4 md:p-6">
                 <div className="flex items-baseline justify-between">
@@ -187,6 +186,6 @@ export default function Tomorrow({
                     <Button variant="ghost" onClick={dejarVacio}>Dejarlo vacío</Button>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

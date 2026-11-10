@@ -1,12 +1,11 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 
 interface AiEnabled {
@@ -208,12 +207,6 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
     const [loadingAiInsight, setLoadingAiInsight] = useState(false);
     const [aiInsightError, setAiInsightError] = useState('');
 
-    useEffect(() => {
-        if (aiEnabled && data.length > 0 && !aiInsight && !loadingAiInsight && !aiInsightError) {
-            fetchAiInsight();
-        }
-    }, [aiEnabled, data.length]);
-
     const fetchAiInsight = async () => {
         setLoadingAiInsight(true);
         setAiInsightError('');
@@ -239,7 +232,7 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Historial — Entrenamientos" />
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6 lg:p-8 animate-in fade-in duration-500">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -299,6 +292,19 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                                     className="mt-2 text-xs font-bold text-primary hover:underline"
                                 >
                                     Try Again
+                                </button>
+                            </div>
+                        )}
+
+                        {!loadingAiInsight && !aiInsightError && !aiInsight && (
+                            <div className="bg-[#1c0f0f] rounded-xl border border-dashed border-[#3e2121] p-5 text-center">
+                                <p className="text-sm text-[#e8b4b4]">Todavía no pediste el análisis de tus entrenamientos.</p>
+                                <button
+                                    type="button"
+                                    onClick={fetchAiInsight}
+                                    className="mt-3 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-5 py-2 text-xs font-black uppercase tracking-widest text-white shadow-[0_0_15px_rgba(239,68,68,0.25)] transition hover:bg-primary/90"
+                                >
+                                    Analizar con IA
                                 </button>
                             </div>
                         )}
@@ -662,6 +668,6 @@ export default function History({ workouts, personalRecords, routines = [] }: Pr
                     </form>
                 </DialogContent>
             </Dialog>
-        </MainLayout>
+        </>
     );
 }

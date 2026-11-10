@@ -10,8 +10,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 import type { SharedData } from '@/types';
 
 export interface SkillRow {
@@ -134,12 +132,12 @@ export default function SkillsSettings() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Skills" />
 
             <h1 className="sr-only">Skills</h1>
 
-            <SettingsLayout>
+            <>
                 <div className="space-y-6">
                     <Heading
                         variant="small"
@@ -256,7 +254,7 @@ export default function SkillsSettings() {
                         </div>
                     )}
                 </div>
-            </SettingsLayout>
-        </MainLayout>
+            </>
+        </>
     );
 }

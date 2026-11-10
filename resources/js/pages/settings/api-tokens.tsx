@@ -6,8 +6,6 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import MainLayout from '@/layouts/main-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/settings/ai';
 import type { BreadcrumbItem } from '@/types';
 
@@ -40,12 +38,12 @@ export default function ApiTokensSettings({
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="API Keys" />
 
             <h1 className="sr-only">API Keys</h1>
 
-            <SettingsLayout>
+            <>
                 <div className="space-y-6">
                     <Heading
                         variant="small"
@@ -201,7 +199,7 @@ export default function ApiTokensSettings({
                         </div>
                     </div>
                 </div>
-            </SettingsLayout>
-        </MainLayout>
+            </>
+        </>
     );
 }

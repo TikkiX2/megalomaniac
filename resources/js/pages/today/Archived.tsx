@@ -1,7 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import MainLayout from '@/layouts/main-layout';
 
 interface ArchivedItem {
     id: number;
@@ -14,7 +13,7 @@ export default function Archived({ items, undoable = 0 }: { items: ArchivedItem[
     const toggle = (id: number) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
     return (
-        <MainLayout>
+        <>
             <Head title="Archivadas" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 p-4">
                 <h2 className="text-xl font-black text-white">Archivadas</h2>
@@ -40,6 +39,6 @@ export default function Archived({ items, undoable = 0 }: { items: ArchivedItem[
                     Restaurar {sel.length > 0 ? sel.length : ''}
                 </Button>
             </div>
-        </MainLayout>
+        </>
     );
 }

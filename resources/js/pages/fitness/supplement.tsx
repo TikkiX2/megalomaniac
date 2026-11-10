@@ -1,6 +1,5 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import SupplementLayout from '@/layouts/supplement-layout';
 
 interface Supplement {
     id: number;
@@ -87,7 +86,7 @@ export default function SupplementPage({ supplements, recentLogs }: Props) {
         : 100;
 
     return (
-        <SupplementLayout>
+        <>
             <Head title="Supplements" />
             <div className="p-6 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 text-white">
                 <header className="flex justify-between items-end mb-10">
@@ -296,6 +295,6 @@ export default function SupplementPage({ supplements, recentLogs }: Props) {
                     </div>
                 </div>
             )}
-        </SupplementLayout>
+        </>
     );
 }

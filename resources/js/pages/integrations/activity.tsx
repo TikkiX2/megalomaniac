@@ -19,7 +19,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 import type { ActivityLogRow } from '@/types/integrations';
 
@@ -64,7 +63,7 @@ export default function Activity() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Actividad de integraciones" />
 
             <div className="mx-auto max-w-5xl space-y-6 px-4 py-6">
@@ -233,6 +232,6 @@ export default function Activity() {
                     </div>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

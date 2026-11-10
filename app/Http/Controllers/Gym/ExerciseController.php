@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Gym;
 
 use App\Http\Controllers\Controller;
 use App\Models\Exercise;
+use App\Models\Workout;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -31,23 +33,26 @@ class ExerciseController extends Controller
             $activeWorkout = app(WorkoutController::class)->loadWorkoutWithHistory($activeWorkout);
         }
 
-        // Weekly volume + streak for gym-routine (last 7 days)
-        $start = now()->copy()->subDays(6)->startOfDay();
+        // Weekly volume + streak for gym-routine (last 7 local days)
+        $timezone = $user->localTimezone();
+        $today = Carbon::now($timezone)->startOfDay();
+        $windowStart = $today->copy()->subDays(6);
+
         $weeklyWorkouts = $user->workouts()->with('exercises.sets')
-            ->where('started_at', '>=', $start)
+            ->where('started_at', '>=', $windowStart->copy()->utc())
             ->get();
 
         $volMap = [];
         $labels = [];
         for ($i = 0; $i < 7; $i++) {
-            $d = $start->copy()->addDays($i);
+            $d = $windowStart->copy()->addDays($i);
             $key = $d->toDateString();
             $volMap[$key] = 0;
             $labels[$key] = $d->format('D');
         }
         $datesWithWorkout = [];
         foreach ($weeklyWorkouts as $w) {
-            $key = $w->started_at->toDateString();
+            $key = $w->started_at->copy()->setTimezone($timezone)->toDateString();
             if (! isset($volMap[$key])) {
                 continue;
             }
@@ -71,21 +76,29 @@ class ExerciseController extends Controller
             $weeklyVolumeByDay[] = ['date' => $date, 'label' => $labels[$date], 'volume' => $vol];
         }
         $streakDays = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $d = $start->copy()->addDays($i);
+        for ($i = 0; $i < 7; $i++) {
+            $d = $windowStart->copy()->addDays($i);
             $key = $d->toDateString();
-            $has = isset($datesWithWorkout[$key]);
-            array_unshift($streakDays, ['date' => $key, 'label' => $labels[$key], 'hasWorkout' => $has]);
+            $streakDays[] = ['date' => $key, 'label' => $labels[$key], 'hasWorkout' => isset($datesWithWorkout[$key])];
         }
+
+        $streakDates = $user->workouts()
+            ->get(['started_at'])
+            ->map(fn (Workout $workout) => $workout->started_at->copy()->setTimezone($timezone)->toDateString())
+            ->unique()
+            ->flip();
+
+        $cursor = $today->copy();
+
+        if (! isset($streakDates[$cursor->toDateString()])) {
+            $cursor->subDay();
+        }
+
         $currentStreak = 0;
-        for ($i = 6; $i >= 0; $i--) {
-            $d = $start->copy()->addDays($i);
-            $key = $d->toDateString();
-            if (isset($datesWithWorkout[$key])) {
-                $currentStreak++;
-            } else {
-                break;
-            }
+
+        while (isset($streakDates[$cursor->toDateString()])) {
+            $currentStreak++;
+            $cursor->subDay();
         }
 
         return Inertia::render('fitness/gym-routine', [
@@ -93,7 +106,7 @@ class ExerciseController extends Controller
             'routines' => $user->routines()->with('exercises')->get(),
             'activeWorkout' => $activeWorkout,
             'suggestedRoutine' => $user->routines()
-                ->where('scheduled_date', now()->format('l'))
+                ->where('scheduled_date', now($timezone)->format('l'))
                 ->with('exercises')
                 ->first(),
             'weeklyVolumeByDay' => $weeklyVolumeByDay,

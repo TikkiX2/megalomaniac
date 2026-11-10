@@ -28,6 +28,7 @@ class User extends Authenticatable
         'weight',
         'height',
         'target_weight',
+        'timezone',
         'ai_provider_url',
         'ai_provider_key',
         'ai_model',
@@ -67,6 +68,11 @@ class User extends Authenticatable
             'ai_enabled' => 'boolean',
             'tavily_api_key' => 'encrypted',
         ];
+    }
+
+    public function localTimezone(): string
+    {
+        return $this->timezone ?: config('app.timezone');
     }
 
     public function routines()

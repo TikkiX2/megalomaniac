@@ -7,8 +7,6 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import MainLayout from '@/layouts/main-layout';
-import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem, SharedData } from '@/types';
@@ -33,9 +31,11 @@ function calcIMC(weight: number | null, height: number | null): { imc: number | 
 export default function Profile({
     mustVerifyEmail,
     status,
+    timezones,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    timezones: string[];
 }) {
     const { auth } = usePage<SharedData>().props;
     const initialWeight = auth.user.weight ? Number(auth.user.weight) : null;
@@ -43,12 +43,12 @@ export default function Profile({
     const imcInfo = calcIMC(initialWeight, initialHeight);
 
     return (
-        <MainLayout>
+        <>
             <Head title="Profile settings" />
 
             <h1 className="sr-only">Profile Settings</h1>
 
-            <SettingsLayout>
+            <>
                 <div className="space-y-6">
                     <Heading
                         variant="small"
@@ -200,6 +200,30 @@ export default function Profile({
                                     )}
                                 </div>
 
+                                <div className="rounded-xl bg-card border border-border p-4 space-y-4">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-primary text-[18px]">public</span>
+                                        Preferencias
+                                    </h3>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="timezone">Zona horaria</Label>
+                                        <select
+                                            id="timezone"
+                                            name="timezone"
+                                            defaultValue={auth.user.timezone ?? 'America/Argentina/Buenos_Aires'}
+                                            className="flex h-9 w-full min-w-0 rounded-md border border-border bg-background px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                                        >
+                                            {timezones.map((timezone) => (
+                                                <option key={timezone} value={timezone}>
+                                                    {timezone}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <InputError className="mt-1" message={errors.timezone} />
+                                        <p className="text-xs text-muted-foreground">Se usa para calcular tu racha y los días de entrenamiento.</p>
+                                    </div>
+                                </div>
+
                                 <div className="flex items-center gap-4">
                                     <Button
                                         disabled={processing}
@@ -226,7 +250,7 @@ export default function Profile({
                 </div>
 
                 <DeleteUser />
-            </SettingsLayout>
-        </MainLayout>
+            </>
+        </>
     );
 }

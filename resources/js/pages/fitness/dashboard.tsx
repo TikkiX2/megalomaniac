@@ -2,7 +2,6 @@ import { Head, usePage, Link } from '@inertiajs/react';
 import type { MediaPick, PickTypeOption } from '@/components/today/MediaLine';
 import TodayPanel from '@/components/today/TodayPanel';
 import type { BlockPayload, DayPayload, RoutinePayload } from '@/components/today/TodayPanel';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 
 interface Props {
@@ -45,7 +44,7 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
     const todayEs = new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' });
 
     return (
-        <MainLayout>
+        <>
             <Head title="Panel" />
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-4 md:p-6 lg:p-8 animate-in fade-in duration-700">
                 <div className="flex flex-col flex-wrap justify-between gap-4 md:flex-row md:items-end">
@@ -213,6 +212,6 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
                 </div>
 
             </div>
-        </MainLayout>
+        </>
     );
 }

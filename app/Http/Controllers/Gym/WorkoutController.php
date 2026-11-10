@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -61,11 +62,15 @@ class WorkoutController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $startedAt = isset($validated['started_at'])
+            ? Carbon::parse($validated['started_at'], $request->user()->localTimezone())->utc()->toDateTimeString()
+            : null;
+
         try {
             $workout = $this->sessions->start(
                 $request->user(),
                 $validated['routine_id'] ?? null,
-                $validated['started_at'] ?? null,
+                $startedAt,
                 $validated['notes'] ?? null,
             );
         } catch (WorkoutAlreadyActiveException $e) {
@@ -127,10 +132,14 @@ class WorkoutController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        $startedAt = Carbon::parse($validated['started_at'], $request->user()->localTimezone())
+            ->utc()
+            ->toDateTimeString();
+
         $workout = $this->sessions->logPast(
             $request->user(),
             $validated['routine_id'] ?? null,
-            $validated['started_at'],
+            $startedAt,
             $validated['notes'] ?? null,
         );
 

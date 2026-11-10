@@ -3,7 +3,6 @@ import { Cake, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import PeopleLayout from '@/layouts/people-layout';
 import people from '@/routes/people';
 
 interface Entry {
@@ -84,7 +83,7 @@ export default function PeopleCalendar({ people: peopleList, keyDates }: any) {
     const monthName = current.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
     return (
-        <PeopleLayout>
+        <>
             <Head title="Calendario de fechas" />
             <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[2fr_1fr] animate-in fade-in duration-700">
                 <div className="flex flex-col gap-4 bg-card border border-border rounded-xl p-4">
@@ -149,6 +148,6 @@ export default function PeopleCalendar({ people: peopleList, keyDates }: any) {
                     ))}
                 </div>
             </div>
-        </PeopleLayout>
+        </>
     );
 }
