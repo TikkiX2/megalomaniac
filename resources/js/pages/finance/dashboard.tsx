@@ -69,14 +69,24 @@ interface Props {
 export default function FinanceDashboard({ balances, pendingDebts, recentTransactions, overdueDebts, stats, monthlyBudget, savingsGoals }: Props) {
     const [financeInsight, setFinanceInsight] = useState<string | null>(null);
     const [insightLoading, setInsightLoading] = useState(false);
+    const [insightError, setInsightError] = useState<string | null>(null);
 
-    const fetchInsight = () => {
+    const fetchInsight = async () => {
+        setInsightError(null);
         setInsightLoading(true);
-        fetch('/ai/insights/finance')
-            .then((res) => (res.ok ? res.json() : { insight: null }))
-            .then((data) => setFinanceInsight(data.insight))
-            .catch(() => {})
-            .finally(() => setInsightLoading(false));
+        try {
+            const res = await fetch('/ai/insights/finance');
+            if (!res.ok) {
+                setInsightError('No se pudo generar el análisis.');
+                return;
+            }
+            const data = await res.json();
+            setFinanceInsight(data.insight ?? null);
+        } catch {
+            setInsightError('Error de red. Reintentá.');
+        } finally {
+            setInsightLoading(false);
+        }
     };
 
     return (
@@ -364,6 +374,7 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                         icon="account_balance"
                         onRequest={fetchInsight}
                         requestLabel="Analizar con IA"
+                        error={insightError}
                     />
 
                     {/* Recent Transactions */}

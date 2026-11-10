@@ -38,45 +38,62 @@ export function AiInsightCard({ title, insight, loading, icon = 'sparkles', clas
                         <Loader2 className="h-5 w-5 text-primary animate-spin" />
                         <span className="text-xs font-bold text-muted-foreground">Analizando datos...</span>
                     </div>
+                ) : insight ? (
+                    <div className="flex flex-col gap-3">
+                        {error && (
+                            <div role="alert" className="rounded-xl bg-[#1c0f0f] border border-primary/30 p-3 text-center">
+                                <p className="text-xs font-bold text-[#e8b4b4]">{error}</p>
+                            </div>
+                        )}
+                        <div className="rounded-xl bg-[#1c0f0f] border border-[#3e2121]/50 p-4">
+                            <p className="text-sm text-[#e8b4b4] leading-relaxed whitespace-pre-wrap">{insight}</p>
+                            {onRequest && (
+                                <button
+                                    type="button"
+                                    onClick={onRequest}
+                                    data-test="ai-insight-refresh"
+                                    className="mt-4 min-h-[44px] rounded-xl border border-[#3e2121] bg-[#2b1a1a] px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#3e2121]"
+                                >
+                                    Actualizar análisis
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 ) : error ? (
-                    <div className="rounded-xl bg-[#1c0f0f] border border-[#3e2121] p-4 text-center">
+                    <div role="alert" className="rounded-xl bg-[#1c0f0f] border border-[#3e2121] p-4 text-center">
                         <p className="text-xs font-bold text-[#e8b4b4]">{error}</p>
                         {onRequest && (
                             <button
                                 type="button"
                                 onClick={onRequest}
+                                data-test="ai-insight-retry"
                                 className="mt-3 min-h-[44px] rounded-xl border border-[#3e2121] bg-[#2b1a1a] px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#3e2121]"
                             >
                                 Reintentar
                             </button>
                         )}
                     </div>
-                ) : insight ? (
-                    <div className="rounded-xl bg-[#1c0f0f] border border-[#3e2121]/50 p-4">
-                        <p className="text-sm text-[#e8b4b4] leading-relaxed whitespace-pre-wrap">{insight}</p>
-                        {onRequest && (
-                            <button
-                                type="button"
-                                onClick={onRequest}
-                                className="mt-4 min-h-[44px] rounded-xl border border-[#3e2121] bg-[#2b1a1a] px-4 py-2 text-xs font-black uppercase tracking-widest text-white transition hover:bg-[#3e2121]"
-                            >
-                                Actualizar análisis
-                            </button>
-                        )}
-                    </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-6 text-center rounded-xl bg-[#1c0f0f] border border-dashed border-[#3e2121]">
                         <span className="material-symbols-outlined text-2xl text-muted-foreground mb-2">psychology</span>
-                        <p className="text-xs font-bold text-muted-foreground">Sin datos suficientes para generar insights</p>
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">Registra más actividad para obtener análisis IA</p>
-                        {onRequest && (
-                            <button
-                                type="button"
-                                onClick={onRequest}
-                                className="mt-4 min-h-[44px] rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-white shadow-[0_0_15px_rgba(239,68,68,0.25)] transition hover:bg-primary/90"
-                            >
-                                {requestLabel ?? 'Analizar con IA'}
-                            </button>
+                        {onRequest ? (
+                            <>
+                                <p className="text-xs font-bold text-muted-foreground">Todavía no generaste el análisis</p>
+                                <p className="text-[10px] text-muted-foreground/60 mt-1">Pedilo cuando quieras y la IA revisa tus datos.</p>
+                                <button
+                                    type="button"
+                                    onClick={onRequest}
+                                    data-test="ai-insight-request"
+                                    className="mt-4 min-h-[44px] rounded-xl bg-primary px-4 py-2 text-xs font-black uppercase tracking-widest text-white shadow-[0_0_15px_rgba(239,68,68,0.25)] transition hover:bg-primary/90"
+                                >
+                                    {requestLabel ?? 'Analizar con IA'}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-xs font-bold text-muted-foreground">Sin datos suficientes para generar insights</p>
+                                <p className="text-[10px] text-muted-foreground/60 mt-1">Registra más actividad para obtener análisis IA</p>
+                            </>
                         )}
                     </div>
                 )}

@@ -43,6 +43,7 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
     const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
     const [groceryInsight, setGroceryInsight] = useState<string | null>(null);
     const [insightLoading, setInsightLoading] = useState(false);
+    const [insightError, setInsightError] = useState<string | null>(null);
     const { data, setData, post, put, processing, reset, errors, clearErrors } = useForm({
         name: '',
         category: '',
@@ -54,13 +55,22 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
 
     const [restockData, setRestockData] = useState<{ id: number; quantity: number; price: number }[]>([]);
 
-    const fetchInsight = () => {
+    const fetchInsight = async () => {
+        setInsightError(null);
         setInsightLoading(true);
-        fetch('/ai/insights/grocery')
-            .then((res) => (res.ok ? res.json() : { insight: null }))
-            .then((data) => setGroceryInsight(data.insight))
-            .catch(() => {})
-            .finally(() => setInsightLoading(false));
+        try {
+            const res = await fetch('/ai/insights/grocery');
+            if (!res.ok) {
+                setInsightError('No se pudo generar el análisis.');
+                return;
+            }
+            const data = await res.json();
+            setGroceryInsight(data.insight ?? null);
+        } catch {
+            setInsightError('Error de red. Reintentá.');
+        } finally {
+            setInsightLoading(false);
+        }
     };
 
     const deficitItems = items.filter(item => item.current_stock < item.target_stock);
@@ -459,12 +469,14 @@ export default function GroceryPage({ items, categories, history = {} }: Props) 
                         </section>
 
                         {/* AI Restock Suggestions */}
-                        {(groceryInsight || insightLoading) && (
+                        {(groceryInsight || insightLoading || insightError) && (
                             <AiInsightCard
                                 title="AI Restock Suggestions"
                                 insight={groceryInsight}
                                 loading={insightLoading}
                                 icon="shopping_cart"
+                                onRequest={fetchInsight}
+                                error={insightError}
                             />
                         )}
 

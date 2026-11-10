@@ -22,14 +22,24 @@ interface Props {
 export default function StatisticsIndex({ currencies, currentCurrencyId, filters, stats }: Props) {
     const [financeInsight, setFinanceInsight] = useState<string | null>(null);
     const [insightLoading, setInsightLoading] = useState(false);
+    const [insightError, setInsightError] = useState<string | null>(null);
 
-    const fetchInsight = () => {
+    const fetchInsight = async () => {
+        setInsightError(null);
         setInsightLoading(true);
-        fetch('/ai/insights/finance')
-            .then((res) => (res.ok ? res.json() : { insight: null }))
-            .then((data) => setFinanceInsight(data.insight))
-            .catch(() => {})
-            .finally(() => setInsightLoading(false));
+        try {
+            const res = await fetch('/ai/insights/finance');
+            if (!res.ok) {
+                setInsightError('No se pudo generar el análisis.');
+                return;
+            }
+            const data = await res.json();
+            setFinanceInsight(data.insight ?? null);
+        } catch {
+            setInsightError('Error de red. Reintentá.');
+        } finally {
+            setInsightLoading(false);
+        }
     };
 
     return (
@@ -70,6 +80,7 @@ export default function StatisticsIndex({ currencies, currentCurrencyId, filters
                     className="lg:col-span-2"
                     onRequest={fetchInsight}
                     requestLabel="Analizar con IA"
+                    error={insightError}
                 />
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
