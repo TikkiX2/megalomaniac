@@ -9,7 +9,12 @@ test('profile page is displayed', function () {
         ->actingAs($user)
         ->get(route('profile.edit'));
 
-    $response->assertOk();
+    $response
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('settings/profile')
+            ->has('timezones')
+            ->where('timezones.0', 'Africa/Abidjan'));
 });
 
 test('profile information can be updated', function () {
@@ -60,6 +65,46 @@ test('invalid timezone is rejected', function () {
         ])
         ->assertSessionHasErrors('timezone')
         ->assertRedirect(route('profile.edit'));
+});
+
+test('profile update without timezone keeps the current one', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->timezone)->toBe('America/Argentina/Buenos_Aires');
+});
+
+test('empty timezone is rejected', function (?string $timezone) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->from(route('profile.edit'))
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'timezone' => $timezone,
+        ])
+        ->assertSessionHasErrors('timezone')
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->timezone)->toBe('America/Argentina/Buenos_Aires');
+})->with([
+    'empty string' => '',
+    'null' => null,
+]);
+
+test('local timezone falls back to the column default', function () {
+    $user = User::factory()->create()->fresh();
+
+    expect($user->timezone)->toBe('America/Argentina/Buenos_Aires');
+    expect($user->localTimezone())->toBe('America/Argentina/Buenos_Aires');
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {
