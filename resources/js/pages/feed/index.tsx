@@ -4,7 +4,6 @@ import EmptyState from '@/components/integrations/EmptyState';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 import type { FlashProps } from '@/types/integrations';
 
@@ -56,7 +55,7 @@ export default function FeedIndex() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Feed" />
 
             <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
@@ -180,6 +179,6 @@ export default function FeedIndex() {
                     </div>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

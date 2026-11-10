@@ -3,7 +3,6 @@ import Heading from '@/components/heading';
 import ApprovalCard from '@/components/integrations/ApprovalCard';
 import EmptyState from '@/components/integrations/EmptyState';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import MainLayout from '@/layouts/main-layout';
 import type { SharedData } from '@/types';
 import type { ApprovalRow, FlashProps } from '@/types/integrations';
 
@@ -17,7 +16,7 @@ export default function Approvals() {
     const { pending, history, flash } = usePage<SharedData & ApprovalsPageProps>().props;
 
     return (
-        <MainLayout>
+        <>
             <Head title="Aprobaciones" />
 
             <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
@@ -76,6 +75,6 @@ export default function Approvals() {
                     </TabsContent>
                 </Tabs>
             </div>
-        </MainLayout>
+        </>
     );
 }

@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import MainLayout from '@/layouts/main-layout';
 import freelance from '@/routes/freelance';
 
 export default function QuoteShow({ quote }: any) {
@@ -27,7 +26,7 @@ export default function QuoteShow({ quote }: any) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={`Cotización ${quote.quote_number}`} />
 
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 max-w-4xl mx-auto w-full animate-in fade-in duration-700 pb-20">
@@ -155,6 +154,6 @@ export default function QuoteShow({ quote }: any) {
                     </div>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

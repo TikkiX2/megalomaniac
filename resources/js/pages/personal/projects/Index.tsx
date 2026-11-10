@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import MainLayout from '@/layouts/main-layout';
 import type { PersonalProject } from '@/types/personal';
 
 interface Props {
@@ -55,7 +54,7 @@ export default function PersonalProjectsIndex({ projects, filters }: Props) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Proyectos Personales" />
             <div className="flex flex-col gap-6 p-4 md:p-6 animate-in fade-in duration-700">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -190,6 +189,6 @@ export default function PersonalProjectsIndex({ projects, filters }: Props) {
                     </div>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

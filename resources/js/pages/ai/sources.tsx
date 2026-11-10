@@ -22,7 +22,6 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { useAttachmentUpload } from '@/hooks/use-attachment-upload';
-import MainLayout from '@/layouts/main-layout';
 import { cn } from '@/lib/utils';
 import type { AiChatState, ChatAttachment } from '@/types/chat';
 
@@ -115,7 +114,7 @@ export default function Sources({ items }: SourcesPageProps) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Fuentes" />
 
             <div className="mx-auto max-w-5xl space-y-6 px-4 py-6">
@@ -408,6 +407,6 @@ export default function Sources({ items }: SourcesPageProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </MainLayout>
+        </>
     );
 }

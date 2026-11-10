@@ -11,7 +11,6 @@ import SourceChips from '@/components/inspiration/SourceChips';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import MainLayout from '@/layouts/main-layout';
 import inspiration from '@/routes/inspiration';
 import type { SharedData } from '@/types';
 
@@ -157,7 +156,7 @@ export default function Explore() {
     const isDown = (key: string): boolean => sources[key]?.down ?? false;
 
     return (
-        <MainLayout>
+        <>
             <Head title="Inspiración" />
 
             <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6">
@@ -332,6 +331,6 @@ export default function Explore() {
                 }}
                 onSaved={() => router.reload({ only: ['saved', 'boards'] })}
             />
-        </MainLayout>
+        </>
     );
 }

@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import type { PersonalProject } from '@/types/personal';
 
 interface Props {
@@ -50,7 +49,7 @@ export default function PersonalProjectForm({ project, clients = [] }: Props) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={isEdit ? `Editar ${project?.name}` : 'Nuevo Proyecto'} />
             <div className="max-w-2xl mx-auto flex flex-col gap-6 p-4 md:p-6">
                 <Button variant="ghost" asChild className="w-fit"><Link href="/personal/projects"><ArrowLeft className="mr-2 h-4 w-4" />Volver</Link></Button>
@@ -152,6 +151,6 @@ export default function PersonalProjectForm({ project, clients = [] }: Props) {
                     </div>
                 </form>
             </div>
-        </MainLayout>
+        </>
     );
 }

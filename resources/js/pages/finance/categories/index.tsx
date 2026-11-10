@@ -2,7 +2,6 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { PurchaseCategory } from '@/types/finance';
 
@@ -25,7 +24,7 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Purchase Categories" />
 
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -154,6 +153,6 @@ export default function PurchaseCategoriesIndex({ categories }: Props) {
                     </div>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

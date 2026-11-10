@@ -13,7 +13,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import freelance from '@/routes/freelance';
 
 interface ClientFormProps {
@@ -46,7 +45,7 @@ export default function ClientForm({ client, people }: ClientFormProps) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={isEditing ? 'Editar Cliente' : 'Nuevo Cliente'} />
 
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 max-w-2xl mx-auto w-full animate-in fade-in duration-700">
@@ -179,6 +178,6 @@ export default function ClientForm({ client, people }: ClientFormProps) {
                     </Card>
                 </form>
             </div>
-        </MainLayout>
+        </>
     );
 }

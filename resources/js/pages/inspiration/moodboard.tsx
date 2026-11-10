@@ -5,7 +5,6 @@ import Lightbox from '@/components/inspiration/Lightbox';
 import MasonryGrid from '@/components/inspiration/MasonryGrid';
 import { sourceColorClass, sourceLabel, type DownloadState, type SavedMoodboardItem } from '@/components/inspiration/shared';
 import { Button } from '@/components/ui/button';
-import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
 import inspiration from '@/routes/inspiration';
 import type { SharedData } from '@/types';
@@ -89,7 +88,7 @@ export default function Moodboard() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={board.name} />
 
             <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6">
@@ -324,6 +323,6 @@ export default function Moodboard() {
                 onRefresh={() => router.reload({ only: ['items', 'total', 'sources'] })}
                 returnFocusTo={lightboxOrigin}
             />
-        </MainLayout>
+        </>
     );
 }

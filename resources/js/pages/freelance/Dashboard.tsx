@@ -16,7 +16,6 @@ import { ModuleAiButton } from '@/components/ai/module-ai-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import MainLayout from '@/layouts/main-layout';
 import { cn } from '@/lib/utils';
 import freelance from '@/routes/freelance';
 
@@ -47,7 +46,7 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
     }, [stats]);
 
     return (
-        <MainLayout>
+        <>
             <Head title="Freelance Dashboard" />
 
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 lg:p-8 animate-in fade-in duration-700">
@@ -205,7 +204,7 @@ export default function Dashboard({ stats, recent_projects, upcoming_tasks }: Da
                     </Card>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }
 

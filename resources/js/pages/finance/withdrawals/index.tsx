@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { Withdrawal, WithdrawalCategory, Currency } from '@/types/finance';
 
@@ -40,7 +39,7 @@ export default function WithdrawalsIndex({ withdrawals, categories, currencies, 
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Withdrawals" />
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in duration-700">
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -203,6 +202,6 @@ export default function WithdrawalsIndex({ withdrawals, categories, currencies, 
                     </table>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

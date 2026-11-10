@@ -14,7 +14,6 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import freelance from '@/routes/freelance';
 
 interface ProjectFormProps {
@@ -57,7 +56,7 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={isEditing ? 'Editar Proyecto' : 'Nuevo Proyecto'} />
 
             <div className="flex h-full flex-col gap-6 p-4 md:p-6 max-w-4xl mx-auto w-full animate-in fade-in duration-700 pb-20">
@@ -317,6 +316,6 @@ export default function ProjectForm({ project, clients, currencies }: ProjectFor
                     </Card>
                 </form>
             </div>
-        </MainLayout>
+        </>
     );
 }

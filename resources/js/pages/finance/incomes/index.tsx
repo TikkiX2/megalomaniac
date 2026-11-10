@@ -1,5 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { Income, IncomeSource, Currency } from '@/types/finance';
 
@@ -26,7 +25,7 @@ interface Props {
 
 export default function IncomesIndex({ incomes, incomeSources, currencies, summary, filters }: Props) {
     return (
-        <MainLayout>
+        <>
             <Head title="Incomes" />
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in duration-700">
                 {/* Header Section */}
@@ -117,7 +116,7 @@ export default function IncomesIndex({ incomes, incomeSources, currencies, summa
                     </table>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }
 

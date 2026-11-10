@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import MainLayout from '@/layouts/main-layout';
 import type { PersonalProject } from '@/types/personal';
 
 interface Props {
@@ -21,7 +20,7 @@ export default function PersonalProjectShow({ project, clients = [] }: Props) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={project.name} />
             <div className="flex flex-col gap-6 p-4 md:p-6 max-w-5xl mx-auto animate-in fade-in duration-700">
                 <Button variant="ghost" asChild className="w-fit">
@@ -133,6 +132,6 @@ export default function PersonalProjectShow({ project, clients = [] }: Props) {
                     </Card>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

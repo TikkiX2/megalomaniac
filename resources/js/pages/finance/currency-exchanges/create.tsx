@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import { cn } from '@/lib/utils';
 import finance from '@/routes/finance';
 import type { Currency, IncomeSource, WithdrawalCategory, SavingsReserve } from '@/types/finance';
@@ -58,7 +57,7 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
     }, [data.to_reserve_id, targetType]);
 
     return (
-        <MainLayout>
+        <>
             <Head title="Record Currency Exchange" />
             <div className="mx-auto max-w-2xl p-6 lg:p-8">
                 <div className="mb-8 flex items-center justify-between">
@@ -285,6 +284,6 @@ export default function CreateExchange({ currencies, incomeSources, withdrawalCa
                     </Button>
                 </form>
             </div>
-        </MainLayout>
+        </>
     );
 }

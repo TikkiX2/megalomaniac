@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import MainLayout from '@/layouts/main-layout';
 import type { PersonalTask, PersonalProject } from '@/types/personal';
 
 interface Props {
@@ -69,7 +68,7 @@ export default function PersonalTaskShow({ task, projects }: Props) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={task.title} />
             <div className="max-w-4xl mx-auto flex flex-col gap-6 p-4 md:p-6">
                 <Button variant="ghost" asChild className="w-fit"><Link href="/personal/tasks"><ArrowLeft className="mr-2 h-4 w-4" />Volver a tareas</Link></Button>
@@ -167,6 +166,6 @@ export default function PersonalTaskShow({ task, projects }: Props) {
                     </div>
                 </form>
             </div>
-        </MainLayout>
+        </>
     );
 }

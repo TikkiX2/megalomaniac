@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { SavingsReserve } from '@/types/finance';
 
@@ -37,7 +36,7 @@ export default function SavingsReserveShow({ reserve }: Props) {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title={reserve.name} />
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in duration-700">
                 <div className="flex items-center gap-4">
@@ -219,6 +218,6 @@ export default function SavingsReserveShow({ reserve }: Props) {
                     </div>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }

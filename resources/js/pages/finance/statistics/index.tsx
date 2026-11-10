@@ -1,7 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
-import MainLayout from '@/layouts/main-layout';
 import type { Currency } from '@/types/finance';
 
 interface Props {
@@ -43,7 +42,7 @@ export default function StatisticsIndex({ currencies, currentCurrencyId, filters
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Finance Statistics" />
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6 lg:p-8 animate-in fade-in duration-700">
                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -178,7 +177,7 @@ export default function StatisticsIndex({ currencies, currentCurrencyId, filters
                     </div>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }
 

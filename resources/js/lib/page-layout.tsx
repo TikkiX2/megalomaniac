@@ -15,11 +15,8 @@ export function resolvePageLayout(name: string): LayoutComponent[] | null {
         return null;
     }
 
-    if (name.startsWith('ai/') || name.startsWith('finance/') || name.startsWith('freelance/')
-        || name.startsWith('personal/') || name.startsWith('today/') || name.startsWith('agents/')
-        || name.startsWith('feed/') || name.startsWith('inspiration/') || name.startsWith('integrations/')
-        || name.startsWith('storage/')) {
-        return null; // todavía se envuelven solas; Task 5 las convierte
+    if (name === 'ai/chat' || name === 'ai/thread' || name === 'ai/module') {
+        return null; // todavía se envuelven solas; Task 7 las convierte
     }
 
     if (name === 'settings' || name.startsWith('settings/')) {
@@ -50,9 +47,5 @@ export function resolvePageLayout(name: string): LayoutComponent[] | null {
         return [MainLayout, SupplementLayout];
     }
 
-    if (name.startsWith('fitness/')) {
-        return [MainLayout];
-    }
-
-    return null;
+    return [MainLayout];
 }

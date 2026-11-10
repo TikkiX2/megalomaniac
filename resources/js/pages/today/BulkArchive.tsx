@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import MainLayout from '@/layouts/main-layout';
 import { csrfHeaders } from '@/lib/csrf';
 
 export default function BulkArchive() {
@@ -42,7 +41,7 @@ export default function BulkArchive() {
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Archivo masivo" />
             <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4">
                 <h2 className="text-xl font-black text-white">Archivo masivo</h2>
@@ -108,6 +107,6 @@ export default function BulkArchive() {
                     </div>
                 )}
             </div>
-        </MainLayout>
+        </>
     );
 }

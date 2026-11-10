@@ -22,7 +22,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import MainLayout from '@/layouts/main-layout';
 import type { BoardColumn, PersonalProject, PersonalTask, TaskSavedView, TaskViewType } from '@/types/personal';
 
 interface Props {
@@ -117,7 +116,7 @@ export default function PersonalTasksIndex({ tasks, projects, savedViews, boardC
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Tareas Personales" />
             <div className="flex flex-col lg:flex-row gap-6 p-4 md:p-6 animate-in fade-in duration-700">
                 {/* Project Sidebar - desktop */}
@@ -277,6 +276,6 @@ export default function PersonalTasksIndex({ tasks, projects, savedViews, boardC
                 }}
                 extraFields={selectedTask ? <TaskProperties task={selectedTask} /> : null}
             />
-        </MainLayout>
+        </>
     );
 }

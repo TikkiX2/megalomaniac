@@ -2,7 +2,6 @@ import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { AiInsightCard } from '@/components/ai/AiInsightCard';
 import { ModuleAiButton } from '@/components/ai/module-ai-button';
-import MainLayout from '@/layouts/main-layout';
 import finance from '@/routes/finance';
 import type { Currency, Debt } from '@/types/finance';
 
@@ -90,7 +89,7 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
     };
 
     return (
-        <MainLayout>
+        <>
             <Head title="Finance Dashboard" />
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-4 md:p-6 lg:p-8 animate-in fade-in duration-700">
                 {/* Header Section */}
@@ -495,6 +494,6 @@ export default function FinanceDashboard({ balances, pendingDebts, recentTransac
                     </div>
                 </div>
             </div>
-        </MainLayout>
+        </>
     );
 }
