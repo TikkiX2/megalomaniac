@@ -42,11 +42,11 @@ export function resolvePageLayout(name: string): LayoutComponent[] | null {
         return [MainLayout, NutritionLayout];
     }
 
-    if (name === 'fitness/groceries') {
+    if (name === 'fitness/grocery') {
         return [MainLayout, GroceryLayout];
     }
 
-    if (name === 'fitness/supplements') {
+    if (name === 'fitness/supplement') {
         return [MainLayout, SupplementLayout];
     }
 
