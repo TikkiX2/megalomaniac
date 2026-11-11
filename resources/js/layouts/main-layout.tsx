@@ -21,7 +21,7 @@ function AreaAwareContent({
     const showAreaNav = state === 'expanded' && activeArea !== null;
 
     return (
-        <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex h-[calc(100svh-3rem)] min-h-0 flex-1 overflow-hidden">
             {showAreaNav && <SidebarAreaNav area={activeArea} />}
             <div className="flex min-w-0 flex-1 flex-col overflow-auto pb-24 md:pb-0">
                 {children}

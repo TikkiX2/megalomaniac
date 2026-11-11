@@ -5,11 +5,11 @@ import { cn } from '@/lib/utils';
 import type { SharedData } from '@/types';
 
 export function SidebarAreaNav({ area }: { area: NavArea | null }) {
-    const { url } = usePage();
-    const pathname = url.split('?')[0];
-    const { approvals_pending_count } = usePage<
+    const { props, url } = usePage<
         SharedData & { approvals_pending_count: number }
-    >().props;
+    >();
+    const { approvals_pending_count } = props;
+    const pathname = url.split('?')[0];
 
     if (!area) {
         return null;
@@ -39,10 +39,10 @@ export function SidebarAreaNav({ area }: { area: NavArea | null }) {
                                 prefetch
                                 aria-current={isActive ? 'page' : undefined}
                                 className={cn(
-                                    'flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors',
+                                    'flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-hidden',
                                     isActive
-                                        ? 'bg-accent font-medium text-foreground'
-                                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                                        ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
+                                        : 'text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground',
                                 )}
                             >
                                 <span className="truncate">{item.title}</span>
