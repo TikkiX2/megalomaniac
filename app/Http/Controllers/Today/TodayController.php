@@ -51,7 +51,7 @@ class TodayController extends Controller
         $pick = $pickService->pick($userId, $today, $pickType, $queueItems);
 
         return Inertia::render('fitness/dashboard', array_merge(
-            $this->dashboardProps($userId),
+            $this->dashboardProps($userId, $timezone),
             [
                 'date' => $today,
                 'day' => $this->dayPayload($day),
@@ -158,11 +158,11 @@ class TodayController extends Controller
      *
      * @return array<string, mixed>
      */
-    private function dashboardProps(int $userId): array
+    private function dashboardProps(int $userId, string $timezone): array
     {
         $mealLogsToday = MealLog::with('items')
             ->where('user_id', $userId)
-            ->whereDate('date', now()->toDateString())
+            ->whereDate('date', now($timezone)->toDateString())
             ->get();
 
         $caloriesToday = $mealLogsToday->sum(fn ($log) => $log->total_calories ?? 0);

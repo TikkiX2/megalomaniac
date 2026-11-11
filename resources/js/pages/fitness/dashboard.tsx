@@ -41,7 +41,7 @@ export default function Dashboard({ workoutCount, recentWorkouts, caloriesToday,
 
 
 
-    const todayEs = new Date().toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' });
+    const todayEs = new Date(`${date}T00:00:00`).toLocaleDateString('es-ES', { weekday: 'long', month: 'short', day: 'numeric' });
 
     return (
         <>

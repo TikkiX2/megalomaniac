@@ -791,7 +791,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                     </div>
 
                     {/* Right Sidebar (Quick Library) - Desktop Only */}
-                    <aside className="hidden xl:flex flex-col w-80 bg-[#1c0f0f] border-l border-[#3e2121] h-full animate-in slide-in-from-right-8 duration-700">
+                    <aside className="hidden xl:flex flex-col w-80 bg-[#1c0f0f] border-l border-[#3e2121] h-full max-h-[calc(100dvh-8rem)] overflow-hidden animate-in slide-in-from-right-8 duration-700">
                         <div className="p-6 border-b border-[#3e2121]">
                             <div className="flex items-center justify-between mb-1">
                                 <h3 className="font-black text-white uppercase tracking-widest text-sm">Quick Library</h3>
@@ -819,7 +819,7 @@ export default function GymRoutine({ exercises: libraryExercises, routines, acti
                             ))}
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                        <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                             {filteredExercises.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-10 text-center">
                                     <span className="material-symbols-outlined text-[#3e2121] text-4xl mb-2">search_off</span>
