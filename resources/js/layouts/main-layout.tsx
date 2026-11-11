@@ -4,14 +4,35 @@ import type { ReactNode } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
-import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarAreaNav } from '@/components/sidebar-area-nav';
+import { SidebarInset, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { findActiveArea } from '@/lib/navigation-areas';
 
 interface MainLayoutProps {
     children: ReactNode;
 }
 
+function AreaAwareContent({
+    pathname,
+    children,
+}: MainLayoutProps & { pathname: string }) {
+    const { state } = useSidebar();
+    const activeArea = findActiveArea(pathname);
+    const showAreaNav = state === 'expanded' && activeArea !== null;
+
+    return (
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+            {showAreaNav && <SidebarAreaNav area={activeArea} />}
+            <div className="flex min-w-0 flex-1 flex-col overflow-auto pb-24 md:pb-0">
+                {children}
+            </div>
+        </div>
+    );
+}
+
 export default function MainLayout({ children }: MainLayoutProps) {
     const { url } = usePage();
+    const pathname = url.split('?')[0];
     const isChatRoute = url.startsWith('/ai/chat');
 
     return (
@@ -23,9 +44,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     <div className="h-4 w-px bg-border mx-2" />
                     <span className="text-sm font-black tracking-tight text-muted-foreground hidden sm:inline">Megalomaniac Pro · Panel</span>
                 </header>
-                <div className="flex flex-1 flex-col overflow-auto pb-24 md:pb-0">
+                <AreaAwareContent pathname={pathname}>
                     {children}
-                </div>
+                </AreaAwareContent>
             </SidebarInset>
             <MobileBottomNav />
 
