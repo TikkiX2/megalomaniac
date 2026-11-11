@@ -23,7 +23,10 @@ function AreaAwareContent({
     return (
         <div className="flex h-[calc(100svh-3rem)] min-h-0 flex-1 overflow-hidden">
             {showAreaNav && <SidebarAreaNav area={activeArea} />}
-            <div className="flex min-w-0 flex-1 flex-col overflow-auto pb-24 md:pb-0">
+            <div
+                scroll-region="true"
+                className="flex min-w-0 flex-1 flex-col overflow-auto pb-24 md:pb-0"
+            >
                 {children}
             </div>
         </div>
