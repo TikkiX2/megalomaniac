@@ -17,6 +17,7 @@ import inspiration from '@/routes/inspiration';
 export interface NavAreaItem {
     title: string;
     href: string;
+    match?: string[];
     badge?: 'approvals';
 }
 
@@ -44,7 +45,11 @@ export const navAreas: NavArea[] = [
         groups: [
             {
                 items: [
-                    { title: 'Hoy', href: dashboard().url },
+                    {
+                        title: 'Hoy',
+                        href: dashboard().url,
+                        match: [dashboard().url, '/today'],
+                    },
                     { title: 'Semana', href: '/today/week' },
                     { title: 'Cola', href: '/today/queue' },
                     { title: 'Archivadas', href: '/today/archived' },
@@ -144,8 +149,14 @@ export const navAreas: NavArea[] = [
                 items: [
                     { title: 'Panel', href: freelance.dashboard().url },
                     { title: 'Clientes', href: freelance.clients.index().url },
-                    { title: 'Proyectos', href: freelance.projects.index().url },
-                    { title: 'Cotizaciones', href: freelance.quotes.index().url },
+                    {
+                        title: 'Proyectos',
+                        href: freelance.projects.index().url,
+                    },
+                    {
+                        title: 'Cotizaciones',
+                        href: freelance.quotes.index().url,
+                    },
                 ],
             },
         ],
@@ -193,13 +204,22 @@ export const navAreas: NavArea[] = [
         title: 'Más',
         icon: LayoutGrid,
         href: inspiration.explore().url,
-        match: ['/inspiration', '/agents', '/feed', '/storage', '/integrations'],
+        match: [
+            '/inspiration',
+            '/agents',
+            '/feed',
+            '/storage',
+            '/integrations',
+        ],
         groups: [
             {
                 label: 'Inspiración',
                 items: [
                     { title: 'Explorar', href: inspiration.explore().url },
-                    { title: 'Ajustes de fuentes', href: inspiration.settings.index().url },
+                    {
+                        title: 'Ajustes de fuentes',
+                        href: inspiration.settings.index().url,
+                    },
                 ],
             },
             {
@@ -208,7 +228,11 @@ export const navAreas: NavArea[] = [
                     { title: 'Agentes', href: '/agents' },
                     { title: 'Feed', href: '/feed' },
                     { title: 'Archivos', href: '/storage' },
-                    { title: 'Aprobaciones', href: '/integrations/approvals', badge: 'approvals' },
+                    {
+                        title: 'Aprobaciones',
+                        href: '/integrations/approvals',
+                        badge: 'approvals',
+                    },
                 ],
             },
         ],
@@ -216,11 +240,12 @@ export const navAreas: NavArea[] = [
 ];
 
 export function matchesHref(pathname: string, href: string): boolean {
+    const cleanPathname = pathname.split('?')[0];
     const cleanHref = href.split('?')[0];
 
     return (
-        pathname === cleanHref ||
-        pathname.startsWith(cleanHref === '/' ? '/' : `${cleanHref}/`)
+        cleanPathname === cleanHref ||
+        cleanPathname.startsWith(cleanHref === '/' ? '/' : `${cleanHref}/`)
     );
 }
 
@@ -245,14 +270,18 @@ export function findActiveItem(
     area: NavArea,
 ): NavAreaItem | null {
     let active: NavAreaItem | null = null;
+    let activeLength = 0;
 
     for (const group of area.groups) {
         for (const item of group.items) {
-            if (
-                matchesHref(pathname, item.href) &&
-                (!active || item.href.length > active.href.length)
-            ) {
+            const matchedLength = (item.match ?? [item.href])
+                .filter((href) => matchesHref(pathname, href))
+                .map((href) => href.split('?')[0].length)
+                .sort((a, b) => b - a)[0];
+
+            if (matchedLength !== undefined && matchedLength > activeLength) {
                 active = item;
+                activeLength = matchedLength;
             }
         }
     }

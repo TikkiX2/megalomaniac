@@ -18,7 +18,10 @@ export function SidebarAreaNav({ area }: { area: NavArea | null }) {
     const activeItem = findActiveItem(pathname, area);
 
     return (
-        <aside className="hidden w-48 shrink-0 flex-col gap-3 overflow-y-auto border-r border-border bg-background px-2 py-4 lg:flex">
+        <aside
+            aria-label={area.title}
+            className="hidden w-48 shrink-0 flex-col gap-3 overflow-y-auto border-r border-border bg-background px-2 py-4 lg:flex"
+        >
             <p className="px-2 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
                 {area.title}
             </p>

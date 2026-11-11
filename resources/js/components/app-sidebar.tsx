@@ -52,6 +52,11 @@ function AreaSubNavigation({
                             <SidebarMenuSubButton
                                 asChild
                                 isActive={activeItem?.href === item.href}
+                                aria-current={
+                                    activeItem?.href === item.href
+                                        ? 'page'
+                                        : undefined
+                                }
                             >
                                 <Link href={item.href} prefetch>
                                     <span>{item.title}</span>
@@ -97,7 +102,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-                <div className="px-2 pt-2">
+                <div className="px-2 pt-2 group-data-[collapsible=icon]:hidden">
                     <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">
                         Áreas
                     </span>
@@ -116,6 +121,9 @@ export function AppSidebar() {
                                         asChild
                                         tooltip={area.title}
                                         isActive={isAreaActive}
+                                        aria-current={
+                                            isAreaActive ? 'page' : undefined
+                                        }
                                     >
                                         <Link href={area.href} prefetch>
                                             <area.icon className="h-4 w-4" />
