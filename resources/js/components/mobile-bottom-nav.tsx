@@ -13,10 +13,11 @@ const primaryItems = [
     { title: 'Hoy', href: dashboard().url, icon: LayoutGrid, matches: ['/dashboard', '/today'] },
     { title: 'Gym', href: '/fitness/gym', icon: Dumbbell, matches: ['/fitness/gym'] },
     { title: 'Proyectos', href: '/personal/projects', icon: FolderKanban, matches: ['/personal'] },
-    { title: 'IA', href: '/ai/chat', icon: Brain, matches: ['/ai/chat'] },
+    { title: 'IA', href: '/ai/chat', icon: Brain, matches: ['/ai'] },
 ];
 
 const moreItems = [
+    { title: 'Tareas', href: '/personal/tasks', matches: ['/personal/tasks'] },
     { title: 'Nutrición', href: '/fitness/nutrition', matches: ['/fitness/nutrition'] },
     { title: 'Suplementos', href: '/fitness/supplements', matches: ['/fitness/supplements'] },
     { title: 'Compras', href: '/fitness/groceries', matches: ['/fitness/groceries'] },
