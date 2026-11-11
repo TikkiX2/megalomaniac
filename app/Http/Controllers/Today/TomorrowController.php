@@ -16,9 +16,11 @@ class TomorrowController extends Controller
     public function show(Request $request, TaskFilterService $taskFilters)
     {
         $userId = $request->user()->id;
-        $target = $this->resolveTarget($request->query('target'));
-        $date = $target === 'today' ? now()->toDateString() : now()->addDay()->toDateString();
-        $yesterday = now()->subDay()->toDateString();
+        $timezone = $request->user()->localTimezone();
+        $target = $this->resolveTarget($request->query('target'), $timezone);
+        $now = now($timezone);
+        $date = $target === 'today' ? $now->toDateString() : $now->copy()->addDay()->toDateString();
+        $yesterday = $now->copy()->subDay()->toDateString();
 
         $filters = $taskFilters->resolve($request, 'tomorrow');
         $options = $taskFilters->options($userId);
@@ -58,8 +60,10 @@ class TomorrowController extends Controller
     public function store(StoreTomorrowRequest $request)
     {
         $userId = $request->user()->id;
+        $timezone = $request->user()->localTimezone();
         $target = $request->validated()['target'] ?? 'tomorrow';
-        $date = $target === 'today' ? now()->toDateString() : now()->addDay()->toDateString();
+        $now = now($timezone);
+        $date = $target === 'today' ? $now->toDateString() : $now->copy()->addDay()->toDateString();
         $items = $request->validated()['items'] ?? [];
 
         foreach ($items as $it) {
@@ -93,7 +97,10 @@ class TomorrowController extends Controller
     {
         abort_if($item->day->user_id !== $request->user()->id, 403);
         $userId = $request->user()->id;
-        $today = Day::firstOrCreate(['user_id' => $userId, 'date' => now()->toDateString()]);
+        $today = Day::firstOrCreate([
+            'user_id' => $userId,
+            'date' => now($request->user()->localTimezone())->toDateString(),
+        ]);
 
         $visible = $today->visibleItems()->count();
         if ($visible >= 3) {
@@ -120,12 +127,12 @@ class TomorrowController extends Controller
      * Resuelve el destino de la planificación: `?target=today|tomorrow` explícito
      * o, sin parámetro, por hora (madrugada 00–05 → hoy, resto → mañana).
      */
-    private function resolveTarget(mixed $requested): string
+    private function resolveTarget(mixed $requested, string $timezone): string
     {
         if (in_array($requested, ['today', 'tomorrow'], true)) {
             return $requested;
         }
 
-        return now()->hour < 5 ? 'today' : 'tomorrow';
+        return now($timezone)->hour < 5 ? 'today' : 'tomorrow';
     }
 }

@@ -61,7 +61,7 @@ class QueueController extends Controller
             return response()->noContent();
         }
 
-        $date = now()->toDateString();
+        $date = now($request->user()->localTimezone())->toDateString();
         $daily = $pickService->pick($userId, $date, $type, $items);
 
         // Con ≥2 items nunca repite el pick del día: sigue siendo determinístico
