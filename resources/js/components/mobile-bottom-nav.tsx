@@ -1,27 +1,42 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Dumbbell, LayoutGrid, MoreHorizontal, Utensils, Wallet } from 'lucide-react';
+import {
+    Brain,
+    Dumbbell,
+    FolderKanban,
+    LayoutGrid,
+    MoreHorizontal,
+} from 'lucide-react';
 import * as React from 'react';
 import { dashboard } from '@/routes';
 
 const primaryItems = [
-    { title: 'Panel', href: dashboard().url, icon: LayoutGrid, match: '/dashboard' },
-    { title: 'Gym', href: '/fitness/gym', icon: Dumbbell, match: '/fitness/gym' },
-    { title: 'Nutrición', href: '/fitness/nutrition', icon: Utensils, match: '/fitness/nutrition' },
-    { title: 'Finanzas', href: '/finance/dashboard', icon: Wallet, match: '/finance' },
+    { title: 'Hoy', href: dashboard().url, icon: LayoutGrid, matches: ['/dashboard', '/today'] },
+    { title: 'Gym', href: '/fitness/gym', icon: Dumbbell, matches: ['/fitness/gym'] },
+    { title: 'Proyectos', href: '/personal/projects', icon: FolderKanban, matches: ['/personal'] },
+    { title: 'IA', href: '/ai/chat', icon: Brain, matches: ['/ai/chat'] },
 ];
 
 const moreItems = [
-    { title: 'Suplementos', href: '/fitness/supplements', match: '/fitness/supplements' },
-    { title: 'Compras', href: '/fitness/groceries', match: '/fitness/groceries' },
-    { title: 'Freelance', href: '/freelance/dashboard', match: '/freelance' },
-    { title: 'Tareas', href: '/personal/tasks', match: '/personal' },
-    { title: 'Chat IA', href: '/ai/chat', match: '/ai/chat' },
+    { title: 'Nutrición', href: '/fitness/nutrition', matches: ['/fitness/nutrition'] },
+    { title: 'Suplementos', href: '/fitness/supplements', matches: ['/fitness/supplements'] },
+    { title: 'Compras', href: '/fitness/groceries', matches: ['/fitness/groceries'] },
+    { title: 'Finanzas', href: '/finance/dashboard', matches: ['/finance'] },
+    { title: 'Freelance', href: '/freelance/dashboard', matches: ['/freelance'] },
+    { title: 'Salud', href: '/health', matches: ['/health'] },
+    { title: 'Personas', href: '/people', matches: ['/people'] },
+    { title: 'Inspiración', href: '/inspiration', matches: ['/inspiration'] },
+    { title: 'Agentes', href: '/agents', matches: ['/agents'] },
+    { title: 'Feed', href: '/feed', matches: ['/feed'] },
+    { title: 'Archivos', href: '/storage', matches: ['/storage'] },
+    { title: 'Aprobaciones', href: '/integrations/approvals', matches: ['/integrations/approvals'] },
 ];
 
 export function MobileBottomNav() {
     const { url } = usePage();
     const detailsRef = React.useRef<HTMLDetailsElement>(null);
-    const isMoreActive = moreItems.some((item) => url.startsWith(item.match));
+    const isMoreActive = moreItems.some((item) =>
+        item.matches.some((prefix) => url.startsWith(prefix)),
+    );
 
     // Close the "Más" menu on navigation (Inertia preserves DOM, so <details> would stay open).
     React.useEffect(() => {
@@ -57,7 +72,7 @@ export function MobileBottomNav() {
         >
             <div className="grid h-full w-full max-w-full grid-cols-5 overflow-x-clip overflow-y-visible">
                 {primaryItems.map((item) => {
-                    const isActive = url.startsWith(item.match);
+                    const isActive = item.matches.some((prefix) => url.startsWith(prefix));
                     return (
                         <Link
                             key={item.title}
@@ -83,9 +98,11 @@ export function MobileBottomNav() {
                         <MoreHorizontal className="h-5 w-5" aria-hidden />
                         <span className="leading-none">Más</span>
                     </summary>
-                    <div className="absolute right-2 bottom-full mb-2 w-48 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                    <div className="absolute right-2 bottom-full mb-2 max-h-[60vh] w-48 overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
                         {moreItems.map((item) => {
-                            const isActive = url.startsWith(item.match);
+                            const isActive = item.matches.some((prefix) =>
+                                url.startsWith(prefix),
+                            );
                             return (
                                 <Link
                                     key={item.title}

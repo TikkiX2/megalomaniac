@@ -2,7 +2,7 @@
 
 > **Proyecto:** Fitness + Freelance + Finance cockpit oscuro rojizo Ember (#EF4444) — Laravel 12 + Inertia v2 + React 19 + Tailwind v4 + Wayfinder + Fortify + Pest 4.
 > **Palette:** Ember B Solo Dark — `bg #1C0F0F` `card #2B1A1A` `border #3E2121` `primary #EF4444` `muted-fg #E8B4B4` (ver `docs/design-tokens.md`). Verde #13ec5b eliminado 2026-08-24.
-> **Estructura:** `app/Http/Controllers/{Gym,Nutrition,Supplement,Grocery,Finance,Freelance}` + 35 modelos + `resources/js/pages/{fitness,finance,freelance}` + `layouts/main-layout.tsx` sidebar 7 items.
+> **Estructura:** `app/Http/Controllers/{Gym,Nutrition,Supplement,Grocery,Finance,Freelance}` + 35 modelos + `resources/js/pages/{fitness,finance,freelance}` + `layouts/main-layout.tsx` sidebar por áreas (9 áreas + subnavegación contextual).
 > **Docs:** `README.md` (quick start), `docs/architecture.md` (ERD), `docs/design-tokens.md` (tokens), `docs/modules/*.md`, `docs/qa/playwright-report.md` (crawl diario MCP), `docs/superpowers/specs/2026-08-24-megalomaniac-red-design.md` (spec 10 fases).
 > **QA diario:** Landing → Login (`test@example.com/password`) → Dashboard bento → Gym (workout/sets) → Nutrition → Grocery → Finance → Freelance → Settings. Playwright MCP en `:8010` (ver reporte).
 > **Convenciones:** Eloquent `casts()` + Wayfinder (`@/routes`, `@/actions`), sin `DB::`, Form Requests, Tailwind tokens `bg-background` etc. (hardcoded `#1c0f0f` migrados a rojo pero aún con hex — tokenizar progresivo en FASE 3).
