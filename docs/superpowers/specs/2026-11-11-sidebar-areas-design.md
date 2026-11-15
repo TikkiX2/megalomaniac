@@ -22,22 +22,22 @@ La sidebar general mostraba los ~40 enlaces de todos los módulos en 8 grupos. E
 
 ## Mapa de áreas
 
-| Área | Primer nivel (destino al hacer clic) | Subnavegación |
-|---|---|---|
-| Hoy | `/dashboard` | Hoy, Semana, Cola, Archivadas |
-| Gym | `/fitness/gym` | Entrenamiento, Rutinas, Historial, Nutrición, Suplementos, Compras |
-| Proyectos | `/personal/projects` | Proyectos, Tareas |
-| IA | `/ai/chat` | Chat · Asistentes (Gym, Nutrición, Compras, Finanzas, Freelance, Salud, Personas) · Sistema (Fuentes, Memoria) |
-| Finanzas | `/finance/dashboard` | Panel, Compras, Ingresos |
-| Freelance | `/freelance/dashboard` | Panel, Clientes, Proyectos, Cotizaciones |
-| Salud | `/health` | Panel, Condiciones, Medicación, Mediciones, Síntomas, Estudios, Citas, Profesionales, Chats |
-| Personas | `/people` | Personas, Historial, Calendario |
-| Más | `/inspiration` | Inspiración (Explorar, Ajustes de fuentes) · Sistema (Agentes, Feed, Archivos, Aprobaciones) |
+| Área      | Primer nivel (destino al hacer clic) | Subnavegación                                                                                                  |
+| --------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Hoy       | `/dashboard`                         | Hoy, Semana, Cola, Archivadas                                                                                  |
+| Gym       | `/fitness/gym`                       | Entrenamiento, Rutinas, Historial, Nutrición, Suplementos, Compras                                             |
+| Proyectos | `/personal/projects`                 | Proyectos, Tareas                                                                                              |
+| IA        | `/ai/chat`                           | Chat · Asistentes (Gym, Nutrición, Compras, Finanzas, Freelance, Salud, Personas) · Sistema (Fuentes, Memoria) |
+| Finanzas  | `/finance/dashboard`                 | Panel, Compras, Ingresos                                                                                       |
+| Freelance | `/freelance/dashboard`               | Panel, Clientes, Proyectos, Cotizaciones                                                                       |
+| Salud     | `/health`                            | Panel, Condiciones, Medicación, Mediciones, Síntomas, Estudios, Citas, Profesionales, Chats                    |
+| Personas  | `/people`                            | Personas, Historial, Calendario                                                                                |
+| Más       | `/inspiration`                       | Inspiración (Explorar, Ajustes de fuentes) · Sistema (Agentes, Feed, Archivos, Aprobaciones)                   |
 
 ## Comportamiento
 
-- **Escritorio ≥lg:** una sola sidebar (16rem) con las 9 áreas. El área activa, deducida de la URL, expande sus grupos y páginas como acordeón inline bajo su propia fila; no hay segunda columna.
-- **<lg:** el mismo acordeón se muestra dentro del sheet móvil.
+- **Escritorio (≥768px):** una sola sidebar (16rem) con las 9 áreas. El área activa, deducida de la URL, expande sus grupos y páginas como acordeón inline bajo su propia fila; no hay segunda columna. Entre 768 y 1023px se usa este mismo rail, sin sheet.
+- **Móvil (<768px):** el mismo acordeón se muestra dentro del sheet móvil.
 - **Colapsado:** la sidebar queda en iconos y el primitivo oculta los subitems; al desplegar vuelve el acordeón del área activa.
 - **Pin y hover:** el botón de pin (guardado en `localStorage` como `sidebar-pinned`, fijado por defecto) decide si la sidebar se queda abierta. Sin pin, entrar con el ratón la expande y salir la colapsa en escritorio; sigue disponible el trigger estándar.
 - **Móvil:** la barra inferior mantiene 4 destinos diarios (Hoy, Gym, Proyectos, IA) y un “Más” desplazable con el resto.

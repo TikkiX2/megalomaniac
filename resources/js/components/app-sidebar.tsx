@@ -120,6 +120,10 @@ function SidebarPinToggle() {
         };
     }, [handleMouseEnter, handleMouseLeave]);
 
+    if (isMobile) {
+        return null;
+    }
+
     return (
         <button
             onClick={() => {
@@ -132,9 +136,10 @@ function SidebarPinToggle() {
                     setOpen(false);
                 }
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-hidden"
             title={isPinned ? 'Desfijar sidebar' : 'Fijar sidebar'}
             aria-label={isPinned ? 'Sidebar fijado' : 'Sidebar flotante'}
+            aria-pressed={isPinned}
         >
             {isPinned ? (
                 <Pin className="h-4 w-4 text-primary" />
@@ -171,7 +176,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-                <div className="flex items-center justify-between px-2 pt-2">
+                <div className="flex items-center justify-between px-2 pt-2 group-data-[collapsible=icon]:justify-center">
                     <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">
                         Áreas
                     </span>
