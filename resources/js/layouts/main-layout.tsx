@@ -4,60 +4,14 @@ import type { ReactNode } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
-import { SidebarAreaNav } from '@/components/sidebar-area-nav';
-import {
-    SidebarInset,
-    SidebarTrigger,
-    useSidebar,
-} from '@/components/ui/sidebar';
-import { findActiveArea } from '@/lib/navigation-areas';
+import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
 interface MainLayoutProps {
     children: ReactNode;
 }
 
-const chatSurfacePrefixes = [
-    '/ai/chat',
-    '/ai/gym',
-    '/ai/nutrition',
-    '/ai/grocery',
-    '/ai/finance',
-    '/ai/freelance',
-    '/ai/health',
-    '/ai/people',
-];
-
-function isChatSurface(pathname: string): boolean {
-    return chatSurfacePrefixes.some(
-        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-    );
-}
-
-function AreaAwareContent({
-    pathname,
-    children,
-}: MainLayoutProps & { pathname: string }) {
-    const { state } = useSidebar();
-    const activeArea = findActiveArea(pathname);
-    const showAreaNav =
-        state === 'expanded' && activeArea !== null && !isChatSurface(pathname);
-
-    return (
-        <div className="flex h-[calc(100svh-3rem)] min-h-0 flex-1 overflow-hidden">
-            {showAreaNav && <SidebarAreaNav area={activeArea} />}
-            <div
-                scroll-region="true"
-                className="flex min-w-0 flex-1 flex-col overflow-auto pb-24 md:pb-0"
-            >
-                {children}
-            </div>
-        </div>
-    );
-}
-
 export default function MainLayout({ children }: MainLayoutProps) {
     const { url } = usePage();
-    const pathname = url.split('?')[0];
     const isChatRoute = url.startsWith('/ai/chat');
 
     return (
@@ -71,9 +25,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
                         Megalomaniac Pro · Panel
                     </span>
                 </header>
-                <AreaAwareContent pathname={pathname}>
+                <div className="flex flex-1 flex-col overflow-auto pb-24 md:pb-0">
                     {children}
-                </AreaAwareContent>
+                </div>
             </SidebarInset>
             <MobileBottomNav />
 

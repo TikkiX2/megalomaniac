@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Pin, PinOff } from 'lucide-react';
 import * as React from 'react';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -37,7 +38,7 @@ function AreaSubNavigation({
     approvalsPendingCount,
 }: AreaSubNavigationProps) {
     return (
-        <SidebarMenuSub className="lg:hidden">
+        <SidebarMenuSub>
             {area.groups.map((group, groupIndex) => (
                 <React.Fragment key={group.label ?? groupIndex}>
                     {group.label && (
@@ -76,6 +77,74 @@ function AreaSubNavigation({
     );
 }
 
+function SidebarPinToggle() {
+    const { state, setOpen, isMobile } = useSidebar();
+    const [isPinned, setIsPinned] = React.useState(() => {
+        if (typeof window === 'undefined') {
+            return true;
+        }
+
+        return localStorage.getItem('sidebar-pinned') !== 'false';
+    });
+
+    React.useEffect(() => {
+        localStorage.setItem('sidebar-pinned', String(isPinned));
+    }, [isPinned]);
+
+    // Hover logic: when not pinned and collapsed, expand on hover
+    const handleMouseEnter = React.useCallback(() => {
+        if (!isPinned && state === 'collapsed' && !isMobile) {
+            setOpen(true);
+        }
+    }, [isPinned, state, isMobile, setOpen]);
+    const handleMouseLeave = React.useCallback(() => {
+        if (!isPinned && state === 'expanded' && !isMobile) {
+            setOpen(false);
+        }
+    }, [isPinned, state, isMobile, setOpen]);
+
+    // Attach to sidebar element via data attribute
+    React.useEffect(() => {
+        const sidebar = document.querySelector('[data-sidebar="sidebar"]');
+
+        if (!sidebar) {
+            return;
+        }
+
+        sidebar.addEventListener('mouseenter', handleMouseEnter);
+        sidebar.addEventListener('mouseleave', handleMouseLeave);
+
+        return () => {
+            sidebar.removeEventListener('mouseenter', handleMouseEnter);
+            sidebar.removeEventListener('mouseleave', handleMouseLeave);
+        };
+    }, [handleMouseEnter, handleMouseLeave]);
+
+    return (
+        <button
+            onClick={() => {
+                const next = !isPinned;
+                setIsPinned(next);
+
+                if (next) {
+                    setOpen(true);
+                } else {
+                    setOpen(false);
+                }
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            title={isPinned ? 'Desfijar sidebar' : 'Fijar sidebar'}
+            aria-label={isPinned ? 'Sidebar fijado' : 'Sidebar flotante'}
+        >
+            {isPinned ? (
+                <Pin className="h-4 w-4 text-primary" />
+            ) : (
+                <PinOff className="h-4 w-4" />
+            )}
+        </button>
+    );
+}
+
 export function AppSidebar() {
     const { setOpenMobile } = useSidebar();
     const { props, url } = usePage<
@@ -102,10 +171,11 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
-                <div className="px-2 pt-2 group-data-[collapsible=icon]:hidden">
+                <div className="flex items-center justify-between px-2 pt-2">
                     <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">
                         Áreas
                     </span>
+                    <SidebarPinToggle />
                 </div>
             </SidebarHeader>
 

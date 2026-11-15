@@ -36,18 +36,22 @@ La sidebar general mostraba los ~40 enlaces de todos los módulos en 8 grupos. E
 
 ## Comportamiento
 
-- **Escritorio ≥lg:** rail de áreas (13.5rem) + columna de subnavegación del área activa (12rem). El área activa se deduce de la URL.
-- **<lg:** los subitems del área activa se muestran inline bajo su fila (sheet móvil o rail de tablet).
-- **Colapsado:** el rail queda en iconos y la columna contextual se oculta.
+- **Escritorio ≥lg:** una sola sidebar (16rem) con las 9 áreas. El área activa, deducida de la URL, expande sus grupos y páginas como acordeón inline bajo su propia fila; no hay segunda columna.
+- **<lg:** el mismo acordeón se muestra dentro del sheet móvil.
+- **Colapsado:** la sidebar queda en iconos y el primitivo oculta los subitems; al desplegar vuelve el acordeón del área activa.
+- **Pin y hover:** el botón de pin (guardado en `localStorage` como `sidebar-pinned`, fijado por defecto) decide si la sidebar se queda abierta. Sin pin, entrar con el ratón la expande y salir la colapsa en escritorio; sigue disponible el trigger estándar.
 - **Móvil:** la barra inferior mantiene 4 destinos diarios (Hoy, Gym, Proyectos, IA) y un “Más” desplazable con el resto.
 - **Aprobaciones:** conserva el badge con el contador pendiente.
+- **Chat IA:** las rutas `/ai/*` usan el layout normal, con su propia área y acordeón; ya no hay un tratamiento especial de tres columnas.
 
 ## Decisiones
 
-- Se elimina el pin personalizado y el hover automático: chocan con el layout de dos columnas. Queda el trigger estándar de colapsar/expandir.
+- Se prefirió el acordeón inline sobre la columna de subnavegación porque la segunda columna robaba ancho al contenido; así el área activa se lee en el mismo eje vertical que el selector.
+- Se restaura el pin con hover automático: con una sola columna ya no compiten con el contenido y devuelven el rail compacto que el usuario usa a diario.
+- El ancho vuelve a los 16rem por defecto del primitivo, sin overrides de `--sidebar-width`.
 - “Más” tiene `/inspiration` como destino de aterrizaje para que el clic siempre tenga una página coherente.
 - El ítem activo se resuelve por la coincidencia de URL más específica, para que `/health/conditions` no active “Panel” ni `/inspiration/settings` active “Explorar”.
-- Las rutas de ajustes (`/settings/*`) no pertenecen a ninguna área: no se muestra columna contextual ahí.
+- Las rutas de ajustes (`/settings/*`) no pertenecen a ninguna área: no hay acordeón que mostrar ahí.
 
 ## Criterios de aceptación
 
