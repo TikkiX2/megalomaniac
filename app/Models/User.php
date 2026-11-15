@@ -272,4 +272,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(HealthAppointment::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Journal Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function journalDays(): HasMany
+    {
+        return $this->hasMany(JournalDay::class);
+    }
+
+    public function journalMoments(): HasMany
+    {
+        return $this->hasMany(JournalMoment::class);
+    }
 }
