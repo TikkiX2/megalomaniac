@@ -64,14 +64,29 @@ class JournalService
      */
     public function createMoment(JournalDay $day, array $data): JournalMoment
     {
+        $user = $day->user;
+        $explicit = isset($data['occurred_at']) && $data['occurred_at'] !== '';
+
+        $occurredAt = $this->occurredAtFor(
+            $user,
+            $day->date->toDateString(),
+            $data['occurred_at'] ?? null,
+        );
+
+        $anchor = $day;
+
+        if ($explicit) {
+            $localDate = $occurredAt->setTimezone($user->localTimezone())->toDateString();
+
+            if ($localDate !== $day->date->toDateString()) {
+                $anchor = $this->dayFor($user, $localDate);
+            }
+        }
+
         $moment = new JournalMoment([
             'user_id' => $day->user_id,
-            'journal_day_id' => $day->id,
-            'occurred_at' => $this->occurredAtFor(
-                $day->user,
-                $day->date->toDateString(),
-                $data['occurred_at'] ?? null,
-            ),
+            'journal_day_id' => $anchor->id,
+            'occurred_at' => $occurredAt,
             'title' => $data['title'] ?? null,
             'body' => $data['body'],
             'tags' => $this->normalizeTags($data['tags'] ?? []),
@@ -79,6 +94,10 @@ class JournalService
         ]);
 
         $moment->save();
+
+        if (! $anchor->is($day)) {
+            $this->pruneIfEmpty($day);
+        }
 
         return $moment;
     }

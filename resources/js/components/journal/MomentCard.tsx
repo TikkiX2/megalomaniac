@@ -83,7 +83,7 @@ export default function MomentCard({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-9 text-muted-foreground hover:text-white/90"
+                            className="size-11 text-muted-foreground hover:text-white/90"
                             aria-label="Editar momento"
                             onClick={() => onEdit(moment)}
                         >
@@ -93,7 +93,7 @@ export default function MomentCard({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-9 text-muted-foreground hover:text-destructive"
+                            className="size-11 text-muted-foreground hover:text-destructive"
                             aria-label="Eliminar momento"
                             onClick={() => onDelete(moment)}
                         >

@@ -219,6 +219,7 @@ export default function MomentDialog({
                             variant="ghost"
                             onClick={() => onOpenChange(false)}
                             disabled={form.processing}
+                            className="min-h-11"
                         >
                             Cancelar
                         </Button>

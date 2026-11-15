@@ -37,6 +37,18 @@ it('crea un momento en un día pasado a las 12 locales', function () {
     expect($moment->occurred_at->setTimezone('America/Argentina/Buenos_Aires')->format('H:i'))->toBe('12:00');
 });
 
+it('re-ancla al día de la fecha explícita al crear y poda el día vacío', function () {
+    $this->post('/diario/2026-11-01/momentos', [
+        'body' => 'Más tarde',
+        'occurred_at' => '2026-11-05T09:00:00-03:00',
+    ])->assertRedirect();
+
+    $moment = JournalMoment::with('day')->firstOrFail();
+
+    expect($moment->day->date->toDateString())->toBe('2026-11-05')
+        ->and(JournalDay::where('date', '2026-11-01')->exists())->toBeFalse();
+});
+
 it('re-ancla el momento cuando cambia de fecha y poda el día viejo', function () {
     $this->post('/diario/2026-11-01/momentos', ['body' => 'x'])->assertRedirect();
     $moment = JournalMoment::firstOrFail();

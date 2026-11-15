@@ -252,6 +252,7 @@ export default function JournalIndex({
                             variant="ghost"
                             onClick={() => setPendingDelete(null)}
                             disabled={deleting}
+                            className="min-h-11"
                         >
                             Cancelar
                         </Button>
