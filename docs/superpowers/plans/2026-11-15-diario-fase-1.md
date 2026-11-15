@@ -161,7 +161,7 @@ Migraciones con `foreignId('user_id')->constrained()->cascadeOnDelete()`:
 
 En ambos modelos, hook `booted()` → `static::saving()`: si `isDirty('is_private')` y el atributo de texto no está dirty, reasignarlo (`$model->body = $model->body;`, y `title` en el momento) para que el cast reescriba plano o cifrado. Es lo que hace que el toggle funcione sin un servicio aparte.
 
-`hasContent(): bool` = `filled($this->body) || $this->mood !== null || ! empty($this->tags) || $this->moments()->exists()`.
+`hasContent(): bool` = `filled($this->body) || $this->mood !== null || $this->moments()->exists()` — las etiquetas solas **no** cuentan, tal como fija el spec.
 
 Policies con el mismo patrón que `HealthMeasurementPolicy` (`$user->id === $model->user_id`).
 
