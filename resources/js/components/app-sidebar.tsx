@@ -136,7 +136,7 @@ function SidebarPinToggle() {
                     setOpen(false);
                 }
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-hidden"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-hidden"
             title={isPinned ? 'Desfijar sidebar' : 'Fijar sidebar'}
             aria-label={isPinned ? 'Sidebar fijado' : 'Sidebar flotante'}
             aria-pressed={isPinned}
