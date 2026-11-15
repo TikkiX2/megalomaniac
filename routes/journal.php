@@ -1,10 +1,26 @@
 <?php
 
 use App\Http\Controllers\Journal\DiaryController;
+use App\Http\Controllers\Journal\MomentController;
+use App\Models\JournalMoment;
 use Illuminate\Support\Facades\Route;
+
+Route::bind('moment', function (string $value): JournalMoment {
+    return JournalMoment::query()
+        ->where('user_id', request()->user()?->id)
+        ->whereKey($value)
+        ->firstOrFail();
+});
 
 Route::middleware(['auth', 'verified'])->prefix('diario')->name('journal.')->group(function () {
     Route::get('/', [DiaryController::class, 'index'])->name('index');
+
+    Route::post('{date}/momentos', [MomentController::class, 'store'])
+        ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        ->name('moments.store');
+    Route::patch('momentos/{moment}', [MomentController::class, 'update'])->name('moments.update');
+    Route::delete('momentos/{moment}', [MomentController::class, 'destroy'])->name('moments.destroy');
+
     Route::get('{date}', [DiaryController::class, 'show'])->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')->name('show');
     Route::put('{date}', [DiaryController::class, 'update'])->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')->name('day.update');
 });

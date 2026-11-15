@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Journal;
 
 use App\Models\JournalDay;
+use App\Models\JournalMoment;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 
 class JournalService
 {
@@ -55,6 +57,97 @@ class JournalService
         $day->delete();
 
         return true;
+    }
+
+    /**
+     * @param  array{title?: string|null, body: string, tags?: array<int, string>|null, is_private?: bool, occurred_at?: string|null}  $data
+     */
+    public function createMoment(JournalDay $day, array $data): JournalMoment
+    {
+        $moment = new JournalMoment([
+            'user_id' => $day->user_id,
+            'journal_day_id' => $day->id,
+            'occurred_at' => $this->occurredAtFor(
+                $day->user,
+                $day->date->toDateString(),
+                $data['occurred_at'] ?? null,
+            ),
+            'title' => $data['title'] ?? null,
+            'body' => $data['body'],
+            'tags' => $this->normalizeTags($data['tags'] ?? []),
+            'is_private' => (bool) ($data['is_private'] ?? false),
+        ]);
+
+        $moment->save();
+
+        return $moment;
+    }
+
+    /**
+     * @param  array{title?: string|null, body?: string, tags?: array<int, string>|null, is_private?: bool, occurred_at?: string|null}  $data
+     */
+    public function updateMoment(JournalMoment $moment, array $data): JournalMoment
+    {
+        $occurredAt = $data['occurred_at'] ?? null;
+        unset($data['occurred_at']);
+
+        if (array_key_exists('tags', $data)) {
+            $data['tags'] = $this->normalizeTags($data['tags']);
+        }
+
+        $moment->fill($data)->save();
+
+        if ($occurredAt !== null) {
+            $moment = $this->moveMoment($moment, CarbonImmutable::parse((string) $occurredAt)->utc());
+        }
+
+        return $moment->refresh();
+    }
+
+    /**
+     * Re-anchor the moment to the day of its new local date and prune the old
+     * day when the move leaves it without content.
+     */
+    public function moveMoment(JournalMoment $moment, CarbonInterface $occurredAt): JournalMoment
+    {
+        $moment->loadMissing(['day', 'user']);
+
+        $previousDay = $moment->day;
+        $localDate = CarbonImmutable::instance($occurredAt)
+            ->setTimezone($moment->user->localTimezone())
+            ->toDateString();
+
+        $targetDay = $previousDay !== null && $previousDay->date->toDateString() === $localDate
+            ? $previousDay
+            : $this->dayFor($moment->user, $localDate);
+
+        $moment->fill([
+            'occurred_at' => $occurredAt,
+            'journal_day_id' => $targetDay->id,
+        ])->save();
+
+        if ($previousDay !== null && ! $previousDay->is($targetDay)) {
+            $this->pruneIfEmpty($previousDay);
+        }
+
+        return $moment->refresh();
+    }
+
+    /**
+     * Default the clock to "now" for today and to local noon for past or
+     * future days, always stored in UTC.
+     */
+    private function occurredAtFor(User $user, string $date, mixed $value): CarbonImmutable
+    {
+        if ($value !== null && $value !== '') {
+            return CarbonImmutable::parse((string) $value)->utc();
+        }
+
+        if ($date === $this->today($user)->toDateString()) {
+            return CarbonImmutable::now()->utc();
+        }
+
+        return CarbonImmutable::parse($date.' 12:00:00', $user->localTimezone())->utc();
     }
 
     /**

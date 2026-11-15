@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Journal;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Journal\UpdateDayRequest;
 use App\Models\JournalDay;
+use App\Models\JournalMoment;
+use App\Models\Person;
 use App\Services\Journal\JournalService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -57,6 +59,13 @@ class DiaryController extends Controller
             ->where('date', $date)
             ->first();
 
+        $moments = $day === null
+            ? collect()
+            : $day->moments()
+                ->with(['people:id,first_name,last_name', 'media'])
+                ->orderBy('occurred_at')
+                ->get();
+
         return Inertia::render('journal/Index', [
             'date' => $date,
             'today' => $today->toDateString(),
@@ -67,6 +76,22 @@ class DiaryController extends Controller
                 'tags' => $day->tags ?? [],
                 'is_private' => $day->is_private,
             ],
+            'moments' => $moments->map(fn (JournalMoment $moment): array => [
+                'id' => $moment->id,
+                'occurred_at' => $moment->occurred_at->toIso8601String(),
+                'title' => $moment->title,
+                'body' => $moment->body,
+                'tags' => $moment->tags ?? [],
+                'is_private' => $moment->is_private,
+                'people' => $moment->people->map(fn (Person $person): array => [
+                    'id' => $person->id,
+                    'name' => $person->full_name,
+                ])->values(),
+                'photos' => $moment->media->map(fn ($media): array => [
+                    'id' => $media->id,
+                    'url' => $media->getUrl(),
+                ])->values(),
+            ])->values(),
             'prevDate' => $current->subDay()->toDateString(),
             'nextDate' => $current->addDay()->toDateString(),
         ]);
