@@ -4,6 +4,7 @@ use App\Models\JournalDay;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -60,6 +61,34 @@ it('no muestra el día de otro usuario', function () {
 
     $this->get('/diario/2026-11-09')->assertOk()
         ->assertInertia(fn ($page) => $page->where('day', null));
+});
+
+it('poda un día que sólo tiene etiquetas', function () {
+    $this->put('/diario/2026-11-06', ['tags' => ['viaje']])->assertRedirect();
+
+    expect(JournalDay::count())->toBe(0);
+});
+
+it('conserva la privacidad y el cifrado cuando el PUT no la menciona', function () {
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-07',
+        'body' => 'secreto',
+        'mood' => 3,
+        'is_private' => true,
+    ]);
+
+    $this->put('/diario/2026-11-07', ['body' => 'secreto corregido'])->assertRedirect();
+
+    $day->refresh();
+
+    expect($day->is_private)->toBeTrue()
+        ->and($day->body)->toBe('secreto corregido')
+        ->and(DB::table('journal_days')->where('id', $day->id)->value('body'))->toStartWith('enc:v1:');
+});
+
+it('devuelve 404 para fechas inexistentes o mal formadas', function () {
+    $this->get('/diario/2026-02-30')->assertNotFound();
+    $this->get('/diario/no-es-fecha')->assertNotFound();
 });
 
 it('rechaza un ánimo fuera de rango y un cuerpo gigante', function () {

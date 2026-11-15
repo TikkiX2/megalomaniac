@@ -181,7 +181,7 @@ export default function DayEditor({ date, day }: DayEditorProps) {
                 </label>
 
                 <div className="flex items-center gap-3">
-                    {form.recentlySuccessful && (
+                    {form.recentlySuccessful && day !== null && (
                         <span className="text-[11px] font-bold tracking-widest text-primary uppercase">
                             Guardado
                         </span>

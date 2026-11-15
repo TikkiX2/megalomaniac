@@ -3,12 +3,18 @@ import DayEditor from '@/components/journal/DayEditor';
 import type { JournalDayPayload } from '@/components/journal/DayEditor';
 import { Button } from '@/components/ui/button';
 
+interface FlashProps {
+    success?: string | null;
+    error?: string | null;
+}
+
 interface JournalIndexProps {
     date: string;
     today: string;
     day: JournalDayPayload | null;
     prevDate: string;
     nextDate: string;
+    flash?: FlashProps;
 }
 
 function formatLongDate(date: string): string {
@@ -27,6 +33,7 @@ export default function JournalIndex({
     day,
     prevDate,
     nextDate,
+    flash,
 }: JournalIndexProps) {
     return (
         <>
@@ -95,6 +102,15 @@ export default function JournalIndex({
                         </div>
                     )}
                 </header>
+
+                {flash?.success && (
+                    <div
+                        role="status"
+                        className="mb-4 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm text-primary"
+                    >
+                        {flash.success}
+                    </div>
+                )}
 
                 <DayEditor key={date} date={date} day={day} />
             </div>
