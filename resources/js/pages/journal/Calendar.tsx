@@ -34,7 +34,7 @@ export default function JournalCalendar({
     return (
         <>
             <Head title="Calendario" />
-            <div className="mx-auto w-full max-w-3xl p-4 md:p-6">
+            <div className="mx-auto w-full max-w-3xl px-2 py-4 md:p-6">
                 <header className="mb-6 flex flex-col gap-3">
                     <div>
                         <p className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
@@ -126,7 +126,7 @@ export default function JournalCalendar({
 
                 <section
                     aria-label="Calendario mensual"
-                    className="rounded-lg border border-border bg-card/40 p-3 md:p-4"
+                    className="rounded-lg border border-border bg-card/40 px-2 py-3 md:p-4"
                 >
                     <CalendarGrid month={month} days={days} today={today} />
                 </section>

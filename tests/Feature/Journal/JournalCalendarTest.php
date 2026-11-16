@@ -75,18 +75,34 @@ it('incluye días que sólo tienen momentos', function () {
             )));
 });
 
-it('cae al mes local actual con un mes inválido', function () {
-    Carbon::setTestNow('2026-11-15 10:00:00');
+it('cae al mes y al día locales con un mes inválido', function () {
+    // 02:00 UTC del 15 son las 23:00 del 14 en Buenos Aires.
+    Carbon::setTestNow('2026-11-15 02:00:00');
+
+    JournalDay::factory()->for($this->user)->create(['date' => '2026-11-14', 'mood' => 3]);
 
     $this->get('/diario/calendario?month=2026-13')->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('month', '2026-11')
-            ->where('today', '2026-11-15')
+            ->where('today', '2026-11-14')
+            ->where('streak', 1)
+            ->where('days', fn ($days) => collect($days)->contains('date', '2026-11-14'))
             ->where('prevMonth', '2026-10')
             ->where('nextMonth', '2026-12'));
 
     $this->get('/diario/calendario')->assertOk()
-        ->assertInertia(fn ($page) => $page->where('month', '2026-11'));
+        ->assertInertia(fn ($page) => $page
+            ->where('month', '2026-11')
+            ->where('today', '2026-11-14'));
+});
+
+it('cuenta la racha desde el día local aunque en UTC ya sea mañana', function () {
+    // 02:00 UTC del 15 son las 23:00 del 14 en Buenos Aires.
+    Carbon::setTestNow('2026-11-15 02:00:00');
+
+    JournalDay::factory()->for($this->user)->create(['date' => '2026-11-13', 'mood' => 3]);
+
+    expect(app(JournalStats::class)->streak($this->user))->toBe(1);
 });
 
 it('pagina el mes pedido', function () {

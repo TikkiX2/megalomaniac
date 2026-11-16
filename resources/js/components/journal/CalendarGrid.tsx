@@ -87,10 +87,12 @@ export default function CalendarGrid({
     const byDate = new Map(days.map((day) => [day.date, day]));
     const cells = buildCells(month);
 
+    // Seven 44px targets need ~344px of usable width: a 320px viewport lands
+    // near 39px, while everything from 360px up reaches 44px or more.
     return (
         <div
             role="group"
-            className="grid grid-cols-7 gap-1"
+            className={cn('grid grid-cols-7', compact ? 'gap-1' : 'gap-0.5')}
             aria-label={`Calendario de ${month}`}
         >
             {WEEKDAYS.map((weekday) => (
@@ -118,7 +120,7 @@ export default function CalendarGrid({
                                 'flex flex-col items-center justify-center rounded-md text-muted-foreground/30',
                                 compact
                                     ? 'aspect-square text-[11px]'
-                                    : 'min-h-12 text-xs',
+                                    : 'min-h-11 text-xs',
                             )}
                         >
                             {cell.day}
@@ -152,7 +154,7 @@ export default function CalendarGrid({
                             'relative flex flex-col items-center justify-center gap-0.5 rounded-md border border-transparent text-white/80 transition-colors outline-none hover:border-primary/40 hover:text-white focus-visible:ring-3 focus-visible:ring-primary/40',
                             compact
                                 ? 'aspect-square text-[11px]'
-                                : 'min-h-12 text-sm',
+                                : 'min-h-11 min-w-0 text-sm',
                             isToday
                                 ? 'border-primary/60 text-white ring-1 ring-primary/60'
                                 : '',
