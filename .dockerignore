@@ -3,8 +3,11 @@ node_modules
 vendor
 .env
 storage/logs/*
+storage/app/private
+storage/app/public
 storage/framework/cache/data/*
 storage/framework/sessions/*
+storage/framework/testing/*
 storage/framework/views/*
 bootstrap/cache/*.php
 public/build
