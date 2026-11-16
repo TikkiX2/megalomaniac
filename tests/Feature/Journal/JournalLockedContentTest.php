@@ -2,8 +2,10 @@
 
 use App\Models\JournalDay;
 use App\Models\JournalMoment;
+use App\Models\Person;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 
 uses(RefreshDatabase::class);
 
@@ -21,6 +23,9 @@ it('no expone el texto privado bloqueado', function () {
         'user_id' => $this->user->id, 'journal_day_id' => $day->id,
         'title' => 'título privado', 'body' => 'cuerpo privado', 'is_private' => true,
     ]);
+    $moment->people()->attach(Person::factory()->for($this->user)->create()->id);
+    $moment->addMedia(UploadedFile::fake()->image('privada.jpg'))
+        ->toMediaCollection('photos', 'local');
 
     $this->get('/diario/2026-11-16')->assertOk()->assertInertia(fn ($page) => $page
         ->component('journal/Index')
@@ -28,9 +33,13 @@ it('no expone el texto privado bloqueado', function () {
         ->where('day.locked', true)
         ->where('moments.0.title', null)
         ->where('moments.0.body', null)
+        ->where('moments.0.people', [])
+        ->where('moments.0.photos', [])
         ->where('moments.0.locked', true));
 
-    expect($moment->body)->toBe('cuerpo privado');
+    expect($moment->body)->toBe('cuerpo privado')
+        ->and($moment->fresh()->people()->count())->toBe(1)
+        ->and($moment->fresh()->getMedia('photos'))->toHaveCount(1);
 });
 
 it('muestra el texto privado desbloqueado', function () {
@@ -93,4 +102,37 @@ it('permite editar contenido privado después de desbloquear', function () {
         ->assertSessionHasNoErrors();
 
     expect($moment->fresh()->body)->toBe('cambio');
+});
+
+it('bloquea la foto de un momento privado mientras está bloqueado', function () {
+    $moment = JournalMoment::factory()->create([
+        'user_id' => $this->user->id, 'is_private' => true,
+    ]);
+    $media = $moment->addMedia(UploadedFile::fake()->image('privada.jpg'))
+        ->toMediaCollection('photos', 'local');
+
+    $this->get("/diario/momentos/{$moment->id}/fotos/{$media->id}")
+        ->assertStatus(423);
+
+    $this->post('/diario/desbloquear', ['password' => 'password']);
+
+    $this->get("/diario/momentos/{$moment->id}/fotos/{$media->id}")
+        ->assertOk();
+});
+
+it('no deja subir ni borrar fotos de un momento privado bloqueado', function () {
+    $moment = JournalMoment::factory()->create([
+        'user_id' => $this->user->id, 'is_private' => true,
+    ]);
+    $media = $moment->addMedia(UploadedFile::fake()->image('privada.jpg'))
+        ->toMediaCollection('photos', 'local');
+
+    $this->post("/diario/momentos/{$moment->id}/fotos", [
+        'file' => UploadedFile::fake()->image('nueva.jpg'),
+    ])->assertSessionHasErrors('password');
+
+    $this->delete("/diario/momentos/{$moment->id}/fotos/{$media->id}")
+        ->assertSessionHasErrors('password');
+
+    expect($moment->fresh()->getMedia('photos'))->toHaveCount(1);
 });

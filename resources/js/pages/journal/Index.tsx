@@ -203,7 +203,11 @@ export default function JournalIndex({
                         />
                     )}
 
-                    <DayEditor key={date} date={date} day={day} />
+                    <DayEditor
+                        key={`${date}-${day?.locked ? 'locked' : 'open'}`}
+                        date={date}
+                        day={day}
+                    />
 
                     <section className="mt-10">
                         <div className="mb-4 flex items-baseline justify-between">
