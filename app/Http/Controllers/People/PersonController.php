@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\People;
 
 use App\Http\Controllers\Controller;
+use App\Models\JournalMoment;
 use App\Models\Person;
 use App\Models\PersonInteraction;
 use App\Models\PersonKeyDate;
@@ -15,6 +16,7 @@ use App\People\Enums\RelationshipStatus;
 use App\Services\People\PeopleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -92,6 +94,7 @@ class PersonController extends Controller
                 ->paginate(30)
                 ->withQueryString(),
             'upcoming' => $this->people->upcoming(request()->user(), 60, $person),
+            'memories' => $this->memoriesFor($person),
             'channelOptions' => InteractionChannel::values(),
         ]);
     }
@@ -174,6 +177,31 @@ class PersonController extends Controller
         $person->clearMediaCollection('avatar');
 
         return back()->with('success', 'Avatar eliminado.');
+    }
+
+    /**
+     * The five newest journal moments linked to the person.
+     *
+     * @return array<int, array{id: int, date: string, excerpt: string, is_private: bool}>
+     */
+    private function memoriesFor(Person $person): array
+    {
+        $timezone = request()->user()->localTimezone();
+
+        return JournalMoment::query()
+            ->where('user_id', $person->user_id)
+            ->whereHas('people', fn ($query) => $query->whereKey($person->id))
+            ->orderByDesc('occurred_at')
+            ->limit(5)
+            ->get()
+            ->map(fn (JournalMoment $moment): array => [
+                'id' => $moment->id,
+                'date' => $moment->occurred_at->setTimezone($timezone)->toDateString(),
+                'excerpt' => $moment->is_private ? '' : Str::limit($moment->body, 140),
+                'is_private' => $moment->is_private,
+            ])
+            ->values()
+            ->all();
     }
 
     /**

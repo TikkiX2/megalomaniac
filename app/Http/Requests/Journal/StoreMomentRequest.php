@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Journal;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreMomentRequest extends FormRequest
 {
@@ -20,6 +21,10 @@ class StoreMomentRequest extends FormRequest
             'tags.*' => ['nullable', 'string', 'max:32'],
             'is_private' => ['boolean'],
             'occurred_at' => ['nullable', 'date'],
+            'person_ids' => ['nullable', 'array'],
+            'person_ids.*' => [
+                Rule::exists('people', 'id')->where('user_id', $this->user()?->id),
+            ],
         ];
     }
 

@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Cake, MessageCircle, Pencil, Plus, Star, Trash, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Cake, ChevronRight, MessageCircle, Pencil, Plus, Star, Trash, X } from 'lucide-react';
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,26 @@ const localDateTimeInput = () => {
     return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
 };
 
-export default function PersonShow({ person, interactions, upcoming, channelOptions }: any) {
+interface PersonMemory {
+    id: number;
+    date: string;
+    excerpt: string;
+    is_private: boolean;
+}
+
+const formatMemoryDate = (date: string) => {
+    const [year, month, day] = date.split('-').map(Number);
+
+    return new Date(year, month - 1, day).toLocaleDateString('es-AR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+};
+
+export default function PersonShow({ person, interactions, upcoming, channelOptions, memories = [] }: any) {
+    const personMemories: PersonMemory[] = memories;
+
     const quickLog = () => {
         router.post(people.contacted(person.id).url, {}, { preserveScroll: true });
     };
@@ -350,6 +369,32 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                         </Card>
                     </div>
                 </div>
+
+                <Card className="bg-card border-border">
+                    <CardHeader>
+                        <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground">Recuerdos</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-1">
+                        {personMemories.length === 0 ? (
+                            <p className="py-6 text-center text-sm text-muted-foreground italic">Sin recuerdos en el diario.</p>
+                        ) : personMemories.map((memory) => (
+                            <Link
+                                key={memory.id}
+                                href={`/diario/${memory.date}`}
+                                className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/5"
+                            >
+                                <BookOpen className="h-4 w-4 shrink-0 text-primary" />
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm text-white/90">
+                                        {memory.is_private ? 'Momento privado' : memory.excerpt}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">{formatMemoryDate(memory.date)}</p>
+                                </div>
+                                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            </Link>
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
         </>
     );

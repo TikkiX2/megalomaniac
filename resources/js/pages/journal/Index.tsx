@@ -4,7 +4,10 @@ import { useState } from 'react';
 import DayEditor from '@/components/journal/DayEditor';
 import type { JournalDayPayload } from '@/components/journal/DayEditor';
 import MomentCard from '@/components/journal/MomentCard';
-import type { JournalMomentPayload } from '@/components/journal/MomentCard';
+import type {
+    JournalMomentPayload,
+    JournalMomentPerson,
+} from '@/components/journal/MomentCard';
 import MomentDialog from '@/components/journal/MomentDialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +29,7 @@ interface JournalIndexProps {
     today: string;
     day: JournalDayPayload | null;
     moments: JournalMomentPayload[];
+    people: JournalMomentPerson[];
     prevDate: string;
     nextDate: string;
     flash?: FlashProps;
@@ -50,6 +54,7 @@ export default function JournalIndex({
     today,
     day,
     moments,
+    people,
     prevDate,
     nextDate,
     flash,
@@ -235,6 +240,7 @@ export default function JournalIndex({
                     }}
                     date={date}
                     moment={editorMoment}
+                    people={people}
                 />
             )}
 

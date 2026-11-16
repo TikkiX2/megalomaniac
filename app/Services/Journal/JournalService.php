@@ -9,6 +9,7 @@ use App\Models\JournalMoment;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\DB;
 
 class JournalService
 {
@@ -60,67 +61,80 @@ class JournalService
     }
 
     /**
-     * @param  array{title?: string|null, body: string, tags?: array<int, string>|null, is_private?: bool, occurred_at?: string|null}  $data
+     * @param  array{title?: string|null, body: string, tags?: array<int, string>|null, is_private?: bool, occurred_at?: string|null, person_ids?: array<int, int>|null}  $data
      */
     public function createMoment(JournalDay $day, array $data): JournalMoment
     {
-        $user = $day->user;
-        $explicit = isset($data['occurred_at']) && $data['occurred_at'] !== '';
+        return DB::transaction(function () use ($day, $data): JournalMoment {
+            $user = $day->user;
+            $explicit = isset($data['occurred_at']) && $data['occurred_at'] !== '';
+            $personIds = $data['person_ids'] ?? [];
 
-        $occurredAt = $this->occurredAtFor(
-            $user,
-            $day->date->toDateString(),
-            $data['occurred_at'] ?? null,
-        );
+            $occurredAt = $this->occurredAtFor(
+                $user,
+                $day->date->toDateString(),
+                $data['occurred_at'] ?? null,
+            );
 
-        $anchor = $day;
+            $anchor = $day;
 
-        if ($explicit) {
-            $localDate = $occurredAt->setTimezone($user->localTimezone())->toDateString();
+            if ($explicit) {
+                $localDate = $occurredAt->setTimezone($user->localTimezone())->toDateString();
 
-            if ($localDate !== $day->date->toDateString()) {
-                $anchor = $this->dayFor($user, $localDate);
+                if ($localDate !== $day->date->toDateString()) {
+                    $anchor = $this->dayFor($user, $localDate);
+                }
             }
-        }
 
-        $moment = new JournalMoment([
-            'user_id' => $day->user_id,
-            'journal_day_id' => $anchor->id,
-            'occurred_at' => $occurredAt,
-            'title' => $data['title'] ?? null,
-            'body' => $data['body'],
-            'tags' => $this->normalizeTags($data['tags'] ?? []),
-            'is_private' => (bool) ($data['is_private'] ?? false),
-        ]);
+            $moment = new JournalMoment([
+                'user_id' => $day->user_id,
+                'journal_day_id' => $anchor->id,
+                'occurred_at' => $occurredAt,
+                'title' => $data['title'] ?? null,
+                'body' => $data['body'],
+                'tags' => $this->normalizeTags($data['tags'] ?? []),
+                'is_private' => (bool) ($data['is_private'] ?? false),
+            ]);
 
-        $moment->save();
+            $moment->save();
+            $moment->people()->sync($personIds);
 
-        if (! $anchor->is($day)) {
-            $this->pruneIfEmpty($day);
-        }
+            if (! $anchor->is($day)) {
+                $this->pruneIfEmpty($day);
+            }
 
-        return $moment;
+            return $moment;
+        });
     }
 
     /**
-     * @param  array{title?: string|null, body?: string, tags?: array<int, string>|null, is_private?: bool, occurred_at?: string|null}  $data
+     * @param  array{title?: string|null, body?: string, tags?: array<int, string>|null, is_private?: bool, occurred_at?: string|null, person_ids?: array<int, int>|null}  $data
      */
     public function updateMoment(JournalMoment $moment, array $data): JournalMoment
     {
-        $occurredAt = $data['occurred_at'] ?? null;
-        unset($data['occurred_at']);
+        return DB::transaction(function () use ($moment, $data): JournalMoment {
+            $occurredAt = $data['occurred_at'] ?? null;
+            unset($data['occurred_at']);
 
-        if (array_key_exists('tags', $data)) {
-            $data['tags'] = $this->normalizeTags($data['tags']);
-        }
+            $personIds = $data['person_ids'] ?? null;
+            unset($data['person_ids']);
 
-        $moment->fill($data)->save();
+            if (array_key_exists('tags', $data)) {
+                $data['tags'] = $this->normalizeTags($data['tags']);
+            }
 
-        if ($occurredAt !== null) {
-            $moment = $this->moveMoment($moment, CarbonImmutable::parse((string) $occurredAt)->utc());
-        }
+            $moment->fill($data)->save();
 
-        return $moment->refresh();
+            if ($personIds !== null) {
+                $moment->people()->sync($personIds);
+            }
+
+            if ($occurredAt !== null) {
+                $moment = $this->moveMoment($moment, CarbonImmutable::parse((string) $occurredAt)->utc());
+            }
+
+            return $moment->refresh();
+        });
     }
 
     /**

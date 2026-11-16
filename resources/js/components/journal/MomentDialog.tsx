@@ -1,4 +1,4 @@
-import { useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import PhotoStrip from '@/components/journal/PhotoStrip';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { JournalMomentPayload } from './MomentCard';
+import type { JournalMomentPayload, JournalMomentPerson } from './MomentCard';
 
 interface MomentFormData {
     title: string;
@@ -22,6 +22,7 @@ interface MomentFormData {
     occurred_at: string;
     tags: string;
     is_private: boolean;
+    person_ids: number[];
 }
 
 interface MomentDialogProps {
@@ -29,6 +30,7 @@ interface MomentDialogProps {
     onOpenChange: (open: boolean) => void;
     date: string;
     moment: JournalMomentPayload | null;
+    people: JournalMomentPerson[];
 }
 
 function tagsFromInput(value: string): string[] {
@@ -56,6 +58,7 @@ export default function MomentDialog({
     onOpenChange,
     date,
     moment,
+    people,
 }: MomentDialogProps) {
     const form = useForm<MomentFormData>({
         title: moment?.title ?? '',
@@ -63,7 +66,16 @@ export default function MomentDialog({
         occurred_at: toLocalInput(moment?.occurred_at),
         tags: (moment?.tags ?? []).join(', '),
         is_private: moment?.is_private ?? false,
+        person_ids: (moment?.people ?? []).map((person) => person.id),
     });
+
+    const togglePerson = (personId: number, checked: boolean) => {
+        const next = checked
+            ? [...form.data.person_ids, personId]
+            : form.data.person_ids.filter((id) => id !== personId);
+
+        form.setData('person_ids', next);
+    };
 
     const submit = () => {
         if (form.processing) {
@@ -79,6 +91,7 @@ export default function MomentDialog({
                     : new Date(data.occurred_at).toISOString(),
             tags: tagsFromInput(data.tags),
             is_private: data.is_private,
+            person_ids: data.person_ids,
         }));
 
         const options = {
@@ -197,6 +210,51 @@ export default function MomentDialog({
                             placeholder="casa, tarde, familia"
                             className="border-border bg-background text-sm"
                         />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                            Personas
+                        </span>
+                        {people.length === 0 ? (
+                            <p className="text-[11px] text-muted-foreground">
+                                Todavía no cargaste personas.{' '}
+                                <Link
+                                    href="/people"
+                                    className="text-primary underline-offset-2 hover:underline"
+                                >
+                                    Agregar una
+                                </Link>
+                            </p>
+                        ) : (
+                            <div
+                                role="group"
+                                aria-label="Personas del momento"
+                                className="max-h-44 overflow-y-auto rounded-md border border-border bg-background"
+                            >
+                                {people.map((person) => (
+                                    <label
+                                        key={person.id}
+                                        className="flex min-h-11 cursor-pointer items-center gap-2 px-3 hover:bg-white/5"
+                                    >
+                                        <Checkbox
+                                            checked={form.data.person_ids.includes(
+                                                person.id,
+                                            )}
+                                            onCheckedChange={(checked) =>
+                                                togglePerson(
+                                                    person.id,
+                                                    checked === true,
+                                                )
+                                            }
+                                        />
+                                        <span className="truncate text-sm text-white/90">
+                                            {person.name}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <label className="flex min-h-11 cursor-pointer items-center gap-2">

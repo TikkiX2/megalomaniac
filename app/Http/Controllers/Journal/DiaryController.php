@@ -99,6 +99,16 @@ class DiaryController extends Controller
                         'name' => $media->name,
                     ])->values(),
             ])->values(),
+            'people' => Person::query()
+                ->where('user_id', $request->user()->id)
+                ->visible()
+                ->orderBy('first_name')
+                ->get(['id', 'first_name', 'last_name'])
+                ->map(fn (Person $person): array => [
+                    'id' => $person->id,
+                    'name' => $person->full_name,
+                ])
+                ->values(),
             'prevDate' => $current->subDay()->toDateString(),
             'nextDate' => $current->addDay()->toDateString(),
         ]);
