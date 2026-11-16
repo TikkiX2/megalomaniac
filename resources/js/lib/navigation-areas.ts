@@ -8,6 +8,7 @@ import {
     FolderKanban,
     HeartPulse,
     LayoutGrid,
+    NotebookPen,
     Wallet,
 } from 'lucide-react';
 import { dashboard } from '@/routes';
@@ -87,6 +88,27 @@ export const navAreas: NavArea[] = [
                 items: [
                     { title: 'Proyectos', href: '/personal/projects' },
                     { title: 'Tareas', href: '/personal/tasks' },
+                ],
+            },
+        ],
+    },
+    {
+        key: 'diario',
+        title: 'Diario',
+        icon: NotebookPen,
+        href: '/diario',
+        match: ['/diario'],
+        groups: [
+            {
+                items: [
+                    { title: 'Hoy', href: '/diario' },
+                    { title: 'Calendario', href: '/diario/calendario' },
+                    {
+                        title: 'Todas',
+                        href: '/diario/todas',
+                        match: ['/diario/todas', '/diario/buscar'],
+                    },
+                    { title: 'Repaso', href: '/diario/repaso' },
                 ],
             },
         ],

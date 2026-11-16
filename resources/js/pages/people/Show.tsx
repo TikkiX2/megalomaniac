@@ -381,7 +381,7 @@ export default function PersonShow({ person, interactions, upcoming, channelOpti
                             <Link
                                 key={memory.id}
                                 href={`/diario/${memory.date}`}
-                                className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/5"
+                                className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 outline-none hover:bg-white/5 focus-visible:ring-3 focus-visible:ring-primary/40"
                             >
                                 <BookOpen className="h-4 w-4 shrink-0 text-primary" />
                                 <div className="min-w-0 flex-1">

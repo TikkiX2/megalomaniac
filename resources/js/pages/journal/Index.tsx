@@ -298,7 +298,7 @@ export default function JournalIndex({
                         <Button
                             onClick={confirmDelete}
                             disabled={deleting}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            className="min-h-11 bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                             {deleting ? 'Eliminando…' : 'Eliminar'}
                         </Button>

@@ -56,6 +56,7 @@ const moreItems = [
     },
     { title: 'Salud', href: '/health', matches: ['/health'] },
     { title: 'Personas', href: '/people', matches: ['/people'] },
+    { title: 'Diario', href: '/diario', matches: ['/diario'] },
     { title: 'Inspiración', href: '/inspiration', matches: ['/inspiration'] },
     { title: 'Agentes', href: '/agents', matches: ['/agents'] },
     { title: 'Feed', href: '/feed', matches: ['/feed'] },
