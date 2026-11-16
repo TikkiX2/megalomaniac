@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Journal;
 
+use App\Ai\Agents\MegalomaniacAgent;
+use App\Ai\Support\AiInsightRunner;
 use App\Models\JournalDay;
 use App\Models\JournalMoment;
 use App\Models\JournalReflection;
@@ -33,6 +35,12 @@ class JournalReflectionService
 
     private const int RECAP_WEEKS = 8;
 
+    /**
+     * Fixed Spanish prompt from the phase-2 design: four short blocks, no
+     * invention. Kept byte-stable so regenerating a week reads the same.
+     */
+    public const AI_PROMPT = 'Sos un asistente que ayuda a mirar la semana, no un terapeuta. Con las memorias públicas de esta semana, devolvé exactamente cuatro bloques cortos: (1) dos o tres temas que se repiten, (2) cómo se movió el ánimo, (3) dos o tres momentos destacados citando la fecha, (4) una pregunta abierta para la semana que viene. Máximo 250 palabras. No inventes nada que no esté en los datos; si la semana tiene poco, decilo.';
+
     public function __construct(
         private readonly JournalService $journal,
         private readonly JournalStats $stats,
@@ -48,9 +56,11 @@ class JournalReflectionService
 
     public function forWeek(User $user, CarbonImmutable $weekStart): ?JournalReflection
     {
+        // Rows written from a Carbon instance keep a time part (the model has
+        // no write-side date cast), so compare the date itself.
         return JournalReflection::query()
             ->where('user_id', $user->id)
-            ->where('week_start', $weekStart->toDateString())
+            ->whereDate('week_start', $weekStart->toDateString())
             ->first();
     }
 
@@ -113,13 +123,43 @@ class JournalReflectionService
     }
 
     /**
-     * AI generation lands in a later task; the fallback runs until then.
+     * Run the fixed recap prompt on the `journal` insight chain.
+     *
+     * Returns null when the chain is unconfigured, exhausted or answers with
+     * nothing usable, so the caller keeps the deterministic fallback.
      *
      * @return array{body: string, model: string|null}|null
      */
     public function generateWithAi(User $user, string $payload): ?array
     {
-        return null;
+        $prompt = self::AI_PROMPT."\n\nMemorias públicas de esta semana:\n".$payload;
+
+        $usedModel = null;
+
+        $outcome = app(AiInsightRunner::class)->run(
+            $user,
+            'journal',
+            function (string $key, string $model, ?string $block) use ($user, $prompt, &$usedModel): mixed {
+                $usedModel = $model;
+
+                return (new MegalomaniacAgent($user))
+                    ->forUser($user)
+                    ->withPersonalization($block)
+                    ->prompt($prompt, provider: $key, model: $model);
+            },
+        );
+
+        if ($outcome->isEmpty()) {
+            return null;
+        }
+
+        $body = trim((string) $outcome->text());
+
+        if ($body === '') {
+            return null;
+        }
+
+        return ['body' => $body, 'model' => $usedModel];
     }
 
     /**
@@ -358,7 +398,13 @@ class JournalReflectionService
         return mb_substr($line, 0, $limit);
     }
 
-    private function parseWeekStart(User $user, string $value): CarbonImmutable
+    /**
+     * Resolve a requested `Y-m-d` Monday inside the recap window.
+     *
+     * @throws InvalidArgumentException when the date is malformed, is not a
+     *                                  Monday or falls outside the last 8 weeks.
+     */
+    public function parseWeekStart(User $user, string $value): CarbonImmutable
     {
         try {
             $parsed = CarbonImmutable::createFromFormat('!Y-m-d', $value, $user->localTimezone());

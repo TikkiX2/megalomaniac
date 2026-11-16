@@ -18,7 +18,7 @@ test('settings ai page renders the provider tab with health badges data', functi
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/ai')
             ->where('providers.0.has_key', true)
-            ->has('scopes', 14)
+            ->has('scopes', 15)
             ->where('ai.ai_enabled', true));
 });
 

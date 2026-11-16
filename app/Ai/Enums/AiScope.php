@@ -20,6 +20,7 @@ enum AiScope: string
     case ModuleFreelance = 'module:freelance';
     case ModuleHealth = 'module:health';
     case ModulePeople = 'module:people';
+    case ModuleJournal = 'module:journal';
 
     public function label(): string
     {
@@ -38,6 +39,7 @@ enum AiScope: string
             self::ModuleFreelance => 'Freelance',
             self::ModuleHealth => 'Salud',
             self::ModulePeople => 'Personas',
+            self::ModuleJournal => 'Diario',
         };
     }
 
@@ -47,7 +49,7 @@ enum AiScope: string
         return match ($this) {
             self::Global => 'global',
             self::SurfaceChat, self::SurfaceAgents, self::SurfaceInsights, self::SurfaceFeed, self::SurfaceEmbeddings, self::SurfaceFiles => 'surface',
-            self::ModuleGym, self::ModuleNutrition, self::ModuleGrocery, self::ModuleFinance, self::ModuleFreelance, self::ModuleHealth, self::ModulePeople => 'module',
+            self::ModuleGym, self::ModuleNutrition, self::ModuleGrocery, self::ModuleFinance, self::ModuleFreelance, self::ModuleHealth, self::ModulePeople, self::ModuleJournal => 'module',
         };
     }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Journal\CalendarController;
 use App\Http\Controllers\Journal\DiaryController;
 use App\Http\Controllers\Journal\MomentController;
 use App\Http\Controllers\Journal\PhotoController;
+use App\Http\Controllers\Journal\ReflectionController;
 use App\Http\Controllers\Journal\ReviewController;
 use App\Http\Controllers\Journal\SearchController;
 use App\Http\Controllers\Journal\TimelineController;
@@ -25,6 +26,10 @@ Route::middleware(['auth', 'verified'])->prefix('diario')->name('journal.')->gro
     Route::get('todas', TimelineController::class)->name('timeline');
     Route::get('buscar', SearchController::class)->name('search');
     Route::get('repaso', ReviewController::class)->name('review');
+
+    Route::post('reflexiones', [ReflectionController::class, 'store'])
+        ->middleware('throttle:3,1')
+        ->name('reflections.store');
 
     Route::post('desbloquear', [UnlockController::class, 'store'])
         ->middleware('throttle:5,1')

@@ -4,12 +4,19 @@ import { useState } from 'react';
 import JournalSubnav from '@/components/journal/JournalSubnav';
 import MemoryCard from '@/components/journal/MemoryCard';
 import type { JournalMemoryRef } from '@/components/journal/MemoryCard';
+import ReflectionCard, {
+    ReflectionHistory,
+} from '@/components/journal/ReflectionCard';
+import type { JournalReflectionData } from '@/components/journal/ReflectionCard';
 import { Button } from '@/components/ui/button';
 
 interface JournalReviewProps {
     onThisDay: JournalMemoryRef[];
     random: JournalMemoryRef | null;
     today: string;
+    weekStart: string;
+    reflection: JournalReflectionData | null;
+    reflections: JournalReflectionData[];
 }
 
 function formatLongDate(date: string): string {
@@ -25,6 +32,9 @@ export default function JournalReview({
     onThisDay,
     random,
     today,
+    weekStart,
+    reflection,
+    reflections,
 }: JournalReviewProps) {
     const [shuffling, setShuffling] = useState(false);
 
@@ -55,6 +65,10 @@ export default function JournalReview({
                 </header>
 
                 <JournalSubnav />
+
+                <ReflectionCard reflection={reflection} weekStart={weekStart} />
+
+                <ReflectionHistory reflections={reflections} />
 
                 <section aria-labelledby="review-on-this-day" className="mb-10">
                     <h2
