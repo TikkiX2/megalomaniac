@@ -158,7 +158,6 @@ git commit -m "feat(journal): desbloqueo de 15 minutos para memorias privadas"
 **Files:**
 - Modify: `app/Http/Controllers/Journal/DiaryController.php`
 - Modify: `app/Http/Controllers/Journal/MomentController.php`
-- Modify: `app/Services/Journal/JournalService.php` (guard de mutación reutilizable)
 - Modify: `resources/js/components/journal/MomentCard.tsx`, `MomentDialog.tsx`, `DayEditor.tsx`
 - Test: `tests/Feature/Journal/JournalLockedContentTest.php`
 
@@ -260,8 +259,8 @@ Expected: sin errores.
 - [ ] **Step 6: Commit**
 
 ```bash
-vendor/bin/pint --format agent app/Http/Controllers/Journal app/Services/Journal tests/Feature/Journal/JournalLockedContentTest.php
-git add app/Http/Controllers/Journal app/Services/Journal resources/js tests/Feature/Journal/JournalLockedContentTest.php
+vendor/bin/pint --format agent app/Http/Controllers/Journal app/Services/Journal/JournalAccess.php tests/Feature/Journal/JournalLockedContentTest.php
+git add app/Http/Controllers/Journal app/Services/Journal/JournalAccess.php resources/js tests/Feature/Journal/JournalLockedContentTest.php
 git commit -m "feat(journal): props saneadas y bloqueo de edición privada"
 ```
 
