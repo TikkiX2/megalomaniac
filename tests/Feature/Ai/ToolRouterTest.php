@@ -1,5 +1,6 @@
 <?php
 
+use App\Ai\Enums\AiScope;
 use App\Ai\Tools\ToolRouter;
 
 it('routes task questions to the tasks group', function () {
@@ -96,4 +97,13 @@ it('routes health messages to the health group', function () {
         ->and(ToolRouter::route('Tengo dolor de espalda'))->toContain('health')
         ->and(ToolRouter::route('¿Cuándo es mi turno con el doctor?'))->toContain('health')
         ->and(ToolRouter::route('Registrá que me tomé la pastilla'))->toContain('health', 'actions');
+});
+
+it('routes the journal suggestion chips to the journal group', function () {
+    $chips = AiScope::moduleSuggestions('journal');
+
+    expect($chips)->toContain('¿Cómo fue mi diario esta semana?', '¿Qué escribí en el diario estos días?')
+        ->and(ToolRouter::route($chips[0]))->toContain('journal')
+        ->and(ToolRouter::route($chips[2]))->toContain('journal')
+        ->and(ToolRouter::route('¿Con quién hablé hace días?'))->toContain('people');
 });
