@@ -20,6 +20,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['journal_day_id', 'occurred_at']);
+            $table->index('user_id');
         });
     }
 

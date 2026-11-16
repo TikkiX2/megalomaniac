@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Journal;
 
 use App\Http\Controllers\Controller;
 use App\Models\JournalDay;
+use App\Models\JournalMoment;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -46,7 +47,7 @@ class TimelineController extends Controller
                 'date' => $day->date->toDateString(),
                 'excerpt' => $this->excerpt($day),
                 'moments_count' => (int) $day->moments_count,
-                'is_private' => (bool) $day->is_private,
+                'is_private' => $this->isPrivate($day),
                 'photo_url' => $this->photoUrl($day),
             ]),
             'total' => $total,
@@ -54,17 +55,37 @@ class TimelineController extends Controller
     }
 
     /**
-     * The day text, or the body of its first moment, flattened for the card.
+     * The day text when it is public, or the body of its first public moment,
+     * flattened for the card. Private text never reaches the timeline.
      */
     private function excerpt(JournalDay $day): string
     {
-        $text = Str::squish((string) $day->body);
+        $text = $day->is_private ? '' : Str::squish((string) $day->body);
 
         if ($text === '') {
-            $text = Str::squish((string) $day->moments->first()?->body);
+            $text = Str::squish((string) $day->moments
+                ->first(fn (JournalMoment $moment): bool => ! $moment->is_private && filled($moment->body))
+                ?->body);
         }
 
-        return Str::limit($text, self::EXCERPT_LIMIT);
+        return $text === '' ? 'Sin texto' : Str::limit($text, self::EXCERPT_LIMIT);
+    }
+
+    /**
+     * A day is locked when it is private or when it has no public content at
+     * all, so a day holding only a private moment never leaks an excerpt.
+     */
+    private function isPrivate(JournalDay $day): bool
+    {
+        if ($day->is_private) {
+            return true;
+        }
+
+        if (filled($day->body) || $day->mood !== null) {
+            return false;
+        }
+
+        return ! $day->moments->contains(fn (JournalMoment $moment): bool => ! $moment->is_private);
     }
 
     /**

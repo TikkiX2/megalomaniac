@@ -56,6 +56,18 @@ it('borra el día cuando se vacía por completo', function () {
     expect(JournalDay::whereKey($day->id)->exists())->toBeFalse();
 });
 
+it('conserva los momentos al cambiar de día y volver', function () {
+    $this->post('/diario/2026-11-15/momentos', ['body' => 'Café con Ana'])->assertRedirect();
+
+    $this->get('/diario/2026-11-14')->assertOk();
+
+    $this->get('/diario/2026-11-15')->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('journal/Index')
+            ->has('moments', 1)
+            ->where('moments.0.body', 'Café con Ana'));
+});
+
 it('no muestra el día de otro usuario', function () {
     JournalDay::factory()->create(['date' => '2026-11-09', 'body' => 'ajeno']);
 

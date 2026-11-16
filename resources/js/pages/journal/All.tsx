@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { NotebookPen, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import JournalSubnav from '@/components/journal/JournalSubnav';
 import MemoryCard from '@/components/journal/MemoryCard';
 import type { JournalMemory } from '@/components/journal/MemoryCard';
 import { Button } from '@/components/ui/button';
@@ -343,6 +344,8 @@ export default function JournalAll({
                         </p>
                     )}
                 </header>
+
+                <JournalSubnav />
 
                 {isSearch ? (
                     <SearchBody

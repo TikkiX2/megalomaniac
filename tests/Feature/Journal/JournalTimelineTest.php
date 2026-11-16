@@ -37,6 +37,27 @@ it('usa el primer momento como extracto si el día no tiene texto', function () 
         ->assertInertia(fn ($page) => $page->where('days.data.0.excerpt', 'Caminata por la costanera'));
 });
 
+it('muestra candado y ningún extracto privado si el día sólo tiene un momento privado', function () {
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-07',
+        'body' => null,
+        'mood' => null,
+    ]);
+
+    $day->moments()->create([
+        'user_id' => $this->user->id,
+        'occurred_at' => '2026-11-07 10:00:00',
+        'body' => 'Algo muy privado',
+        'is_private' => true,
+    ]);
+
+    $this->get('/diario/todas')->assertOk()
+        ->assertInertia(fn ($page) => $page->component('journal/All')
+            ->has('days.data', 1)
+            ->where('days.data.0.excerpt', 'Sin texto')
+            ->where('days.data.0.is_private', true));
+});
+
 it('no lista los días de otro usuario', function () {
     JournalDay::factory()->create(['date' => '2026-11-10', 'body' => 'ajena']);
 

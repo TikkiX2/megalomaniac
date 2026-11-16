@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Dices, History } from 'lucide-react';
 import { useState } from 'react';
+import JournalSubnav from '@/components/journal/JournalSubnav';
 import MemoryCard from '@/components/journal/MemoryCard';
 import type { JournalMemoryRef } from '@/components/journal/MemoryCard';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,8 @@ export default function JournalReview({
                         </p>
                     </div>
                 </header>
+
+                <JournalSubnav />
 
                 <section aria-labelledby="review-on-this-day" className="mb-10">
                     <h2

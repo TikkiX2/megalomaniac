@@ -34,15 +34,17 @@ class JournalService
      */
     public function saveDay(User $user, string $date, array $data): ?JournalDay
     {
-        $day = $this->dayFor($user, $date);
+        return DB::transaction(function () use ($user, $date, $data): ?JournalDay {
+            $day = $this->dayFor($user, $date);
 
-        if (array_key_exists('tags', $data)) {
-            $data['tags'] = $this->normalizeTags($data['tags']);
-        }
+            if (array_key_exists('tags', $data)) {
+                $data['tags'] = $this->normalizeTags($data['tags']);
+            }
 
-        $day->fill($data)->save();
+            $day->fill($data)->save();
 
-        return $this->pruneIfEmpty($day) ? null : $day;
+            return $this->pruneIfEmpty($day) ? null : $day;
+        });
     }
 
     /**

@@ -28,7 +28,8 @@ class SearchController extends Controller
     public function __invoke(Request $request): Response
     {
         $user = $request->user();
-        $query = Str::squish((string) $request->query('q', ''));
+        $rawQuery = $request->query('q');
+        $query = Str::squish(is_string($rawQuery) ? $rawQuery : '');
         $valid = Str::length($query) >= self::MINIMUM_QUERY_LENGTH
             && Str::length($query) <= self::MAXIMUM_QUERY_LENGTH;
 

@@ -75,6 +75,48 @@ it('incluye días que sólo tienen momentos', function () {
             )));
 });
 
+it('marca privado un día cuyo único contenido es un momento privado', function () {
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-21',
+        'body' => null,
+        'mood' => null,
+    ]);
+
+    $day->moments()->create([
+        'user_id' => $this->user->id,
+        'body' => 'Íntimo',
+        'occurred_at' => '2026-11-21 10:00:00',
+        'is_private' => true,
+    ]);
+
+    $this->get('/diario/calendario?month=2026-11')->assertOk()
+        ->assertInertia(fn ($page) => $page->where('days', fn ($days) => collect($days)->contains(
+            fn ($item) => $item['date'] === '2026-11-21'
+                && $item['public'] === false
+                && $item['moments'] === 1
+        )));
+});
+
+it('mantiene público un día privado con un momento público', function () {
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-22',
+        'body' => 'secreto',
+        'is_private' => true,
+    ]);
+
+    $day->moments()->create([
+        'user_id' => $this->user->id,
+        'body' => 'Público',
+        'occurred_at' => '2026-11-22 10:00:00',
+        'is_private' => false,
+    ]);
+
+    $this->get('/diario/calendario?month=2026-11')->assertOk()
+        ->assertInertia(fn ($page) => $page->where('days', fn ($days) => collect($days)->contains(
+            fn ($item) => $item['date'] === '2026-11-22' && $item['public'] === true
+        )));
+});
+
 it('cae al mes y al día locales con un mes inválido', function () {
     // 02:00 UTC del 15 son las 23:00 del 14 en Buenos Aires.
     Carbon::setTestNow('2026-11-15 02:00:00');

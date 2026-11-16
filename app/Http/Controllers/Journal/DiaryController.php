@@ -71,6 +71,7 @@ class DiaryController extends Controller
             : $day->moments()
                 ->with(['people:id,first_name,last_name', 'media'])
                 ->orderBy('occurred_at')
+                ->orderBy('id')
                 ->get();
 
         return Inertia::render('journal/Index', [

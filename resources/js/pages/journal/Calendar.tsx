@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Flame } from 'lucide-react';
 import CalendarGrid from '@/components/journal/CalendarGrid';
 import type { JournalCalendarDay } from '@/components/journal/CalendarGrid';
+import JournalSubnav from '@/components/journal/JournalSubnav';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -123,6 +124,8 @@ export default function JournalCalendar({
                         </p>
                     </div>
                 </header>
+
+                <JournalSubnav />
 
                 <section
                     aria-label="Calendario mensual"

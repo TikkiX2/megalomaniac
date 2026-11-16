@@ -79,6 +79,15 @@ it('devuelve 404 en momentos ajenos', function () {
     $this->delete("/diario/momentos/{$moment->id}")->assertNotFound();
 });
 
+it('redirige al login cuando un invitado edita o borra un momento', function () {
+    $moment = JournalMoment::factory()->create(['user_id' => $this->user->id]);
+
+    auth()->logout();
+
+    $this->patch("/diario/momentos/{$moment->id}", ['body' => 'x'])->assertRedirect('/login');
+    $this->delete("/diario/momentos/{$moment->id}")->assertRedirect('/login');
+});
+
 it('valida cuerpo requerido y largo del título', function () {
     $this->post('/diario/2026-11-04/momentos', ['body' => ''])->assertSessionHasErrors('body');
     $this->post('/diario/2026-11-04/momentos', ['body' => 'x', 'title' => str_repeat('a', 121)])->assertSessionHasErrors('title');

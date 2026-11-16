@@ -46,6 +46,13 @@ it('busca sin distinguir mayúsculas', function () {
         ->assertInertia(fn ($page) => $page->has('days', 1));
 });
 
+it('ignora una búsqueda con forma de arreglo', function () {
+    JournalDay::factory()->for($this->user)->create(['date' => '2026-11-01', 'body' => 'algo']);
+
+    $this->get('/diario/buscar?q[]=x')->assertOk()
+        ->assertInertia(fn ($page) => $page->where('q', '')->where('days', []));
+});
+
 it('ignora búsquedas de menos de dos caracteres y escapa comodines', function () {
     JournalDay::factory()->for($this->user)->create(['date' => '2026-11-01', 'body' => '100% real']);
     JournalDay::factory()->for($this->user)->create(['date' => '2026-11-02', 'body' => 'abc']);

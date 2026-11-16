@@ -37,7 +37,8 @@ class JournalStats
             ->map(fn (JournalDay $day): array => [
                 'date' => $day->date->toDateString(),
                 'mood' => $day->mood,
-                'public' => ! $day->is_private || $day->public_moments_count > 0,
+                'public' => (! $day->is_private && (filled($day->body) || $day->mood !== null))
+                    || $day->public_moments_count > 0,
                 'moments' => (int) $day->moments_count,
             ])
             ->values();

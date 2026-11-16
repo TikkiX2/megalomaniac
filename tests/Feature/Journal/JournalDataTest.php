@@ -51,6 +51,43 @@ it('cifra también el título del momento privado', function () {
         ->and($moment->fresh()->title)->toBe('Título privado');
 });
 
+it('deja intacto un cuerpo público que empieza con el prefijo de cifrado', function () {
+    $texto = 'enc:v1:esto no está cifrado';
+    $day = JournalDay::factory()->create(['date' => '2026-11-16', 'body' => $texto, 'is_private' => false]);
+
+    expect(DB::table('journal_days')->where('id', $day->id)->value('body'))->toBe($texto)
+        ->and($day->fresh()->body)->toBe($texto);
+});
+
+it('devuelve vacío en vez de fallar cuando el cifrado está corrupto', function () {
+    $user = User::factory()->create();
+
+    $id = DB::table('journal_days')->insertGetId([
+        'user_id' => $user->id,
+        'date' => '2026-11-17',
+        'body' => 'enc:v1:not-base64',
+        'mood' => null,
+        'tags' => null,
+        'is_private' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    expect(JournalDay::findOrFail($id)->body)->toBe('');
+});
+
+it('cifra el cuerpo nuevo al marcar privado en el mismo guardado', function () {
+    $day = JournalDay::factory()->create(['date' => '2026-11-18', 'body' => 'visible', 'is_private' => false]);
+
+    $day->update(['body' => 'secreto nuevo', 'is_private' => true]);
+
+    $raw = DB::table('journal_days')->where('id', $day->id)->value('body');
+
+    expect($raw)->toStartWith('enc:v1:')
+        ->and($raw)->not->toContain('secreto nuevo')
+        ->and($day->fresh()->body)->toBe('secreto nuevo');
+});
+
 it('no permite dos días del mismo usuario en la misma fecha', function () {
     $user = User::factory()->create();
     JournalDay::factory()->for($user)->create(['date' => '2026-11-12']);

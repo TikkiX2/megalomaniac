@@ -45,6 +45,7 @@ class JournalMoment extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('photos')
+            ->useDisk('local')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
     }
 

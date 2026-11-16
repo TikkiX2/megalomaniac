@@ -5,6 +5,7 @@ import type { JournalCalendarDay } from '@/components/journal/CalendarGrid';
 import DayEditor from '@/components/journal/DayEditor';
 import type { JournalDayPayload } from '@/components/journal/DayEditor';
 import JournalRail from '@/components/journal/JournalRail';
+import JournalSubnav from '@/components/journal/JournalSubnav';
 import type { JournalMemory } from '@/components/journal/MemoryCard';
 import MomentCard from '@/components/journal/MomentCard';
 import type {
@@ -166,6 +167,18 @@ export default function JournalIndex({
                             </div>
                         )}
                     </header>
+
+                    <JournalSubnav />
+
+                    <div className="mb-6 lg:hidden">
+                        <JournalRail
+                            month={calendar.month}
+                            days={calendar.days}
+                            streak={calendar.streak}
+                            today={today}
+                            showTeaser={false}
+                        />
+                    </div>
 
                     {flash?.success && (
                         <div

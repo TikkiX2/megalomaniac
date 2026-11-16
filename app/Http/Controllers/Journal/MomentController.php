@@ -11,6 +11,7 @@ use App\Models\JournalMoment;
 use App\Services\Journal\JournalService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class MomentController extends Controller
 {
@@ -20,9 +21,11 @@ class MomentController extends Controller
     {
         $this->guardDate($date);
 
-        $day = $this->journal->dayFor($request->user(), $date);
+        DB::transaction(function () use ($request, $date): void {
+            $day = $this->journal->dayFor($request->user(), $date);
 
-        $this->journal->createMoment($day, $request->validated());
+            $this->journal->createMoment($day, $request->validated());
+        });
 
         return back()->with('success', 'Momento agregado.');
     }

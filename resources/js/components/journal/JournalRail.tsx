@@ -11,6 +11,7 @@ interface JournalRailProps {
     streak: number;
     today: string;
     onThisDay?: JournalMemory | null;
+    showTeaser?: boolean;
 }
 
 function formatMonth(month: string): string {
@@ -28,6 +29,7 @@ export default function JournalRail({
     streak,
     today,
     onThisDay = null,
+    showTeaser = true,
 }: JournalRailProps) {
     return (
         <aside className="flex flex-col gap-4">
@@ -75,44 +77,46 @@ export default function JournalRail({
                 </div>
             </section>
 
-            <section
-                data-slot="repaso-teaser"
-                className="rounded-lg border border-border bg-card/60 p-3"
-            >
-                <header className="mb-2 flex items-baseline justify-between gap-2">
-                    <p className="flex items-center gap-1.5 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
-                        <History aria-hidden="true" className="size-3.5" />
-                        Repaso
-                    </p>
-                    <Link
-                        href="/diario/repaso"
-                        className="rounded-sm text-[11px] text-muted-foreground transition-colors outline-none hover:text-white/90 focus-visible:ring-3 focus-visible:ring-primary/40"
-                    >
-                        Ver repaso
-                    </Link>
-                </header>
-
-                {onThisDay === null ? (
-                    <p className="text-[11px] text-muted-foreground">
-                        Tal día como hoy, en años anteriores.
-                    </p>
-                ) : (
-                    <Link
-                        href="/diario/repaso"
-                        className="block rounded-md outline-none focus-visible:ring-3 focus-visible:ring-primary/40"
-                    >
-                        <time
-                            dateTime={onThisDay.date}
-                            className="text-[10px] font-black tracking-widest text-primary uppercase tabular-nums"
-                        >
-                            {onThisDay.date.slice(0, 4)}
-                        </time>
-                        <p className="mt-1 line-clamp-3 text-[13px] leading-relaxed text-white/80">
-                            {onThisDay.excerpt || 'Sin texto'}
+            {showTeaser && (
+                <section
+                    data-slot="repaso-teaser"
+                    className="rounded-lg border border-border bg-card/60 p-3"
+                >
+                    <header className="mb-2 flex items-baseline justify-between gap-2">
+                        <p className="flex items-center gap-1.5 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                            <History aria-hidden="true" className="size-3.5" />
+                            Repaso
                         </p>
-                    </Link>
-                )}
-            </section>
+                        <Link
+                            href="/diario/repaso"
+                            className="rounded-sm text-[11px] text-muted-foreground transition-colors outline-none hover:text-white/90 focus-visible:ring-3 focus-visible:ring-primary/40"
+                        >
+                            Ver repaso
+                        </Link>
+                    </header>
+
+                    {onThisDay === null ? (
+                        <p className="text-[11px] text-muted-foreground">
+                            Tal día como hoy, en años anteriores.
+                        </p>
+                    ) : (
+                        <Link
+                            href="/diario/repaso"
+                            className="block rounded-md outline-none focus-visible:ring-3 focus-visible:ring-primary/40"
+                        >
+                            <time
+                                dateTime={onThisDay.date}
+                                className="text-[10px] font-black tracking-widest text-primary uppercase tabular-nums"
+                            >
+                                {onThisDay.date.slice(0, 4)}
+                            </time>
+                            <p className="mt-1 line-clamp-3 text-[13px] leading-relaxed text-white/80">
+                                {onThisDay.excerpt || 'Sin texto'}
+                            </p>
+                        </Link>
+                    )}
+                </section>
+            )}
         </aside>
     );
 }
