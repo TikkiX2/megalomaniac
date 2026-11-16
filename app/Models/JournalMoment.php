@@ -42,6 +42,12 @@ class JournalMoment extends Model implements HasMedia
         });
     }
 
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('photos')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -59,6 +59,12 @@ export default function JournalIndex({
         useState<JournalMomentPayload | null>(null);
     const [deleting, setDeleting] = useState(false);
 
+    const editorMoment =
+        editor === null || editor.moment === null
+            ? null
+            : (moments.find((moment) => moment.id === editor.moment?.id) ??
+              editor.moment);
+
     const confirmDelete = () => {
         if (pendingDelete === null) {
             return;
@@ -220,7 +226,7 @@ export default function JournalIndex({
 
             {editor !== null && (
                 <MomentDialog
-                    key={editor.moment?.id ?? 'new'}
+                    key={editorMoment?.id ?? 'new'}
                     open
                     onOpenChange={(open) => {
                         if (!open) {
@@ -228,7 +234,7 @@ export default function JournalIndex({
                         }
                     }}
                     date={date}
-                    moment={editor.moment}
+                    moment={editorMoment}
                 />
             )}
 

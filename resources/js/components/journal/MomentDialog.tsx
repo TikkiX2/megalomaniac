@@ -1,5 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import PhotoStrip from '@/components/journal/PhotoStrip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -212,6 +213,18 @@ export default function MomentDialog({
                             Se guarda cifrado.
                         </span>
                     </label>
+
+                    {moment !== null && (
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                                Fotos
+                            </span>
+                            <PhotoStrip
+                                momentId={moment.id}
+                                photos={moment.photos}
+                            />
+                        </div>
+                    )}
 
                     <DialogFooter className="gap-2">
                         <Button

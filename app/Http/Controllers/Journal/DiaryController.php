@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class DiaryController extends Controller
 {
@@ -87,10 +88,16 @@ class DiaryController extends Controller
                     'id' => $person->id,
                     'name' => $person->full_name,
                 ])->values(),
-                'photos' => $moment->media->map(fn ($media): array => [
-                    'id' => $media->id,
-                    'url' => $media->getUrl(),
-                ])->values(),
+                'photos' => $moment->media
+                    ->where('collection_name', 'photos')
+                    ->map(fn (Media $media): array => [
+                        'id' => $media->id,
+                        'url' => route('journal.photos.show', [
+                            'moment' => $moment->id,
+                            'media' => $media->id,
+                        ]),
+                        'name' => $media->name,
+                    ])->values(),
             ])->values(),
             'prevDate' => $current->subDay()->toDateString(),
             'nextDate' => $current->addDay()->toDateString(),

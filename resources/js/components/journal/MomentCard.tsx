@@ -1,14 +1,11 @@
 import { Lock, Pencil, Trash2 } from 'lucide-react';
+import PhotoStrip from '@/components/journal/PhotoStrip';
+import type { JournalMomentPhoto } from '@/components/journal/PhotoStrip';
 import { Button } from '@/components/ui/button';
 
 export interface JournalMomentPerson {
     id: number;
     name: string;
-}
-
-export interface JournalMomentPhoto {
-    id: number;
-    url: string;
 }
 
 export interface JournalMomentPayload {
@@ -105,6 +102,8 @@ export default function MomentCard({
                 <p className="mt-1 text-[15px] leading-relaxed whitespace-pre-wrap text-white/80">
                     {moment.body}
                 </p>
+
+                <PhotoStrip momentId={moment.id} photos={moment.photos} />
 
                 {(moment.tags.length > 0 || moment.people.length > 0) && (
                     <ul className="mt-2 flex flex-wrap gap-1.5">
