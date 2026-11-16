@@ -1,4 +1,5 @@
 import { Link, useForm } from '@inertiajs/react';
+import { Lock } from 'lucide-react';
 import type { FormEvent } from 'react';
 import PhotoStrip from '@/components/journal/PhotoStrip';
 import { Button } from '@/components/ui/button';
@@ -77,8 +78,10 @@ export default function MomentDialog({
         form.setData('person_ids', next);
     };
 
+    const locked = moment?.locked === true;
+
     const submit = () => {
-        if (form.processing) {
+        if (locked || form.processing) {
             return;
         }
 
@@ -135,6 +138,13 @@ export default function MomentDialog({
                         </p>
                     )}
 
+                    {locked && (
+                        <p className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-[11px] font-black tracking-widest text-muted-foreground uppercase">
+                            <Lock aria-hidden="true" className="size-3.5" />
+                            Privado — desbloqueá para leer
+                        </p>
+                    )}
+
                     <div className="flex flex-col gap-2">
                         <Label
                             htmlFor="moment-title"
@@ -145,6 +155,7 @@ export default function MomentDialog({
                         <Input
                             id="moment-title"
                             value={form.data.title}
+                            disabled={locked}
                             onChange={(event) =>
                                 form.setData('title', event.target.value)
                             }
@@ -164,10 +175,15 @@ export default function MomentDialog({
                             id="moment-body"
                             required
                             value={form.data.body}
+                            disabled={locked}
                             onChange={(event) =>
                                 form.setData('body', event.target.value)
                             }
-                            placeholder="Escribí el momento…"
+                            placeholder={
+                                locked
+                                    ? 'Contenido privado'
+                                    : 'Escribí el momento…'
+                            }
                             className="min-h-28 resize-y border-border bg-background text-[15px] leading-relaxed"
                         />
                     </div>
@@ -183,6 +199,7 @@ export default function MomentDialog({
                             id="moment-occurred-at"
                             type="datetime-local"
                             value={form.data.occurred_at}
+                            disabled={locked}
                             onChange={(event) =>
                                 form.setData('occurred_at', event.target.value)
                             }
@@ -204,6 +221,7 @@ export default function MomentDialog({
                         <Input
                             id="moment-tags"
                             value={form.data.tags}
+                            disabled={locked}
                             onChange={(event) =>
                                 form.setData('tags', event.target.value)
                             }
@@ -241,6 +259,7 @@ export default function MomentDialog({
                                             checked={form.data.person_ids.includes(
                                                 person.id,
                                             )}
+                                            disabled={locked}
                                             onCheckedChange={(checked) =>
                                                 togglePerson(
                                                     person.id,
@@ -260,6 +279,7 @@ export default function MomentDialog({
                     <label className="flex min-h-11 cursor-pointer items-center gap-2">
                         <Checkbox
                             checked={form.data.is_private}
+                            disabled={locked}
                             onCheckedChange={(checked) =>
                                 form.setData('is_private', checked === true)
                             }
@@ -272,7 +292,7 @@ export default function MomentDialog({
                         </span>
                     </label>
 
-                    {moment !== null && (
+                    {moment !== null && !locked && (
                         <div className="flex flex-col gap-2">
                             <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
                                 Fotos
@@ -294,17 +314,19 @@ export default function MomentDialog({
                         >
                             Cancelar
                         </Button>
-                        <Button
-                            type="submit"
-                            disabled={form.processing}
-                            className="min-h-11"
-                        >
-                            {form.processing
-                                ? 'Guardando…'
-                                : moment === null
-                                  ? 'Agregar'
-                                  : 'Guardar'}
-                        </Button>
+                        {!locked && (
+                            <Button
+                                type="submit"
+                                disabled={form.processing}
+                                className="min-h-11"
+                            >
+                                {form.processing
+                                    ? 'Guardando…'
+                                    : moment === null
+                                      ? 'Agregar'
+                                      : 'Guardar'}
+                            </Button>
+                        )}
                     </DialogFooter>
                 </form>
             </DialogContent>

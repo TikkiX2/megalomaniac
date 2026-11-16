@@ -1,0 +1,96 @@
+<?php
+
+use App\Models\JournalDay;
+use App\Models\JournalMoment;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->withoutVite();
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
+});
+
+it('no expone el texto privado bloqueado', function () {
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-16', 'body' => 'secreto del día', 'is_private' => true,
+    ]);
+    $moment = JournalMoment::factory()->create([
+        'user_id' => $this->user->id, 'journal_day_id' => $day->id,
+        'title' => 'título privado', 'body' => 'cuerpo privado', 'is_private' => true,
+    ]);
+
+    $this->get('/diario/2026-11-16')->assertOk()->assertInertia(fn ($page) => $page
+        ->component('journal/Index')
+        ->where('day.body', null)
+        ->where('day.locked', true)
+        ->where('moments.0.title', null)
+        ->where('moments.0.body', null)
+        ->where('moments.0.locked', true));
+
+    expect($moment->body)->toBe('cuerpo privado');
+});
+
+it('muestra el texto privado desbloqueado', function () {
+    JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-16', 'body' => 'secreto del día', 'is_private' => true,
+    ]);
+
+    $this->post('/diario/desbloquear', ['password' => 'password']);
+
+    $this->get('/diario/2026-11-16')->assertInertia(fn ($page) => $page
+        ->where('day.body', 'secreto del día')
+        ->where('day.locked', false));
+});
+
+it('no deja editar ni borrar un momento privado bloqueado', function () {
+    $moment = JournalMoment::factory()->create([
+        'user_id' => $this->user->id, 'body' => 'privado', 'is_private' => true,
+    ]);
+
+    $this->patch("/diario/momentos/{$moment->id}", ['body' => 'cambio'])
+        ->assertSessionHasErrors('password');
+    $this->delete("/diario/momentos/{$moment->id}")->assertSessionHasErrors('password');
+
+    expect($moment->fresh()->body)->toBe('privado');
+});
+
+it('permite editar una memoria pública sin desbloquear', function () {
+    $moment = JournalMoment::factory()->create(['user_id' => $this->user->id, 'body' => 'público']);
+
+    $this->patch("/diario/momentos/{$moment->id}", ['body' => 'editado'])->assertSessionHasNoErrors();
+
+    expect($moment->fresh()->body)->toBe('editado');
+});
+
+it('no deja editar un día privado bloqueado', function () {
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-16', 'body' => 'secreto', 'is_private' => true,
+    ]);
+
+    $this->put('/diario/2026-11-16', ['body' => 'cambio'])
+        ->assertSessionHasErrors('password');
+
+    expect($day->fresh()->body)->toBe('secreto');
+});
+
+it('permite crear un día privado estando bloqueado', function () {
+    $this->put('/diario/2026-11-16', ['body' => 'nuevo', 'is_private' => true])
+        ->assertSessionHasNoErrors();
+
+    expect(JournalDay::query()->where('date', '2026-11-16')->first()?->body)->toBe('nuevo');
+});
+
+it('permite editar contenido privado después de desbloquear', function () {
+    $moment = JournalMoment::factory()->create([
+        'user_id' => $this->user->id, 'body' => 'privado', 'is_private' => true,
+    ]);
+
+    $this->post('/diario/desbloquear', ['password' => 'password']);
+    $this->patch("/diario/momentos/{$moment->id}", ['body' => 'cambio'])
+        ->assertSessionHasNoErrors();
+
+    expect($moment->fresh()->body)->toBe('cambio');
+});

@@ -6,6 +6,7 @@ namespace App\Services\Journal;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class JournalAccess
 {
@@ -44,5 +45,23 @@ class JournalAccess
         }
 
         return CarbonImmutable::createFromTimestamp((int) $timestamp);
+    }
+
+    /**
+     * Reject mutations over existing private content while the journal is locked.
+     */
+    public function assertUnlockedForPrivate(Request $request, bool $isPrivate): void
+    {
+        if (! $isPrivate || $this->unlocked($request)) {
+            return;
+        }
+
+        if ($request->expectsJson()) {
+            abort(423);
+        }
+
+        throw ValidationException::withMessages([
+            'password' => 'Desbloqueá el diario para editar esta memoria.',
+        ]);
     }
 }

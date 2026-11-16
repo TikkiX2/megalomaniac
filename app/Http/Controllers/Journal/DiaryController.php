@@ -49,6 +49,13 @@ class DiaryController extends Controller
     {
         $this->parseDate($date);
 
+        $existing = JournalDay::query()
+            ->forUser($request->user())
+            ->where('date', $date)
+            ->first();
+
+        $this->access->assertUnlockedForPrivate($request, $existing?->is_private === true);
+
         $day = $this->journal->saveDay($request->user(), $date, $request->validated());
 
         if ($day === null) {
@@ -77,6 +84,8 @@ class DiaryController extends Controller
                 ->get();
 
         $expiresAt = $this->access->expiresAt($request);
+        $locked = $expiresAt === null;
+        $dayLocked = $day?->is_private === true && $locked;
 
         $hasPrivate = JournalDay::query()
             ->forUser($request->user())
@@ -92,38 +101,48 @@ class DiaryController extends Controller
         return Inertia::render('journal/Index', [
             'date' => $date,
             'today' => $today->toDateString(),
-            'locked' => $expiresAt === null,
+            'locked' => $locked,
             'unlock_expires_at' => $expiresAt?->toIso8601String(),
             'has_private' => $hasPrivate,
             'day' => $day === null ? null : [
                 'id' => $day->id,
-                'body' => $day->body,
+                'body' => $dayLocked ? null : $day->body,
                 'mood' => $day->mood,
                 'tags' => $day->tags ?? [],
                 'is_private' => $day->is_private,
+                'locked' => $dayLocked,
             ],
-            'moments' => $moments->map(fn (JournalMoment $moment): array => [
-                'id' => $moment->id,
-                'occurred_at' => $moment->occurred_at->toIso8601String(),
-                'title' => $moment->title,
-                'body' => $moment->body,
-                'tags' => $moment->tags ?? [],
-                'is_private' => $moment->is_private,
-                'people' => $moment->people->map(fn (Person $person): array => [
-                    'id' => $person->id,
-                    'name' => $person->full_name,
-                ])->values(),
-                'photos' => $moment->media
-                    ->where('collection_name', 'photos')
-                    ->map(fn (Media $media): array => [
-                        'id' => $media->id,
-                        'url' => route('journal.photos.show', [
-                            'moment' => $moment->id,
-                            'media' => $media->id,
-                        ]),
-                        'name' => $media->name,
-                    ])->values(),
-            ])->values(),
+            'moments' => $moments->map(function (JournalMoment $moment) use ($locked): array {
+                $momentLocked = $moment->is_private && $locked;
+
+                return [
+                    'id' => $moment->id,
+                    'occurred_at' => $moment->occurred_at->toIso8601String(),
+                    'title' => $momentLocked ? null : $moment->title,
+                    'body' => $momentLocked ? null : $moment->body,
+                    'tags' => $moment->tags ?? [],
+                    'is_private' => $moment->is_private,
+                    'locked' => $momentLocked,
+                    'people' => $momentLocked
+                        ? []
+                        : $moment->people->map(fn (Person $person): array => [
+                            'id' => $person->id,
+                            'name' => $person->full_name,
+                        ])->values(),
+                    'photos' => $momentLocked
+                        ? []
+                        : $moment->media
+                            ->where('collection_name', 'photos')
+                            ->map(fn (Media $media): array => [
+                                'id' => $media->id,
+                                'url' => route('journal.photos.show', [
+                                    'moment' => $moment->id,
+                                    'media' => $media->id,
+                                ]),
+                                'name' => $media->name,
+                            ])->values(),
+                ];
+            })->values(),
             'people' => Person::query()
                 ->where('user_id', $request->user()->id)
                 ->visible()

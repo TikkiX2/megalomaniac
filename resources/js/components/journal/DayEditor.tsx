@@ -1,4 +1,5 @@
 import { useForm } from '@inertiajs/react';
+import { Lock } from 'lucide-react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,6 +14,7 @@ export interface JournalDayPayload {
     mood: number | null;
     tags: string[];
     is_private: boolean;
+    locked: boolean;
 }
 
 interface DayFormData {
@@ -39,6 +41,8 @@ function tagsFromInput(value: string): string[] {
 }
 
 export default function DayEditor({ date, day }: DayEditorProps) {
+    const locked = day?.locked === true;
+
     const form = useForm<DayFormData>({
         body: day?.body ?? '',
         mood: day?.mood ?? null,
@@ -47,7 +51,7 @@ export default function DayEditor({ date, day }: DayEditorProps) {
     });
 
     const submit = () => {
-        if (form.processing) {
+        if (locked || form.processing) {
             return;
         }
 
@@ -111,6 +115,18 @@ export default function DayEditor({ date, day }: DayEditorProps) {
                 </div>
             )}
 
+            {locked && (
+                <div className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2">
+                    <Lock
+                        aria-hidden="true"
+                        className="size-3.5 text-muted-foreground"
+                    />
+                    <p className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                        Privado — desbloqueá para leer
+                    </p>
+                </div>
+            )}
+
             <div className="flex flex-col gap-2">
                 <Label
                     htmlFor="journal-body"
@@ -121,26 +137,38 @@ export default function DayEditor({ date, day }: DayEditorProps) {
                 <Textarea
                     id="journal-body"
                     value={form.data.body}
+                    readOnly={locked}
                     onChange={(event) =>
                         form.setData('body', event.target.value)
                     }
                     onKeyDown={handleKeyDown}
-                    placeholder="Escribí lo que quieras recordar…"
+                    placeholder={
+                        locked
+                            ? 'Contenido privado'
+                            : 'Escribí lo que quieras recordar…'
+                    }
                     className="min-h-40 resize-y border-border bg-card text-[15px] leading-relaxed text-white/90"
                 />
-                <p className="text-[11px] text-muted-foreground">
-                    Ctrl + Enter para guardar.
-                </p>
+                {!locked && (
+                    <p className="text-[11px] text-muted-foreground">
+                        Ctrl + Enter para guardar.
+                    </p>
+                )}
             </div>
 
             <div className="flex flex-col gap-2">
                 <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">
                     Ánimo
                 </span>
-                <MoodPicker
-                    value={form.data.mood}
-                    onChange={(mood) => form.setData('mood', mood)}
-                />
+                <fieldset
+                    disabled={locked}
+                    className="m-0 min-w-0 border-0 p-0"
+                >
+                    <MoodPicker
+                        value={form.data.mood}
+                        onChange={(mood) => form.setData('mood', mood)}
+                    />
+                </fieldset>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -153,6 +181,7 @@ export default function DayEditor({ date, day }: DayEditorProps) {
                 <Input
                     id="journal-tags"
                     value={form.data.tags}
+                    disabled={locked}
                     onChange={(event) =>
                         form.setData('tags', event.target.value)
                     }
@@ -168,6 +197,7 @@ export default function DayEditor({ date, day }: DayEditorProps) {
                 <label className="flex min-h-11 cursor-pointer items-center gap-2">
                     <Checkbox
                         checked={form.data.is_private}
+                        disabled={locked}
                         onCheckedChange={(checked) =>
                             form.setData('is_private', checked === true)
                         }
@@ -181,14 +211,14 @@ export default function DayEditor({ date, day }: DayEditorProps) {
                 </label>
 
                 <div className="flex items-center gap-3">
-                    {form.recentlySuccessful && day !== null && (
+                    {form.recentlySuccessful && day !== null && !locked && (
                         <span className="text-[11px] font-bold tracking-widest text-primary uppercase">
                             Guardado
                         </span>
                     )}
                     <Button
                         type="submit"
-                        disabled={form.processing}
+                        disabled={locked || form.processing}
                         className="min-h-11"
                     >
                         {form.processing ? 'Guardando…' : 'Guardar'}

@@ -89,6 +89,8 @@ it('conserva la privacidad y el cifrado cuando el PUT no la menciona', function 
         'is_private' => true,
     ]);
 
+    $this->post('/diario/desbloquear', ['password' => 'password']);
+
     $this->put('/diario/2026-11-07', ['body' => 'secreto corregido'])->assertRedirect();
 
     $day->refresh();

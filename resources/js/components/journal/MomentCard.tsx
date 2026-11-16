@@ -12,9 +12,10 @@ export interface JournalMomentPayload {
     id: number;
     occurred_at: string;
     title: string | null;
-    body: string;
+    body: string | null;
     tags: string[];
     is_private: boolean;
+    locked: boolean;
     people: JournalMomentPerson[];
     photos: JournalMomentPhoto[];
 }
@@ -61,17 +62,30 @@ export default function MomentCard({
             <div className="min-w-0 flex-1 pb-6">
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                        {moment.title !== null && moment.title !== '' && (
-                            <h3 className="text-sm font-semibold text-white/90">
-                                {moment.title}
-                            </h3>
-                        )}
-
-                        {moment.is_private && (
-                            <p className="mt-0.5 flex items-center gap-1 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                        {moment.locked ? (
+                            <p className="flex items-center gap-1 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
                                 <Lock aria-hidden="true" className="size-3" />
-                                Privado
+                                Privado — desbloqueá para leer
                             </p>
+                        ) : (
+                            <>
+                                {moment.title !== null &&
+                                    moment.title !== '' && (
+                                        <h3 className="text-sm font-semibold text-white/90">
+                                            {moment.title}
+                                        </h3>
+                                    )}
+
+                                {moment.is_private && (
+                                    <p className="mt-0.5 flex items-center gap-1 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                                        <Lock
+                                            aria-hidden="true"
+                                            className="size-3"
+                                        />
+                                        Privado
+                                    </p>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -99,31 +113,39 @@ export default function MomentCard({
                     </div>
                 </div>
 
-                <p className="mt-1 text-[15px] leading-relaxed whitespace-pre-wrap text-white/80">
-                    {moment.body}
-                </p>
+                {!moment.locked && (
+                    <>
+                        <p className="mt-1 text-[15px] leading-relaxed whitespace-pre-wrap text-white/80">
+                            {moment.body}
+                        </p>
 
-                <PhotoStrip momentId={moment.id} photos={moment.photos} />
+                        <PhotoStrip
+                            momentId={moment.id}
+                            photos={moment.photos}
+                        />
 
-                {(moment.tags.length > 0 || moment.people.length > 0) && (
-                    <ul className="mt-2 flex flex-wrap gap-1.5">
-                        {moment.tags.map((tag) => (
-                            <li
-                                key={`tag-${tag}`}
-                                className="rounded-full border border-border px-2 py-0.5 text-[10px] font-black tracking-widest text-muted-foreground uppercase"
-                            >
-                                #{tag}
-                            </li>
-                        ))}
-                        {moment.people.map((person) => (
-                            <li
-                                key={`person-${person.id}`}
-                                className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black tracking-widest text-primary uppercase"
-                            >
-                                @{person.name}
-                            </li>
-                        ))}
-                    </ul>
+                        {(moment.tags.length > 0 ||
+                            moment.people.length > 0) && (
+                            <ul className="mt-2 flex flex-wrap gap-1.5">
+                                {moment.tags.map((tag) => (
+                                    <li
+                                        key={`tag-${tag}`}
+                                        className="rounded-full border border-border px-2 py-0.5 text-[10px] font-black tracking-widest text-muted-foreground uppercase"
+                                    >
+                                        #{tag}
+                                    </li>
+                                ))}
+                                {moment.people.map((person) => (
+                                    <li
+                                        key={`person-${person.id}`}
+                                        className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-black tracking-widest text-primary uppercase"
+                                    >
+                                        @{person.name}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </>
                 )}
             </div>
         </article>

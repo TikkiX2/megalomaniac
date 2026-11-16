@@ -8,14 +8,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Journal\StoreMomentRequest;
 use App\Http\Requests\Journal\UpdateMomentRequest;
 use App\Models\JournalMoment;
+use App\Services\Journal\JournalAccess;
 use App\Services\Journal\JournalService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class MomentController extends Controller
 {
-    public function __construct(private readonly JournalService $journal) {}
+    public function __construct(
+        private readonly JournalService $journal,
+        private readonly JournalAccess $access,
+    ) {}
 
     public function store(StoreMomentRequest $request, string $date): RedirectResponse
     {
@@ -33,15 +38,17 @@ class MomentController extends Controller
     public function update(UpdateMomentRequest $request, JournalMoment $moment): RedirectResponse
     {
         $this->authorize('update', $moment);
+        $this->access->assertUnlockedForPrivate($request, $moment->is_private);
 
         $this->journal->updateMoment($moment, $request->validated());
 
         return back()->with('success', 'Momento actualizado.');
     }
 
-    public function destroy(JournalMoment $moment): RedirectResponse
+    public function destroy(Request $request, JournalMoment $moment): RedirectResponse
     {
         $this->authorize('delete', $moment);
+        $this->access->assertUnlockedForPrivate($request, $moment->is_private);
 
         $day = $moment->day;
 
