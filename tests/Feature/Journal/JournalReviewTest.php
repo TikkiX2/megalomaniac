@@ -39,3 +39,38 @@ it('repaso no filtra memorias de otro usuario', function () {
     $this->get('/diario/repaso')->assertOk()
         ->assertInertia(fn ($page) => $page->where('onThisDay', []));
 });
+
+it('repaso elige una memoria pública de más de treinta días', function () {
+    Carbon::setTestNow('2026-11-15 10:00:00');
+    JournalDay::factory()->for($this->user)->create(['date' => '2026-11-05', 'body' => 'Reciente']);
+    JournalDay::factory()->for($this->user)->create(['date' => '2026-10-06', 'body' => 'Vieja']);
+
+    $this->get('/diario/repaso')->assertOk()
+        ->assertInertia(fn ($page) => $page->where('random.type', 'day')
+            ->where('random.date', '2026-10-06')
+            ->where('random.excerpt', 'Vieja'));
+});
+
+it('repaso no propone memorias recientes ni privadas', function () {
+    Carbon::setTestNow('2026-11-15 10:00:00');
+
+    $recent = JournalDay::factory()->for($this->user)->create(['date' => '2026-11-10', 'body' => 'Reciente']);
+    $oldPrivate = JournalDay::factory()->for($this->user)->create(['date' => '2026-10-01', 'body' => 'Vieja privada', 'is_private' => true]);
+
+    JournalMoment::factory()->create([
+        'user_id' => $this->user->id,
+        'journal_day_id' => $recent->id,
+        'occurred_at' => '2026-11-10 15:00:00',
+        'body' => 'Momento reciente',
+    ]);
+    JournalMoment::factory()->create([
+        'user_id' => $this->user->id,
+        'journal_day_id' => $oldPrivate->id,
+        'occurred_at' => '2026-10-01 15:00:00',
+        'body' => 'Momento privado',
+        'is_private' => true,
+    ]);
+
+    $this->get('/diario/repaso')->assertOk()
+        ->assertInertia(fn ($page) => $page->where('random', null));
+});

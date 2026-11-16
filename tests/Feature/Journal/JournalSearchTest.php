@@ -31,6 +31,21 @@ it('no devuelve memorias privadas', function () {
         ->assertInertia(fn ($page) => $page->where('days', [])->where('moments', []));
 });
 
+it('busca sin distinguir mayúsculas', function () {
+    JournalDay::factory()->for($this->user)->create(['date' => '2026-11-01', 'body' => 'caminata en la costanera']);
+    JournalDay::factory()->for($this->user)->create(['date' => '2026-11-02', 'body' => 'árbol añoso']);
+    JournalMoment::factory()->create(['user_id' => $this->user->id, 'title' => 'Costanera al atardecer', 'body' => 'foto']);
+
+    $this->get('/diario/buscar?q=Caminata')->assertOk()
+        ->assertInertia(fn ($page) => $page->has('days', 1)->has('moments', 0));
+
+    $this->get('/diario/buscar?q=COSTANERA')->assertOk()
+        ->assertInertia(fn ($page) => $page->has('days', 1)->has('moments', 1));
+
+    $this->get('/diario/buscar?'.http_build_query(['q' => 'ÁRBOL']))->assertOk()
+        ->assertInertia(fn ($page) => $page->has('days', 1));
+});
+
 it('ignora búsquedas de menos de dos caracteres y escapa comodines', function () {
     JournalDay::factory()->for($this->user)->create(['date' => '2026-11-01', 'body' => '100% real']);
     JournalDay::factory()->for($this->user)->create(['date' => '2026-11-02', 'body' => 'abc']);

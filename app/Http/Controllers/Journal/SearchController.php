@@ -98,10 +98,12 @@ class SearchController extends Controller
     }
 
     /**
-     * Case-insensitive "contains" pattern with the LIKE wildcards escaped.
+     * Case-insensitive "contains" pattern with the LIKE wildcards escaped. The
+     * needle is folded too, so a capitalized search still matches the
+     * lowercased column.
      */
     private function pattern(string $query): string
     {
-        return '%'.addcslashes($query, '%_\\').'%';
+        return '%'.addcslashes(Str::lower($query), '%_\\').'%';
     }
 }
