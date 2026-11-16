@@ -288,4 +288,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(JournalMoment::class);
     }
+
+    public function journalReflections(): HasMany
+    {
+        return $this->hasMany(JournalReflection::class);
+    }
 }
