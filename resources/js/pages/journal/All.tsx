@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { NotebookPen, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import JournalSubnav from '@/components/journal/JournalSubnav';
+import LockedNotice from '@/components/journal/LockedNotice';
 import MemoryCard from '@/components/journal/MemoryCard';
 import type { JournalMemory } from '@/components/journal/MemoryCard';
 import { Button } from '@/components/ui/button';
@@ -311,6 +312,8 @@ export default function JournalAll({
     const tooShort = query.trim().length < 2;
     const paginator = isSearch ? null : (days as JournalTimelinePaginator);
     const memoryTotal = total ?? paginator?.total ?? 0;
+    const hasLockedDays =
+        !isSearch && (paginator?.data.some((day) => day.locked) ?? false);
 
     return (
         <>
@@ -346,6 +349,13 @@ export default function JournalAll({
                 </header>
 
                 <JournalSubnav />
+
+                {hasLockedDays && (
+                    <LockedNotice
+                        expiresAt={null}
+                        action="/diario/desbloquear"
+                    />
+                )}
 
                 {isSearch ? (
                     <SearchBody

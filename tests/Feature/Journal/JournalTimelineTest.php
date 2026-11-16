@@ -54,8 +54,9 @@ it('muestra candado y ningún extracto privado si el día sólo tiene un momento
     $this->get('/diario/todas')->assertOk()
         ->assertInertia(fn ($page) => $page->component('journal/All')
             ->has('days.data', 1)
-            ->where('days.data.0.excerpt', 'Sin texto')
-            ->where('days.data.0.is_private', true));
+            ->where('days.data.0.excerpt', null)
+            ->where('days.data.0.is_private', true)
+            ->where('days.data.0.locked', true));
 });
 
 it('no lista los días de otro usuario', function () {

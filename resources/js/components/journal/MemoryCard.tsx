@@ -3,10 +3,11 @@ import { Lock } from 'lucide-react';
 
 export interface JournalMemory {
     date: string;
-    excerpt: string;
+    excerpt: string | null;
     moments_count?: number;
     is_private: boolean;
     photo_url?: string | null;
+    locked?: boolean;
 }
 
 /**
@@ -81,7 +82,15 @@ export default function MemoryCard({ memory, href }: MemoryCardProps) {
             </time>
 
             <div className="min-w-0 flex-1">
-                {memory.excerpt ? (
+                {memory.locked ? (
+                    <p className="flex items-center gap-1.5 text-[15px] leading-relaxed text-muted-foreground italic">
+                        <Lock
+                            aria-hidden="true"
+                            className="size-3.5 shrink-0"
+                        />
+                        Privado — desbloqueá para leer
+                    </p>
+                ) : memory.excerpt ? (
                     <p className="line-clamp-3 text-[15px] leading-relaxed text-white/80">
                         {memory.excerpt}
                     </p>
@@ -91,7 +100,7 @@ export default function MemoryCard({ memory, href }: MemoryCardProps) {
                     </p>
                 )}
 
-                {(count > 0 || memory.is_private) && (
+                {(count > 0 || (memory.is_private && !memory.locked)) && (
                     <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
                         {count > 0 && (
                             <span className="tabular-nums">
@@ -99,7 +108,7 @@ export default function MemoryCard({ memory, href }: MemoryCardProps) {
                             </span>
                         )}
 
-                        {memory.is_private && (
+                        {memory.is_private && !memory.locked && (
                             <span className="flex items-center gap-1">
                                 <Lock aria-hidden="true" className="size-3" />
                                 Privado
@@ -109,7 +118,7 @@ export default function MemoryCard({ memory, href }: MemoryCardProps) {
                 )}
             </div>
 
-            {memory.photo_url ? (
+            {!memory.locked && memory.photo_url ? (
                 <img
                     src={memory.photo_url}
                     alt=""
