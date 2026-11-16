@@ -10,6 +10,7 @@ use App\Models\JournalDay;
 use App\Models\JournalMoment;
 use App\Models\Person;
 use App\Services\Journal\JournalService;
+use App\Services\Journal\JournalStats;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,10 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class DiaryController extends Controller
 {
-    public function __construct(private readonly JournalService $journal) {}
+    public function __construct(
+        private readonly JournalService $journal,
+        private readonly JournalStats $stats,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -111,6 +115,11 @@ class DiaryController extends Controller
                 ->values(),
             'prevDate' => $current->subDay()->toDateString(),
             'nextDate' => $current->addDay()->toDateString(),
+            'calendar' => [
+                'month' => $today->format('Y-m'),
+                'days' => $this->stats->month($request->user(), $today->startOfMonth()),
+                'streak' => $this->stats->streak($request->user()),
+            ],
         ]);
     }
 

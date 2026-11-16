@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Journal\CalendarController;
 use App\Http\Controllers\Journal\DiaryController;
 use App\Http\Controllers\Journal\MomentController;
 use App\Http\Controllers\Journal\PhotoController;
@@ -15,6 +16,8 @@ Route::bind('moment', function (string $value): JournalMoment {
 
 Route::middleware(['auth', 'verified'])->prefix('diario')->name('journal.')->group(function () {
     Route::get('/', [DiaryController::class, 'index'])->name('index');
+
+    Route::get('calendario', CalendarController::class)->name('calendar');
 
     Route::post('{date}/momentos', [MomentController::class, 'store'])
         ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
