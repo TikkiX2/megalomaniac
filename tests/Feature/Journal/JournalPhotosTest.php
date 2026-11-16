@@ -37,6 +37,18 @@ it('no sirve fotos de un momento ajeno', function () {
     $this->delete("/diario/momentos/{$moment->id}/fotos/{$media->id}")->assertNotFound();
 });
 
+it('no sirve ni borra fotos de otro momento del mismo dueño', function () {
+    $moment = JournalMoment::factory()->create(['user_id' => $this->user->id]);
+    $other = JournalMoment::factory()->create(['user_id' => $this->user->id]);
+    $media = $other->addMedia(UploadedFile::fake()->image('otra.jpg'))
+        ->toMediaCollection('photos', 'local');
+
+    $this->get("/diario/momentos/{$moment->id}/fotos/{$media->id}")->assertNotFound();
+    $this->delete("/diario/momentos/{$moment->id}/fotos/{$media->id}")->assertNotFound();
+
+    expect($other->fresh()->getMedia('photos'))->toHaveCount(1);
+});
+
 it('rechaza archivos que no son imagen y más de 10 MB', function () {
     $moment = JournalMoment::factory()->create(['user_id' => $this->user->id]);
 
