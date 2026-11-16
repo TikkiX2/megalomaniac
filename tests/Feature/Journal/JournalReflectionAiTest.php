@@ -53,6 +53,73 @@ it('cae al fallback si el proveedor falla', function () {
     expect(JournalReflection::firstOrFail()->source)->toBe('fallback');
 });
 
+it('guarda el fallback ante un error no recuperable del proveedor', function () {
+    $this->user->update(['ai_enabled' => true]);
+    AiProvider::factory()->for($this->user)->create(['enabled' => true, 'url' => 'https://ai.example.com/v1']);
+    Http::fake(['ai.example.com/*' => Http::response('not found', 404)]);
+    JournalDay::factory()->for($this->user)->create(['date' => now()->toDateString(), 'body' => 'Día de prueba']);
+
+    $this->post('/diario/reflexiones')->assertRedirect();
+
+    $reflection = JournalReflection::firstOrFail();
+
+    expect($reflection->source)->toBe('fallback')
+        ->and($reflection->body)->toContain('Sin IA');
+});
+
+it('cae al fallback si la IA devuelve una respuesta vacía', function () {
+    $this->user->update(['ai_enabled' => true]);
+    AiProvider::factory()->for($this->user)->create(['enabled' => true, 'url' => 'https://ai.example.com/v1']);
+    Http::fake(['ai.example.com/*' => Http::response(journalChatBody("   \n  "), 200)]);
+    JournalDay::factory()->for($this->user)->create(['date' => now()->toDateString(), 'body' => 'Día de prueba']);
+
+    $this->post('/diario/reflexiones')->assertRedirect();
+
+    $reflection = JournalReflection::firstOrFail();
+
+    expect($reflection->source)->toBe('fallback')
+        ->and($reflection->model)->toBeNull()
+        ->and($reflection->body)->toContain('Sin IA');
+});
+
+it('usa el fallback sin IA habilitada y sin proveedores', function () {
+    Http::preventStrayRequests();
+
+    $this->user->update(['ai_enabled' => false]);
+    JournalDay::factory()->for($this->user)->create(['date' => now()->toDateString(), 'body' => 'Día de prueba']);
+
+    $this->post('/diario/reflexiones')->assertRedirect();
+
+    expect(JournalReflection::firstOrFail()->source)->toBe('fallback');
+});
+
+it('rechaza una semana que no empieza un lunes', function () {
+    $week = app(JournalReflectionService::class)->weekStart($this->user);
+
+    $this->post('/diario/reflexiones', ['week_start' => $week->addDay()->toDateString()])
+        ->assertSessionHasErrors('week_start');
+
+    expect(JournalReflection::count())->toBe(0);
+});
+
+it('rechaza una semana fuera de las últimas ocho', function () {
+    $week = app(JournalReflectionService::class)->weekStart($this->user);
+
+    foreach ([$week->subWeeks(8), $week->addWeek()] as $invalid) {
+        $this->post('/diario/reflexiones', ['week_start' => $invalid->toDateString()])
+            ->assertSessionHasErrors('week_start');
+    }
+
+    expect(JournalReflection::count())->toBe(0);
+});
+
+it('rechaza una semana con formato inválido', function () {
+    $this->post('/diario/reflexiones', ['week_start' => '16/11/2026'])
+        ->assertSessionHasErrors('week_start');
+
+    expect(JournalReflection::count())->toBe(0);
+});
+
 it('limita la generación a tres por minuto', function () {
     foreach (range(1, 3) as $i) {
         $this->post('/diario/reflexiones')->assertRedirect();

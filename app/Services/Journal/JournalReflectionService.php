@@ -95,7 +95,15 @@ class JournalReflectionService
         $source = 'fallback';
 
         if ($user->ai_enabled && $payload['text'] !== '') {
-            $result = $this->generateWithAi($user, $payload['text']);
+            try {
+                $result = $this->generateWithAi($user, $payload['text']);
+            } catch (Throwable $exception) {
+                // A configured provider can still answer with a non-retryable
+                // error (wrong URL, 4xx, application exception). The week must
+                // keep its deterministic summary instead of a 500.
+                report($exception);
+                $result = null;
+            }
 
             if ($result !== null && trim($result['body']) !== '') {
                 $body = $result['body'];
