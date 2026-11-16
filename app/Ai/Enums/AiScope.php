@@ -106,6 +106,7 @@ enum AiScope: string
             'freelance' => ['¿Qué proyectos tengo activos?', 'Redactá una cotización', '¿Qué tareas vencen?'],
             'health' => ['¿Cómo están mis mediciones?', '¿Qué medicamento me queda?', 'Resumí mis síntomas'],
             'people' => ['¿Con quién hablé hace días?', '¿Qué fechas tengo próximas?', '¿Quiénes son mis contactos frecuentes?'],
+            'journal' => ['¿Cómo fue mi semana?', 'Resumí mi diario', '¿Qué escribí estos días?'],
             default => [],
         };
     }

@@ -15,6 +15,7 @@ use App\Ai\Tools\HealthActionTool;
 use App\Ai\Tools\HealthQueryTool;
 use App\Ai\Tools\IntegrationCallTool;
 use App\Ai\Tools\IntegrationCatalogTool;
+use App\Ai\Tools\JournalRecapTool;
 use App\Ai\Tools\LoadSkillTool;
 use App\Ai\Tools\ManageAgentsTool;
 use App\Ai\Tools\NutritionActionTool;
@@ -90,7 +91,7 @@ test('megalomaniac agent has correct tools', function () {
 
     $tools = iterator_to_array($agent->tools());
 
-    expect($tools)->toHaveCount(29);
+    expect($tools)->toHaveCount(30);
     expect($tools[0])->toBeInstanceOf(TaskQueryTool::class);
     expect($tools[1])->toBeInstanceOf(ProjectActionTool::class);
     expect($tools[2])->toBeInstanceOf(TaskActionTool::class);
@@ -110,16 +111,17 @@ test('megalomaniac agent has correct tools', function () {
     expect($tools[16])->toBeInstanceOf(PeopleActionTool::class);
     expect($tools[17])->toBeInstanceOf(HealthQueryTool::class);
     expect($tools[18])->toBeInstanceOf(HealthActionTool::class);
-    expect($tools[19])->toBeInstanceOf(IntegrationCatalogTool::class);
-    expect($tools[20])->toBeInstanceOf(IntegrationCallTool::class);
-    expect($tools[21])->toBeInstanceOf(ManageAgentsTool::class);
-    expect($tools[22])->toBeInstanceOf(LoadSkillTool::class);
-    expect($tools[23])->toBeInstanceOf(RememberMemoryTool::class);
-    expect($tools[24])->toBeInstanceOf(ForgetMemoryTool::class);
-    expect($tools[25])->toBeInstanceOf(PromoteMemoryTool::class);
-    expect($tools[26])->toBeInstanceOf(WebSearchTool::class);
-    expect($tools[27])->toBeInstanceOf(WebFetchTool::class);
-    expect($tools[28])->toBeInstanceOf(AskUserTool::class);
+    expect($tools[19])->toBeInstanceOf(JournalRecapTool::class);
+    expect($tools[20])->toBeInstanceOf(IntegrationCatalogTool::class);
+    expect($tools[21])->toBeInstanceOf(IntegrationCallTool::class);
+    expect($tools[22])->toBeInstanceOf(ManageAgentsTool::class);
+    expect($tools[23])->toBeInstanceOf(LoadSkillTool::class);
+    expect($tools[24])->toBeInstanceOf(RememberMemoryTool::class);
+    expect($tools[25])->toBeInstanceOf(ForgetMemoryTool::class);
+    expect($tools[26])->toBeInstanceOf(PromoteMemoryTool::class);
+    expect($tools[27])->toBeInstanceOf(WebSearchTool::class);
+    expect($tools[28])->toBeInstanceOf(WebFetchTool::class);
+    expect($tools[29])->toBeInstanceOf(AskUserTool::class);
 });
 
 test('workout query tool returns workouts', function () {

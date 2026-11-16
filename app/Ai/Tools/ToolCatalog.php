@@ -14,6 +14,7 @@ use App\Services\Grocery\GroceryService;
 use App\Services\Gym\RoutineService;
 use App\Services\Gym\WorkoutSessionService;
 use App\Services\Health\HealthService;
+use App\Services\Journal\JournalReflectionService;
 use App\Services\Nutrition\NutritionService;
 use App\Services\People\PeopleService;
 use App\Services\Projects\ProjectService;
@@ -38,6 +39,7 @@ final class ToolCatalog
             'freelance' => ['label' => 'Freelance', 'tools' => [FreelanceQueryTool::class, FreelanceActionTool::class]],
             'people' => ['label' => 'Personas', 'tools' => [PeopleQueryTool::class, PeopleActionTool::class]],
             'health' => ['label' => 'Salud', 'tools' => [HealthQueryTool::class, HealthActionTool::class]],
+            'journal' => ['label' => 'Diario', 'tools' => [JournalRecapTool::class]],
             'actions' => ['label' => 'Todas las acciones', 'tools' => self::actionTools()],
             'integrations' => ['label' => 'Integraciones', 'tools' => [IntegrationCatalogTool::class, IntegrationCallTool::class]],
             'agents' => ['label' => 'Agentes', 'tools' => [ManageAgentsTool::class]],
@@ -134,6 +136,7 @@ final class ToolCatalog
             PeopleActionTool::class => new PeopleActionTool($user, app(PeopleService::class)),
             HealthQueryTool::class => new HealthQueryTool($user, app(HealthService::class)),
             HealthActionTool::class => new HealthActionTool($user, app(HealthService::class)),
+            JournalRecapTool::class => new JournalRecapTool($user, app(JournalReflectionService::class)),
             default => new $class($user),
         };
     }

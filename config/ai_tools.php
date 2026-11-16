@@ -65,6 +65,9 @@ return [
             'estudio', 'laboratorio', 'doctor', 'doctora', 'turno', 'consulta',
             'tsh', 'tiroides', 'peso', 'orina', 'calambre', 'cansancio',
         ],
+        'journal' => [
+            'diario', 'memoria', 'memorias', 'recap', 'reflexion', 'reflexión',
+        ],
         'integrations' => [
             'github', 'docker', 'proxmox', 'servidor', 'contenedor', 'reddit',
             'telegram', 'notion', 'youtube', 'feed', 'drive', 's3', 'storage',
