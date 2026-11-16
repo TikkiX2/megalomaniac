@@ -9,6 +9,7 @@ use App\Http\Requests\Journal\UpdateDayRequest;
 use App\Models\JournalDay;
 use App\Models\JournalMoment;
 use App\Models\Person;
+use App\Services\Journal\JournalAccess;
 use App\Services\Journal\JournalMemories;
 use App\Services\Journal\JournalService;
 use App\Services\Journal\JournalStats;
@@ -25,6 +26,7 @@ class DiaryController extends Controller
         private readonly JournalService $journal,
         private readonly JournalStats $stats,
         private readonly JournalMemories $memories,
+        private readonly JournalAccess $access,
     ) {}
 
     public function index(Request $request): Response
@@ -74,9 +76,25 @@ class DiaryController extends Controller
                 ->orderBy('id')
                 ->get();
 
+        $expiresAt = $this->access->expiresAt($request);
+
+        $hasPrivate = JournalDay::query()
+            ->forUser($request->user())
+            ->where('date', $date)
+            ->where('is_private', true)
+            ->exists()
+            || JournalMoment::query()
+                ->where('user_id', $request->user()->id)
+                ->where('is_private', true)
+                ->whereHas('day', fn ($query) => $query->where('date', $date))
+                ->exists();
+
         return Inertia::render('journal/Index', [
             'date' => $date,
             'today' => $today->toDateString(),
+            'locked' => $expiresAt === null,
+            'unlock_expires_at' => $expiresAt?->toIso8601String(),
+            'has_private' => $hasPrivate,
             'day' => $day === null ? null : [
                 'id' => $day->id,
                 'body' => $day->body,

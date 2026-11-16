@@ -6,6 +6,7 @@ import DayEditor from '@/components/journal/DayEditor';
 import type { JournalDayPayload } from '@/components/journal/DayEditor';
 import JournalRail from '@/components/journal/JournalRail';
 import JournalSubnav from '@/components/journal/JournalSubnav';
+import LockedNotice from '@/components/journal/LockedNotice';
 import type { JournalMemory } from '@/components/journal/MemoryCard';
 import MomentCard from '@/components/journal/MomentCard';
 import type {
@@ -37,6 +38,9 @@ interface JournalCalendarRailProps {
 interface JournalIndexProps {
     date: string;
     today: string;
+    locked: boolean;
+    unlock_expires_at: string | null;
+    has_private: boolean;
     day: JournalDayPayload | null;
     moments: JournalMomentPayload[];
     people: JournalMomentPerson[];
@@ -64,6 +68,9 @@ function formatLongDate(date: string): string {
 export default function JournalIndex({
     date,
     today,
+    locked,
+    unlock_expires_at,
+    has_private,
     day,
     moments,
     people,
@@ -187,6 +194,13 @@ export default function JournalIndex({
                         >
                             {flash.success}
                         </div>
+                    )}
+
+                    {locked && has_private && (
+                        <LockedNotice
+                            expiresAt={unlock_expires_at}
+                            action="/diario/desbloquear"
+                        />
                     )}
 
                     <DayEditor key={date} date={date} day={day} />
