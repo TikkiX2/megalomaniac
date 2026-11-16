@@ -256,7 +256,7 @@ class JournalReflectionService
             ->where('is_private', false)
             ->where('occurred_at', '>=', $weekStart->utc())
             ->where('occurred_at', '<', $weekStart->addWeek()->utc())
-            ->with('people:id,name')
+            ->with('people:id,first_name,last_name')
             ->orderBy('occurred_at')
             ->get();
     }
@@ -294,7 +294,7 @@ class JournalReflectionService
             $header .= ' · tags: '.implode(', ', $tags);
         }
 
-        $people = $moment->people->pluck('name')->implode(', ');
+        $people = $moment->people->pluck('full_name')->implode(', ');
 
         if ($people !== '') {
             $header .= ' · con: '.$people;

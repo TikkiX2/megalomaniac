@@ -2,6 +2,7 @@
 
 use App\Models\JournalDay;
 use App\Models\JournalReflection;
+use App\Models\Person;
 use App\Models\User;
 use App\Services\Journal\JournalReflectionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,6 +39,77 @@ it('el payload sólo incluye memorias públicas', function () {
 
     expect($payload['text'])->toContain('público de la semana')
         ->not->toContain('SECRETO PRIVADO');
+});
+
+it('deja fuera del payload y del fallback los momentos privados', function () {
+    $week = app(JournalReflectionService::class)->weekStart($this->user);
+
+    JournalDay::factory()->for($this->user)->create([
+        'date' => $week->toDateString(), 'body' => 'público de la semana',
+    ]);
+
+    $anchor = JournalDay::factory()->for($this->user)->create([
+        'date' => $week->addDay()->toDateString(), 'body' => null, 'mood' => null, 'is_private' => true,
+    ]);
+
+    $person = Person::factory()->for($this->user)->create([
+        'first_name' => 'Persona', 'last_name' => 'Secreta',
+    ]);
+
+    $moment = $anchor->moments()->create([
+        'user_id' => $this->user->id,
+        'title' => 'Título privado',
+        'body' => 'SECRETO MOMENTO',
+        'tags' => ['secretotag'],
+        'occurred_at' => $week->toDateString().' 20:00:00',
+        'is_private' => true,
+    ]);
+
+    $moment->people()->attach($person);
+
+    $service = app(JournalReflectionService::class);
+    $payload = $service->publicPayload($this->user, $week);
+    $fallback = $service->fallback($this->user, $week);
+
+    expect($payload['text'])->toContain('público de la semana')
+        ->not->toContain('SECRETO MOMENTO')
+        ->not->toContain('secretotag')
+        ->not->toContain('Persona Secreta');
+
+    expect($fallback)->toContain('público de la semana')
+        ->not->toContain('SECRETO MOMENTO')
+        ->not->toContain('secretotag')
+        ->not->toContain('Persona Secreta');
+});
+
+it('incluye tags y personas de los momentos públicos', function () {
+    $week = app(JournalReflectionService::class)->weekStart($this->user);
+
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => $week->toDateString(), 'body' => 'día con momento',
+    ]);
+
+    $person = Person::factory()->for($this->user)->create([
+        'first_name' => 'Ana', 'last_name' => 'Pública',
+    ]);
+
+    $moment = $day->moments()->create([
+        'user_id' => $this->user->id,
+        'title' => 'Cena',
+        'body' => 'Cena con Ana',
+        'tags' => ['amistad'],
+        'occurred_at' => $week->toDateString().' 21:00:00',
+        'is_private' => false,
+    ]);
+
+    $moment->people()->attach($person);
+
+    $payload = app(JournalReflectionService::class)->publicPayload($this->user, $week);
+
+    expect($payload['text'])
+        ->toContain('Cena con Ana')
+        ->toContain('amistad')
+        ->toContain('Ana Pública');
 });
 
 it('el fallback arma un resumen con datos de la semana', function () {
