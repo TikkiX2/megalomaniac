@@ -5,6 +5,7 @@ import type { JournalCalendarDay } from '@/components/journal/CalendarGrid';
 import DayEditor from '@/components/journal/DayEditor';
 import type { JournalDayPayload } from '@/components/journal/DayEditor';
 import JournalRail from '@/components/journal/JournalRail';
+import type { JournalMemory } from '@/components/journal/MemoryCard';
 import MomentCard from '@/components/journal/MomentCard';
 import type {
     JournalMomentPayload,
@@ -41,6 +42,7 @@ interface JournalIndexProps {
     calendar: JournalCalendarRailProps;
     prevDate: string;
     nextDate: string;
+    onThisDay: JournalMemory | null;
     flash?: FlashProps;
 }
 
@@ -67,6 +69,7 @@ export default function JournalIndex({
     calendar,
     prevDate,
     nextDate,
+    onThisDay,
     flash,
 }: JournalIndexProps) {
     const [editor, setEditor] = useState<MomentEditorState | null>(null);
@@ -248,6 +251,7 @@ export default function JournalIndex({
                         days={calendar.days}
                         streak={calendar.streak}
                         today={today}
+                        onThisDay={onThisDay}
                     />
                 </div>
             </div>

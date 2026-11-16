@@ -9,6 +9,15 @@ export interface JournalMemory {
     photo_url?: string | null;
 }
 
+/**
+ * A memory as it comes from the search and review endpoints, where the same
+ * shape serves both days and moments.
+ */
+export interface JournalMemoryRef extends JournalMemory {
+    id: number;
+    type: 'day' | 'moment';
+}
+
 interface MemoryCardProps {
     memory: JournalMemory;
     href?: string;

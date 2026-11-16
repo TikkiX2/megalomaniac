@@ -9,6 +9,7 @@ use App\Http\Requests\Journal\UpdateDayRequest;
 use App\Models\JournalDay;
 use App\Models\JournalMoment;
 use App\Models\Person;
+use App\Services\Journal\JournalMemories;
 use App\Services\Journal\JournalService;
 use App\Services\Journal\JournalStats;
 use Carbon\CarbonImmutable;
@@ -23,6 +24,7 @@ class DiaryController extends Controller
     public function __construct(
         private readonly JournalService $journal,
         private readonly JournalStats $stats,
+        private readonly JournalMemories $memories,
     ) {}
 
     public function index(Request $request): Response
@@ -115,6 +117,7 @@ class DiaryController extends Controller
                 ->values(),
             'prevDate' => $current->subDay()->toDateString(),
             'nextDate' => $current->addDay()->toDateString(),
+            'onThisDay' => $this->memories->onThisDay($request->user(), $current, 1)->first(),
             'calendar' => [
                 'month' => $today->format('Y-m'),
                 'days' => $this->stats->month($request->user(), $today->startOfMonth()),
