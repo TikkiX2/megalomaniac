@@ -48,7 +48,7 @@ class AiSettingsController extends Controller
      *   `ai_providers` since the registry landed.
      * - `providers`: the user's own providers ordered by `sort_order`, never
      *   carrying the key itself, plus the circuit breaker row per provider.
-     * - `scopes`: the 13 `AiScope` cases in declaration order, each with the
+     * - `scopes`: the 15 `AiScope` cases in declaration order, each with the
      *   persisted chain (`[]` = inherits) and the chain that would be used
      *   today for that context, health filter included.
      * - `module_labels`: module key => label, so the assignments tab can label
@@ -275,7 +275,7 @@ class AiSettingsController extends Controller
     }
 
     /**
-     * The 14 scopes, always materialized, in `AiScope::cases()` order.
+     * The 15 scopes, always materialized, in `AiScope::cases()` order.
      *
      * `chain` is what the user stored (`[]` = inherits) and `effective` is what
      * the resolver would pick today for that context, health filter included.

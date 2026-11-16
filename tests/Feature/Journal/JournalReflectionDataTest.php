@@ -1,5 +1,6 @@
 <?php
 
+use App\Ai\Tools\JournalRecapTool;
 use App\Models\JournalDay;
 use App\Models\JournalReflection;
 use App\Models\Person;
@@ -7,6 +8,7 @@ use App\Models\User;
 use App\Services\Journal\JournalReflectionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Laravel\Ai\Tools\Request;
 
 uses(RefreshDatabase::class);
 
@@ -121,7 +123,8 @@ it('el fallback arma un resumen con datos de la semana', function () {
     $reflection = app(JournalReflectionService::class)->generate($this->user, $week);
 
     expect($reflection->body)->toContain('Día uno')
-        ->and($reflection->body)->toContain('Sin IA');
+        ->and($reflection->body)->toContain('Sin IA')
+        ->and($reflection->body)->toContain('Ánimo promedio: Bien (4/5 en 1 día).');
 });
 
 it('una semana sin datos públicos devuelve null', function () {
@@ -202,4 +205,81 @@ it('recorta los textos largos del payload y del resumen', function () {
         ->and($payload['text'])->not->toContain(str_repeat('a', 501))
         ->and(mb_strlen($service->fallback($this->user, $service->weekStart($this->user))))
         ->toBeLessThanOrEqual(7000);
+});
+
+it('invalida la reflexión cuando el día citado pasa a privado', function () {
+    Carbon::setTestNow('2026-11-16 10:00:00');
+
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-16', 'body' => 'SECRETO TARDÍO',
+    ]);
+
+    $service = app(JournalReflectionService::class);
+    $reflection = $service->generate($this->user, $service->weekStart($this->user));
+
+    expect($reflection->body)->toContain('SECRETO TARDÍO')
+        ->and(JournalReflection::count())->toBe(1);
+
+    $day->update(['is_private' => true]);
+
+    expect(JournalReflection::count())->toBe(0)
+        ->and($service->recap($this->user))->toBeNull();
+
+    $tool = new JournalRecapTool($this->user, $service);
+
+    expect((string) $tool->handle(new Request([])))
+        ->toBe('No hay memorias públicas en esa semana.')
+        ->not->toContain('SECRETO TARDÍO');
+});
+
+it('invalida la reflexión cuando se borra un momento público citado', function () {
+    Carbon::setTestNow('2026-11-16 10:00:00');
+
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-16', 'body' => 'día público',
+    ]);
+
+    $moment = $day->moments()->create([
+        'user_id' => $this->user->id,
+        'title' => 'Momento',
+        'body' => 'MOMENTO BORRADO',
+        'occurred_at' => '2026-11-16 20:00:00',
+        'is_private' => false,
+    ]);
+
+    $service = app(JournalReflectionService::class);
+    $reflection = $service->generate($this->user, $service->weekStart($this->user));
+
+    expect($reflection->body)->toContain('MOMENTO BORRADO');
+
+    $moment->delete();
+
+    expect(JournalReflection::count())->toBe(0)
+        ->and($service->forWeek($this->user, $service->weekStart($this->user)))->toBeNull();
+});
+
+it('invalida la reflexión de la semana cuando un momento pasa a privado', function () {
+    Carbon::setTestNow('2026-11-16 10:00:00');
+
+    $day = JournalDay::factory()->for($this->user)->create([
+        'date' => '2026-11-16', 'body' => 'día público',
+    ]);
+
+    $moment = $day->moments()->create([
+        'user_id' => $this->user->id,
+        'title' => 'Momento',
+        'body' => 'MOMENTO PRIVADO',
+        'occurred_at' => '2026-11-16 20:00:00',
+        'is_private' => false,
+    ]);
+
+    $service = app(JournalReflectionService::class);
+    $service->generate($this->user, $service->weekStart($this->user));
+
+    expect(JournalReflection::count())->toBe(1);
+
+    $moment->update(['is_private' => true]);
+
+    expect(JournalReflection::count())->toBe(0)
+        ->and($service->forWeek($this->user, $service->weekStart($this->user)))->toBeNull();
 });

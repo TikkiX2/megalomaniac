@@ -105,7 +105,7 @@ class JournalReflectionService
                 $result = null;
             }
 
-            if ($result !== null && trim($result['body']) !== '') {
+            if ($result !== null && trim($result['body'] ?? '') !== '') {
                 $body = $result['body'];
                 $model = $result['model'] ?? null;
                 $source = 'ai';
@@ -150,7 +150,7 @@ class JournalReflectionService
             function (string $key, string $model, ?string $block) use ($user, $prompt, &$usedModel): mixed {
                 $usedModel = $model;
 
-                return (new MegalomaniacAgent($user))
+                return (new MegalomaniacAgent($user, []))
                     ->forUser($user)
                     ->withPersonalization($block)
                     ->prompt($prompt, provider: $key, model: $model);
@@ -230,7 +230,10 @@ class JournalReflectionService
 
         if ($moods->isNotEmpty()) {
             $average = round((float) $moods->avg(), 1);
-            $lines[] = 'Ánimo promedio: '.number_format($average, 1).'/5 ('.$this->moodLabel($average).').';
+            $moodDays = $moods->count();
+            $lines[] = 'Ánimo promedio: '.$this->moodLabel($average)
+                .' ('.$this->formatMoodAverage($average).'/5 en '.$moodDays
+                .($moodDays === 1 ? ' día' : ' días').').';
         }
 
         $tags = $this->topTags($days, $moments);
@@ -380,6 +383,11 @@ class JournalReflectionService
             $average < 4.5 => 'Bien',
             default => 'Muy bien',
         };
+    }
+
+    private function formatMoodAverage(float $average): string
+    {
+        return rtrim(rtrim(number_format($average, 1, '.', ''), '0'), '.');
     }
 
     /**

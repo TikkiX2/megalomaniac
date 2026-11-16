@@ -7,9 +7,11 @@ use App\Models\JournalDay;
 use App\Models\JournalReflection;
 use App\Models\User;
 use App\Services\Journal\JournalReflectionService;
+use Illuminate\Support\Carbon;
 use Laravel\Ai\Tools\Request;
 
 beforeEach(function () {
+    Carbon::setTestNow('2026-11-16 10:00:00');
     $this->user = User::factory()->create(['timezone' => 'America/Argentina/Buenos_Aires']);
 });
 

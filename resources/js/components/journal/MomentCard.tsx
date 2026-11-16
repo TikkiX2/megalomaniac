@@ -89,28 +89,40 @@ export default function MomentCard({
                         )}
                     </div>
 
-                    <div className="flex shrink-0 items-center">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-11 text-muted-foreground hover:text-white/90"
-                            aria-label="Editar momento"
-                            onClick={() => onEdit(moment)}
-                        >
-                            <Pencil aria-hidden="true" className="size-3.5" />
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="size-11 text-muted-foreground hover:text-destructive"
-                            aria-label="Eliminar momento"
-                            onClick={() => onDelete(moment)}
-                        >
-                            <Trash2 aria-hidden="true" className="size-3.5" />
-                        </Button>
-                    </div>
+                    {moment.locked ? (
+                        <p className="shrink-0 text-right text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                            Desbloqueá para editar
+                        </p>
+                    ) : (
+                        <div className="flex shrink-0 items-center">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-11 text-muted-foreground hover:text-white/90"
+                                aria-label="Editar momento"
+                                onClick={() => onEdit(moment)}
+                            >
+                                <Pencil
+                                    aria-hidden="true"
+                                    className="size-3.5"
+                                />
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-11 text-muted-foreground hover:text-destructive"
+                                aria-label="Eliminar momento"
+                                onClick={() => onDelete(moment)}
+                            >
+                                <Trash2
+                                    aria-hidden="true"
+                                    className="size-3.5"
+                                />
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {!moment.locked && (

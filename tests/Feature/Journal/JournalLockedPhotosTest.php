@@ -37,10 +37,61 @@ it('una foto ajena sigue dando 404 aunque esté desbloqueado', function () {
 it('el timeline tapa el extracto y la foto de un día sólo privado', function () {
     $day = JournalDay::factory()->for($this->user)->create(['date' => '2026-11-10', 'body' => 'privado', 'is_private' => true]);
 
+    $moment = JournalMoment::factory()->create([
+        'user_id' => $this->user->id,
+        'journal_day_id' => $day->id,
+        'occurred_at' => '2026-11-10 10:00:00',
+        'body' => 'momento privado',
+        'is_private' => true,
+    ]);
+    $moment->addMedia(UploadedFile::fake()->image('privada.jpg'))->toMediaCollection('photos', 'local');
+
     $this->get('/diario/todas')->assertInertia(fn ($page) => $page
         ->where('days.data.0.excerpt', null)
         ->where('days.data.0.photo_url', null)
         ->where('days.data.0.locked', true));
+});
+
+it('el timeline muestra la foto privada después de desbloquear', function () {
+    $day = JournalDay::factory()->for($this->user)->create(['date' => '2026-11-10', 'body' => 'privado', 'is_private' => true]);
+
+    $moment = JournalMoment::factory()->create([
+        'user_id' => $this->user->id,
+        'journal_day_id' => $day->id,
+        'occurred_at' => '2026-11-10 10:00:00',
+        'body' => 'momento privado',
+        'is_private' => true,
+    ]);
+    $media = $moment->addMedia(UploadedFile::fake()->image('privada.jpg'))->toMediaCollection('photos', 'local');
+
+    $this->post('/diario/desbloquear', ['password' => 'password']);
+
+    $this->get('/diario/todas')->assertInertia(fn ($page) => $page
+        ->where('days.data.0.photo_url', route('journal.photos.show', [
+            'moment' => $moment->id,
+            'media' => $media->id,
+        ]))
+        ->where('days.data.0.locked', false));
+});
+
+it('el timeline muestra la foto de un momento público aunque el diario esté bloqueado', function () {
+    $day = JournalDay::factory()->for($this->user)->create(['date' => '2026-11-09', 'body' => 'público']);
+
+    $moment = JournalMoment::factory()->create([
+        'user_id' => $this->user->id,
+        'journal_day_id' => $day->id,
+        'occurred_at' => '2026-11-09 10:00:00',
+        'body' => 'momento público',
+        'is_private' => false,
+    ]);
+    $media = $moment->addMedia(UploadedFile::fake()->image('publica.jpg'))->toMediaCollection('photos', 'local');
+
+    $this->get('/diario/todas')->assertInertia(fn ($page) => $page
+        ->where('days.data.0.photo_url', route('journal.photos.show', [
+            'moment' => $moment->id,
+            'media' => $media->id,
+        ]))
+        ->where('days.data.0.locked', false));
 });
 
 it('el timeline muestra el extracto privado después de desbloquear', function () {

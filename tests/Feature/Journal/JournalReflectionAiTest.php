@@ -6,6 +6,7 @@ use App\Models\JournalReflection;
 use App\Models\User;
 use App\Services\Journal\JournalReflectionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
@@ -20,6 +21,7 @@ function journalChatBody(string $content): array
 }
 
 beforeEach(function () {
+    Carbon::setTestNow('2026-11-16 10:00:00');
     $this->withoutVite();
     $this->user = User::factory()->create(['timezone' => 'America/Argentina/Buenos_Aires']);
     $this->actingAs($this->user);
